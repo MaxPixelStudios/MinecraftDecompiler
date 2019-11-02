@@ -24,7 +24,7 @@ public abstract class MappingReader implements AutoCloseable {
 		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
-	public abstract ArrayList<ClassMapping> deobfuscate();
+	public abstract ArrayList<ClassMapping> getMappings();
 	@Override
 	public void close() throws Exception {
 		reader.close();

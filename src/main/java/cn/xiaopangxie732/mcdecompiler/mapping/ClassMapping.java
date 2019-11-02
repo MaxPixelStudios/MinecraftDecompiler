@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ClassMapping extends Mapping {
-
 	private HashMap<String, MethodMapping> methods;
 	private HashMap<String, FieldMapping> fields;
-
+	public ClassMapping() {}
 	public ClassMapping(String obfuscatedName, String originalName) {
 		super(obfuscatedName, originalName);
 		this.methods = new HashMap<>();
@@ -20,26 +19,21 @@ public class ClassMapping extends Mapping {
 		}
 		return this;
 	}
-
 	public ClassMapping addMethods(MethodMapping... methods) {
 		for (MethodMapping method : methods) {
 			this.methods.put(method.getObfuscatedName(), method);
 		}
 		return this;
 	}
-
 	public ArrayList<MethodMapping> getMethods() {
 		return new ArrayList<>(methods.values());
 	}
-
 	public ArrayList<FieldMapping> getFields() {
 		return new ArrayList<>(fields.values());
 	}
-
 	public MethodMapping getMethod(String obfuscatedName) {
 		return methods.get(obfuscatedName);
 	}
-
 	public FieldMapping getField(String obfuscatedName) {
 		return fields.get(obfuscatedName);
 	}

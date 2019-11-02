@@ -9,29 +9,32 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class NotchMappingReader extends MappingReader {
-
+	private  NotchMappingProcessor processor = new NotchMappingProcessor();
 	public NotchMappingReader(BufferedReader reader) {
 		super(reader);
 	}
-
 	public NotchMappingReader(Reader rd) {
 		super(rd);
 	}
-
 	public NotchMappingReader(InputStream is) {
 		super(is);
 	}
-
 	public NotchMappingReader(String path) throws FileNotFoundException {
 		super(path);
 	}
 
 	@Override
-	public ArrayList<ClassMapping> deobfuscate() {
+	public ArrayList<ClassMapping> getMappings() {
+		AtomicReference<ClassMapping> currClass = new AtomicReference<>(null);
+		reader.lines().forEach(s -> {
+			if(!s.startsWith("#") && s.contains("<clinit>")) {
+				if(!s.startsWith(" ")) currClass.set(processor.processClass(s));
+
+			}
+		});
 		return null;
 	}
 
