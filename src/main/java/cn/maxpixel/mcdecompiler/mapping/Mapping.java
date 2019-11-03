@@ -1,4 +1,4 @@
-package cn.xiaopangxie732.mcdecompiler.mapping;
+package cn.maxpixel.mcdecompiler.mapping;
 
 public class Mapping {
 	private String obfuscatedName;

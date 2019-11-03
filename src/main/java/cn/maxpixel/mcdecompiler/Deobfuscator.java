@@ -1,4 +1,4 @@
-package cn.xiaopangxie732.mcdecompiler;
+package cn.maxpixel.mcdecompiler;
 
 import cn.xiaopangxie732.easynetwork.coder.ByteDecoder;
 import cn.xiaopangxie732.easynetwork.http.HttpConnection;
@@ -6,11 +6,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.jar.JarFile;
 
 public class Deobfuscator {
 	private String version;
@@ -28,7 +32,7 @@ public class Deobfuscator {
 	}
 	public Deobfuscator downloadMapping() {
 		checkVersion(version);
-		File f = new File("mappings/version/mappings.txt");
+		File f = new File(Info.getMappingPath(version, type));
 		f.mkdirs();
 		try(FileOutputStream fout = new FileOutputStream(f)) {
 			fout.write(HttpConnection.newGetConnection(
@@ -38,8 +42,27 @@ public class Deobfuscator {
 		}
 		return this;
 	}
+	public Deobfuscator downloadJar() {
+		File f = new File(Info.getMcJarPath(version, type));
+		f.mkdirs();
+		try(FileOutputStream fout = new FileOutputStream(f)) {
+			fout.write(HttpConnection.newGetConnection(
+					version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject().get("url").getAsString()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return this;
+	}
 	public Deobfuscator deobfuscate() {
+		try {
+			File f = new File(Info.getDeobfuscateJarPath(version));
+			f.mkdirs();
+			File temp = new File(Info.TEMP_PATH);
+			temp.mkdirs();temp.deleteOnExit();
 
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 	private void checkVersion(String version) {

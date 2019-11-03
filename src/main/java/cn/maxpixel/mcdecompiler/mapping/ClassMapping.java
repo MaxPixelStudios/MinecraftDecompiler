@@ -1,4 +1,4 @@
-package cn.xiaopangxie732.mcdecompiler.mapping;
+package cn.maxpixel.mcdecompiler.mapping;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +23,14 @@ public class ClassMapping extends Mapping {
 		for (MethodMapping method : methods) {
 			this.methods.put(method.getObfuscatedName(), method);
 		}
+		return this;
+	}
+	public ClassMapping addField(FieldMapping field) {
+		this.fields.put(field.getObfuscatedName(), field);
+		return this;
+	}
+	public ClassMapping addMethod(MethodMapping method) {
+		this.methods.put(method.getObfuscatedName(), method);
 		return this;
 	}
 	public ArrayList<MethodMapping> getMethods() {
