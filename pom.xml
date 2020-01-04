@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
+  ~ Copyright (C) 2020  XiaoPangxie732
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -15,7 +33,7 @@
 				<executions>
 					<execution>
 						<id>add-dependency</id>
-						<phase>clean</phase>
+						<phase>install</phase>
 						<configuration>
 							<file>${basedir}/lib/easynetwork-1.0-Dev.jar</file>
 							<groupId>cn.xiaopangxie732</groupId>
@@ -51,7 +69,8 @@
 							</manifestEntries>
 						</transformer>
 					</transformers>
-					<outputFile>MinecraftDecompiler</outputFile>
+					<outputDirectory>${basedir}\target\</outputDirectory>
+					<outputFile>MinecraftDecompiler.jar</outputFile>
 				</configuration>
 				<executions>
 					<execution>
@@ -90,12 +109,6 @@
 			</plugin>
 		</plugins>
 	</build>
-	<repositories>
-		<repository>
-			<id>xiaopangxie732</id>
-			<url>http://repo.xiaopangxie732.cn:27384/repository/maven-public/</url>
-		</repository>
-	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
@@ -111,6 +124,21 @@
 			<groupId>cn.xiaopangxie732</groupId>
 			<artifactId>easynetwork</artifactId>
 			<version>1.0-Dev</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-commons</artifactId>
+			<version>7.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.13.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.13.0</version>
 		</dependency>
 	</dependencies>
 </project>
