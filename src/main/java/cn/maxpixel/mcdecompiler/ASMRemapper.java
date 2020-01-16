@@ -20,39 +20,83 @@ package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.signature.SignatureVisitor;
 
-import java.util.Objects;
+import java.util.HashMap;
 
 public class ASMRemapper extends Remapper {
-	private ClassMapping mapping;
-	public ASMRemapper(ClassMapping mapping) {
+	private HashMap<String, ClassMapping> mapping;
+	public ASMRemapper(HashMap<String, ClassMapping> mapping) {
 		this.mapping = mapping;
 	}
+
+	@Override
+	public String mapDesc(String descriptor) {
+		return super.mapDesc(descriptor);
+	}
+
+	@Override
+	public String mapType(String internalName) {
+		return super.mapType(internalName);
+	}
+
+	@Override
+	public String[] mapTypes(String[] internalNames) {
+		return super.mapTypes(internalNames);
+	}
+
+	@Override
+	public String mapMethodDesc(String methodDescriptor) {
+		return super.mapMethodDesc(methodDescriptor);
+	}
+
+	@Override
+	public Object mapValue(Object value) {
+		return super.mapValue(value);
+	}
+
+	@Override
+	public String mapSignature(String signature, boolean typeSignature) {
+		return super.mapSignature(signature, typeSignature);
+	}
+
+	@Override
+	public SignatureVisitor createSignatureRemapper(SignatureVisitor signatureVisitor) {
+		return super.createSignatureRemapper(signatureVisitor);
+	}
+
+	@Override
+	public String mapInnerClassName(String name, String ownerName, String innerName) {
+		return super.mapInnerClassName(name, ownerName, innerName);
+	}
+
 	@Override
 	public String mapMethodName(String owner, String name, String descriptor) {
 		return super.mapMethodName(owner, name, descriptor);
 	}
 
 	@Override
-	public String mapFieldName(String owner, String name, String descriptor) {
-		if(owner.equals(mapping.getObfuscatedName()) && Objects.nonNull(mapping.getField(name))) {
+	public String mapInvokeDynamicMethodName(String name, String descriptor) {
+		return super.mapInvokeDynamicMethodName(name, descriptor);
+	}
 
-		}
+	@Override
+	public String mapFieldName(String owner, String name, String descriptor) {
 		return super.mapFieldName(owner, name, descriptor);
 	}
 
 	@Override
 	public String mapPackageName(String name) {
-		if(Objects.nonNull(name)) {
-			return name.equals(NamingUtil.getPackageName(mapping.getObfuscatedName())) ?
-					mapping.getObfuscatedName() : name;
-		}
-		return null;
+		return super.mapPackageName(name);
+	}
+
+	@Override
+	public String mapModuleName(String name) {
+		return super.mapModuleName(name);
 	}
 
 	@Override
 	public String map(String internalName) {
-		return mapping.getObfuscatedName().equals(internalName) ?
-				mapping.getOriginalName() : internalName;
+		return super.map(internalName);
 	}
 }

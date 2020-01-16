@@ -24,6 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
 public abstract class MappingReader implements AutoCloseable {
@@ -43,6 +44,7 @@ public abstract class MappingReader implements AutoCloseable {
 	}
 
 	public abstract ArrayList<ClassMapping> getMappings();
+	public abstract HashMap<String, ClassMapping> getMappingsMap();
 	@Override
 	public void close() {
 		try {
@@ -57,7 +59,7 @@ public abstract class MappingReader implements AutoCloseable {
 		protected abstract ClassMapping processClass(String line);
 		protected abstract MethodMapping processMethod(String line);
 		protected abstract FieldMapping processField(String line);
-		public static boolean startsWithNumber(String text) {
+		protected static boolean startsWithNumber(String text) {
 			char[] numbers = new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 			char start = text.trim().charAt(0);
 			for (char number : numbers) {

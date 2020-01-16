@@ -22,51 +22,54 @@ import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NotchMappingReader extends MappingReader {
-	private  NotchMappingProcessor processor = new NotchMappingProcessor();
+	private NotchMappingProcessor processor = new NotchMappingProcessor();
+	private HashMap<String, ClassMapping> mappings = new HashMap<>(4850);
 	public NotchMappingReader(BufferedReader reader) {
 		super(reader);
-		HashMap<String, ClassMapping> mappings = new HashMap<>(128);
 		AtomicReference<ClassMapping> currClass = new AtomicReference<>(null);
 		reader.lines().forEach(s -> {
-			if(!s.startsWith("#") && !s.contains("<clinit>") && !s.contains("<init>")) {
+			if(!s.startsWith("#") && !s.contains("<clinit>")) {
 				if(!s.startsWith(" ")) {
 					if(currClass.get() != null)
 						mappings.put(currClass.get().getObfuscatedName(), currClass.getAndSet(processor.processClass(s)));
+					else currClass.set(processor.processClass(s));
 				} else {
-					if(NotchMappingProcessor.startsWithNumber(s)) currClass.get().addMethod(processor.processMethod(s));
-					else currClass.get().addField(processor.processField(s));
+					if(NotchMappingProcessor.startsWithNumber(s)) currClass.get().addMethod(processor.processMethod(s.trim()));
+					else currClass.get().addField(processor.processField(s.trim()));
 				}
 			}
 		});
 	}
 	public NotchMappingReader(Reader rd) {
-		super(rd);
+		this(new BufferedReader(rd));
 	}
 	public NotchMappingReader(InputStream is) {
-		super(is);
+		this(new InputStreamReader(is));
 	}
 	public NotchMappingReader(String path) throws FileNotFoundException, NullPointerException {
-		super(path);
+		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
 	@Override
 	public ArrayList<ClassMapping> getMappings() {
-		ArrayList<ClassMapping> mappings = new ArrayList<>();
-
-		return null;
+		return new ArrayList<>(mappings.values());
 	}
+
+	@Override
+	public HashMap<String, ClassMapping> getMappingsMap() {
+		return mappings;
+	}
+
 	private static class NotchMappingProcessor extends MappingProcessor {
 		private static Pattern pattern = Pattern.compile("(?:[^\\s\":./()]+\\.)*[^\\s\":./()]+");
 		@Override
@@ -98,6 +101,10 @@ public class NotchMappingReader extends MappingReader {
 				mapping.setArgTypes(s1.split(","));
 				m.find();
 				m.find();
+				mapping.setObfuscatedName(m.group());
+			} else {
+				m.find();
+				mapping.setObfuscatedName(m.group());
 			}
 			return mapping;
 		}
@@ -105,7 +112,7 @@ public class NotchMappingReader extends MappingReader {
 		@Override
 		public FieldMapping processField(String line) {
 			String[] strings = line.trim().split(" ");
-			return new FieldMapping(strings[1], strings[3], strings[0]);
+			return new FieldMapping(strings[3], strings[1], strings[0]);
 		}
 	}
 }

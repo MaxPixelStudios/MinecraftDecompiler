@@ -22,7 +22,13 @@ public class MethodMapping extends Mapping {
 	private int[] linenumber = new int[2];
 	private String returnVal;
 	private String[] argTypes;
-	public MethodMapping() {}
+	public MethodMapping() {
+		super();
+		this.linenumber[0] = 0;
+		this.linenumber[1] = 0;
+		this.returnVal = null;
+		this.argTypes = null;
+	}
 	public MethodMapping(String obfuscatedName, String originalName, int linenumber1,
 	                     int linenumber2, String returnVal, String[] argTypes) {
 		super(obfuscatedName, originalName);
