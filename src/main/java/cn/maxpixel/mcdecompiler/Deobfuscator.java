@@ -35,14 +35,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Enumeration;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 public class Deobfuscator {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private String version;
+	int i = 0;
 	private Info.MappingType type;
 	private static JsonArray versions;
 	private JsonObject version_json;
@@ -94,24 +98,59 @@ public class Deobfuscator {
 			f.createNewFile();
 			File temp = new File(Info.TEMP_PATH);
 			temp.mkdirs();
-			decompress(new JarFile(Info.getMcJarPath(version, type)), new File(temp, "originalClasses"));
+//			decompress(new JarFile(Info.getMcJarPath(version, type)), new File(temp, version + "/" + type.toString() + "/originalClasses"));
 			try(NotchMappingReader mappingReader = new NotchMappingReader(Info.getMappingPath(version, type))) {
 				ASMRemapper remapper = new ASMRemapper(mappingReader.getMappingsMap());
+				Files.createDirectories(Paths.get("temp", version, type.toString(), "deobfuscatedClasses"));
 				mappingReader.getMappings().forEach(classMapping -> {
-					try {
-						ClassReader reader = new ClassReader("temp/originalClasses/" + classMapping.getObfuscatedName()
-								.replace(".", "/"));
-						ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-						reader.accept(new ClassRemapper(writer, remapper), ClassReader.SKIP_DEBUG);
-					} catch (IOException e) {
-						e.printStackTrace();
+					if(i < 1) {
+						try(InputStream inputStream = Files.newInputStream(Paths.get("temp", version, type.toString(),
+								"originalClasses", classMapping.getObfuscatedName().replace('.', '/') + ".class"))) {
+							ClassReader reader = new ClassReader(inputStream);
+							ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+							reader.accept(new ClassRemapper(writer, remapper), ClassReader.SKIP_DEBUG);
+							String s = classMapping.getOriginalName().replace('.', '/');
+							Files.createDirectories(Paths.get("temp", version, type.toString(), "deobfuscatedClasses",
+									s.substring(0, s.lastIndexOf('/'))));
+							Files.write(Paths.get("temp", version, type.toString(), "deobfuscatedClasses",
+									s + ".class"), writer.toByteArray(),
+									StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						++i;
 					}
 				});
 			}
+//			compress(new JarFile(f.getPath()), new File(temp, "deobfuscatedClasses"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return this;
+	}
+	private void compress(JarFile target, File from) {
+		try {
+			JarOutputStream out = new JarOutputStream(new FileOutputStream(target.getName()), new Manifest(new StringInput("Manifest-Version: 1.0\n" +
+					"Main-Class: net.minecraft.client.Main")));
+			try {
+				if(from.exists()) {
+					for(File children : Objects.requireNonNull(from.listFiles())) {
+						if(children.isDirectory()) {
+
+						}
+						out.closeEntry();
+						out.flush();
+					}
+				}
+			} finally {
+				out.finish();
+				out.close();
+				target.close();
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	private void decompress(JarFile jar, File target) {
 		LOGGER.info("decompressing");
@@ -148,6 +187,22 @@ public class Deobfuscator {
 				if (version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings")) break;
 				else throw new RuntimeException("This version doesn't have mappings");
 			}
+		}
+	}
+	private class StringInput extends InputStream {
+		private char[] string;
+		private int index;
+		private int length;
+		public StringInput(String string) {
+			this.string = string.toCharArray();
+			index = 0;
+			length = string.length();
+		}
+
+		@Override
+		public int read() throws IOException {
+			if(index < length) return string[index++];
+			return -1;
 		}
 	}
 }

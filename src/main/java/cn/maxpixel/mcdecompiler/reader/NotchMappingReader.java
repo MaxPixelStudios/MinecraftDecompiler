@@ -18,13 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.*;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;

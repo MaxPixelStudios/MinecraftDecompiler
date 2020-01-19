@@ -18,10 +18,15 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class DeobfuscatorCommandLine {
 	public static final String USAGE = "java -jar MinecraftDecompiler.jar <version(1.14 or above)> <c or s>";
+	private static Logger LOGGER = LogManager.getLogger();
 	public static void main(String[] args) {
+		System.setProperty("log4j2.skipJansi", "false");
 		Deobfuscator deobfuscator = new Deobfuscator("1.14.4", Info.MappingType.SERVER);
-
+		deobfuscator.deobfuscate();
 	}
 }

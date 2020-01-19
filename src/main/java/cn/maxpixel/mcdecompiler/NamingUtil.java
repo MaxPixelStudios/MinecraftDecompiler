@@ -28,9 +28,12 @@ public class NamingUtil {
 		return fullClassName.substring(0, fullClassName.lastIndexOf("."));
 	}
 	public static String asJavaName(String nativeName) {
-		return nativeName.replace("/", ".");
+		return nativeName.replace('/', '.');
 	}
 	public static String asNativeName(String javaName) {
+		return javaName.replace('/', '.');
+	}
+	public static String asFQCN(String javaName) {
 		if(!javaName.contains("[]"))
 			if(javaName.equals("boolean")) return "Z";
 			else if(javaName.equals("byte")) return "B";
@@ -42,21 +45,41 @@ public class NamingUtil {
 			else if(javaName.equals("short")) return "S";
 			else return "L" + javaName.replace('.', '/') + ";";
 		else {
-			StringBuffer buf = new StringBuffer();
+			StringBuilder buf = new StringBuilder();
 			int arrDimension = 0;
 			for(int index = 0;index < javaName.length();index+=2)
 				if((index = javaName.indexOf("[]", index)) != -1) arrDimension++;
 			for(;arrDimension!=0;arrDimension--) buf.append('[');
 			javaName = javaName.replace("[]", "");
-			if(javaName.equals("boolean")) buf.append('Z');
-			else if(javaName.equals("byte")) buf.append('B');
-			else if(javaName.equals("char")) buf.append('C');
-			else if(javaName.equals("double")) buf.append('D');
-			else if(javaName.equals("float")) buf.append('F');
-			else if(javaName.equals("int")) buf.append('I');
-			else if(javaName.equals("long")) buf.append('J');
-			else if(javaName.equals("short")) buf.append('S');
-			else buf.append('L').append(javaName.replace('.', '/')).append(';');
+			switch (javaName) {
+				case "boolean":
+					buf.append('Z');
+					break;
+				case "byte":
+					buf.append('B');
+					break;
+				case "char":
+					buf.append('C');
+					break;
+				case "double":
+					buf.append('D');
+					break;
+				case "float":
+					buf.append('F');
+					break;
+				case "int":
+					buf.append('I');
+					break;
+				case "long":
+					buf.append('J');
+					break;
+				case "short":
+					buf.append('S');
+					break;
+				default:
+					buf.append('L').append(javaName.replace('.', '/')).append(';');
+					break;
+			}
 			return buf.toString();
 		}
 	}
