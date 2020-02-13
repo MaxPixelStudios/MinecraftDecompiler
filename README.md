@@ -1,6 +1,6 @@
 # MinecraftDecompiler
 A useful tool to decompile and deobfuscate Minecraft by CFR and Proguard/SRG/CSRG/TSRG mappings
-# The project is under development and cannot be used now         Current Progress: 90%--Fixing bugs
+# The project is under development and cannot be used now         Current Progress: 99%--Nearing Completion
 ## Features
 1. Deobfuscate Minecraft by Proguard(Notch) mappings(adding support), SRG/TSRG/CSRG mappings(support in future)
 2. Decompile Minecraft by CFR(adding support)
