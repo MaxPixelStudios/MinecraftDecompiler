@@ -19,5 +19,6 @@
     <orderEntry type="library" name="Maven: org.ow2.asm:asm-analysis:7.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-api:2.13.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-core:2.13.0" level="project" />
+    <orderEntry type="library" name="Maven: it.unimi.dsi:fastutil:8.3.0" level="project" />
   </component>
 </module>

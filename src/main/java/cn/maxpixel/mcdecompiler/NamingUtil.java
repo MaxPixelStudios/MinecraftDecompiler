@@ -28,10 +28,10 @@ public class NamingUtil {
 		return fullClassName.substring(0, fullClassName.lastIndexOf("."));
 	}
 	public static String asJavaName(String nativeName) {
-		return nativeName.replace('/', '.');
+		return nativeName.replace('/', '.').replace('\\', '.');
 	}
 	public static String asNativeName(String javaName) {
-		return javaName.replace('/', '.');
+		return javaName.replace('.', '/');
 	}
 	public static String asFQCN(String javaName) {
 		if(!javaName.contains("[]"))
@@ -43,6 +43,7 @@ public class NamingUtil {
 			else if(javaName.equals("int")) return "I";
 			else if(javaName.equals("long")) return "J";
 			else if(javaName.equals("short")) return "S";
+			else if(javaName.equals("void")) return "V";
 			else return "L" + javaName.replace('.', '/') + ";";
 		else {
 			StringBuilder buf = new StringBuilder();
@@ -75,6 +76,9 @@ public class NamingUtil {
 					break;
 				case "short":
 					buf.append('S');
+					break;
+				case "void":
+					buf.append('V');
 					break;
 				default:
 					buf.append('L').append(javaName.replace('.', '/')).append(';');

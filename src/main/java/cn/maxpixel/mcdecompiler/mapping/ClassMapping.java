@@ -18,21 +18,25 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class ClassMapping extends Mapping {
-	private HashMap<String, MethodMapping> methods;
-	private HashMap<String, FieldMapping> fields;
+	private List<MethodMapping> methods;
+	private Map<String, FieldMapping> fields;
 	public ClassMapping() {
-		super();
-		this.methods = new HashMap<>();
-		this.fields = new HashMap<>();
+		this.methods = new ObjectArrayList<>();
+		this.fields = new Object2ObjectOpenHashMap<>();
 	}
 	public ClassMapping(String obfuscatedName, String originalName) {
 		super(obfuscatedName, originalName);
-		this.methods = new HashMap<>();
-		this.fields = new HashMap<>();
+		this.methods = new ObjectArrayList<>();
+		this.fields = new Object2ObjectOpenHashMap<>();
 	}
 
 	public ClassMapping addFields(FieldMapping... fields) {
@@ -42,9 +46,7 @@ public class ClassMapping extends Mapping {
 		return this;
 	}
 	public ClassMapping addMethods(MethodMapping... methods) {
-		for (MethodMapping method : methods) {
-			this.methods.put(method.getObfuscatedName(), method);
-		}
+		this.methods.addAll(Arrays.asList(methods));
 		return this;
 	}
 	public ClassMapping addField(FieldMapping field) {
@@ -52,23 +54,17 @@ public class ClassMapping extends Mapping {
 		return this;
 	}
 	public ClassMapping addMethod(MethodMapping method) {
-		this.methods.put(method.getObfuscatedName(), method);
+		this.methods.add(method);
 		return this;
 	}
-	public ArrayList<MethodMapping> getMethods() {
-		return new ArrayList<>(methods.values());
-	}
-	public ArrayList<FieldMapping> getFields() {
-		return new ArrayList<>(fields.values());
-	}
-	public HashMap<String, MethodMapping> getMethodMap() {
+	public List<MethodMapping> getMethods() {
 		return methods;
 	}
-	public HashMap<String, FieldMapping> getFieldMap() {
-		return fields;
+	public List<FieldMapping> getFields() {
+		return new ArrayList<>(fields.values());
 	}
-	public MethodMapping getMethod(String obfuscatedName) {
-		return methods.get(obfuscatedName);
+	public Map<String, FieldMapping> getFieldMap() {
+		return fields;
 	}
 	public FieldMapping getField(String obfuscatedName) {
 		return fields.get(obfuscatedName);

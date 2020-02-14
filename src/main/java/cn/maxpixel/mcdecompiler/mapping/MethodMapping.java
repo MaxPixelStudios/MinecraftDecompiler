@@ -24,8 +24,6 @@ public class MethodMapping extends Mapping {
 	private String[] argTypes;
 	public MethodMapping() {
 		super();
-		this.linenumber[0] = 0;
-		this.linenumber[1] = 0;
 		this.returnVal = null;
 		this.argTypes = null;
 	}

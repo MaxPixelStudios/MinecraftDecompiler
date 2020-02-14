@@ -18,30 +18,36 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.*;
+import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class NotchMappingReader extends MappingReader {
 	private NotchMappingProcessor processor = new NotchMappingProcessor();
-	private HashMap<String, ClassMapping> mappings = new HashMap<>(4850);
+	private ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(4850);
 	public NotchMappingReader(BufferedReader reader) {
 		super(reader);
 		AtomicReference<ClassMapping> currClass = new AtomicReference<>(null);
 		reader.lines().forEach(s -> {
-			if(!s.startsWith("#") && !s.contains("<clinit>")) {
+			if(!s.startsWith("#") && !s.contains("<clinit>") && !s.contains("package-info") && !s.contains("<init>")) {
 				if(!s.startsWith(" ")) {
-					if(currClass.get() != null)
-						mappings.put(currClass.get().getObfuscatedName(), currClass.getAndSet(processor.processClass(s)));
-					else currClass.set(processor.processClass(s));
+					if(currClass.get() != null) {
+						mappings.add(currClass.getAndSet(processor.processClass(s)));
+					} else currClass.set(processor.processClass(s));
 				} else {
-					if(NotchMappingProcessor.startsWithNumber(s)) currClass.get().addMethod(processor.processMethod(s.trim()));
+					if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processor.processMethod(s.trim()));
 					else currClass.get().addField(processor.processField(s.trim()));
 				}
 			}
@@ -58,13 +64,20 @@ public class NotchMappingReader extends MappingReader {
 	}
 
 	@Override
-	public ArrayList<ClassMapping> getMappings() {
-		return new ArrayList<>(mappings.values());
+	public List<ClassMapping> getMappings() {
+		return mappings;
 	}
 
 	@Override
-	public HashMap<String, ClassMapping> getMappingsMap() {
-		return mappings;
+	public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
+		return mappings.stream().collect(Collectors.toMap(ClassMapping::getObfuscatedName, Function.identity(),
+				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+	}
+
+	@Override
+	public Map<String, ClassMapping> getMappingsMapByOriginalName() {
+		return mappings.stream().collect(Collectors.toMap(ClassMapping::getOriginalName, Function.identity(),
+				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
 	}
 
 	private static class NotchMappingProcessor extends MappingProcessor {
@@ -83,25 +96,20 @@ public class NotchMappingReader extends MappingReader {
 		@Override
 		public MethodMapping processMethod(String line) {
 			MethodMapping mapping = new MethodMapping();
-			Matcher m = pattern.matcher(line);
-			m.find();
-			int l1 = Integer.parseInt(m.group());
-			m.find();
-			mapping.setLinenumber(l1, Integer.parseInt(m.group()));
-			m.find();
-			mapping.setReturnVal(m.group());
-			m.find();
-			mapping.setOriginalName(m.group());
-			m.find();
-			String s1;
-			if(!(s1 = m.group()).equals("->")) {
-				mapping.setArgTypes(s1.split(","));
-				m.find();
-				m.find();
-				mapping.setObfuscatedName(m.group());
-			} else {
-				m.find();
-				mapping.setObfuscatedName(m.group());
+			String[] linenums = line.trim().split(":");
+			String[] method;
+			if(linenums.length == 3){
+				mapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
+				method = linenums[2].split(" ");
+			} else method = linenums[0].split(" ");
+			mapping.setReturnVal(method[0]);
+			mapping.setObfuscatedName(method[3]);
+			String ori_arg = method[1];
+			if(ori_arg.contains("()")) mapping.setOriginalName(ori_arg.substring(0, ori_arg.indexOf('(')));
+			else {
+				String[] ori_args = ori_arg.split("([(]|[)])+");
+				mapping.setOriginalName(ori_args[0]);
+				mapping.setArgTypes(ori_args[1].split(","));
 			}
 			return mapping;
 		}

@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: cn.xiaopangxie732:easynetwork:1.0-Dev">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/cn/xiaopangxie732/easynetwork/1.0-Dev/easynetwork-1.0-Dev.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/cn/xiaopangxie732/easynetwork/1.0-Dev/easynetwork-1.0-Dev-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../EasyNetwork/src/main/java" />
+      <root url="jar://$MAVEN_REPOSITORY$/cn/xiaopangxie732/easynetwork/1.0-Dev/easynetwork-1.0-Dev-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

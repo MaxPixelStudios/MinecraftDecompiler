@@ -21,9 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class MappingReader implements AutoCloseable {
 	protected BufferedReader reader;
@@ -41,8 +39,9 @@ public abstract class MappingReader implements AutoCloseable {
 		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
-	public abstract ArrayList<ClassMapping> getMappings();
-	public abstract HashMap<String, ClassMapping> getMappingsMap();
+	public abstract List<ClassMapping> getMappings();
+	public abstract Map<String, ClassMapping> getMappingsMapByObfuscatedName();
+	public abstract Map<String, ClassMapping> getMappingsMapByOriginalName();
 	@Override
 	public void close() {
 		try {

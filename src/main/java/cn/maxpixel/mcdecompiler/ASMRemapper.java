@@ -19,102 +19,98 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.signature.SignatureVisitor;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ASMRemapper extends Remapper {
-	private HashMap<String, ClassMapping> mapping;
-	private static final Logger LOGGER = LogManager.getLogger("");
-	public ASMRemapper(HashMap<String, ClassMapping> mapping) {
-		this.mapping = mapping;
+	private Map<String, ClassMapping> mappingByObfus;
+	private Map<String, ClassMapping> mappingByOri;
+	private SuperClassMapping superClassMapping;
+	private static final Logger LOGGER = LogManager.getLogger("Remapper");
+	public ASMRemapper(Map<String, ClassMapping> mappingByObfus, Map<String, ClassMapping> mappingByOri, SuperClassMapping superClassMapping) {
+		this.mappingByObfus = mappingByObfus;
+		this.mappingByOri = mappingByOri;
+		this.superClassMapping = superClassMapping;
 	}
-
-	@Override
-	public String mapDesc(String descriptor) {
-		LOGGER.debug("Method: mapDesc(String), Args: descriptor=\"{}\"", descriptor);
-		return super.mapDesc(descriptor);
-	}
-
-	@Override
-	public String mapType(String internalName) {
-		LOGGER.debug("Method: mapType(String), Args: internalName=\"{}\"", internalName);
-		return super.mapType(internalName);
-	}
-
-	@Override
-	public String[] mapTypes(String[] internalNames) {
-		LOGGER.debug("Method: mapTypes(String[]), Args: internalNames=\"{}\"", Arrays.toString(internalNames));
-		return super.mapTypes(internalNames);
-	}
-
-	@Override
-	public String mapMethodDesc(String methodDescriptor) {
-		LOGGER.debug("Method: mapMethodDesc(String), Args: methodDescriptor=\"{}\"", methodDescriptor);
-		return super.mapMethodDesc(methodDescriptor);
-	}
-
-	@Override
-	public Object mapValue(Object value) {
-		LOGGER.debug("Method: mapValue(Object), Args: value=\"{}\"", value);
-		return super.mapValue(value);
-	}
-
-	@Override
-	public String mapSignature(String signature, boolean typeSignature) {
-		LOGGER.debug("Method: mapSignature(String, boolean), Args: signature=\"{}\", typeSignature=\"{}\"", signature, typeSignature);
-		return super.mapSignature(signature, typeSignature);
-	}
-
-	@Override
-	public SignatureVisitor createSignatureRemapper(SignatureVisitor signatureVisitor) {
-		LOGGER.debug("Method: createSignatureRemapper(SignatureVisitor), Args: signatureVisitor=\"{}\"", signatureVisitor);
-		return super.createSignatureRemapper(signatureVisitor);
-	}
-
 	@Override
 	public String mapInnerClassName(String name, String ownerName, String innerName) {
-		LOGGER.debug("Method: mapInnerClassName(String, String, String), Args: name=\"{}\", ownerName=\"{}\", innerName=\"{}\"", name, ownerName, innerName);
-		return super.mapInnerClassName(name, ownerName, innerName);
+		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(name));
+		if(classMapping != null) {
+			String innerClassName = NamingUtil.asNativeName(classMapping.getOriginalName());
+			return innerClassName.substring(innerClassName.lastIndexOf('$') + 1);
+		}
+		else return innerName;
 	}
-
 	@Override
 	public String mapMethodName(String owner, String name, String descriptor) {
-		LOGGER.debug("Method: mapMethodName(String, String, String), Args: owner=\"{}\", name=\"{}\", descriptor=\"{}\"", owner, name, descriptor);
-		return super.mapMethodName(owner, name, descriptor);
+		if(!(name.equals("<init>") || name.equals("<clinit>"))) {
+			ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
+			if(classMapping != null) {
+				AtomicReference<MethodMapping> mtdmapping = new AtomicReference<>();
+				classMapping.getMethods().forEach(methodMapping -> {
+					if(methodMapping.getObfuscatedName().equals(name)) {
+						StringBuilder builder = new StringBuilder().append('(');
+						if(methodMapping.getArgTypes() != null) {
+							for(String arg : methodMapping.getArgTypes()) {
+								ClassMapping argClass = mappingByOri.get(arg);
+								if(argClass != null) builder.append(NamingUtil.asFQCN(argClass.getObfuscatedName()));
+								else builder.append(NamingUtil.asFQCN(arg));
+							}
+						}
+						builder.append(')');
+						String returnVal = methodMapping.getReturnVal();
+						ClassMapping revClass = mappingByOri.get(returnVal);
+						if(revClass != null) builder.append(NamingUtil.asFQCN(revClass.getObfuscatedName()));
+						else builder.append(NamingUtil.asFQCN(returnVal));
+						if(descriptor.contentEquals(builder)) mtdmapping.set(methodMapping);
+					}
+				});
+				if(mtdmapping.get() == null && superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
+					superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
+						mappingByObfus.get(superClass).getMethods().forEach(methodMapping -> {
+							if(methodMapping.getObfuscatedName().equals(name)) {
+								StringBuilder builder = new StringBuilder().append('(');
+								if(methodMapping.getArgTypes() != null) {
+									for(String arg : methodMapping.getArgTypes()) {
+										ClassMapping argClass = mappingByOri.get(arg);
+										if(argClass != null) builder.append(NamingUtil.asFQCN(argClass.getObfuscatedName()));
+										else builder.append(NamingUtil.asFQCN(arg));
+									}
+								}
+								builder.append(')');
+								String returnVal = methodMapping.getReturnVal();
+								ClassMapping revClass = mappingByOri.get(returnVal);
+								if(revClass != null) builder.append(NamingUtil.asFQCN(revClass.getObfuscatedName()));
+								else builder.append(NamingUtil.asFQCN(returnVal));
+								if(descriptor.contentEquals(builder)) mtdmapping.set(methodMapping);
+							}
+						});
+					});
+				}
+				if(mtdmapping.get() != null) return mtdmapping.get().getOriginalName();
+			}
+		}
+		return name;
 	}
-
-	@Override
-	public String mapInvokeDynamicMethodName(String name, String descriptor) {
-		LOGGER.debug("Method: mapTypes(String, String), Args: name=\"{}\", descriptor=\"{}\"", name, descriptor);
-		return super.mapInvokeDynamicMethodName(name, descriptor);
-	}
-
 	@Override
 	public String mapFieldName(String owner, String name, String descriptor) {
-		LOGGER.debug("Method: mapFieldName(String, String, String), Args: owner=\"{}\", name=\"{}\", descriptor=\"{}\"", owner, name, descriptor);
-		return super.mapFieldName(owner, name, descriptor);
+		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
+		if(classMapping != null) {
+			FieldMapping fieldMapping = classMapping.getField(name);
+			if(fieldMapping != null) return fieldMapping.getOriginalName();
+		}
+		return name;
 	}
-
-	@Override
-	public String mapPackageName(String name) {
-		LOGGER.debug("Method: mapPackageName(String), Args: name=\"{}\"", name);
-		return super.mapPackageName(name);
-	}
-
-	@Override
-	public String mapModuleName(String name) {
-		LOGGER.debug("Method: mapModuleName(String), Args: name=\"{}\"", name);
-		return super.mapModuleName(name);
-	}
-
 	@Override
 	public String map(String internalName) {
-		LOGGER.debug("Method: map(String), Args: internalNames=\"{}\"", internalName);
-		return super.map(internalName);
+		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(internalName));
+		if(classMapping != null) return NamingUtil.asNativeName(classMapping.getOriginalName());
+		else return internalName;
 	}
 }
