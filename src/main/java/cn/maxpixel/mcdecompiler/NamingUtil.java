@@ -44,13 +44,13 @@ public class NamingUtil {
 			else if(javaName.equals("long")) return "J";
 			else if(javaName.equals("short")) return "S";
 			else if(javaName.equals("void")) return "V";
-			else return "L" + javaName.replace('.', '/') + ";";
+			else return "L" + asNativeName(javaName) + ";";
 		else {
 			StringBuilder buf = new StringBuilder();
 			int arrDimension = 0;
 			for(int index = 0;index < javaName.length();index+=2)
 				if((index = javaName.indexOf("[]", index)) != -1) arrDimension++;
-			for(;arrDimension!=0;arrDimension--) buf.append('[');
+			for(;arrDimension>0;arrDimension--) buf.append('[');
 			javaName = javaName.replace("[]", "");
 			switch (javaName) {
 				case "boolean":
@@ -81,7 +81,7 @@ public class NamingUtil {
 					buf.append('V');
 					break;
 				default:
-					buf.append('L').append(javaName.replace('.', '/')).append(';');
+					buf.append('L').append(asNativeName(javaName)).append(';');
 					break;
 			}
 			return buf.toString();

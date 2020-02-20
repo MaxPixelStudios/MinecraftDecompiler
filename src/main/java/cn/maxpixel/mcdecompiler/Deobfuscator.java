@@ -35,11 +35,9 @@ import org.objectweb.asm.commons.ClassRemapper;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -108,9 +106,6 @@ public class Deobfuscator {
 			LOGGER.info("remapping...");
 			try(NotchMappingReader mappingReader = new NotchMappingReader(Info.getMappingPath(version, type))) {
 				SuperClassMapping superClassMapping = new SuperClassMapping();
-				ASMRemapper remapper = new ASMRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
-				Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
-				Files.createDirectories(Paths.get("temp", version, type.toString(), "deobfuscatedClasses"));
 				$$listFiles$$(Paths.get("temp", version, type.toString(), "originalClasses").toFile(), path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
 						ClassReader reader = new ClassReader(inputStream);
@@ -119,6 +114,9 @@ public class Deobfuscator {
 						e.printStackTrace();
 					}
 				});
+				ASMRemapper remapper = new ASMRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
+				Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
+				Files.createDirectories(Paths.get("temp", version, type.toString(), "deobfuscatedClasses"));
 				$$listFiles$$(Paths.get("temp", version, type.toString(), "originalClasses").toFile(), path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
 						ClassReader reader = new ClassReader(inputStream);

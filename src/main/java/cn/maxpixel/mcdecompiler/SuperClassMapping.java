@@ -34,12 +34,12 @@ public class SuperClassMapping extends ClassVisitor {
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		if(!superName.equals("java/lang/Object")) {
-			List<String> list = new ObjectArrayList<>(3);
+		List<String> list = new ObjectArrayList<>(3);
+		if(!superName.contains("java/lang/Object")) {
 			list.add(NamingUtil.asJavaName(superName));
-			if(interfaces != null) for(String interface_ : interfaces) list.add(NamingUtil.asJavaName(interface_));
-			superClassMap.put(NamingUtil.asJavaName(name), list);
 		}
+		if(interfaces != null) for(String interface_ : interfaces) list.add(NamingUtil.asJavaName(interface_));
+		if(!list.isEmpty()) superClassMap.put(NamingUtil.asJavaName(name), list);
 	}
 
 	public Map<String, List<String>> getMap() {

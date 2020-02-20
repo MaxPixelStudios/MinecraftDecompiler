@@ -21,9 +21,9 @@ package cn.maxpixel.mcdecompiler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class DeobfuscatorCommandLine {
@@ -32,8 +32,8 @@ public class DeobfuscatorCommandLine {
 	public static final Proxy PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080));
 	public static void main(String[] args) {
 		System.setProperty("log4j2.skipJansi", "false");
-		String version = "";
-		Info.MappingType type = Info.MappingType.CLIENT;
+		String version;
+		Info.MappingType type = null;
 		if(args.length == 0) {
 			System.out.println(USAGE);
 			try(Scanner sc = new Scanner(System.in)) {
@@ -55,7 +55,7 @@ public class DeobfuscatorCommandLine {
 				type = Info.MappingType.SERVER;
 			}
 		}
-		Deobfuscator deobfuscator = new Deobfuscator(version, type);
+		Deobfuscator deobfuscator = new Deobfuscator(version, Objects.requireNonNull(type, "INVALID SIDE TYPE DETECTED"));
 		deobfuscator.deobfuscate();
 	}
 }

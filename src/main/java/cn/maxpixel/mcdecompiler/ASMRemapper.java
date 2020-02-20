@@ -52,60 +52,107 @@ public class ASMRemapper extends Remapper {
 		if(!(name.equals("<init>") || name.equals("<clinit>"))) {
 			ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
 			if(classMapping != null) {
-				AtomicReference<MethodMapping> mtdmapping = new AtomicReference<>();
-				classMapping.getMethods().forEach(methodMapping -> {
-					if(methodMapping.getObfuscatedName().equals(name)) {
+				AtomicReference<MethodMapping> methodMapping = new AtomicReference<>(null);
+				classMapping.getMethods().forEach(methodMapping1 -> {
+					if(methodMapping1.getObfuscatedName().equals(name) && methodMapping.get() == null) {
 						StringBuilder builder = new StringBuilder().append('(');
-						if(methodMapping.getArgTypes() != null) {
-							for(String arg : methodMapping.getArgTypes()) {
+						if(methodMapping1.getArgTypes() != null) {
+							for(String arg : methodMapping1.getArgTypes()) {
 								ClassMapping argClass = mappingByOri.get(arg);
 								if(argClass != null) builder.append(NamingUtil.asFQCN(argClass.getObfuscatedName()));
 								else builder.append(NamingUtil.asFQCN(arg));
 							}
 						}
 						builder.append(')');
-						String returnVal = methodMapping.getReturnVal();
+						String returnVal = methodMapping1.getReturnVal();
 						ClassMapping revClass = mappingByOri.get(returnVal);
 						if(revClass != null) builder.append(NamingUtil.asFQCN(revClass.getObfuscatedName()));
 						else builder.append(NamingUtil.asFQCN(returnVal));
-						if(descriptor.contentEquals(builder)) mtdmapping.set(methodMapping);
+						if(descriptor.contentEquals(builder)) methodMapping.set(methodMapping1);
 					}
 				});
-				if(mtdmapping.get() == null && superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
-					superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
-						mappingByObfus.get(superClass).getMethods().forEach(methodMapping -> {
-							if(methodMapping.getObfuscatedName().equals(name)) {
+				if(methodMapping.get() == null) methodMapping.set(processSuperMethod(owner, name, descriptor));
+				if(methodMapping.get() != null) return methodMapping.get().getOriginalName();
+			}
+		}
+		return name;
+	}
+	private MethodMapping processSuperMethod(String owner, String name, String descriptor) {
+		if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
+			AtomicReference<MethodMapping> methodMapping = new AtomicReference<>(null);
+			superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
+				if(methodMapping.get() == null) {
+					ClassMapping supermapping = mappingByObfus.get(superClass);
+					if(supermapping != null) {
+						supermapping.getMethods().forEach(methodMapping1 -> {
+							if(methodMapping1.getObfuscatedName().equals(name)) {
 								StringBuilder builder = new StringBuilder().append('(');
-								if(methodMapping.getArgTypes() != null) {
-									for(String arg : methodMapping.getArgTypes()) {
+								if(methodMapping1.getArgTypes() != null) {
+									for(String arg : methodMapping1.getArgTypes()) {
 										ClassMapping argClass = mappingByOri.get(arg);
 										if(argClass != null) builder.append(NamingUtil.asFQCN(argClass.getObfuscatedName()));
 										else builder.append(NamingUtil.asFQCN(arg));
 									}
 								}
 								builder.append(')');
-								String returnVal = methodMapping.getReturnVal();
+								String returnVal = methodMapping1.getReturnVal();
 								ClassMapping revClass = mappingByOri.get(returnVal);
 								if(revClass != null) builder.append(NamingUtil.asFQCN(revClass.getObfuscatedName()));
 								else builder.append(NamingUtil.asFQCN(returnVal));
-								if(descriptor.contentEquals(builder)) mtdmapping.set(methodMapping);
+								if(descriptor.contentEquals(builder)) methodMapping.set(methodMapping1);
 							}
 						});
-					});
+					}
 				}
-				if(mtdmapping.get() != null) return mtdmapping.get().getOriginalName();
+			});
+			if(methodMapping.get() == null) {
+				superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
+					if(methodMapping.get() == null) {
+						ClassMapping supermapping = mappingByObfus.get(superClass);
+						if(supermapping != null) {
+							methodMapping.set(processSuperMethod(supermapping.getObfuscatedName(), name, descriptor));
+						}
+					}
+				});
 			}
+			if(methodMapping.get() != null) return methodMapping.get();
 		}
-		return name;
+		return null;
 	}
 	@Override
 	public String mapFieldName(String owner, String name, String descriptor) {
 		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
 		if(classMapping != null) {
 			FieldMapping fieldMapping = classMapping.getField(name);
+			if(fieldMapping == null) {
+				fieldMapping = processSuperField(owner, name, descriptor);
+			}
 			if(fieldMapping != null) return fieldMapping.getOriginalName();
 		}
 		return name;
+	}
+	private FieldMapping processSuperField(String owner, String name, String descriptor) {
+		if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
+			AtomicReference<FieldMapping> fieldMapping = new AtomicReference<>(null);
+			superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
+				ClassMapping supermapping = mappingByObfus.get(superClass);
+				if(supermapping != null && fieldMapping.get() == null) {
+					fieldMapping.set(supermapping.getField(name));
+				}
+			});
+			if(fieldMapping.get() == null) {
+				superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
+					if(fieldMapping.get() == null) {
+						ClassMapping supermapping = mappingByObfus.get(superClass);
+						if(supermapping != null) {
+							fieldMapping.set(processSuperField(supermapping.getObfuscatedName(), name, descriptor));
+						}
+					}
+				});
+			}
+			if(fieldMapping.get() != null) return fieldMapping.get();
+		}
+		return null;
 	}
 	@Override
 	public String map(String internalName) {
