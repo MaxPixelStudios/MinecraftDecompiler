@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2020  XiaoPangxie732
+ * Copyright (C) 2019-2020  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,6 +68,7 @@ public class Deobfuscator {
 		File f = new File(Info.getMappingPath(version, type));
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
+			LOGGER.info("downloading mapping...");
 			try(FileOutputStream fout = new FileOutputStream(f)) {
 				f.createNewFile();
 				fout.write(HttpConnection.newGetConnection(
@@ -83,6 +84,7 @@ public class Deobfuscator {
 		File f = new File(Info.getMcJarPath(version, type));
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
+			LOGGER.info("downloading jar...");
 			try(FileOutputStream fout = new FileOutputStream(f)) {
 				f.createNewFile();
 				fout.write(HttpConnection.newGetConnection(
@@ -281,6 +283,7 @@ public class Deobfuscator {
 				else throw new RuntimeException("This version doesn't have mappings");
 			}
 		}
+		if(version_json == null) throw new RuntimeException("INVALID VERSION DETECTED: " + version);
 		MAIN_CLASS = version_json.get("mainClass").getAsString();
 	}
 }

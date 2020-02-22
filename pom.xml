@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
-  ~ Copyright (C) 2020  XiaoPangxie732
+  ~ Copyright (C) 2019-2020  MaxPixelStudios
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cn.xiaopangxie732</groupId>
 	<artifactId>minecraft-decompiler</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.0</version>
 	<build>
 		<plugins>
 			<plugin>

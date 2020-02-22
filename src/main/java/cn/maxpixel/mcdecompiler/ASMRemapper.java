@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2020  XiaoPangxie732
+ * Copyright (C) 2019-2020  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,12 +44,11 @@ public class ASMRemapper extends Remapper {
 		if(classMapping != null) {
 			String innerClassName = NamingUtil.asNativeName(classMapping.getOriginalName());
 			return innerClassName.substring(innerClassName.lastIndexOf('$') + 1);
-		}
-		else return innerName;
+		} else return innerName;
 	}
 	@Override
 	public String mapMethodName(String owner, String name, String descriptor) {
-		if(!(name.equals("<init>") || name.equals("<clinit>"))) {
+		if(!(name.contains("<init>") || name.contains("<clinit>"))) {
 			ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
 			if(classMapping != null) {
 				AtomicReference<MethodMapping> methodMapping = new AtomicReference<>(null);
@@ -59,15 +58,15 @@ public class ASMRemapper extends Remapper {
 						if(methodMapping1.getArgTypes() != null) {
 							for(String arg : methodMapping1.getArgTypes()) {
 								ClassMapping argClass = mappingByOri.get(arg);
-								if(argClass != null) builder.append(NamingUtil.asFQCN(argClass.getObfuscatedName()));
-								else builder.append(NamingUtil.asFQCN(arg));
+								if(argClass != null) builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName()));
+								else builder.append(NamingUtil.asDescriptor(arg));
 							}
 						}
 						builder.append(')');
 						String returnVal = methodMapping1.getReturnVal();
 						ClassMapping revClass = mappingByOri.get(returnVal);
-						if(revClass != null) builder.append(NamingUtil.asFQCN(revClass.getObfuscatedName()));
-						else builder.append(NamingUtil.asFQCN(returnVal));
+						if(revClass != null) builder.append(NamingUtil.asDescriptor(revClass.getObfuscatedName()));
+						else builder.append(NamingUtil.asDescriptor(returnVal));
 						if(descriptor.contentEquals(builder)) methodMapping.set(methodMapping1);
 					}
 				});
@@ -90,15 +89,15 @@ public class ASMRemapper extends Remapper {
 								if(methodMapping1.getArgTypes() != null) {
 									for(String arg : methodMapping1.getArgTypes()) {
 										ClassMapping argClass = mappingByOri.get(arg);
-										if(argClass != null) builder.append(NamingUtil.asFQCN(argClass.getObfuscatedName()));
-										else builder.append(NamingUtil.asFQCN(arg));
+										if(argClass != null) builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName()));
+										else builder.append(NamingUtil.asDescriptor(arg));
 									}
 								}
 								builder.append(')');
 								String returnVal = methodMapping1.getReturnVal();
 								ClassMapping revClass = mappingByOri.get(returnVal);
-								if(revClass != null) builder.append(NamingUtil.asFQCN(revClass.getObfuscatedName()));
-								else builder.append(NamingUtil.asFQCN(returnVal));
+								if(revClass != null) builder.append(NamingUtil.asDescriptor(revClass.getObfuscatedName()));
+								else builder.append(NamingUtil.asDescriptor(returnVal));
 								if(descriptor.contentEquals(builder)) methodMapping.set(methodMapping1);
 							}
 						});
@@ -125,13 +124,13 @@ public class ASMRemapper extends Remapper {
 		if(classMapping != null) {
 			FieldMapping fieldMapping = classMapping.getField(name);
 			if(fieldMapping == null) {
-				fieldMapping = processSuperField(owner, name, descriptor);
+				fieldMapping = processSuperField(owner, name);
 			}
 			if(fieldMapping != null) return fieldMapping.getOriginalName();
 		}
 		return name;
 	}
-	private FieldMapping processSuperField(String owner, String name, String descriptor) {
+	private FieldMapping processSuperField(String owner, String name) {
 		if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
 			AtomicReference<FieldMapping> fieldMapping = new AtomicReference<>(null);
 			superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
@@ -145,7 +144,7 @@ public class ASMRemapper extends Remapper {
 					if(fieldMapping.get() == null) {
 						ClassMapping supermapping = mappingByObfus.get(superClass);
 						if(supermapping != null) {
-							fieldMapping.set(processSuperField(supermapping.getObfuscatedName(), name, descriptor));
+							fieldMapping.set(processSuperField(supermapping.getObfuscatedName(), name));
 						}
 					}
 				});

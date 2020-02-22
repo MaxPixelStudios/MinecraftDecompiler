@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2020  XiaoPangxie732
+ * Copyright (C) 2019-2020  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class NotchMappingReader extends MappingReader {
@@ -81,16 +79,10 @@ public class NotchMappingReader extends MappingReader {
 	}
 
 	private static class NotchMappingProcessor extends MappingProcessor {
-		private static Pattern pattern = Pattern.compile("(?:[^\\s\":./()]+\\.)*[^\\s\":./()]+");
 		@Override
 		public ClassMapping processClass(String line) {
-			ClassMapping mapping = new ClassMapping();
-			Matcher m = pattern.matcher(line);
-			m.find();
-			mapping.setOriginalName(m.group());
-			m.find();m.find();
-			mapping.setObfuscatedName(m.group());
-			return mapping;
+			String[] split = line.split("(\\s->\\s)+|(:)+");
+			return new ClassMapping(split[1], split[0]);
 		}
 
 		@Override
@@ -116,8 +108,8 @@ public class NotchMappingReader extends MappingReader {
 
 		@Override
 		public FieldMapping processField(String line) {
-			String[] strings = line.trim().split(" ");
-			return new FieldMapping(strings[3], strings[1], strings[0]);
+			String[] strings = line.trim().split("(\\s->\\s)+|(\\s)+");
+			return new FieldMapping(strings[2], strings[1], strings[0]);
 		}
 	}
 }

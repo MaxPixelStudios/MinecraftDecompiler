@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2020  XiaoPangxie732
+ * Copyright (C) 2019-2020  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ public class NamingUtil {
 	public static String asNativeName(String javaName) {
 		return javaName.replace('.', '/');
 	}
-	public static String asFQCN(String javaName) {
+	public static String asDescriptor(String javaName) {
 		if(!javaName.contains("[]"))
 			if(javaName.equals("boolean")) return "Z";
 			else if(javaName.equals("byte")) return "B";
@@ -82,7 +82,6 @@ public class NamingUtil {
 					break;
 				default:
 					buf.append('L').append(asNativeName(javaName)).append(';');
-					break;
 			}
 			return buf.toString();
 		}

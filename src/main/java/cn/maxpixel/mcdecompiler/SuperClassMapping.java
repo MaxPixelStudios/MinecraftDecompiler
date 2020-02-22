@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2020  XiaoPangxie732
+ * Copyright (C) 2019-2020  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ public class SuperClassMapping extends ClassVisitor {
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		List<String> list = new ObjectArrayList<>(3);
+		List<String> list = new ObjectArrayList<>(2);
 		if(!superName.contains("java/lang/Object")) {
 			list.add(NamingUtil.asJavaName(superName));
 		}

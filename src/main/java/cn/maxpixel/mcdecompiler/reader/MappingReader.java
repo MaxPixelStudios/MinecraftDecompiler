@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2020  XiaoPangxie732
+ * Copyright (C) 2019-2020  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,13 +56,5 @@ public abstract class MappingReader implements AutoCloseable {
 		protected abstract ClassMapping processClass(String line);
 		protected abstract MethodMapping processMethod(String line);
 		protected abstract FieldMapping processField(String line);
-		protected static boolean startsWithNumber(String text) {
-			char[] numbers = new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-			char start = text.trim().charAt(0);
-			for (char number : numbers) {
-				if(start == number) return true;
-			}
-			return false;
-		}
 	}
 }
