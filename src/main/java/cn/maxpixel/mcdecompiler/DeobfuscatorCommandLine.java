@@ -18,11 +18,16 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -30,12 +35,12 @@ public class DeobfuscatorCommandLine {
 	public static final String USAGE = "java -jar MinecraftDecompiler.jar <version(1.14 or above)> <c or s>";
 	private static Logger LOGGER = LogManager.getLogger();
 	public static final Proxy PROXY =
-//			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080));
-			Proxy.NO_PROXY;
+			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)); //Just for internal testing.
+//			Proxy.NO_PROXY;
 	public static void main(String[] args) {
 		System.setProperty("log4j2.skipJansi", "false");
 		String version;
-		Info.MappingType type = null;
+		Info.SideType type = null;
 		if(args.length == 0) {
 			System.out.println(USAGE);
 			try(Scanner sc = new Scanner(System.in)) {
@@ -44,19 +49,32 @@ public class DeobfuscatorCommandLine {
 				System.out.println("Type a side: (c)lient, (s)erver");
 				String t = sc.next();
 				if(t.equalsIgnoreCase("client") || t.equalsIgnoreCase("c")) {
-					type = Info.MappingType.CLIENT;
+					type = Info.SideType.CLIENT;
 				} else if(t.equalsIgnoreCase("server") || t.equalsIgnoreCase("s")) {
-					type = Info.MappingType.SERVER;
+					type = Info.SideType.SERVER;
 				}
 			}
-		} else if(args.length == 2) {
-			version = args[0];
-			if(args[1].equalsIgnoreCase("client") || args[1].equalsIgnoreCase("c")) {
-				type = Info.MappingType.CLIENT;
-			} else if(args[1].equalsIgnoreCase("server") || args[1].equalsIgnoreCase("s")) {
-				type = Info.MappingType.SERVER;
+		} else {
+			OptionParser parser = new OptionParser();
+			OptionSpec<String> versionO = parser.accepts("version", "Select a version to deobfuscate/decompile.").withRequiredArg();
+			OptionSpec<Info.SideType> typeO = parser
+					.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for client and \"SERVER\" for server").withRequiredArg()
+					.ofType(Info.SideType.class).defaultsTo(Info.SideType.CLIENT);
+			OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
+
+			OptionSet options = parser.parse(args);
+			if(options.has(help)) {
+				try {
+					parser.printHelpOn(System.out);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return;
 			}
-		} else throw new IllegalArgumentException("Usage: " + USAGE);
+
+			version = options.valueOf(versionO);
+			type = options.valueOf(typeO);
+		}
 		Deobfuscator deobfuscator = new Deobfuscator(version, Objects.requireNonNull(type, "INVALID SIDE TYPE DETECTED"));
 		deobfuscator.deobfuscate();
 	}

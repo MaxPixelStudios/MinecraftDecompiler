@@ -19,17 +19,17 @@
 package cn.maxpixel.mcdecompiler;
 
 public interface Info {
-	static String getMappingPath(String version, Info.MappingType type) {
+	static String getMappingPath(String version, SideType type) {
 		return "downloads/" + version + "/" + type + "_mappings.txt";
 	}
-	static String getMcJarPath(String version, Info.MappingType type) {
+	static String getMcJarPath(String version, SideType type) {
 		return "downloads/" + version + "/" + type + ".jar";
 	}
-	static String getDeobfuscateJarPath(String version, Info.MappingType type) {
+	static String getDeobfuscateJarPath(String version, SideType type) {
 		return "output/" + version + "/" + type + "_deobfuscated.jar";
 	}
 	String TEMP_PATH = "temp";
-	enum MappingType {
+	enum SideType {
 		CLIENT,
 		SERVER;
 		@Override

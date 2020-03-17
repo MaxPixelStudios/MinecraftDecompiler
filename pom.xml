@@ -116,6 +116,11 @@
 			<version>7.3.1</version>
 		</dependency>
 		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-commons</artifactId>
+			<version>7.3.1</version>
+		</dependency>
+		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.8.6</version>
@@ -124,11 +129,6 @@
 			<groupId>cn.xiaopangxie732</groupId>
 			<artifactId>easynetwork</artifactId>
 			<version>1.0-Dev</version>
-		</dependency>
-		<dependency>
-			<groupId>org.ow2.asm</groupId>
-			<artifactId>asm-commons</artifactId>
-			<version>7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
@@ -144,6 +144,11 @@
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>fastutil</artifactId>
 			<version>8.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jopt-simple</groupId>
+			<artifactId>jopt-simple</artifactId>
+			<version>6.0-alpha-3</version>
 		</dependency>
 	</dependencies>
 </project>

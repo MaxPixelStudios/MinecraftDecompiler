@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.util;
 
 public class NamingUtil {
 	public static String getClassName(String name) {

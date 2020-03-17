@@ -32,14 +32,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class NotchMappingReader extends MappingReader {
-	private NotchMappingProcessor processor = new NotchMappingProcessor();
-	private ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(4850);
-	public NotchMappingReader(BufferedReader reader) {
+public class ProguardMappingReader extends MappingReader {
+	private ProguardMappingProcessor processor = new ProguardMappingProcessor();
+	private ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+	public ProguardMappingReader(BufferedReader reader) {
 		super(reader);
 		AtomicReference<ClassMapping> currClass = new AtomicReference<>(null);
 		reader.lines().forEach(s -> {
-			if(!s.startsWith("#") && !s.contains("<clinit>") && !s.contains("package-info") && !s.contains("<init>")) {
+			if(!s.startsWith("#")) {
 				if(!s.startsWith(" ")) {
 					if(currClass.get() != null) {
 						mappings.add(currClass.getAndSet(processor.processClass(s)));
@@ -50,14 +50,15 @@ public class NotchMappingReader extends MappingReader {
 				}
 			}
 		});
+		if(currClass.get() != null) mappings.add(currClass.get());
 	}
-	public NotchMappingReader(Reader rd) {
+	public ProguardMappingReader(Reader rd) {
 		this(new BufferedReader(rd));
 	}
-	public NotchMappingReader(InputStream is) {
+	public ProguardMappingReader(InputStream is) {
 		this(new InputStreamReader(is));
 	}
-	public NotchMappingReader(String path) throws FileNotFoundException, NullPointerException {
+	public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
 		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
@@ -78,7 +79,7 @@ public class NotchMappingReader extends MappingReader {
 				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
 	}
 
-	private static class NotchMappingProcessor extends MappingProcessor {
+	private static class ProguardMappingProcessor extends MappingProcessor {
 		@Override
 		public ClassMapping processClass(String line) {
 			String[] split = line.split("(\\s->\\s)+|(:)+");

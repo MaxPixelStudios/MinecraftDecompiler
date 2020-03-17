@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.remapper;
 
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
@@ -28,12 +29,12 @@ import org.objectweb.asm.commons.Remapper;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ASMRemapper extends Remapper {
+public class ProguardMappingRemapper extends Remapper {
 	private Map<String, ClassMapping> mappingByObfus;
 	private Map<String, ClassMapping> mappingByOri;
 	private SuperClassMapping superClassMapping;
 	private static final Logger LOGGER = LogManager.getLogger("Remapper");
-	public ASMRemapper(Map<String, ClassMapping> mappingByObfus, Map<String, ClassMapping> mappingByOri, SuperClassMapping superClassMapping) {
+	public ProguardMappingRemapper(Map<String, ClassMapping> mappingByObfus, Map<String, ClassMapping> mappingByOri, SuperClassMapping superClassMapping) {
 		this.mappingByObfus = mappingByObfus;
 		this.mappingByOri = mappingByOri;
 		this.superClassMapping = superClassMapping;
@@ -123,9 +124,7 @@ public class ASMRemapper extends Remapper {
 		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
 		if(classMapping != null) {
 			FieldMapping fieldMapping = classMapping.getField(name);
-			if(fieldMapping == null) {
-				fieldMapping = processSuperField(owner, name);
-			}
+			if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
 			if(fieldMapping != null) return fieldMapping.getOriginalName();
 		}
 		return name;
