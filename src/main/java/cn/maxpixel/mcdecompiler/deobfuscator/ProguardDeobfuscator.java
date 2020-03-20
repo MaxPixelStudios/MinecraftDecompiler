@@ -22,7 +22,8 @@ import cn.maxpixel.mcdecompiler.*;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
 import cn.maxpixel.mcdecompiler.remapper.ProguardMappingRemapper;
-import cn.maxpixel.mcdecompiler.remapper.SuperClassMapping;
+import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
+import cn.maxpixel.mcdecompiler.util.JarUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.xiaopangxie732.easynetwork.coder.ByteDecoder;
 import cn.xiaopangxie732.easynetwork.http.HttpConnection;
@@ -41,18 +42,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	private String version;
 	private Info.SideType type;
 	private static JsonArray versions;
 	private JsonObject version_json;
-	private String MAIN_CLASS;
 	static {
 		versions = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
 				.newGetConnection("https://launchermeta.mojang.com/mc/game/version_manifest.json", DeobfuscatorCommandLine.PROXY)))
@@ -81,6 +76,19 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 		}
 		return this;
 	}
+	private void checkVersion() {
+		LOGGER.info("checking version...");
+		for (JsonElement element : versions) {
+			JsonObject object = element.getAsJsonObject();
+			if(object.get("id").getAsString().equalsIgnoreCase(version)) {
+				version_json = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
+						.newGetConnection(object.get("url").getAsString(), DeobfuscatorCommandLine.PROXY))).getAsJsonObject();
+				if (version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings")) break;
+				else throw new RuntimeException("This version doesn't have mappings");
+			}
+		}
+		if(version_json == null) throw new RuntimeException("INVALID VERSION DETECTED: " + version);
+	}
 	private ProguardDeobfuscator downloadJar() {
 		File f = new File(Info.getMcJarPath(version, type));
 		f.getParentFile().mkdirs();
@@ -102,16 +110,18 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	public ProguardDeobfuscator deobfuscate() {
 		try {
 			LOGGER.info("deobfuscating...");
-			File f = new File(Info.getDeobfuscateJarPath(version, type));
-			f.getParentFile().mkdirs();
-			f.createNewFile();
+			File deobfuscateJar = new File(Info.getDeobfuscateJarPath(version, type));
+			deobfuscateJar.getParentFile().mkdirs();
+			deobfuscateJar.createNewFile();
 			File temp = new File(Info.TEMP_PATH);
 			temp.mkdirs();
-			decompress(new JarFile(Info.getMcJarPath(version, type)), new File(temp, version + "/" + type.toString() + "/originalClasses"));
+			File originalClasses = new File(temp, version + "/" + type.toString() + "/originalClasses");
+			originalClasses.mkdirs();
+			JarUtil.decompressJar(Info.getMcJarPath(version, type), originalClasses);
 			LOGGER.info("remapping...");
 			try(ProguardMappingReader mappingReader = new ProguardMappingReader(Info.getMappingPath(version, type))) {
 				SuperClassMapping superClassMapping = new SuperClassMapping();
-				$$listFiles$$(Paths.get("temp", version, type.toString(), "originalClasses").toFile(), path -> {
+				listMcClassFiles(originalClasses, path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
 						ClassReader reader = new ClassReader(inputStream);
 						reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
@@ -119,15 +129,18 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 						e.printStackTrace();
 					}
 				});
+				copyOthers(originalClasses);
 				ProguardMappingRemapper remapper = new ProguardMappingRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
 				Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
-				Files.createDirectories(Paths.get("temp", version, type.toString(), "deobfuscatedClasses"));
-				$$listFiles$$(Paths.get("temp", version, type.toString(), "originalClasses").toFile(), path -> {
+				Files.createDirectories(originalClasses.toPath().getParent().resolve("deobfuscatedClasses"));
+				listMcClassFiles(originalClasses, path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
 						ClassReader reader = new ClassReader(inputStream);
 						ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
 						reader.accept(new ClassRemapper(writer, remapper), ClassReader.SKIP_DEBUG);
-						ClassMapping mapping = mappings.get((path.getPath().contains("net\\minecraft\\") ? NamingUtil.asJavaName(path.getPath().replace("temp\\" + version + "\\" + type + "\\originalClasses\\", "")) : path.getName()).replace(".class", ""));
+						ClassMapping mapping = mappings.get((path.getPath().contains("minecraft" + Info.FILE_SEPARATOR) ?
+								NamingUtil.asJavaName("net/minecraft" + path.getPath().substring(path.getPath().lastIndexOf(Info.FILE_SEPARATOR, 48)))
+								: path.getName()).replace(".class", ""));
 						if(mapping != null) {
 							String s = NamingUtil.asNativeName(mapping.getOriginalName());
 							Files.createDirectories(Paths.get("temp", version, type.toString(), "deobfuscatedClasses",
@@ -141,118 +154,49 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 					}
 				});
 			}
-			compress(f, new File(temp, version + "/" + type + "/" + "deobfuscatedClasses"));
+			String mainClass = type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer";
+			JarUtil.compressJar(mainClass, deobfuscateJar, new File(temp, version + "/" + type + "/" + "deobfuscatedClasses"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return this;
 	}
-	private void $$listFiles$$(File baseDir, Consumer<File> fileConsumer) {
+	private void copyOthers(File baseDir) {
 		for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
-			if(childFile.isFile())
-				if(childFile.getPath().endsWith(".class")) fileConsumer.accept(childFile);
-				else runProcess("copy \"" + childFile.getAbsolutePath() + "\" /B \"" + Paths.get(new File(Info.TEMP_PATH).getAbsolutePath(),
-						version, type.toString(), "deobfuscatedClasses", childFile.getName()).toAbsolutePath() + "\"");
-			else if(childFile.isDirectory() && !childFile.getAbsolutePath().contains("net"))
-				runProcess("xcopy \"" + childFile.getAbsolutePath() + "\" \"" + Paths.get("temp", version,
+			if(childFile.isFile() && !childFile.getPath().endsWith(".class")) {
+				runProcess("copy \"" + childFile.getAbsolutePath() + "\" /B \"" +
+						Paths.get(Info.TEMP_PATH, version, type.toString(),
+								"deobfuscatedClasses", childFile.getName()).toAbsolutePath() + "\"");
+			} else if(childFile.isDirectory() && !childFile.getAbsolutePath().contains("net")) {
+				runProcess("xcopy \"" + childFile.getAbsolutePath() + "\" \"" + Paths.get(Info.TEMP_PATH, version,
 						type.toString(), "deobfuscatedClasses", childFile.getName()).toFile().getAbsolutePath() + "\" /E /I /H /Y");
-		}
-		for(File minecraft : Objects.requireNonNull(new File(baseDir, "net/minecraft").listFiles())) {
-			if (minecraft.isDirectory()) $$$a$$$(minecraft, fileConsumer);
+			}
 		}
 		File manifest = Paths.get("temp", version,
-				type.toString(), "deobfuscatedClasses/META-INF/MANIFEST.MF").toFile();
+				type.toString(), "deobfuscatedClasses", "META-INF", "MANIFEST.MF").toFile();
 		if(manifest.exists()) manifest.delete();
 		File mojangRSA = Paths.get("temp", version,
-				type.toString(), "deobfuscatedClasses/META-INF/MOJANGCS.RSA").toFile();
+				type.toString(), "deobfuscatedClasses", "META-INF", "MOJANGCS.RSA").toFile();
 		if(mojangRSA.exists()) mojangRSA.delete();
 		File mojangSF = Paths.get("temp", version,
-				type.toString(), "deobfuscatedClasses/META-INF/MOJANGCS.SF").toFile();
+				type.toString(), "deobfuscatedClasses", "META-INF", "MOJANGCS.SF").toFile();
 		if(mojangSF.exists()) mojangSF.delete();
 	}
-	private void $$$a$$$(File dir, Consumer<File> fileConsumer) {
+	private void listMcClassFiles(File baseDir, Consumer<File> fileConsumer) {
+		for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
+			if(childFile.isFile() && childFile.getPath().endsWith(".class")) fileConsumer.accept(childFile);
+		}
+		for(File minecraft : Objects.requireNonNull(new File(baseDir, "net/minecraft").listFiles())) {
+			if (minecraft.isDirectory()) processNetDotMinecraftPackage(minecraft, fileConsumer);
+		}
+	}
+	private void processNetDotMinecraftPackage(File dir, Consumer<File> fileConsumer) {
 		for(File f : Objects.requireNonNull(dir.listFiles())) {
-			if(f.isFile()) fileConsumer.accept(f);
-			else if(f.isDirectory()) $$$a$$$(f, fileConsumer);
-		}
-	}
-	private void compress(File f, File from) {
-		try {
-			Manifest manifest = new Manifest();
-			switch (type) {
-				case CLIENT:
-					manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-					manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, MAIN_CLASS);
-					break;
-				case SERVER:
-					manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-					manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "net.minecraft.server.MinecraftServer");
-					break;
-			}
-			JarOutputStream out = new JarOutputStream(new FileOutputStream(f), manifest);
-			try {
-				if(from.exists()) processDirectory(from, out);
-			} finally {
-				out.finish();
-				out.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	private void processDirectory(File directory, JarOutputStream stream) throws IOException {
-		if(directory.listFiles() != null) {
-			for (File children : directory.listFiles()) {
-				if (children.isDirectory()) processDirectory(children, stream);
-				else if (!children.getAbsolutePath().contains("MANIFEST.MF") && !children.getAbsolutePath().contains("MOJANGCS")) {
-					stream.putNextEntry(new ZipEntry(children.getPath().replace("temp\\" + version + "\\" + type + "\\deobfuscatedClasses\\", "")
-							.replace('\\', '/')));
-					stream.write(Files.readAllBytes(children.toPath()));
-					stream.closeEntry();
-					stream.flush();
-				}
+			if(f.isFile()) {
+				fileConsumer.accept(f);
+			} else if(f.isDirectory()) {
+				processNetDotMinecraftPackage(f, fileConsumer);
 			}
 		}
-	}
-	private void decompress(JarFile jar, File target) {
-		LOGGER.info("decompressing");
-		jar.stream().forEach(entry -> {
-			if(entry.isDirectory()) {
-				new File(target, entry.getName()).mkdirs();
-			} else {
-				try {
-					File f = new File(target, entry.getName());
-					if(!f.exists()) {
-						f.getParentFile().mkdirs();
-						f.createNewFile();
-						try(InputStream is = jar.getInputStream(entry);
-						    FileOutputStream out = new FileOutputStream(f)) {
-							for (int i = is.read(); i != -1; i = is.read()) out.write(i);
-						}
-					}
-				} catch (IOException ex) {
-					LOGGER.error("A exception occurred while decompressing jar file", ex);
-				}
-			}
-		});
-		try {
-			jar.close();
-		} catch (IOException ex) {
-			LOGGER.error("A exception occurred while closing jar file", ex);
-		}
-	}
-	private void checkVersion() {
-		LOGGER.info("checking version...");
-		for (JsonElement element : versions) {
-			JsonObject object = element.getAsJsonObject();
-			if(object.get("id").getAsString().equalsIgnoreCase(version)) {
-				version_json = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
-						.newGetConnection(object.get("url").getAsString(), DeobfuscatorCommandLine.PROXY))).getAsJsonObject();
-				if (version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings")) break;
-				else throw new RuntimeException("This version doesn't have mappings");
-			}
-		}
-		if(version_json == null) throw new RuntimeException("INVALID VERSION DETECTED: " + version);
-		MAIN_CLASS = version_json.get("mainClass").getAsString();
 	}
 }

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.remapper;
+package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

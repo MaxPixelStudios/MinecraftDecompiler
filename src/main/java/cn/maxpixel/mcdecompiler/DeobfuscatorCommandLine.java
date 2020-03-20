@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.Scanner;
 
 public class DeobfuscatorCommandLine {
-	public static final String USAGE = "java -jar MinecraftDecompiler.jar <version(1.14 or above)> <c or s>";
 	private static Logger LOGGER = LogManager.getLogger();
 	public static final Proxy PROXY =
 			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)); //Just for internal testing.
@@ -42,7 +41,6 @@ public class DeobfuscatorCommandLine {
 		String version;
 		Info.SideType type = null;
 		if(args.length == 0) {
-			System.out.println(USAGE);
 			try(Scanner sc = new Scanner(System.in)) {
 				System.out.println("Type a version(1.14.4 or above)");
 				version = sc.next();

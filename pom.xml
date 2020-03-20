@@ -23,7 +23,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cn.xiaopangxie732</groupId>
 	<artifactId>minecraft-decompiler</artifactId>
-	<version>1.0</version>
+	<version>1.1.0</version>
 	<build>
 		<plugins>
 			<plugin>
@@ -69,7 +69,6 @@
 							</manifestEntries>
 						</transformer>
 					</transformers>
-					<outputDirectory>${basedir}\target\</outputDirectory>
 					<outputFile>MinecraftDecompiler.jar</outputFile>
 				</configuration>
 				<executions>
@@ -98,14 +97,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
-				<configuration>
-					<jarname>MinecraftDecompiler</jarname>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

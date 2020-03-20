@@ -29,6 +29,7 @@ public interface Info {
 		return "output/" + version + "/" + type + "_deobfuscated.jar";
 	}
 	String TEMP_PATH = "temp";
+	String FILE_SEPARATOR = System.getProperty("file.separator");
 	enum SideType {
 		CLIENT,
 		SERVER;
