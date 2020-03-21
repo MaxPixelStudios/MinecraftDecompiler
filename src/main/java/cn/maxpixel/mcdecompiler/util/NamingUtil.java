@@ -28,7 +28,7 @@ public class NamingUtil {
 		return fullClassName.substring(0, fullClassName.lastIndexOf("."));
 	}
 	public static String asJavaName(String nativeName) {
-		return nativeName.replace('/', '.').replace('\\', '.');
+		return nativeName.replace('/', '.').replace('\\', '.').replace(".class", "");
 	}
 	public static String asNativeName(String javaName) {
 		return javaName.replace('.', '/');

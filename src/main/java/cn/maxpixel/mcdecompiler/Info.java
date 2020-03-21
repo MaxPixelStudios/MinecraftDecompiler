@@ -28,6 +28,12 @@ public interface Info {
 	static String getDeobfuscateJarPath(String version, SideType type) {
 		return "output/" + version + "/" + type + "_deobfuscated.jar";
 	}
+	static String getTempOriginalClassesPath(String version, SideType type) {
+		return "temp/" + version + "/" + type + "/originalClasses";
+	}
+	static String getTempDeobfuscatedClassesPath(String version, SideType type) {
+		return "temp/" + version + "/" + type + "/deobfuscatedClasses";
+	}
 	String TEMP_PATH = "temp";
 	String FILE_SEPARATOR = System.getProperty("file.separator");
 	enum SideType {

@@ -27,13 +27,23 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtil {
 	private static final Logger LOGGER = LogManager.getLogger();
-	public void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
+	public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
 		try {
-			Files.copy(source, target, copyOptions);
-			String relativePath = null;
+			LOGGER.debug("Coping directory {} to {} ...", source, target);
+			try {
+				Files.copy(source, target, copyOptions);
+			} catch(FileAlreadyExistsException ignored) {}
 			Files.walkFileTree(source, new FileVisitor<Path>() {
+				String relativePath = null;
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					if(relativePath == null)
+						relativePath = dir.getFileName().toString();
+					else
+						relativePath += "/" + dir.getFileName();
+					try {
+						Files.copy(dir, target.resolve(relativePath), copyOptions);
+					} catch(FileAlreadyExistsException ignored) {}
 					return FileVisitResult.CONTINUE;
 				}
 				@Override
@@ -43,15 +53,34 @@ public class FileUtil {
 				}
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					try {
+						Files.copy(file, relativePath == null ?
+								target.resolve(file.getFileName()) :
+								target.resolve(relativePath).resolve(file.getFileName()), copyOptions);
+					} catch(FileAlreadyExistsException ignored) {}
 					return FileVisitResult.CONTINUE;
 				}
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					int index = relativePath.lastIndexOf('/');
+					if(index == -1) relativePath = null;
+					else relativePath = relativePath.substring(0, index);
 					return FileVisitResult.CONTINUE;
 				}
 			});
 		} catch (IOException e) {
 			LOGGER.error("Error while coping directory", e);
+		}
+	}
+	public static void copyFile(Path source, Path target, CopyOption... copyOptions) {
+		LOGGER.debug("Coping file {} to {} ...", source, target);
+		try {
+			Files.createDirectories(target.getParent());
+			try {
+				Files.copy(source, target, copyOptions);
+			} catch(FileAlreadyExistsException ignored) {}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

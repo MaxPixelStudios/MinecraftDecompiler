@@ -33,7 +33,7 @@ public class JarUtil {
 	public static void decompressJar(String jarPath, File target) {
 		LOGGER.info("decompressing");
 		try {
-			Process pro = Runtime.getRuntime().exec(new String[] {"cmd", "/C", "jar xf \"" + new File(jarPath).getAbsolutePath() + "\""}, null, target.getAbsoluteFile());
+			Process pro = Runtime.getRuntime().exec(new String[] {"jar", "xf", new File(jarPath).getAbsolutePath()}, null, target.getAbsoluteFile());
 			ProcessUtil.waitForProcess(pro);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -41,9 +41,10 @@ public class JarUtil {
 	}
 	public static void compressJar(String mainClass, File jar, File from) {
 		LOGGER.info("compressing");
-		File file = from.toPath().resolve("META-INF").resolve("MANIFEST.MF").toFile();
+		File file = new File(from, "META-INF/MANIFEST.MF");
 		if(!file.exists()) {
 			try {
+				file.getParentFile().mkdirs();
 				file.createNewFile();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -54,7 +55,7 @@ public class JarUtil {
 			manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
 			manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
 			manifest.write(manifestOut);
-			Process pro = Runtime.getRuntime().exec(new String[] {"cmd", "/C", "jar cfm0 \"" + jar.getAbsolutePath() + "\" META-INF\\MANIFEST.MF ."}, null, from);
+			Process pro = Runtime.getRuntime().exec(new String[] {"jar", "cfm0", jar.getAbsolutePath(), "META-INF\\MANIFEST.MF", "."}, null, from);
 			ProcessUtil.waitForProcess(pro);
 		} catch (IOException e) {
 			e.printStackTrace();
