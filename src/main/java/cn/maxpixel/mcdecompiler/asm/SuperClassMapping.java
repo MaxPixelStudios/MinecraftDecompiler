@@ -22,8 +22,10 @@ import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -45,5 +47,11 @@ public class SuperClassMapping extends ClassVisitor {
 
 	public Map<String, List<String>> getMap() {
 		return superClassMap;
+	}
+
+	@Override
+	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+		if((access & Opcodes.ACC_VARARGS) != 0) System.err.println("method: access=" + access + ", name="+name+", descriptor="+descriptor+", signature="+signature+", exceptions="+ Arrays.toString(exceptions));
+		return super.visitMethod(access, name, descriptor, signature, exceptions);
 	}
 }
