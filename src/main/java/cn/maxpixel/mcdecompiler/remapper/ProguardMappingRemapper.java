@@ -19,10 +19,10 @@
 package cn.maxpixel.mcdecompiler.remapper;
 
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.commons.Remapper;
@@ -71,9 +71,22 @@ public class ProguardMappingRemapper extends Remapper {
 		StringBuilder builder = new StringBuilder().append('(');
 		if(methodMapping1.getArgTypes() != null) {
 			for(String arg : methodMapping1.getArgTypes()) {
-				ClassMapping argClass = mappingByOri.get(arg);
-				if(argClass != null) builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName()));
-				else builder.append(NamingUtil.asDescriptor(arg));
+				if(arg.contains("[]")) {
+					ClassMapping argClass = mappingByOri.get(arg.replace("[]", ""));
+					if(argClass != null) {
+						StringBuilder arrays = new StringBuilder(2);
+						int dimension = NamingUtil.getDimension(arg), i = 0;
+						do {
+							arrays.append('[').append(']');
+							i++;
+						} while(i < dimension);
+						builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName() + arrays));
+					} else builder.append(NamingUtil.asDescriptor(arg));
+				} else {
+					ClassMapping argClass = mappingByOri.get(arg);
+					if(argClass != null) builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName()));
+					else builder.append(NamingUtil.asDescriptor(arg));
+				}
 			}
 		}
 		builder.append(')');

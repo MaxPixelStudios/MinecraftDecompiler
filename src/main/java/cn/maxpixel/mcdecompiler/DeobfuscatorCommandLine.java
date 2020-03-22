@@ -34,8 +34,8 @@ import java.util.Scanner;
 public class DeobfuscatorCommandLine {
 	private static Logger LOGGER = LogManager.getLogger();
 	public static final Proxy PROXY =
-//			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)); //Just for internal testing.
-			Proxy.NO_PROXY;
+			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)); //Just for internal testing.
+//			Proxy.NO_PROXY;
 	public static void main(String[] args) {
 		System.setProperty("log4j2.skipJansi", "false");
 		String version;
@@ -73,7 +73,7 @@ public class DeobfuscatorCommandLine {
 			version = options.valueOf(versionO);
 			type = options.valueOf(typeO);
 		}
-		Deobfuscator deobfuscator = new Deobfuscator(version, Objects.requireNonNull(type, "INVALID SIDE TYPE DETECTED"));
+		Deobfuscator deobfuscator = new Deobfuscator(version, type);
 		deobfuscator.deobfuscate();
 	}
 }

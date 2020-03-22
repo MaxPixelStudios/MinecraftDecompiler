@@ -26,6 +26,8 @@ import java.util.Objects;
 public class Deobfuscator {
 	AbstractDeobfuscator deobfuscator;
 	public Deobfuscator(String version, Info.SideType type) {
+		Objects.requireNonNull(version, "version cannot be null!");
+		Objects.requireNonNull(type, "type cannot be null!");
 		deobfuscator = new ProguardDeobfuscator(version, type);
 	}
 	public void deobfuscate() {

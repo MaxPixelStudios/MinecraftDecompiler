@@ -30,6 +30,13 @@ public class NamingUtil {
 	public static String asJavaName(String nativeName) {
 		return nativeName.replace('/', '.').replace('\\', '.').replace(".class", "");
 	}
+	public static int getDimension(String javaName) {
+		int arrDimension = 0;
+		for(int index = 0;index < javaName.length();index+=2) {
+			if((index = javaName.indexOf("[]", index)) != -1) arrDimension++;
+		}
+		return arrDimension;
+	}
 	public static String asNativeName(String javaName) {
 		return javaName.replace('.', '/');
 	}
@@ -47,10 +54,7 @@ public class NamingUtil {
 			else return "L" + asNativeName(javaName) + ";";
 		else {
 			StringBuilder buf = new StringBuilder();
-			int arrDimension = 0;
-			for(int index = 0;index < javaName.length();index+=2)
-				if((index = javaName.indexOf("[]", index)) != -1) arrDimension++;
-			for(;arrDimension>0;arrDimension--) buf.append('[');
+			for(int arrDimension = getDimension(javaName);arrDimension>0;arrDimension--) buf.append('[');
 			javaName = javaName.replace("[]", "");
 			switch (javaName) {
 				case "boolean":
