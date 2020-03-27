@@ -18,26 +18,12 @@
 
 package cn.maxpixel.mcdecompiler;
 
-public interface Info {
-	String getMappingPath(String version, SideType type);
-	String getMcJarPath(String version, SideType type);
-	String getDeobfuscateJarPath(String version, SideType type);
-	String getTempOriginalClassesPath(String version, SideType type);
-	String getTempRemappedClassesPath(String version, SideType type);
-	String getTempPath();
-	String FILE_SEPARATOR = System.getProperty("file.separator");
-	enum SideType {
-		CLIENT,
-		SERVER;
-		@Override
-		public String toString() {
-			return name().toLowerCase();
-		}
+public class InfoProviders {
+	private static Info info = new DefaultedInfo();
+	public static Info get() {
+		return info;
 	}
-	enum MappingType {
-		PROGUARD,
-		SRG,
-		TSRG,
-		CSRG
+	public static void set(Info information) {
+		info = information;
 	}
 }

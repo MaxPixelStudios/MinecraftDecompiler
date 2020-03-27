@@ -39,7 +39,6 @@ import org.objectweb.asm.commons.ClassRemapper;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Objects;
@@ -63,7 +62,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	}
 	private ProguardDeobfuscator downloadMapping() {
 		checkVersion();
-		File f = new File(Info.getMappingPath(version, type));
+		File f = new File(InfoProviders.get().getMappingPath(version, type));
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
 			LOGGER.info("downloading mapping...");
@@ -92,7 +91,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 		if(version_json == null) throw new RuntimeException("INVALID VERSION DETECTED: " + version);
 	}
 	private ProguardDeobfuscator downloadJar() {
-		File f = new File(Info.getMcJarPath(version, type));
+		File f = new File(InfoProviders.get().getMcJarPath(version, type));
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
 			LOGGER.info("downloading jar...");
@@ -112,15 +111,15 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	public ProguardDeobfuscator deobfuscate() {
 		try {
 			LOGGER.info("deobfuscating...");
-			File deobfuscateJar = new File(Info.getDeobfuscateJarPath(version, type));
+			File deobfuscateJar = new File(InfoProviders.get().getDeobfuscateJarPath(version, type));
 			deobfuscateJar.getParentFile().mkdirs();
 			deobfuscateJar.createNewFile();
-			new File(Info.TEMP_PATH).mkdirs();
-			File originalClasses = new File(Info.getTempOriginalClassesPath(version, type));
+			new File(InfoProviders.get().getTempPath()).mkdirs();
+			File originalClasses = new File(InfoProviders.get().getTempOriginalClassesPath(version, type));
 			originalClasses.mkdirs();
-			JarUtil.decompressJar(Info.getMcJarPath(version, type), originalClasses);
+			JarUtil.decompressJar(InfoProviders.get().getMcJarPath(version, type), originalClasses);
 			LOGGER.info("remapping...");
-			try(ProguardMappingReader mappingReader = new ProguardMappingReader(Info.getMappingPath(version, type))) {
+			try(ProguardMappingReader mappingReader = new ProguardMappingReader(InfoProviders.get().getMappingPath(version, type))) {
 				SuperClassMapping superClassMapping = new SuperClassMapping();
 				listMcClassFiles(originalClasses, path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
@@ -132,7 +131,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 				});
 				ProguardMappingRemapper remapper = new ProguardMappingRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
 				Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
-				Files.createDirectories(Paths.get(Info.getTempDeobfuscatedClassesPath(version, type)));
+				Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
 				listMcClassFiles(originalClasses, path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
 						ClassReader reader = new ClassReader(inputStream);
@@ -151,8 +150,8 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 						ClassMapping mapping = mappings.get(mappingKey);
 						if(mapping != null) {
 							String s = NamingUtil.asNativeName(mapping.getOriginalName());
-							Files.createDirectories(Paths.get(Info.getTempDeobfuscatedClassesPath(version, type), s.substring(0, s.lastIndexOf('/'))));
-							Files.write(Paths.get(Info.getTempDeobfuscatedClassesPath(version, type), s + ".class"), writer.toByteArray(),
+							Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s.substring(0, s.lastIndexOf('/'))));
+							Files.write(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s + ".class"), writer.toByteArray(),
 									StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 						}
 					} catch (IOException e) {
@@ -162,7 +161,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 			}
 			copyOthers(originalClasses);
 			String mainClass = type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer";
-			JarUtil.compressJar(mainClass, deobfuscateJar, new File(Info.getTempDeobfuscatedClassesPath(version, type)));
+			JarUtil.compressJar(mainClass, deobfuscateJar, new File(InfoProviders.get().getTempRemappedClassesPath(version, type)));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -171,17 +170,17 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	private void copyOthers(File baseDir) {
 		for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
 			if(childFile.isFile() && !childFile.getPath().endsWith(".class")) {
-				FileUtil.copyFile(childFile.toPath(), Paths.get(Info.getTempDeobfuscatedClassesPath(version, type), childFile.getName()));
+				FileUtil.copyFile(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), childFile.getName()));
 			} else if(childFile.isDirectory() && !childFile.getAbsolutePath().contains("net")
 					&& !childFile.getAbsolutePath().contains("blaze3d") && !childFile.getAbsolutePath().contains("realmsclient")) {
-				FileUtil.copyDirectory(childFile.toPath(), Paths.get(Info.getTempDeobfuscatedClassesPath(version, type)));
+				FileUtil.copyDirectory(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
 			}
 		}
-		File manifest = Paths.get(Info.getTempDeobfuscatedClassesPath(version, type), "META-INF", "MANIFEST.MF").toFile();
+		File manifest = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MANIFEST.MF").toFile();
 		if(manifest.exists()) manifest.delete();
-		File mojangRSA = Paths.get(Info.getTempDeobfuscatedClassesPath(version, type), "META-INF", "MOJANGCS.RSA").toFile();
+		File mojangRSA = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.RSA").toFile();
 		if(mojangRSA.exists()) mojangRSA.delete();
-		File mojangSF = Paths.get(Info.getTempDeobfuscatedClassesPath(version, type), "META-INF", "MOJANGCS.SF").toFile();
+		File mojangSF = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.SF").toFile();
 		if(mojangSF.exists()) mojangSF.delete();
 	}
 	private void listMcClassFiles(File baseDir, Consumer<File> fileConsumer) {
