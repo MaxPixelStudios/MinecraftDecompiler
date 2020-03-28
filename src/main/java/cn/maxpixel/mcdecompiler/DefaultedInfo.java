@@ -20,7 +20,7 @@ package cn.maxpixel.mcdecompiler;
 
 public class DefaultedInfo implements Info {
 	@Override
-	public String getMappingPath(String version, SideType type) {
+	public String getProguardMappingDownloadPath(String version, SideType type) {
 		return "downloads/" + version + "/" + type + "_mappings.txt";
 	}
 	@Override

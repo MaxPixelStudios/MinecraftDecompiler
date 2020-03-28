@@ -39,7 +39,8 @@ public class DeobfuscatorCommandLine {
 	public static void main(String[] args) {
 		System.setProperty("log4j2.skipJansi", "false");
 		String version;
-		Info.SideType type = null;
+		Info.SideType sideType = null;
+		Info.MappingType mappingType = Info.MappingType.PROGUARD;
 		if(args.length == 0) {
 			try(Scanner sc = new Scanner(System.in)) {
 				System.out.println("Type a version(1.14.4 or above)");
@@ -47,17 +48,20 @@ public class DeobfuscatorCommandLine {
 				System.out.println("Type a side: (c)lient, (s)erver");
 				String t = sc.next();
 				if(t.equalsIgnoreCase("client") || t.equalsIgnoreCase("c")) {
-					type = Info.SideType.CLIENT;
+					sideType = Info.SideType.CLIENT;
 				} else if(t.equalsIgnoreCase("server") || t.equalsIgnoreCase("s")) {
-					type = Info.SideType.SERVER;
+					sideType = Info.SideType.SERVER;
 				}
 			}
 		} else {
 			OptionParser parser = new OptionParser();
 			OptionSpec<String> versionO = parser.accepts("version", "Select a version to deobfuscate/decompile.").withRequiredArg();
-			OptionSpec<Info.SideType> typeO = parser
+			OptionSpec<Info.SideType> sideTypeO = parser
 					.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for client and \"SERVER\" for server").withRequiredArg()
 					.ofType(Info.SideType.class).defaultsTo(Info.SideType.CLIENT);
+			OptionSpec<Info.MappingType> mappingTypeO = parser
+					.accepts("side", "Select a mapping to deobfuscate. Use \"SRG\" for srg, \"PROGUARD\" for Proguard, " +
+							"\"CSRG\" for csrg, \"TSRG\" for tsrg").withOptionalArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
 			OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
 
 			OptionSet options = parser.parse(args);
@@ -71,9 +75,12 @@ public class DeobfuscatorCommandLine {
 			}
 
 			version = options.valueOf(versionO);
-			type = options.valueOf(typeO);
+			sideType = options.valueOf(sideTypeO);
+			if(options.has(mappingTypeO)) {
+				mappingType = options.valueOf(mappingTypeO);
+			}
 		}
-		Deobfuscator deobfuscator = new Deobfuscator(version, type);
+		Deobfuscator deobfuscator = new Deobfuscator(version, sideType, mappingType);
 		deobfuscator.deobfuscate();
 	}
 }

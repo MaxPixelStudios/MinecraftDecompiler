@@ -83,4 +83,28 @@ public class FileUtil {
 			e.printStackTrace();
 		}
 	}
+	public static void deleteDirectory(Path directory) {
+		try {
+			LOGGER.debug("deleting directory {} ...", directory);
+			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+					LOGGER.error("Error while deleting file: " + file, exc);
+					return FileVisitResult.CONTINUE;
+				}
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					Files.deleteIfExists(file);
+					return FileVisitResult.CONTINUE;
+				}
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					Files.deleteIfExists(dir);
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			LOGGER.error("Error while deleting directory", e);
+		}
+	}
 }

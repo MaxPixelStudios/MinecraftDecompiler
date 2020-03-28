@@ -21,20 +21,38 @@ package cn.maxpixel.mcdecompiler.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 public class JarUtil {
 	private static final Logger LOGGER = LogManager.getLogger();
 	public static void decompressJar(String jarPath, File target) {
 		LOGGER.info("decompressing");
-		try {
-			Process pro = Runtime.getRuntime().exec(new String[] {"jar", "xf", new File(jarPath).getAbsolutePath()}, null, target.getAbsoluteFile());
-			ProcessUtil.waitForProcess(pro);
+		try(JarFile jarFile = new JarFile(jarPath)) {
+			jarFile.stream().forEach(entry -> {
+				if(entry.isDirectory()) new File(target, entry.getName());
+				else {
+					try {
+						File f = new File(target, entry.getName());
+						if(!f.exists()) {
+							boolean success = f.getParentFile().mkdirs();
+							success &= f.createNewFile();
+							if(!success) throw new IOException("File create failed");
+							try(InputStream is = jarFile.getInputStream(entry);
+							    FileOutputStream out = new FileOutputStream(f)) {
+								for (int i = is.read(); i != -1; i = is.read()) out.write(i);
+							}
+						}
+					} catch (IOException ex) {
+						LOGGER.error("A exception occurred while decompressing jar file", ex);
+					}
+				}
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

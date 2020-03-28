@@ -62,7 +62,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	}
 	private ProguardDeobfuscator downloadMapping() {
 		checkVersion();
-		File f = new File(InfoProviders.get().getMappingPath(version, type));
+		File f = new File(InfoProviders.get().getProguardMappingDownloadPath(version, type));
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
 			LOGGER.info("downloading mapping...");
@@ -114,12 +114,11 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 			File deobfuscateJar = new File(InfoProviders.get().getDeobfuscateJarPath(version, type));
 			deobfuscateJar.getParentFile().mkdirs();
 			deobfuscateJar.createNewFile();
-			new File(InfoProviders.get().getTempPath()).mkdirs();
 			File originalClasses = new File(InfoProviders.get().getTempOriginalClassesPath(version, type));
 			originalClasses.mkdirs();
 			JarUtil.decompressJar(InfoProviders.get().getMcJarPath(version, type), originalClasses);
 			LOGGER.info("remapping...");
-			try(ProguardMappingReader mappingReader = new ProguardMappingReader(InfoProviders.get().getMappingPath(version, type))) {
+			try(ProguardMappingReader mappingReader = new ProguardMappingReader(InfoProviders.get().getProguardMappingDownloadPath(version, type))) {
 				SuperClassMapping superClassMapping = new SuperClassMapping();
 				listMcClassFiles(originalClasses, path -> {
 					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
