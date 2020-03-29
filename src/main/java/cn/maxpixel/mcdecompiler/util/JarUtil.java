@@ -21,12 +21,16 @@ package cn.maxpixel.mcdecompiler.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 public class JarUtil {
@@ -35,17 +39,16 @@ public class JarUtil {
 		LOGGER.info("decompressing");
 		try(JarFile jarFile = new JarFile(jarPath)) {
 			jarFile.stream().forEach(entry -> {
-				if(entry.isDirectory()) new File(target, entry.getName());
+				if(entry.isDirectory()) new File(target, entry.getName()).mkdirs();
 				else {
 					try {
 						File f = new File(target, entry.getName());
 						if(!f.exists()) {
-							boolean success = f.getParentFile().mkdirs();
-							success &= f.createNewFile();
-							if(!success) throw new IOException("File create failed");
-							try(InputStream is = jarFile.getInputStream(entry);
-							    FileOutputStream out = new FileOutputStream(f)) {
-								for (int i = is.read(); i != -1; i = is.read()) out.write(i);
+							f.getParentFile().mkdirs();
+							f.createNewFile();
+							try(ReadableByteChannel readableByteChannel = Channels.newChannel(jarFile.getInputStream(entry));
+								FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE)) {
+								fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
 							}
 						}
 					} catch (IOException ex) {

@@ -60,7 +60,7 @@ public class DeobfuscatorCommandLine {
 					.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for client and \"SERVER\" for server").withRequiredArg()
 					.ofType(Info.SideType.class).defaultsTo(Info.SideType.CLIENT);
 			OptionSpec<Info.MappingType> mappingTypeO = parser
-					.accepts("side", "Select a mapping to deobfuscate. Use \"SRG\" for srg, \"PROGUARD\" for Proguard, " +
+					.accepts("mapping", "Select a mapping to deobfuscate. Use \"SRG\" for srg, \"PROGUARD\" for Proguard, " +
 							"\"CSRG\" for csrg, \"TSRG\" for tsrg").withOptionalArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
 			OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
 
