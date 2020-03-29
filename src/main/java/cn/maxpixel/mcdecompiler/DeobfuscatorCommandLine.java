@@ -24,11 +24,11 @@ import joptsimple.OptionSpec;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class DeobfuscatorCommandLine {
@@ -59,9 +59,13 @@ public class DeobfuscatorCommandLine {
 			OptionSpec<Info.SideType> sideTypeO = parser
 					.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for client and \"SERVER\" for server").withRequiredArg()
 					.ofType(Info.SideType.class).defaultsTo(Info.SideType.CLIENT);
-			OptionSpec<Info.MappingType> mappingTypeO = parser
-					.accepts("mapping", "Select a mapping to deobfuscate. Use \"SRG\" for srg, \"PROGUARD\" for Proguard, " +
-							"\"CSRG\" for csrg, \"TSRG\" for tsrg").withOptionalArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
+			OptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
+					"Use \"SRG\" for srg, \"PROGUARD\" for Proguard, \"CSRG\" for csrg, \"TSRG\" for tsrg").
+					withOptionalArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
+			OptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
+					withOptionalArg();
+			OptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use. Use this arg when using mapping SRG/CSRG/TSRG").
+					requiredIf(mappingTypeO).withOptionalArg().ofType(File.class);
 			OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
 
 			OptionSet options = parser.parse(args);
@@ -76,8 +80,15 @@ public class DeobfuscatorCommandLine {
 
 			version = options.valueOf(versionO);
 			sideType = options.valueOf(sideTypeO);
-			if(options.has(mappingTypeO)) {
-				mappingType = options.valueOf(mappingTypeO);
+			mappingType = options.valueOf(mappingTypeO);
+			if(options.has(tempDirO) || options.has(mappingPathO)) {
+				InfoProviders.set(new CustomizeInfo() {
+					@Override
+					public String getTempPath() {
+						if(options.has(tempDirO)) return options.valueOf(tempDirO);
+						return super.getTempPath();
+					}
+				});
 			}
 		}
 		Deobfuscator deobfuscator = new Deobfuscator(version, sideType, mappingType);
