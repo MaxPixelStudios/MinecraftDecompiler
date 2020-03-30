@@ -18,8 +18,11 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import java.io.File;
+
 public interface Info {
 	String getProguardMappingDownloadPath(String version, SideType type);
+	File getMappingPath();
 	String getMcJarPath(String version, SideType type);
 	String getDeobfuscateJarPath(String version, SideType type);
 	String getTempOriginalClassesPath(String version, SideType type);

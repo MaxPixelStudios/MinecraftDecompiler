@@ -37,6 +37,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -92,14 +94,14 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	}
 	private ProguardDeobfuscator downloadJar() {
 		File f = new File(InfoProviders.get().getMcJarPath(version, type));
-		f.getParentFile().mkdirs();
 		if(!f.exists()) {
+			f.getParentFile().mkdirs();
 			LOGGER.info("downloading jar...");
-			try(FileOutputStream fout = new FileOutputStream(f)) {
+			try(FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE)) {
 				f.createNewFile();
-				fout.write(HttpConnection.newGetConnection(
+				channel.write(ByteBuffer.wrap(HttpConnection.newGetConnection(
 						version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject().get("url").getAsString(),
-						DeobfuscatorCommandLine.PROXY));
+						DeobfuscatorCommandLine.PROXY)));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

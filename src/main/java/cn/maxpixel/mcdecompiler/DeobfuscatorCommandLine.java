@@ -82,11 +82,18 @@ public class DeobfuscatorCommandLine {
 			sideType = options.valueOf(sideTypeO);
 			mappingType = options.valueOf(mappingTypeO);
 			if(options.has(tempDirO) || options.has(mappingPathO)) {
+				Info.MappingType type = mappingType;
 				InfoProviders.set(new CustomizeInfo() {
 					@Override
 					public String getTempPath() {
 						if(options.has(tempDirO)) return options.valueOf(tempDirO);
 						return super.getTempPath();
+					}
+					@Override
+					public File getMappingPath() {
+						if(type == MappingType.PROGUARD) throw new IllegalArgumentException("Custom Proguard mapping file is not allowed");
+						if(options.has(mappingPathO)) return options.valueOf(mappingPathO);
+						throw new IllegalArgumentException("-—mapFile arg is required when you deobfuscate with SRG/CSRG/TSRG mapping");
 					}
 				});
 			}

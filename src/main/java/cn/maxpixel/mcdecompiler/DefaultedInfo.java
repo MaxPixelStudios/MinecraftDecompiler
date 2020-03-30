@@ -18,13 +18,19 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import java.io.File;
+
 public class DefaultedInfo implements Info {
 	@Override
-	public String getProguardMappingDownloadPath(String version, SideType type) {
+	public final String getProguardMappingDownloadPath(String version, SideType type) {
 		return "downloads/" + version + "/" + type + "_mappings.txt";
 	}
 	@Override
-	public String getMcJarPath(String version, SideType type) {
+	public File getMappingPath() {
+		return null;
+	}
+	@Override
+	public final String getMcJarPath(String version, SideType type) {
 		return "downloads/" + version + "/" + type + ".jar";
 	}
 	@Override
