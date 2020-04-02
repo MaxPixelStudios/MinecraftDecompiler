@@ -53,7 +53,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 	private JsonObject version_json;
 	static {
 		versions = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
-				.newGetConnection("https://launchermeta.mojang.com/mc/game/version_manifest.json", DeobfuscatorCommandLine.PROXY)))
+				.newGetConnection("https://launchermeta.mojang.com/mc/game/version_manifest.json", DeobfuscatorCommandLine.PROXY).getAllBytes()))
 				.getAsJsonObject().get("versions").getAsJsonArray();
 	}
 	public ProguardDeobfuscator(String version, Info.SideType type) {
@@ -68,11 +68,10 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
 			LOGGER.info("downloading mapping...");
-			try(FileOutputStream fout = new FileOutputStream(f)) {
-				f.createNewFile();
-				fout.write(HttpConnection.newGetConnection(
+			try(FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+				channel.transferFrom(HttpConnection.newGetConnection(
 						version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").getAsJsonObject().get("url").getAsString(),
-						DeobfuscatorCommandLine.PROXY));
+						DeobfuscatorCommandLine.PROXY).getInChannel(), 0, Long.MAX_VALUE);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -85,7 +84,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 			JsonObject object = element.getAsJsonObject();
 			if(object.get("id").getAsString().equalsIgnoreCase(version)) {
 				version_json = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
-						.newGetConnection(object.get("url").getAsString(), DeobfuscatorCommandLine.PROXY))).getAsJsonObject();
+						.newGetConnection(object.get("url").getAsString(), DeobfuscatorCommandLine.PROXY).getAllBytes())).getAsJsonObject();
 				if (version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings")) break;
 				else throw new RuntimeException("This version doesn't have mappings");
 			}
@@ -99,9 +98,9 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 			LOGGER.info("downloading jar...");
 			try(FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE)) {
 				f.createNewFile();
-				channel.write(ByteBuffer.wrap(HttpConnection.newGetConnection(
+				channel.transferFrom(HttpConnection.newGetConnection(
 						version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject().get("url").getAsString(),
-						DeobfuscatorCommandLine.PROXY)));
+						DeobfuscatorCommandLine.PROXY).getInChannel(), 0, Long.MAX_VALUE);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
