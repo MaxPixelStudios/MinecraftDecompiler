@@ -47,23 +47,15 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
-	private String version;
-	private Info.SideType type;
-	private static JsonArray versions;
-	private JsonObject version_json;
-	static {
-		versions = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
-				.newGetConnection("https://launchermeta.mojang.com/mc/game/version_manifest.json", DeobfuscatorCommandLine.PROXY).getAllBytes()))
-				.getAsJsonObject().get("versions").getAsJsonArray();
-	}
 	public ProguardDeobfuscator(String version, Info.SideType type) {
-		this.version = Objects.requireNonNull(version);
-		this.type = Objects.requireNonNull(type);
+		super(version, type);
 		downloadMapping();
 		downloadJar();
 	}
-	private ProguardDeobfuscator downloadMapping() {
+	private void downloadMapping() {
 		checkVersion();
+		if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
+			throw new RuntimeException("This version doesn't have mappings. Please use 1.14.4 or above");
 		File f = new File(InfoProviders.get().getProguardMappingDownloadPath(version, type));
 		f.getParentFile().mkdirs();
 		if(!f.exists()) {
@@ -76,22 +68,8 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 				e.printStackTrace();
 			}
 		}
-		return this;
 	}
-	private void checkVersion() {
-		LOGGER.info("checking version...");
-		for (JsonElement element : versions) {
-			JsonObject object = element.getAsJsonObject();
-			if(object.get("id").getAsString().equalsIgnoreCase(version)) {
-				version_json = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
-						.newGetConnection(object.get("url").getAsString(), DeobfuscatorCommandLine.PROXY).getAllBytes())).getAsJsonObject();
-				if (version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings")) break;
-				else throw new RuntimeException("This version doesn't have mappings");
-			}
-		}
-		if(version_json == null) throw new RuntimeException("INVALID VERSION DETECTED: " + version);
-	}
-	private ProguardDeobfuscator downloadJar() {
+	private void downloadJar() {
 		File f = new File(InfoProviders.get().getMcJarPath(version, type));
 		if(!f.exists()) {
 			f.getParentFile().mkdirs();
@@ -105,7 +83,6 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 				e.printStackTrace();
 			}
 		}
-		return this;
 	}
 
 	@Override

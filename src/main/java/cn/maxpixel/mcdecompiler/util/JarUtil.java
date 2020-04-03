@@ -24,14 +24,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 public class JarUtil {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -61,22 +64,56 @@ public class JarUtil {
 	}
 	public static void compressJar(String mainClass, File jar, File from) {
 		LOGGER.info("compressing");
-		File file = new File(from, "META-INF/MANIFEST.MF");
-		if(!file.exists()) {
-			try {
-				file.getParentFile().mkdirs();
-				file.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		try(OutputStream manifestOut = new FileOutputStream(file)) {
-			Manifest manifest = new Manifest();
-			manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-			manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
-			manifest.write(manifestOut);
-			Process pro = Runtime.getRuntime().exec(new String[] {"jar", "cfm0", jar.getAbsolutePath(), "META-INF\\MANIFEST.MF", "."}, null, from);
-			ProcessUtil.waitForProcess(pro);
+		Manifest manifest = new Manifest();
+		manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+		manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
+		try(FileOutputStream jarOut = new FileOutputStream(jar);
+		    JarOutputStream outputStream = new JarOutputStream(jarOut, manifest)) {
+			Files.walkFileTree(from.toPath(), new FileVisitor<Path>() {
+				String relativePath = null;
+				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					if(relativePath == null)
+						relativePath = dir.getFileName().toString();
+					else
+						relativePath += "/" + dir.getFileName();
+					outputStream.putNextEntry(new ZipEntry(relativePath + "/"));
+					outputStream.closeEntry();
+					return FileVisitResult.CONTINUE;
+				}
+				@Override
+				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+					LOGGER.error("Error while zipping file: " + file, exc);
+					return FileVisitResult.CONTINUE;
+				}
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					outputStream.putNextEntry(new ZipEntry(relativePath == null ? file.getFileName().toString() : relativePath + "/" + file.getFileName()));
+					try(FileChannel channel = FileChannel.open(file)) {
+						if(channel.size() <= 256L * 1024L * 1024L) { // 256MB
+							ByteBuffer buffer = ByteBuffer.allocate((int) channel.size());
+							channel.read(buffer);
+							outputStream.write(buffer.array());
+						} else {
+							ByteBuffer buffer = ByteBuffer.allocate(256 * 1024 * 1024); //allocate 256MB buffer
+							int len;
+							while((len = channel.read(buffer)) > 0) {
+								outputStream.write(buffer.array(), 0, len);
+								buffer.clear();
+							}
+						}
+					}
+					outputStream.closeEntry();
+					return FileVisitResult.CONTINUE;
+				}
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					int index = relativePath.lastIndexOf('/');
+					if(index == -1) relativePath = null;
+					else relativePath = relativePath.substring(0, index);
+					return FileVisitResult.CONTINUE;
+				}
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

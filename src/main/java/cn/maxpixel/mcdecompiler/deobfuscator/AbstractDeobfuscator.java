@@ -18,14 +18,44 @@
 
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
+import cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine;
+import cn.maxpixel.mcdecompiler.Info;
+import cn.xiaopangxie732.easynetwork.coder.ByteDecoder;
+import cn.xiaopangxie732.easynetwork.http.HttpConnection;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.util.Objects;
 
 public abstract class AbstractDeobfuscator {
+	protected String version;
+	protected Info.SideType type;
 	protected static final Logger LOGGER = LogManager.getLogger();
-
+	protected static JsonArray versions;
+	protected JsonObject version_json;
+	static {
+		versions = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
+				.newGetConnection("https://launchermeta.mojang.com/mc/game/version_manifest.json", DeobfuscatorCommandLine.PROXY).getAllBytes()))
+				.getAsJsonObject().get("versions").getAsJsonArray();
+	}
+	protected AbstractDeobfuscator(String version, Info.SideType type) {
+		this.version = Objects.requireNonNull(version);
+		this.type = Objects.requireNonNull(type);
+	}
 	public abstract AbstractDeobfuscator deobfuscate();
+	protected void checkVersion() {
+		LOGGER.info("checking version...");
+		for (JsonElement element : versions) {
+			JsonObject object = element.getAsJsonObject();
+			if(object.get("id").getAsString().equalsIgnoreCase(version)) {
+				version_json = JsonParser.parseString(ByteDecoder.decodeToString(HttpConnection
+						.newGetConnection(object.get("url").getAsString(), DeobfuscatorCommandLine.PROXY).getAllBytes())).getAsJsonObject();
+			}
+		}
+		if(version_json == null) throw new RuntimeException("INVALID VERSION DETECTED: " + version);
+	}
 }

@@ -18,9 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+import joptsimple.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,11 +34,11 @@ public class DeobfuscatorCommandLine {
 	public static final Proxy PROXY =
 			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)); //Just for internal testing.
 //			Proxy.NO_PROXY;
+	private static String version;
+	private static Info.SideType sideType = null;
+	private static Info.MappingType mappingType = Info.MappingType.PROGUARD;
 	public static void main(String[] args) {
 		System.setProperty("log4j2.skipJansi", "false");
-		String version;
-		Info.SideType sideType = null;
-		Info.MappingType mappingType = Info.MappingType.PROGUARD;
 		if(args.length == 0) {
 			try(Scanner sc = new Scanner(System.in)) {
 				System.out.println("Type a version(1.14.4 or above)");
@@ -54,51 +52,58 @@ public class DeobfuscatorCommandLine {
 				}
 			}
 		} else {
-			OptionParser parser = new OptionParser();
-			OptionSpec<String> versionO = parser.accepts("version", "Select a version to deobfuscate/decompile.").withRequiredArg();
-			OptionSpec<Info.SideType> sideTypeO = parser
-					.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for client and \"SERVER\" for server").withRequiredArg()
-					.ofType(Info.SideType.class).defaultsTo(Info.SideType.CLIENT);
-			OptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
-					"Use \"SRG\" for srg, \"PROGUARD\" for Proguard, \"CSRG\" for csrg, \"TSRG\" for tsrg").
-					withOptionalArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
-			OptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
-					withOptionalArg();
-			OptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use. Use this arg when using mapping SRG/CSRG/TSRG").
-					requiredIf(mappingTypeO).withOptionalArg().ofType(File.class);
-			OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
-
-			OptionSet options = parser.parse(args);
-			if(options.has(help)) {
-				try {
-					parser.printHelpOn(System.out);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return;
-			}
-
-			version = options.valueOf(versionO);
-			sideType = options.valueOf(sideTypeO);
-			mappingType = options.valueOf(mappingTypeO);
-			if(options.has(tempDirO) || options.has(mappingPathO)) {
-				Info.MappingType type = mappingType;
-				InfoProviders.set(new CustomizeInfo() {
-					@Override
-					public String getTempPath() {
-						if(options.has(tempDirO)) return options.valueOf(tempDirO);
-						return super.getTempPath();
-					}
-					@Override
-					public File getMappingPath() {
-						if(type == MappingType.PROGUARD) throw new IllegalArgumentException("Custom Proguard mapping file is not allowed");
-						if(options.has(mappingPathO)) return options.valueOf(mappingPathO);
-						throw new IllegalArgumentException("-—mapFile arg is required when you deobfuscate with SRG/CSRG/TSRG mapping");
-					}
-				});
-			}
+			processArguments(args);
 		}
 		Deobfuscator deobfuscator = new Deobfuscator(version, sideType, mappingType);
 		deobfuscator.deobfuscate();
+	}
+	private static void processArguments(String[] args) {
+		OptionParser parser = new OptionParser();
+		ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
+				"Required when using Proguard mapping to deobfuscate.").withRequiredArg();
+		ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for " +
+				"client and \"SERVER\" for server. Required when using Proguard mapping to deobfuscate.").withRequiredArg().ofType(Info.SideType.class);
+		ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
+				"Use \"SRG\" for srg, \"PROGUARD\" for Proguard, \"CSRG\" for csrg, \"TSRG\" for tsrg").
+				withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
+		ArgumentAcceptingOptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
+				withRequiredArg();
+		ArgumentAcceptingOptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.").
+				requiredIf(mappingTypeO).withRequiredArg().ofType(File.class);
+		ArgumentAcceptingOptionSpec<String> outDeobfO = parser.accepts("outObf", "Output file of deobfuscated jar").withRequiredArg();
+		AbstractOptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
+
+		OptionSet options = parser.parse(args);
+		if(options.has(help)) {
+			try {
+				parser.printHelpOn(System.out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return;
+		}
+
+		version = options.valueOf(versionO);
+		sideType = options.valueOf(sideTypeO);
+		mappingType = options.valueOf(mappingTypeO);
+		if(options.has(tempDirO) || options.has(mappingPathO)) {
+			Info.MappingType type = mappingType;
+			InfoProviders.set(new CustomizeInfo() {
+				@Override
+				public String getTempPath() {
+					return options.valueOfOptional(tempDirO).orElse(super.getTempPath());
+				}
+				@Override
+				public File getMappingPath() {
+					if(type == MappingType.PROGUARD) throw new IllegalArgumentException("Custom Proguard mapping file is not allowed");
+					return options.valueOfOptional(mappingPathO).orElseThrow(() ->
+							new IllegalArgumentException("-—mapFile arg is required when you deobfuscate with SRG/CSRG/TSRG mapping"));
+				}
+				@Override
+				public String getDeobfuscateJarPath(String version, SideType type) {
+					return options.valueOfOptional(outDeobfO).orElse(super.getDeobfuscateJarPath(version, type));
+				}
+			});
+		}
 	}
 }
