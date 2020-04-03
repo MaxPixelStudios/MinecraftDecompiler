@@ -25,8 +25,12 @@ public interface Info {
 	File getMappingPath();
 	String getMcJarPath(String version, SideType type);
 	String getDeobfuscateJarPath(String version, SideType type);
-	String getTempOriginalClassesPath(String version, SideType type);
-	String getTempRemappedClassesPath(String version, SideType type);
+	default String getTempOriginalClassesPath(String version, SideType type) {
+		return getTempPath() + "/" + version + "/" + type + "/originalClasses";
+	}
+	default String getTempRemappedClassesPath(String version, SideType type) {
+		return getTempPath() + "/" + version + "/" + type + "/remappedClasses";
+	}
 	String getTempPath();
 	String FILE_SEPARATOR = System.getProperty("file.separator");
 	enum SideType {

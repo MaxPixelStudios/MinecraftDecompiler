@@ -45,9 +45,8 @@ public class JarUtil {
 						File f = new File(target, entry.getName());
 						if(!f.exists()) {
 							f.getParentFile().mkdirs();
-							f.createNewFile();
 							try(ReadableByteChannel readableByteChannel = Channels.newChannel(jarFile.getInputStream(entry));
-								FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE)) {
+								FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
 								fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
 							}
 						}

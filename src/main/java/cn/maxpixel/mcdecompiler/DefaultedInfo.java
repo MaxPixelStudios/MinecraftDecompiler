@@ -38,14 +38,6 @@ public class DefaultedInfo implements Info {
 		return "output/" + version + "_" + type + "_deobfuscated.jar";
 	}
 	@Override
-	public String getTempOriginalClassesPath(String version, SideType type) {
-		return getTempPath() + "/" + version + "/" + type + "/originalClasses";
-	}
-	@Override
-	public String getTempRemappedClassesPath(String version, SideType type) {
-		return getTempPath() + "/" + version + "/" + type + "/remappedClasses";
-	}
-	@Override
 	public String getTempPath() {
 		return "temp";
 	}

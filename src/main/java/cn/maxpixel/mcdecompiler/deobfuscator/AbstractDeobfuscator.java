@@ -26,39 +26,6 @@ import java.io.InputStreamReader;
 
 public abstract class AbstractDeobfuscator {
 	protected static final Logger LOGGER = LogManager.getLogger();
-	protected void runProcess(String command) {
-		try {
-			Process pro = Runtime.getRuntime().exec(new String[] {"cmd", "/C", command});
-			try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
-			    BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
-				Thread inT = new Thread(() -> {
-					try {
-						String ins;
-						while ((ins = in.readLine()) != null) {
-							LOGGER.debug(ins);
-						}
-					} catch (Throwable e) {
-						e.printStackTrace();
-					}
-				});
-				Thread errT = new Thread(() -> {
-					try {
-						String ins;
-						while ((ins = err.readLine()) != null) {
-							LOGGER.error(ins);
-						}
-					} catch (Throwable e) {
-						e.printStackTrace();
-					}
-				});
-				inT.start();
-				errT.start();
-				pro.waitFor();
-			}
-		} catch (Throwable e) {
-			e.printStackTrace();
-			System.err.println(command);
-		}
-	}
+
 	public abstract AbstractDeobfuscator deobfuscate();
 }
