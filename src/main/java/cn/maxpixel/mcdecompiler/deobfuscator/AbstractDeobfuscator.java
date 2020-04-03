@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler.deobfuscator;
 
 import cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine;
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.InfoProviders;
 import cn.xiaopangxie732.easynetwork.coder.ByteDecoder;
 import cn.xiaopangxie732.easynetwork.http.HttpConnection;
 import com.google.gson.JsonArray;
@@ -29,6 +30,10 @@ import com.google.gson.JsonParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 public abstract class AbstractDeobfuscator {
@@ -47,6 +52,20 @@ public abstract class AbstractDeobfuscator {
 		this.type = Objects.requireNonNull(type);
 	}
 	public abstract AbstractDeobfuscator deobfuscate();
+	protected void downloadJar() {
+		File f = new File(InfoProviders.get().getMcJarPath(version, type));
+		if(!f.exists()) {
+			f.getParentFile().mkdirs();
+			LOGGER.info("downloading jar...");
+			try(FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+				channel.transferFrom(HttpConnection.newGetConnection(
+						version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject().get("url").getAsString(),
+						DeobfuscatorCommandLine.PROXY).getInChannel(), 0, Long.MAX_VALUE);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	protected void checkVersion() {
 		LOGGER.info("checking version...");
 		for (JsonElement element : versions) {

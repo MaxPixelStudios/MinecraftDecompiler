@@ -69,22 +69,6 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 			}
 		}
 	}
-	private void downloadJar() {
-		File f = new File(InfoProviders.get().getMcJarPath(version, type));
-		if(!f.exists()) {
-			f.getParentFile().mkdirs();
-			LOGGER.info("downloading jar...");
-			try(FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE)) {
-				f.createNewFile();
-				channel.transferFrom(HttpConnection.newGetConnection(
-						version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject().get("url").getAsString(),
-						DeobfuscatorCommandLine.PROXY).getInChannel(), 0, Long.MAX_VALUE);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	@Override
 	public ProguardDeobfuscator deobfuscate() {
 		try {

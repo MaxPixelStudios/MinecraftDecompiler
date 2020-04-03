@@ -61,8 +61,8 @@ public class DeobfuscatorCommandLine {
 		OptionParser parser = new OptionParser();
 		ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
 				"Required when using Proguard mapping to deobfuscate.").withRequiredArg();
-		ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.accepts("side", "Select a side to deobfuscate/decompile. Use \"CLIENT\" for " +
-				"client and \"SERVER\" for server. Required when using Proguard mapping to deobfuscate.").withRequiredArg().ofType(Info.SideType.class);
+		ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"), "Select a side to deobfuscate/decompile. " +
+				"Use \"CLIENT\" for client and \"SERVER\" for server. Required when using Proguard mapping to deobfuscate.").withRequiredArg().ofType(Info.SideType.class);
 		ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
 				"Use \"SRG\" for srg, \"PROGUARD\" for Proguard, \"CSRG\" for csrg, \"TSRG\" for tsrg").
 				withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
@@ -80,7 +80,7 @@ public class DeobfuscatorCommandLine {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			return;
+			System.exit(-1);
 		}
 
 		version = options.valueOf(versionO);
