@@ -30,6 +30,10 @@ public class DefaultedInfo implements Info {
 		return null;
 	}
 	@Override
+	public String getDecompileDirectory(String version, SideType type) {
+		return "output/" + version + "_" + type + "_decompiled/";
+	}
+	@Override
 	public final String getMcJarPath(String version, SideType type) {
 		return "downloads/" + version + "/" + type + ".jar";
 	}

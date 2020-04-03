@@ -26,18 +26,12 @@ import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.JarUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.xiaopangxie732.easynetwork.coder.ByteDecoder;
 import cn.xiaopangxie732.easynetwork.http.HttpConnection;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -101,10 +95,10 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 						String mappingKey;
 						if(path.getPath().contains("minecraft" + Info.FILE_SEPARATOR)) {
 							mappingKey = NamingUtil.asJavaName("net/minecraft" + path.getPath().substring(path.getPath().
-									lastIndexOf(Info.FILE_SEPARATOR, 48)));
+									indexOf("minecraft" + Info.FILE_SEPARATOR) + 9));
 						} else if(path.getPath().contains("mojang" + Info.FILE_SEPARATOR)) {
 							mappingKey = NamingUtil.asJavaName("com/mojang" + path.getPath().substring(path.getPath().
-									lastIndexOf(Info.FILE_SEPARATOR, 45)));
+									indexOf("mojang" + Info.FILE_SEPARATOR) + 6));
 						} else {
 							mappingKey = NamingUtil.asJavaName(path.getName());
 						}
@@ -121,8 +115,8 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 				});
 			}
 			copyOthers(originalClasses);
-			String mainClass = type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer";
-			JarUtil.compressJar(mainClass, deobfuscateJar, new File(InfoProviders.get().getTempRemappedClassesPath(version, type)));
+			JarUtil.compressJar(type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer",
+					deobfuscateJar, new File(InfoProviders.get().getTempRemappedClassesPath(version, type)));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -149,20 +143,20 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 			if(childFile.isFile() && childFile.getPath().endsWith(".class")) fileConsumer.accept(childFile);
 		}
 		for(File minecraft : Objects.requireNonNull(new File(baseDir, "net/minecraft").listFiles())) {
-			if (minecraft.isDirectory()) processNetDotMinecraftPackage(minecraft, fileConsumer);
+			if (minecraft.isDirectory()) processPackage(minecraft, fileConsumer);
 		}
 		if(type == Info.SideType.CLIENT) {
 			for(File mojang : Objects.requireNonNull(new File(baseDir, "com/mojang").listFiles())) {
-				if (mojang.isDirectory()) processNetDotMinecraftPackage(mojang, fileConsumer);
+				if (mojang.isDirectory()) processPackage(mojang, fileConsumer);
 			}
 		}
 	}
-	private void processNetDotMinecraftPackage(File dir, Consumer<File> fileConsumer) {
+	private void processPackage(File dir, Consumer<File> fileConsumer) {
 		for(File f : Objects.requireNonNull(dir.listFiles())) {
 			if(f.isFile()) {
 				fileConsumer.accept(f);
 			} else if(f.isDirectory()) {
-				processNetDotMinecraftPackage(f, fileConsumer);
+				processPackage(f, fileConsumer);
 			}
 		}
 	}

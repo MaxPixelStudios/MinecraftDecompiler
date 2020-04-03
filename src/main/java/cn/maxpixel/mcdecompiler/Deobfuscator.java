@@ -21,7 +21,11 @@ package cn.maxpixel.mcdecompiler;
 import cn.maxpixel.mcdecompiler.deobfuscator.AbstractDeobfuscator;
 import cn.maxpixel.mcdecompiler.deobfuscator.ProguardDeobfuscator;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.ProcessUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -30,10 +34,13 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Deobfuscator {
-	AbstractDeobfuscator deobfuscator;
+	private static Logger LOGGER = LogManager.getLogger();
+	private AbstractDeobfuscator deobfuscator;
+	private String version;
+	private Info.SideType type;
 	public Deobfuscator(String version, Info.SideType type, Info.MappingType mapping) {
-		Objects.requireNonNull(version, "version cannot be null!");
-		Objects.requireNonNull(type, "type cannot be null!");
+		this.version = Objects.requireNonNull(version, "version cannot be null!");
+		this.type = Objects.requireNonNull(type, "type cannot be null!");
 		switch(mapping) {
 			case PROGUARD:
 				deobfuscator = new ProguardDeobfuscator(version, type);
@@ -52,5 +59,26 @@ public class Deobfuscator {
 			e.printStackTrace();
 		}
 		deobfuscator.deobfuscate();
+	}
+	public void decompile(Info.DecompilerType type) {
+		LOGGER.info("decompiling");
+		try {
+			Path remappedClasses = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, this.type));
+			Path decompileClasses = Paths.get(InfoProviders.get().getTempDecompileClassesPath(version, this.type));
+			FileUtil.copyDirectory(remappedClasses.resolve("net"), decompileClasses);
+			FileUtil.copyDirectory(remappedClasses.resolve("com/mojang"), decompileClasses.resolve("com"));
+			if(type == Info.DecompilerType.FERNFLOWER) {
+				File decompilerJarPath = new File(InfoProviders.get().getTempDecompilerPath(type));
+				if(!decompilerJarPath.exists())
+					Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("fernflower.jar")), decompilerJarPath.toPath());
+				File decompileDir = new File(InfoProviders.get().getDecompileDirectory(version, this.type));
+				decompileDir.mkdirs();
+				Process process = Runtime.getRuntime().exec(new String[] {"java", "-jar", decompilerJarPath.getAbsolutePath(), "-dgs=1", "-hdc=0", "-asc=1", "-udv=0",
+						"-rsy=1", "-aoa=1", decompileClasses.toAbsolutePath().toString(), decompileDir.getAbsolutePath()});
+				ProcessUtil.waitForProcess(process);
+			} else throw new IllegalArgumentException("Unsupported now");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

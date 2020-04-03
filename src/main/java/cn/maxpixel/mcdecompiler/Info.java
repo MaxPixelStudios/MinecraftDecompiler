@@ -23,6 +23,7 @@ import java.io.File;
 public interface Info {
 	String getProguardMappingDownloadPath(String version, SideType type);
 	File getMappingPath();
+	String getDecompileDirectory(String version, SideType type);
 	String getMcJarPath(String version, SideType type);
 	String getDeobfuscateJarPath(String version, SideType type);
 	default String getTempOriginalClassesPath(String version, SideType type) {
@@ -30,6 +31,12 @@ public interface Info {
 	}
 	default String getTempRemappedClassesPath(String version, SideType type) {
 		return getTempPath() + "/" + version + "/" + type + "/remappedClasses";
+	}
+	default String getTempDecompileClassesPath(String version, SideType type) {
+		return getTempPath() + "/" + version + "/" + type + "/decompileClasses";
+	}
+	default String getTempDecompilerPath(DecompilerType type) {
+		return getTempPath() + "/" + type + ".jar";
 	}
 	String getTempPath();
 	String FILE_SEPARATOR = System.getProperty("file.separator");
@@ -46,5 +53,13 @@ public interface Info {
 		SRG,
 		TSRG,
 		CSRG
+	}
+	enum DecompilerType {
+		FERNFLOWER,
+		CFR;
+		@Override
+		public String toString() {
+			return name().toLowerCase();
+		}
 	}
 }
