@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -85,7 +84,7 @@ public class JarUtil {
 							return FileVisitResult.CONTINUE;
 						}
 						@Override
-						public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+						public FileVisitResult visitFileFailed(Path file, IOException exc) {
 							LOGGER.error("Error while zipping file: " + file, exc);
 							return FileVisitResult.CONTINUE;
 						}
@@ -93,24 +92,13 @@ public class JarUtil {
 						public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 							outputStream.putNextEntry(new ZipEntry(relativePath == null ? file.getFileName().toString() : relativePath + "/" + file.getFileName()));
 							try(FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-								if(channel.size() <= 256L * 1024L * 1024L) { // 256MB
-									ByteBuffer buffer = ByteBuffer.allocate((int) channel.size());
-									channel.read(buffer);
-									outputStream.write(buffer.array());
-								} else {
-									ByteBuffer buffer = ByteBuffer.allocate(256 * 1024 * 1024); //allocate 256MB buffer
-									int len;
-									while((len = channel.read(buffer)) > 0) {
-										outputStream.write(buffer.array(), 0, len);
-										buffer.clear();
-									}
-								}
+								channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
 							}
 							outputStream.closeEntry();
 							return FileVisitResult.CONTINUE;
 						}
 						@Override
-						public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+						public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
 							int index = relativePath.lastIndexOf('/');
 							if(index == -1) relativePath = null;
 							else relativePath = relativePath.substring(0, index);
@@ -120,19 +108,8 @@ public class JarUtil {
 				}
 				if(child.isFile()) {
 					outputStream.putNextEntry(new ZipEntry(child.getName()));
-					try(FileChannel channel = FileChannel.open(child.toPath(), StandardOpenOption.READ)) {
-						if(channel.size() <= 256L * 1024L * 1024L) { // 256MB
-							ByteBuffer buffer = ByteBuffer.allocate((int) channel.size());
-							channel.read(buffer);
-							outputStream.write(buffer.array());
-						} else {
-							ByteBuffer buffer = ByteBuffer.allocate(256 * 1024 * 1024); //allocate 256MB buffer
-							int len;
-							while((len = channel.read(buffer)) > 0) {
-								outputStream.write(buffer.array(), 0, len);
-								buffer.clear();
-							}
-						}
+					try(FileChannel channel = FileChannel.open(child.toPath(), StandardOpenOption.READ) ) {
+						channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
 					}
 					outputStream.closeEntry();
 				}

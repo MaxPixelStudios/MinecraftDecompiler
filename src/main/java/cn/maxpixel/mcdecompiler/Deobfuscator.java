@@ -76,6 +76,8 @@ public class Deobfuscator {
 				Process process = Runtime.getRuntime().exec(new String[] {"java", "-jar", decompilerJarPath.getAbsolutePath(), "-dgs=1", "-hdc=0", "-asc=1", "-udv=0",
 						"-rsy=1", "-aoa=1", decompileClasses.toAbsolutePath().toString(), decompileDir.getAbsolutePath()});
 				ProcessUtil.waitForProcess(process);
+			} else if(type == Info.DecompilerType.CFR) {
+
 			} else throw new IllegalArgumentException("Unsupported now");
 		} catch (IOException e) {
 			e.printStackTrace();
