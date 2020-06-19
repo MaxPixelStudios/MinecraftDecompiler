@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -31,63 +32,54 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProguardMappingReader extends MappingReader {
-	private ProguardMappingProcessor processor = new ProguardMappingProcessor();
-	private ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
 	public ProguardMappingReader(BufferedReader reader) {
 		super(reader);
-		AtomicReference<ClassMapping> currClass = new AtomicReference<>(null);
-		reader.lines().forEach(s -> {
-			if(!s.startsWith("#")) {
-				if(!s.startsWith(" ")) {
-					if(currClass.get() != null) {
-						mappings.add(currClass.getAndSet(processor.processClass(s)));
-					} else currClass.set(processor.processClass(s));
-				} else {
-					if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processor.processMethod(s.trim()));
-					else currClass.get().addField(processor.processField(s.trim()));
-				}
-			}
-		});
-		if(currClass.get() != null) mappings.add(currClass.get());
 	}
 	public ProguardMappingReader(Reader rd) {
-		this(new BufferedReader(rd));
+		super(new BufferedReader(rd));
 	}
 	public ProguardMappingReader(InputStream is) {
-		this(new InputStreamReader(is));
+		super(new InputStreamReader(is));
 	}
 	public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
-		this(new FileReader(Objects.requireNonNull(path)));
+		super(new FileReader(Objects.requireNonNull(path)));
 	}
 
 	@Override
-	public List<ClassMapping> getMappings() {
-		return mappings;
+	protected MappingProcessor getProcessor() {
+		return new ProguardMappingProcessor();
 	}
 
-	@Override
-	public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
-		return mappings.stream().collect(Collectors.toMap(ClassMapping::getObfuscatedName, Function.identity(),
-				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
-	}
-
-	@Override
-	public Map<String, ClassMapping> getMappingsMapByOriginalName() {
-		return mappings.stream().collect(Collectors.toMap(ClassMapping::getOriginalName, Function.identity(),
-				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
-	}
-
-	private static class ProguardMappingProcessor extends MappingProcessor {
+	private static class ProguardMappingProcessor extends NonPackageMappingProcessor {
 		@Override
-		public ClassMapping processClass(String line) {
-			String[] split = line.split("(\\s->\\s)+|(:)+");
+		public List<ClassMapping> process(Stream<String> stream) {
+			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+			AtomicReference<ClassMapping> currClass = new AtomicReference<>();
+			stream.forEach(s -> {
+				if(!s.startsWith(" ")) {
+					if(currClass.get() != null) {
+						mappings.add(currClass.getAndSet(processClass(s.substring(0, s.indexOf(':') + 1))));
+					} else currClass.set(processClass(s.substring(0, s.indexOf(':') + 1)));
+				} else {
+					if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processMethod(s.trim()));
+					else currClass.get().addField(processField(s.trim()));
+				}
+			});
+			if(currClass.get() != null) mappings.add(currClass.get());
+			return mappings;
+		}
+
+		@Override
+		protected ClassMapping processClass(String line) {
+			String[] split = line.split("( -> )|:");
 			return new ClassMapping(split[1], split[0]);
 		}
 
 		@Override
-		public MethodMapping processMethod(String line) {
+		protected MethodMapping processMethod(String line) {
 			MethodMapping mapping = new MethodMapping();
 			String[] linenums = line.trim().split(":");
 			String[] method;
@@ -108,8 +100,8 @@ public class ProguardMappingReader extends MappingReader {
 		}
 
 		@Override
-		public FieldMapping processField(String line) {
-			String[] strings = line.trim().split("(\\s->\\s)+|(\\s)+");
+		protected FieldMapping processField(String line) {
+			String[] strings = line.trim().split("( -> )| ");
 			return new FieldMapping(strings[2], strings[1], strings[0]);
 		}
 	}

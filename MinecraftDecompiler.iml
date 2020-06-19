@@ -11,10 +11,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm:7.3.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-commons:7.3.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-tree:7.3.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-analysis:7.3.1" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm:8.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-commons:8.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-tree:8.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-analysis:8.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: cn.xiaopangxie732:easynetwork:1.0-Dev" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-api:2.13.0" level="project" />

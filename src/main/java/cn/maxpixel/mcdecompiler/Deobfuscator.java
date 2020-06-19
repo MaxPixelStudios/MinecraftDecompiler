@@ -34,10 +34,10 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Deobfuscator {
-	private static Logger LOGGER = LogManager.getLogger();
-	private AbstractDeobfuscator deobfuscator;
-	private String version;
-	private Info.SideType type;
+	private static final Logger LOGGER = LogManager.getLogger();
+	private final AbstractDeobfuscator deobfuscator;
+	private final String version;
+	private final Info.SideType type;
 	public Deobfuscator(String version, Info.SideType type, Info.MappingType mapping) {
 		this.version = Objects.requireNonNull(version, "version cannot be null!");
 		this.type = Objects.requireNonNull(type, "type cannot be null!");

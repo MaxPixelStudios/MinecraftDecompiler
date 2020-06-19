@@ -42,16 +42,18 @@ public class NamingUtil {
 	}
 	public static String asDescriptor(String javaName) {
 		if(!javaName.contains("[]"))
-			if(javaName.equals("boolean")) return "Z";
-			else if(javaName.equals("byte")) return "B";
-			else if(javaName.equals("char")) return "C";
-			else if(javaName.equals("double")) return "D";
-			else if(javaName.equals("float")) return "F";
-			else if(javaName.equals("int")) return "I";
-			else if(javaName.equals("long")) return "J";
-			else if(javaName.equals("short")) return "S";
-			else if(javaName.equals("void")) return "V";
-			else return "L" + asNativeName(javaName) + ";";
+			switch (javaName) {
+				case "boolean": return "Z";
+				case "byte": return "B";
+				case "char": return "C";
+				case "double": return "D";
+				case "float": return "F";
+				case "int": return "I";
+				case "long": return "J";
+				case "short": return "S";
+				case "void": return "V";
+				default: return "L" + asNativeName(javaName) + ";";
+			}
 		else {
 			StringBuilder buf = new StringBuilder();
 			for(int arrDimension = getDimension(javaName);arrDimension>0;arrDimension--) buf.append('[');
@@ -86,6 +88,7 @@ public class NamingUtil {
 					break;
 				default:
 					buf.append('L').append(asNativeName(javaName)).append(';');
+					break;
 			}
 			return buf.toString();
 		}

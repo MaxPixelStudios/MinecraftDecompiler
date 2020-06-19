@@ -19,13 +19,11 @@
 package cn.maxpixel.mcdecompiler.mapping;
 
 public class MethodMapping extends Mapping {
-	private int[] linenumber = new int[2];
+	private final int[] linenumber = new int[2];
 	private String returnVal;
 	private String[] argTypes;
 	public MethodMapping() {
 		super();
-		this.returnVal = null;
-		this.argTypes = null;
 	}
 	public MethodMapping(String obfuscatedName, String originalName, int linenumber1,
 	                     int linenumber2, String returnVal, String[] argTypes) {

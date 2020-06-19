@@ -58,15 +58,26 @@ public class DeobfuscatorCommandLine {
 			ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
 					"Required when using Proguard mapping to deobfuscate.").withRequiredArg();
 			ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"), "Select a side to deobfuscate/decompile. " +
-					"Use \"CLIENT\" for client and \"SERVER\" for server. Required when using Proguard mapping to deobfuscate.").withRequiredArg().ofType(Info.SideType.class);
+					"Values are client and server. Required when using Proguard mapping to deobfuscate.").withRequiredArg().ofType(Info.SideType.class);
 			ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
-					"Use \"SRG\" for srg, \"PROGUARD\" for Proguard, \"CSRG\" for csrg, \"TSRG\" for tsrg").
-					withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD);
+					"Values are srg, proguard, csrg, tsrg").withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD).
+					withValuesConvertedBy(new ValueConverter<Info.MappingType>() {
+						@Override
+						public Info.MappingType convert(String value) {
+							return Info.MappingType.valueOf(value.toUpperCase());
+						}
+						@Override
+						public Class<? extends Info.MappingType> valueType() {
+							return Info.MappingType.class;
+						}
+						@Override
+						public String valuePattern() { return null; }
+					});
 			ArgumentAcceptingOptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
 					withRequiredArg();
 			ArgumentAcceptingOptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.").
 					requiredIf(mappingTypeO).withRequiredArg().ofType(File.class);
-			ArgumentAcceptingOptionSpec<String> outDeobfO = parser.accepts("outObf", "Output file of deobfuscated jar").withRequiredArg();
+			ArgumentAcceptingOptionSpec<String> outDeobfO = parser.accepts("outDeobf", "Output file of deobfuscated jar").withRequiredArg();
 			ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "To decompile or not").withOptionalArg().
 					ofType(Info.DecompilerType.class).defaultsTo(Info.DecompilerType.FERNFLOWER);
 			AbstractOptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
@@ -78,7 +89,7 @@ public class DeobfuscatorCommandLine {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				System.exit(-1);
+				return;
 			}
 
 			version = options.valueOf(versionO);
@@ -93,7 +104,7 @@ public class DeobfuscatorCommandLine {
 					}
 					@Override
 					public File getMappingPath() {
-						if(type == MappingType.PROGUARD) throw new IllegalArgumentException("Custom Proguard mapping file is not allowed");
+						if(type == MappingType.PROGUARD) throw new IllegalArgumentException("Custom the Proguard mapping file is not allowed");
 						return options.valueOfOptional(mappingPathO).orElseThrow(() ->
 								new IllegalArgumentException("-—mapFile arg is required when you deobfuscate with SRG/CSRG/TSRG mapping"));
 					}

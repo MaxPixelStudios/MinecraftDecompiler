@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ProguardMappingRemapper extends Remapper {
-	private Map<String, ClassMapping> mappingByObfus;
-	private Map<String, ClassMapping> mappingByOri;
-	private SuperClassMapping superClassMapping;
+	private final Map<String, ClassMapping> mappingByObfus;
+	private final Map<String, ClassMapping> mappingByOri;
+	private final SuperClassMapping superClassMapping;
 	private static final Logger LOGGER = LogManager.getLogger("Remapper");
 	public ProguardMappingRemapper(Map<String, ClassMapping> mappingByObfus, Map<String, ClassMapping> mappingByOri, SuperClassMapping superClassMapping) {
 		this.mappingByObfus = mappingByObfus;
@@ -50,14 +50,21 @@ public class ProguardMappingRemapper extends Remapper {
 		} else return innerName;
 	}
 	@Override
+	public String map(String internalName) {
+		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(internalName));
+		if(classMapping != null) return NamingUtil.asNativeName(classMapping.getOriginalName());
+		else return internalName;
+	}
+	@Override
 	public String mapMethodName(String owner, String name, String descriptor) {
 		if(!(name.contains("<init>") || name.contains("<clinit>"))) {
 			ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
 			if(classMapping != null) {
-				AtomicReference<MethodMapping> methodMapping = new AtomicReference<>(null);
-				classMapping.getMethods().forEach(methodMapping1 -> {
-					if(methodMapping1.getObfuscatedName().equals(name) && methodMapping.get() == null) {
-						compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1);
+				AtomicReference<MethodMapping> methodMapping = new AtomicReference<>();
+				classMapping.getMethods().forEach(mapping -> {
+					if(methodMapping.get() == null) return;
+					if(mapping.getObfuscatedName().equals(name)) {
+						compareMethodDescriptorAndSet(descriptor, methodMapping, mapping);
 					}
 				});
 				if(methodMapping.get() == null) methodMapping.set(processSuperMethod(owner, name, descriptor));
@@ -67,59 +74,60 @@ public class ProguardMappingRemapper extends Remapper {
 		return name;
 	}
 
-	private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<MethodMapping> methodMapping, MethodMapping methodMapping1) {
-		StringBuilder builder = new StringBuilder().append('(');
-		if(methodMapping1.getArgTypes() != null) {
-			for(String arg : methodMapping1.getArgTypes()) {
-				if(arg.contains("[]")) {
-					ClassMapping argClass = mappingByOri.get(arg.replace("[]", ""));
-					if(argClass != null) {
-						StringBuilder arrays = new StringBuilder(2);
-						int dimension = NamingUtil.getDimension(arg), i = 0;
-						do {
-							arrays.append('[').append(']');
-							i++;
-						} while(i < dimension);
-						builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName() + arrays));
-					} else builder.append(NamingUtil.asDescriptor(arg));
-				} else {
-					ClassMapping argClass = mappingByOri.get(arg);
-					if(argClass != null) builder.append(NamingUtil.asDescriptor(argClass.getObfuscatedName()));
-					else builder.append(NamingUtil.asDescriptor(arg));
+	private String genDescriptor(String arg) {
+		if(arg.contains("[]")) {
+			ClassMapping argClass = mappingByOri.get(arg.replace("[]", ""));
+			if(argClass != null) {
+				StringBuilder arrays = new StringBuilder(2);
+				{
+					int dimension = NamingUtil.getDimension(arg), i = 0;
+					do {
+						arrays.append('[').append(']');
+						i++;
+					} while (i < dimension);
 				}
+				return NamingUtil.asDescriptor(argClass.getObfuscatedName() + arrays);
+			} else return NamingUtil.asDescriptor(arg);
+		} else {
+			ClassMapping argClass = mappingByOri.get(arg);
+			if(argClass != null) return NamingUtil.asDescriptor(argClass.getObfuscatedName());
+			else return NamingUtil.asDescriptor(arg);
+		}
+	}
+
+	private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<MethodMapping> target, MethodMapping compare) {
+		StringBuilder builder = new StringBuilder().append('(');
+		if(compare.getArgTypes() != null) {
+			for(String arg : compare.getArgTypes()) {
+				builder.append(genDescriptor(arg));
 			}
 		}
-		builder.append(')');
-		String returnVal = methodMapping1.getReturnVal();
-		ClassMapping returnClass = mappingByOri.get(returnVal);
-		if(returnClass != null) builder.append(NamingUtil.asDescriptor(returnClass.getObfuscatedName()));
-		else builder.append(NamingUtil.asDescriptor(returnVal));
-		if(descriptor.contentEquals(builder)) methodMapping.set(methodMapping1);
+		builder.append(')')
+				.append(genDescriptor(compare.getReturnVal()));
+		if(descriptor.contentEquals(builder)) target.set(compare);
 	}
 
 	private MethodMapping processSuperMethod(String owner, String name, String descriptor) {
 		List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
 		if(superNames != null) {
-			AtomicReference<MethodMapping> methodMapping = new AtomicReference<>(null);
+			AtomicReference<MethodMapping> methodMapping = new AtomicReference<>();
 			superNames.forEach(superClass -> {
-				if(methodMapping.get() == null) {
-					ClassMapping superClassMapping = mappingByObfus.get(superClass);
-					if(superClassMapping != null) {
-						superClassMapping.getMethods().forEach(methodMapping1 -> {
-							if(methodMapping1.getObfuscatedName().equals(name)) {
-								compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1);
-							}
-						});
-					}
+				if(methodMapping.get() != null) return;
+				ClassMapping superClassMapping = mappingByObfus.get(superClass);
+				if(superClassMapping != null) {
+					superClassMapping.getMethods().forEach(methodMapping1 -> {
+						if(methodMapping1.getObfuscatedName().equals(name)) {
+							compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1);
+						}
+					});
 				}
 			});
 			if(methodMapping.get() == null) {
 				superNames.forEach(superClass -> {
-					if(methodMapping.get() == null) {
-						ClassMapping superClassMapping = mappingByObfus.get(superClass);
-						if(superClassMapping != null) {
-							methodMapping.set(processSuperMethod(superClassMapping.getObfuscatedName(), name, descriptor));
-						}
+					if(methodMapping.get() != null) return;
+					ClassMapping superClassMapping = mappingByObfus.get(superClass);
+					if(superClassMapping != null) {
+						methodMapping.set(processSuperMethod(superClassMapping.getObfuscatedName(), name, descriptor));
 					}
 				});
 			}
@@ -139,7 +147,7 @@ public class ProguardMappingRemapper extends Remapper {
 	}
 	private FieldMapping processSuperField(String owner, String name) {
 		if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
-			AtomicReference<FieldMapping> fieldMapping = new AtomicReference<>(null);
+			AtomicReference<FieldMapping> fieldMapping = new AtomicReference<>();
 			superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
 				ClassMapping supermapping = mappingByObfus.get(superClass);
 				if(supermapping != null && fieldMapping.get() == null) {
@@ -159,11 +167,5 @@ public class ProguardMappingRemapper extends Remapper {
 			if(fieldMapping.get() != null) return fieldMapping.get();
 		}
 		return null;
-	}
-	@Override
-	public String map(String internalName) {
-		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(internalName));
-		if(classMapping != null) return NamingUtil.asNativeName(classMapping.getOriginalName());
-		else return internalName;
 	}
 }

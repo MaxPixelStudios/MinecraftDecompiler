@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SuperClassMapping extends ClassVisitor {
-	private Map<String, List<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+	private final Map<String, List<String>> superClassMap = new Object2ObjectOpenHashMap<>();
 	public SuperClassMapping() {
 		super(Opcodes.ASM7);
 	}

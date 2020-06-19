@@ -19,15 +19,33 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class MappingReader implements AutoCloseable {
 	protected BufferedReader reader;
+	private final List<ClassMapping> mappings;
+	private final List<PackageMapping> packages;
 
 	protected MappingReader(BufferedReader reader) {
 		this.reader = reader;
+		Stream<String> stream = reader.lines().map(s -> {
+			if(s.startsWith("#")) return null;
+
+			int index = s.indexOf('#');
+			if(index > 0) return s.substring(0, index - 1);
+
+			if(s.replaceAll("\\s+", "").isEmpty()) return null;
+
+			return s;
+		}).filter(Objects::nonNull);
+		mappings = getProcessor().process(stream);
+		packages = getProcessor() instanceof NonPackageMappingProcessor ? null : getProcessor().processPackage(stream);
 	}
 	protected MappingReader(Reader rd) {
 		this(new BufferedReader(rd));
@@ -39,9 +57,21 @@ public abstract class MappingReader implements AutoCloseable {
 		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
-	public abstract List<ClassMapping> getMappings();
-	public abstract Map<String, ClassMapping> getMappingsMapByObfuscatedName();
-	public abstract Map<String, ClassMapping> getMappingsMapByOriginalName();
+	protected abstract MappingProcessor getProcessor();
+	public List<ClassMapping> getMappings() {
+		return mappings;
+	}
+	public List<PackageMapping> getPackages() {
+		return packages;
+	}
+	public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
+		return getMappings().stream().collect(Collectors.toMap(ClassMapping::getObfuscatedName, Function.identity(),
+				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+	}
+	public Map<String, ClassMapping> getMappingsMapByOriginalName() {
+		return getMappings().stream().collect(Collectors.toMap(ClassMapping::getOriginalName, Function.identity(),
+				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+	}
 	@Override
 	public void close() {
 		try {
@@ -53,8 +83,16 @@ public abstract class MappingReader implements AutoCloseable {
 		}
 	}
 	protected abstract static class MappingProcessor {
+		public abstract List<ClassMapping> process(Stream<String> stream);
 		protected abstract ClassMapping processClass(String line);
+		protected abstract List<PackageMapping> processPackage(Stream<String> stream);
 		protected abstract MethodMapping processMethod(String line);
 		protected abstract FieldMapping processField(String line);
+	}
+	protected abstract static class NonPackageMappingProcessor extends MappingProcessor {
+		@Override
+		protected List<PackageMapping> processPackage(Stream<String> stream) {
+			throw new RuntimeException("Process package isn't supported");
+		}
 	}
 }

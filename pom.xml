@@ -24,6 +24,9 @@
 	<groupId>cn.maxpixel</groupId>
 	<artifactId>minecraft-decompiler</artifactId>
 	<version>1.1.1</version>
+	<properties>
+		<depend.asm.ver>8.0.1</depend.asm.ver>
+	</properties>
 	<build>
 		<plugins>
 			<plugin>
@@ -104,12 +107,12 @@
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
 			<artifactId>asm</artifactId>
-			<version>7.3.1</version>
+			<version>${depend.asm.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
 			<artifactId>asm-commons</artifactId>
-			<version>7.3.1</version>
+			<version>${depend.asm.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

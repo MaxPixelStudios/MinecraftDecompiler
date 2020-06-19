@@ -21,14 +21,13 @@ package cn.maxpixel.mcdecompiler.mapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class ClassMapping extends Mapping {
-	private List<MethodMapping> methods;
-	private Map<String, FieldMapping> fields;
+	private final List<MethodMapping> methods;
+	private final Map<String, FieldMapping> fields;
 	public ClassMapping() {
 		this.methods = new ObjectArrayList<>();
 		this.fields = new Object2ObjectOpenHashMap<>();
@@ -61,7 +60,7 @@ public class ClassMapping extends Mapping {
 		return methods;
 	}
 	public List<FieldMapping> getFields() {
-		return new ArrayList<>(fields.values());
+		return new ObjectArrayList<>(fields.values());
 	}
 	public Map<String, FieldMapping> getFieldMap() {
 		return fields;
