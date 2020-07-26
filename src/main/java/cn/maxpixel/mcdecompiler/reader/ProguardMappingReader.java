@@ -21,17 +21,14 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
-import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ProguardMappingReader extends MappingReader {
@@ -39,26 +36,26 @@ public class ProguardMappingReader extends MappingReader {
 		super(reader);
 	}
 	public ProguardMappingReader(Reader rd) {
-		super(new BufferedReader(rd));
+		super(rd);
 	}
 	public ProguardMappingReader(InputStream is) {
-		super(new InputStreamReader(is));
+		super(is);
 	}
 	public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
-		super(new FileReader(Objects.requireNonNull(path)));
+		super(path);
 	}
 
 	@Override
-	protected MappingProcessor getProcessor() {
+	protected ProguardMappingProcessor getProcessor() {
 		return new ProguardMappingProcessor();
 	}
 
 	private static class ProguardMappingProcessor extends NonPackageMappingProcessor {
 		@Override
-		public List<ClassMapping> process(Stream<String> stream) {
+		public List<ClassMapping> process(Stream<String> lines) {
 			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
 			AtomicReference<ClassMapping> currClass = new AtomicReference<>();
-			stream.forEach(s -> {
+			lines.forEach(s -> {
 				if(!s.startsWith(" ")) {
 					if(currClass.get() != null) {
 						mappings.add(currClass.getAndSet(processClass(s.substring(0, s.indexOf(':') + 1))));

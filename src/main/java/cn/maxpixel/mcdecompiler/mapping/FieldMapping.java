@@ -24,6 +24,9 @@ public class FieldMapping extends Mapping {
 		super(obfuscatedName, originalName);
 		this.type = type;
 	}
+	public FieldMapping(String obfuscatedName, String originalName) {
+		super(obfuscatedName, originalName);
+	}
 	public FieldMapping() {}
 
 	public String getType() {
@@ -31,5 +34,14 @@ public class FieldMapping extends Mapping {
 	}
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	@Override
+	public String toString() {
+		return "FieldMapping{" +
+				"obfuscated name=" + getObfuscatedName() +
+				", original name=" + getOriginalName() +
+				", type='" + type + '\'' +
+				'}';
 	}
 }

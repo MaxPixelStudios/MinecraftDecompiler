@@ -18,11 +18,17 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.*;
+import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,7 +40,7 @@ public abstract class MappingReader implements AutoCloseable {
 
 	protected MappingReader(BufferedReader reader) {
 		this.reader = reader;
-		Stream<String> stream = reader.lines().map(s -> {
+		Stream<String> lines = reader.lines().map(s -> {
 			if(s.startsWith("#")) return null;
 
 			int index = s.indexOf('#');
@@ -44,8 +50,9 @@ public abstract class MappingReader implements AutoCloseable {
 
 			return s;
 		}).filter(Objects::nonNull);
-		mappings = getProcessor().process(stream);
-		packages = getProcessor() instanceof NonPackageMappingProcessor ? null : getProcessor().processPackage(stream);
+		NonPackageMappingProcessor processor = getProcessor();
+		mappings = processor.process(lines);
+		packages = processor instanceof MappingProcessor ? ((MappingProcessor) processor).processPackage(lines) : Collections.emptyList();
 	}
 	protected MappingReader(Reader rd) {
 		this(new BufferedReader(rd));
@@ -57,7 +64,7 @@ public abstract class MappingReader implements AutoCloseable {
 		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
-	protected abstract MappingProcessor getProcessor();
+	protected abstract NonPackageMappingProcessor getProcessor();
 	public List<ClassMapping> getMappings() {
 		return mappings;
 	}
@@ -82,17 +89,13 @@ public abstract class MappingReader implements AutoCloseable {
 			reader = null;
 		}
 	}
-	protected abstract static class MappingProcessor {
-		public abstract List<ClassMapping> process(Stream<String> stream);
+	protected abstract static class MappingProcessor extends NonPackageMappingProcessor {
+		protected abstract List<PackageMapping> processPackage(Stream<String> lines);
+	}
+	protected abstract static class NonPackageMappingProcessor {
+		public abstract List<ClassMapping> process(Stream<String> lines);
 		protected abstract ClassMapping processClass(String line);
-		protected abstract List<PackageMapping> processPackage(Stream<String> stream);
 		protected abstract MethodMapping processMethod(String line);
 		protected abstract FieldMapping processField(String line);
-	}
-	protected abstract static class NonPackageMappingProcessor extends MappingProcessor {
-		@Override
-		protected List<PackageMapping> processPackage(Stream<String> stream) {
-			throw new RuntimeException("Process package isn't supported");
-		}
 	}
 }

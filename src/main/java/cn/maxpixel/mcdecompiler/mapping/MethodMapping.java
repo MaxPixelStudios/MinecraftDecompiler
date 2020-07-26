@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import java.util.Arrays;
+
 public class MethodMapping extends Mapping {
 	private final int[] linenumber = new int[2];
 	private String returnVal;
@@ -52,5 +54,16 @@ public class MethodMapping extends Mapping {
 	}
 	public void setArgTypes(String[] argTypes) {
 		this.argTypes = argTypes;
+	}
+
+	@Override
+	public String toString() {
+		return "MethodMapping{" +
+				"obfuscated name=" + getObfuscatedName() +
+				", original name=" + getOriginalName() +
+				", linenumber=" + Arrays.toString(linenumber) +
+				", returnVal='" + returnVal + '\'' +
+				", argTypes=" + Arrays.toString(argTypes) +
+				'}';
 	}
 }

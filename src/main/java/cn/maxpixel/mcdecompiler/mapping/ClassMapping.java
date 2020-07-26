@@ -68,4 +68,14 @@ public class ClassMapping extends Mapping {
 	public FieldMapping getField(String obfuscatedName) {
 		return fields.get(obfuscatedName);
 	}
+
+	@Override
+	public String toString() {
+		return "ClassMapping{" +
+				"obfuscated name=" + getObfuscatedName() +
+				", original name=" + getOriginalName() +
+				", methods=" + Arrays.toString(methods.toArray()) +
+				", fields=" + Arrays.toString(fields.values().toArray()) +
+				'}';
+	}
 }

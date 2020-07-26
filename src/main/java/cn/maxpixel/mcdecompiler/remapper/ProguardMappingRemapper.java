@@ -62,7 +62,7 @@ public class ProguardMappingRemapper extends Remapper {
 			if(classMapping != null) {
 				AtomicReference<MethodMapping> methodMapping = new AtomicReference<>();
 				classMapping.getMethods().forEach(mapping -> {
-					if(methodMapping.get() == null) return;
+					if(methodMapping.get() != null) return;
 					if(mapping.getObfuscatedName().equals(name)) {
 						compareMethodDescriptorAndSet(descriptor, methodMapping, mapping);
 					}

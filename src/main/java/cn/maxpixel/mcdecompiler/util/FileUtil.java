@@ -29,12 +29,14 @@ public class FileUtil {
 	private static final Logger LOGGER = LogManager.getLogger();
 	public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
 		try {
+			if(Files.notExists(source)) throw new IOException("Source not exist");
+			if(!Files.isDirectory(source)) throw new IOException("Source isn't a directory");
+			if(Files.exists(target) && !Files.isDirectory(target)) throw new IOException("Target isn't a directory");
 			LOGGER.debug("Coping directory {} to {} ...", source, target);
-			try {
-				Files.copy(source, target, copyOptions);
-			} catch(FileAlreadyExistsException ignored) {}
+			Files.copy(source, target, copyOptions);
 			Files.walkFileTree(source, new FileVisitor<Path>() {
-				String relativePath = null;
+				private String relativePath = null;
+
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 					if(relativePath == null)
@@ -47,7 +49,7 @@ public class FileUtil {
 					return FileVisitResult.CONTINUE;
 				}
 				@Override
-				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+				public FileVisitResult visitFileFailed(Path file, IOException exc) {
 					LOGGER.error("Error while coping file: " + file, exc);
 					return FileVisitResult.CONTINUE;
 				}
@@ -61,13 +63,14 @@ public class FileUtil {
 					return FileVisitResult.CONTINUE;
 				}
 				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
 					int index = relativePath.lastIndexOf('/');
 					if(index == -1) relativePath = null;
 					else relativePath = relativePath.substring(0, index);
 					return FileVisitResult.CONTINUE;
 				}
 			});
+		} catch(FileAlreadyExistsException ignored) {
 		} catch (IOException e) {
 			LOGGER.error("Error while coping directory", e);
 		}

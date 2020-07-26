@@ -25,4 +25,10 @@ public class PackageMapping extends Mapping {
 	public PackageMapping() {
 		super();
 	}
+
+	@Override
+	public String toString() {
+		return "PackageMapping{obfuscated name=" + getObfuscatedName() +
+				", original name=" + getOriginalName() + '}';
+	}
 }

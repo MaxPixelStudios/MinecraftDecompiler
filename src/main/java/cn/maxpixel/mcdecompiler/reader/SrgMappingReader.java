@@ -22,6 +22,8 @@ import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.BufferedReader;
@@ -29,7 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class SrgMappingReader extends MappingReader {
@@ -46,31 +48,65 @@ public class SrgMappingReader extends MappingReader {
 		super(path);
 	}
 	@Override
-	protected MappingProcessor getProcessor() {
+	protected NonPackageMappingProcessor getProcessor() {
 		return new SrgMappingProcessor();
 	}
 	private static class SrgMappingProcessor extends MappingProcessor {
+		private Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
 		@Override
-		public List<ClassMapping> process(Stream<String> stream) {
-			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
-			AtomicReference<ClassMapping> currClass = new AtomicReference<>();
-			return null;
+		public List<ClassMapping> process(Stream<String> lines) {
+			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>();
+			lines.filter(s -> s.startsWith("CL:")).forEach(s -> mappings.add(processClass(s)));
+			for(int i = 0; i < mappings.size(); ++i)
+				map.put(mappings.get(i).getObfuscatedName(), i); //Use obf name
+			lines.filter(s -> !(s.startsWith("CL:") || s.startsWith("PK:"))).forEach(s -> {
+				if(s.startsWith("FD:")) {
+					FieldMapping mapping = processField(s);
+					String obfClassName = mapping.getObfuscatedName().substring(0, mapping.getObfuscatedName().lastIndexOf('.'));
+					String oriClassName = mapping.getOriginalName().substring(0, mapping.getOriginalName().lastIndexOf('.'));
+					int index = map.getInt(obfClassName);
+					ClassMapping cm;
+					if(index < mappings.size()) {
+						cm = mappings.get(index);
+						if(cm == null) {
+							cm = new ClassMapping(obfClassName, oriClassName);
+							mappings.add(cm);
+						}
+					} else {
+						cm = new ClassMapping(obfClassName, oriClassName);
+						mappings.add(cm);
+					}
+					cm.addField(new FieldMapping(mapping.getObfuscatedName().substring(mapping.getObfuscatedName().lastIndexOf('.') + 1),
+												mapping.getOriginalName().substring(mapping.getOriginalName().lastIndexOf('.') + 1)));
+				} else if(s.startsWith("MD:")) {
+					processMethod(s);
+				}
+			});
+			return mappings;
 		}
 		@Override
 		protected ClassMapping processClass(String line) {
-			return null;
-		}
-		@Override
-		protected List<PackageMapping> processPackage(Stream<String> stream) {
-			return null;
+			String[] split = line.split(" ");
+			return new ClassMapping(NamingUtil.asJavaName(split[1]), NamingUtil.asJavaName(split[2]));
 		}
 		@Override
 		protected MethodMapping processMethod(String line) {
+			String[] split = line.split(" ");
 			return null;
 		}
 		@Override
 		protected FieldMapping processField(String line) {
-			return null;
+			String[] split = line.split(" ");
+			return new FieldMapping(NamingUtil.asJavaName(split[1]), NamingUtil.asJavaName(split[2]));
+		}
+		@Override
+		protected List<PackageMapping> processPackage(Stream<String> lines) {
+			ObjectArrayList<PackageMapping> mappings = new ObjectArrayList<>();
+			lines.filter(s -> s.startsWith("PK:")).forEach(s -> {
+				String[] split = s.split(" ");
+				mappings.add(new PackageMapping(NamingUtil.asJavaName(split[1]), NamingUtil.asJavaName(split[2])));
+			});
+			return mappings;
 		}
 	}
 }
