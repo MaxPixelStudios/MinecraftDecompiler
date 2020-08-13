@@ -1,5 +1,5 @@
 # MinecraftDecompiler
-A useful tool to decompile and deobfuscate Minecraft by CFR and Proguard/SRG/CSRG/TSRG mappings
+A useful tool to decompile and deobfuscate Minecraft by CFR/Fernflower and Proguard/SRG/CSRG/TSRG mappings
 ### If you have any suggestions for parameters passed or CFR decompilation args, Welcome to submit issues
 ## TODO/In Progress/Done
 View [the Project](https://github.com/MaxPixelStudios/MinecraftDecompiler/projects/1)
