@@ -25,7 +25,12 @@
 	<artifactId>minecraft-decompiler</artifactId>
 	<version>1.1.1</version>
 	<properties>
-		<depend.asm.ver>8.0.1</depend.asm.ver>
+		<depend.asm.ver>9.0-beta</depend.asm.ver>
+		<depend.gson.ver>2.8.6</depend.gson.ver>
+		<depend.log4j.ver>2.13.3</depend.log4j.ver>
+		<depend.fastutil.ver>8.4.1</depend.fastutil.ver>
+		<depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
+		<depend.ezntwk.ver>1.0-Dev</depend.ezntwk.ver>
 	</properties>
 	<build>
 		<plugins>
@@ -41,7 +46,7 @@
 							<file>${basedir}/lib/easynetwork-1.0-Dev.jar</file>
 							<groupId>cn.xiaopangxie732</groupId>
 							<artifactId>easynetwork</artifactId>
-							<version>1.0-Dev</version>
+							<version>${depend.ezntwk.ver}</version>
 							<packaging>jar</packaging>
 							<generatePom>true</generatePom>
 						</configuration>
@@ -117,32 +122,32 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.8.6</version>
+			<version>${depend.gson.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>cn.xiaopangxie732</groupId>
 			<artifactId>easynetwork</artifactId>
-			<version>1.0-Dev</version>
+			<version>${depend.ezntwk.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.13.0</version>
+			<version>${depend.log4j.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.13.0</version>
+			<version>${depend.log4j.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>it.unimi.dsi</groupId>
 			<artifactId>fastutil</artifactId>
-			<version>8.3.0</version>
+			<version>${depend.fastutil.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.jopt-simple</groupId>
 			<artifactId>jopt-simple</artifactId>
-			<version>6.0-alpha-3</version>
+			<version>${depend.jopt.ver}</version>
 		</dependency>
 	</dependencies>
 </project>
