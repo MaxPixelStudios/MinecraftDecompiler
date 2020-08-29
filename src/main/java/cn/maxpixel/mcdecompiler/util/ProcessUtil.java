@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class ProcessUtil {
-	private static final Logger LOGGER = LogManager.getLogger();
 	public static void waitForProcess(Process pro) {
+		final Logger LOGGER = LogManager.getLogger("Process " + pro);
 		try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
 		    BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
 			Thread inT = new Thread(() -> {

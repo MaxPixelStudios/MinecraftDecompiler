@@ -52,7 +52,8 @@ public interface Info {
 		PROGUARD,
 		SRG,
 		TSRG,
-		CSRG
+		CSRG,
+		TINY
 	}
 	enum DecompilerType {
 		FERNFLOWER,

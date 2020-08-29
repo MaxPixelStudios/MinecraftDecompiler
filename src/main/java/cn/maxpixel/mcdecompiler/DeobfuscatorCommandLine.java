@@ -30,12 +30,11 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class DeobfuscatorCommandLine {
-	private static Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger();
 	public static final Proxy PROXY =
 			new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)); //Just for internal testing.
 //			Proxy.NO_PROXY;
 	public static void main(String[] args) {
-		System.setProperty("log4j2.skipJansi", "false");
 		String version;
 		Info.SideType sideType = null;
 		Info.MappingType mappingType = Info.MappingType.PROGUARD;
@@ -124,5 +123,8 @@ public class DeobfuscatorCommandLine {
 		if(decompile) {
 			deobfuscator.decompile(decompiler);
 		}
+	}
+	static {
+		System.setProperty("log4j2.skipJansi", "false");
 	}
 }
