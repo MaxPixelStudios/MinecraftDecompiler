@@ -16,29 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.decompiler;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
-public class DefaultedInfo implements Info {
+public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalJarDecompiler {
+	ForgeFlowerDecompiler() {}
 	@Override
-	public String getDownloadPath() {
-		return "downloads";
+	public SourceType getSourceType() {
+		return SourceType.DIRECTORY;
 	}
 	@Override
-	public File getMappingPath() {
-		return null;
+	public void extractDecompilerTo(Path decompilerJarPath) throws IOException {
+
 	}
 	@Override
-	public String getDecompileDirectory(String version, SideType type) {
-		return "output/" + version + "_" + type + "_decompiled/";
-	}
-	@Override
-	public String getDeobfuscateJarPath(String version, SideType type) {
-		return "output/" + version + "_" + type + "_deobfuscated.jar";
-	}
-	@Override
-	public String getTempPath() {
-		return "temp";
+	public void decompile(Path source, Path target) throws IOException {
+		checkArgs(target);
 	}
 }

@@ -18,6 +18,10 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
+import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
+import cn.maxpixel.mcdecompiler.decompiler.IExternalJarDecompiler;
+import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
 import cn.maxpixel.mcdecompiler.deobfuscator.AbstractDeobfuscator;
 import cn.maxpixel.mcdecompiler.deobfuscator.ProguardDeobfuscator;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
@@ -64,28 +68,22 @@ public class Deobfuscator {
 		LOGGER.info("decompiling");
 		try {
 			Path remappedClasses = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, this.type));
-			File decompileDir = new File(InfoProviders.get().getDecompileDirectory(version, this.type));
-			decompileDir.mkdirs();
-			File decompilerJarPath = new File(InfoProviders.get().getTempDecompilerPath(type));
-			if(type == Info.DecompilerType.FERNFLOWER) {
-				Path decompileClasses = Paths.get(InfoProviders.get().getTempDecompileClassesPath(version, this.type));
-				FileUtil.copyDirectory(remappedClasses.resolve("net"), decompileClasses);
-				FileUtil.copyDirectory(remappedClasses.resolve("com/mojang"), decompileClasses.resolve("com"));
-				if(!decompilerJarPath.exists())
-					Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("fernflower.jar")), decompilerJarPath.toPath());
-				Process process = Runtime.getRuntime().exec(new String[] {"java", "-jar", decompilerJarPath.getAbsolutePath(), "-dgs=1", "-hdc=0", "-asc=1", "-udv=0",
-						"-rsy=1", "-aoa=1", decompileClasses.toAbsolutePath().toString(), decompileDir.getAbsolutePath()});
-				ProcessUtil.waitForProcess(process);
-			} else if(type == Info.DecompilerType.CFR) {
-				if(!decompilerJarPath.exists())
-					Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("cfr-0.149.jar")), decompilerJarPath.toPath());
-				Process process = Runtime.getRuntime().exec(new String[] {"java", "-jar", decompilerJarPath.getAbsolutePath(), Paths.get(InfoProviders.get().
-						getDeobfuscateJarPath(version, this.type)).toAbsolutePath().toString(), "--aexagg", "true", "--removedeadmethods", "false",
-						"--removebadgenerics", "false", "--relinkconststring", "false", "--recovertypehints", "true", "--recovertypeclash", "true", "--recordtypes",
-						"false", "--outputpath", decompileDir.getAbsolutePath(), "--liftconstructorinit", "false", "--labelledblocks", "false", "--j14classobj", "false",
-						"--instanceofpattern", "false", "--tidymonitors", "false", "--switchexpression", "false", "--clobber", "true"});
-				ProcessUtil.waitForProcess(process);
-			} else throw new IllegalArgumentException("Unsupported now");
+			Path decompileDir = Paths.get(InfoProviders.get().getDecompileDirectory(version, this.type));
+			Files.createDirectories(decompileDir);
+			Path decompilerJarPath = Paths.get(InfoProviders.get().getTempDecompilerPath(type)).toAbsolutePath().normalize();
+			IDecompiler decompiler = Decompilers.get(type);
+			if(decompiler instanceof IExternalJarDecompiler) ((IExternalJarDecompiler) decompiler).extractDecompilerTo(decompilerJarPath);
+			if(decompiler instanceof ILibRecommendedDecompiler) ((ILibRecommendedDecompiler) decompiler).downloadLib(null, version);
+			switch(decompiler.getSourceType()) {
+				case DIRECTORY:
+					Path decompileClasses = Paths.get(InfoProviders.get().getTempDecompileClassesPath(version, this.type));
+					FileUtil.copyDirectory(remappedClasses.resolve("net"), decompileClasses);
+					FileUtil.copyDirectory(remappedClasses.resolve("com/mojang"), decompileClasses.resolve("com"));
+					decompiler.decompile(decompileClasses.toAbsolutePath().normalize(), decompileDir.toAbsolutePath().normalize());
+				case FILE:
+					decompiler.decompile(Paths.get(InfoProviders.get().getDeobfuscateJarPath(version, this.type)).toAbsolutePath().normalize(),
+							decompileDir.toAbsolutePath().normalize());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

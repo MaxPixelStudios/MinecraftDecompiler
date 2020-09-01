@@ -21,10 +21,15 @@ package cn.maxpixel.mcdecompiler;
 import java.io.File;
 
 public interface Info {
-	String getProguardMappingDownloadPath(String version, SideType type);
+	String getDownloadPath();
+	default String getProguardMappingDownloadPath(String version, SideType type) {
+		return getDownloadPath() + "/" + version + "/" + type + "_mappings.txt";
+	}
 	File getMappingPath();
 	String getDecompileDirectory(String version, SideType type);
-	String getMcJarPath(String version, SideType type);
+	default String getMcJarPath(String version, SideType type) {
+		return getDownloadPath() + "/" + version + "/" + type + ".jar";
+	}
 	String getDeobfuscateJarPath(String version, SideType type);
 	default String getTempOriginalClassesPath(String version, SideType type) {
 		return getTempPath() + "/" + version + "/" + type + "/originalClasses";
@@ -57,7 +62,10 @@ public interface Info {
 	}
 	enum DecompilerType {
 		FERNFLOWER,
-		CFR;
+		OFFICIAL_FERNFLOWER,
+		FORGEFLOWER,
+		CFR,
+		USER_DEFINED;
 		@Override
 		public String toString() {
 			return name().toLowerCase();

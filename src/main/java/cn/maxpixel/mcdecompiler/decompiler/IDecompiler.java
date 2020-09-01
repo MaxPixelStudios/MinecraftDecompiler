@@ -16,29 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.decompiler;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class DefaultedInfo implements Info {
-	@Override
-	public String getDownloadPath() {
-		return "downloads";
+public interface IDecompiler {
+	SourceType getSourceType();
+	void decompile(Path source, Path target) throws IOException;
+	default void checkArgs(Path target) {
+		if(!Files.isDirectory(target)) throw new IllegalArgumentException("target must be directory");
 	}
-	@Override
-	public File getMappingPath() {
-		return null;
-	}
-	@Override
-	public String getDecompileDirectory(String version, SideType type) {
-		return "output/" + version + "_" + type + "_decompiled/";
-	}
-	@Override
-	public String getDeobfuscateJarPath(String version, SideType type) {
-		return "output/" + version + "_" + type + "_deobfuscated.jar";
-	}
-	@Override
-	public String getTempPath() {
-		return "temp";
+	enum SourceType {
+		FILE,
+		DIRECTORY
 	}
 }

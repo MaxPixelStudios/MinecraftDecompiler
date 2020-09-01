@@ -55,11 +55,11 @@ public class DeobfuscatorCommandLine {
 		} else {
 			OptionParser parser = new OptionParser();
 			ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
-					"Required when using Proguard mapping to deobfuscate.").withRequiredArg();
+					"Required when inputJar or mapping.").withRequiredArg();
 			ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"), "Select a side to deobfuscate/decompile. " +
-					"Values are client and server. Required when using Proguard mapping to deobfuscate.").withRequiredArg().ofType(Info.SideType.class);
+					"Values are client and server. Required when version, mapping, .").withRequiredArg().ofType(Info.SideType.class);
 			ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
-					"Values are srg, proguard, csrg, tsrg").withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD).
+					"Values are srg, proguard, csrg, tsrg, tiny").withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD).
 					withValuesConvertedBy(new ValueConverter<Info.MappingType>() {
 						@Override
 						public Info.MappingType convert(String value) {

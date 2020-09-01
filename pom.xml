@@ -31,6 +31,8 @@
 		<depend.fastutil.ver>8.4.1</depend.fastutil.ver>
 		<depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
 		<depend.ezntwk.ver>1.0-Dev</depend.ezntwk.ver>
+		<depend.cfr.ver>0.150</depend.cfr.ver>
+		<depend.fernflower.ver>398</depend.fernflower.ver>
 	</properties>
 	<build>
 		<plugins>
@@ -108,6 +110,12 @@
 			</plugin>
 		</plugins>
 	</build>
+	<repositories>
+		<repository>
+			<id>minecraft-forge</id>
+			<url>https://files.minecraftforge.net/maven/</url>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
@@ -148,6 +156,16 @@
 			<groupId>net.sf.jopt-simple</groupId>
 			<artifactId>jopt-simple</artifactId>
 			<version>${depend.jopt.ver}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.benf</groupId>
+			<artifactId>cfr</artifactId>
+			<version>${depend.cfr.ver}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.minecraftforge</groupId>
+			<artifactId>fernflower</artifactId>
+			<version>${depend.fernflower.ver}</version>
 		</dependency>
 	</dependencies>
 </project>
