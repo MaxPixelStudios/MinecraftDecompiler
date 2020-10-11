@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import cn.maxpixel.mcdecompiler.Info;
 import org.benf.cfr.reader.api.CfrDriver;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,15 +34,14 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
 	}
 	@Override
 	public void decompile(Path source, Path target) {
-		checkArgs(target);
-		if(Files.isDirectory(source)) throw new IllegalArgumentException("source must be file");
+		checkArgs(source, target);
 		Map<String, String> options = new HashMap<>();
 		options.put("aexagg", "true");
 		options.put("forceclassfilever", "52.0");
 		options.put("caseinsensitivefs", "false");
 		options.put("clobber", "true");
 		options.put("eclipse", "false");
-		options.put("extraclasspath", String.join(Info.FILE_SEPARATOR, listLibs()));
+		options.put("extraclasspath", String.join(Info.PATH_SEPARATOR, listLibs()));
 		options.put("outputpath", target.toString());
 		options.put("removebadgenerics", "false");
 		options.put("removedeadconditionals", "false");

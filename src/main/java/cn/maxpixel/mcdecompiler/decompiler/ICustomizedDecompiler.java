@@ -18,9 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
-public interface ILibRecommendedDecompiler extends IDecompiler {
-	void downloadLib(Path libDir, String version) throws IOException;
+public interface ICustomizedDecompiler extends IDecompiler {
+	String name();
 }

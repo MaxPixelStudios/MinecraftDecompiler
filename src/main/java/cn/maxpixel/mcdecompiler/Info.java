@@ -25,6 +25,9 @@ public interface Info {
 	default String getProguardMappingDownloadPath(String version, SideType type) {
 		return getDownloadPath() + "/" + version + "/" + type + "_mappings.txt";
 	}
+	default String getLibDownloadPath() {
+		return getDownloadPath() + "/libs/";
+	}
 	File getMappingPath();
 	String getDecompileDirectory(String version, SideType type);
 	default String getMcJarPath(String version, SideType type) {
@@ -45,6 +48,7 @@ public interface Info {
 	}
 	String getTempPath();
 	String FILE_SEPARATOR = System.getProperty("file.separator");
+	String PATH_SEPARATOR = System.getProperty("path.separator");
 	enum SideType {
 		CLIENT,
 		SERVER;

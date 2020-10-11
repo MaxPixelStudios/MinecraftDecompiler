@@ -18,18 +18,42 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
-public class FernFlowerDecompiler implements IDecompiler {
+public class FernFlowerDecompiler extends AbstractLibRecommendedDecompiler {
 	FernFlowerDecompiler() {}
 	@Override
 	public SourceType getSourceType() {
 		return SourceType.DIRECTORY;
 	}
-
 	@Override
 	public void decompile(Path source, Path target) throws IOException {
-		checkArgs(target);
+		checkArgs(source, target);
+		Map<String, Object> options = new Object2ObjectOpenHashMap<>();
+		options.put("log", "TRACE");
+		options.put("dgs", "1");
+		options.put("hdc", "0");
+		options.put("asc", "1");
+		options.put("udv", "0");
+		options.put("rsy", "1");
+		ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options, new PrintStreamLogger(System.out));
+		decompiler.addSource(source.toFile());
+		List<String> libs = listLibs();
+		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
+		decompiler.decompileContext();
+	}
+	private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {
+		public AccessibleConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
+			super(destination, options, logger);
+		}
 	}
 }

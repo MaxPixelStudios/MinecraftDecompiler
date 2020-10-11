@@ -19,23 +19,27 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.EnumMap;
 
 public class Decompilers {
-	private static volatile boolean init;
 	private static final EnumMap<Info.DecompilerType, IDecompiler> decompilers = new EnumMap<>(Info.DecompilerType.class);
-	private static synchronized void init() {
-		if(init) return;
+	private static final Object2ObjectOpenHashMap<String, ICustomizedDecompiler> customizedDecompilers = new Object2ObjectOpenHashMap<>();
+	static {
+		init();
+	}
+	private static void init() {
 		decompilers.put(Info.DecompilerType.FERNFLOWER, new SpigotFernFlowerDecompiler());
 		decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
 		decompilers.put(Info.DecompilerType.OFFICIAL_FERNFLOWER, new FernFlowerDecompiler());
 		decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
 		decompilers.put(Info.DecompilerType.USER_DEFINED, new UserDefinedDecompiler());
-		init = true;
 	}
 	public static IDecompiler get(Info.DecompilerType type) {
-		if(!init) init();
 		return decompilers.getOrDefault(type, decompilers.get(Info.DecompilerType.FERNFLOWER));
+	}
+	public static ICustomizedDecompiler getCustomized(String name) {
+		return customizedDecompilers.get(name);
 	}
 }

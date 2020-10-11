@@ -19,13 +19,16 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.util.ProcessUtil;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
-public class SpigotFernFlowerDecompiler implements IExternalJarDecompiler {
+public class SpigotFernFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalJarDecompiler {
 	private Path decompilerJarPath;
 	SpigotFernFlowerDecompiler() {}
 	@Override
@@ -34,10 +37,14 @@ public class SpigotFernFlowerDecompiler implements IExternalJarDecompiler {
 	}
 	@Override
 	public void decompile(Path source, Path target) throws IOException {
-		checkArgs(target);
-		if(!Files.isDirectory(source)) throw new IllegalArgumentException("source must be directory!");
-		Process process = Runtime.getRuntime().exec(new String[] {"java", "-jar", decompilerJarPath.toString(), "-dgs=1", "-hdc=0", "-asc=1", "-udv=0",
-				"-rsy=1", "-aoa=1", source.toString(), target.toString()});
+		checkArgs(source, target);
+		ObjectArrayList<String> args = new ObjectArrayList<>();
+		args.addAll(Arrays.asList("java", "-jar", decompilerJarPath.toString(), "-log=TRACE", "-dgs=1", "-hdc=0", "-asc=1", "-udv=0", "-rsy=1", "-aoa=1"));
+		List<String> libs = listLibs();
+		for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
+		args.add(source.toString());
+		args.add(target.toString());
+		Process process = Runtime.getRuntime().exec(args.toArray(new String[0]));
 		ProcessUtil.waitForProcess(process);
 	}
 	@Override

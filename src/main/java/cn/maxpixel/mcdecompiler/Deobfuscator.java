@@ -72,17 +72,20 @@ public class Deobfuscator {
 			Files.createDirectories(decompileDir);
 			Path decompilerJarPath = Paths.get(InfoProviders.get().getTempDecompilerPath(type)).toAbsolutePath().normalize();
 			IDecompiler decompiler = Decompilers.get(type);
+			Path libDownloadPath = Paths.get(InfoProviders.get().getLibDownloadPath()).toAbsolutePath().normalize();
 			if(decompiler instanceof IExternalJarDecompiler) ((IExternalJarDecompiler) decompiler).extractDecompilerTo(decompilerJarPath);
-			if(decompiler instanceof ILibRecommendedDecompiler) ((ILibRecommendedDecompiler) decompiler).downloadLib(null, version);
+			if(decompiler instanceof ILibRecommendedDecompiler) ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
 			switch(decompiler.getSourceType()) {
 				case DIRECTORY:
 					Path decompileClasses = Paths.get(InfoProviders.get().getTempDecompileClassesPath(version, this.type));
 					FileUtil.copyDirectory(remappedClasses.resolve("net"), decompileClasses);
 					FileUtil.copyDirectory(remappedClasses.resolve("com/mojang"), decompileClasses.resolve("com"));
 					decompiler.decompile(decompileClasses.toAbsolutePath().normalize(), decompileDir.toAbsolutePath().normalize());
+					break;
 				case FILE:
 					decompiler.decompile(Paths.get(InfoProviders.get().getDeobfuscateJarPath(version, this.type)).toAbsolutePath().normalize(),
 							decompileDir.toAbsolutePath().normalize());
+					break;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

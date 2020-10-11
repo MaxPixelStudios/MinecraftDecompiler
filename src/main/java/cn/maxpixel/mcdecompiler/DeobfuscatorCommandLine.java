@@ -36,7 +36,7 @@ public class DeobfuscatorCommandLine {
 //			Proxy.NO_PROXY;
 	public static void main(String[] args) {
 		String version;
-		Info.SideType sideType = null;
+		Info.SideType sideType;
 		Info.MappingType mappingType = Info.MappingType.PROGUARD;
 		boolean decompile = false;
 		Info.DecompilerType decompiler = Info.DecompilerType.FERNFLOWER;
@@ -50,17 +50,15 @@ public class DeobfuscatorCommandLine {
 					sideType = Info.SideType.CLIENT;
 				} else if(t.equalsIgnoreCase("server") || t.equalsIgnoreCase("s")) {
 					sideType = Info.SideType.SERVER;
-				}
+				} else throw new IllegalArgumentException("Invalid side type!");
 			}
 		} else {
 			OptionParser parser = new OptionParser();
 			ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
-					"Required when inputJar or mapping.").withRequiredArg();
-			ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"), "Select a side to deobfuscate/decompile. " +
-					"Values are client and server. Required when version, mapping, .").withRequiredArg().ofType(Info.SideType.class);
+					"Required when inputJar or mapping.").requiredIf("mapping", "side").withRequiredArg();
 			ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
-					"Values are srg, proguard, csrg, tsrg, tiny").withRequiredArg().ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD).
-					withValuesConvertedBy(new ValueConverter<Info.MappingType>() {
+					"Values are srg, proguard, csrg, tsrg, tiny").requiredIf("version", "side").withRequiredArg()
+					.ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD).withValuesConvertedBy(new ValueConverter<Info.MappingType>() {
 						@Override
 						public Info.MappingType convert(String value) {
 							return Info.MappingType.valueOf(value.toUpperCase());
@@ -72,13 +70,19 @@ public class DeobfuscatorCommandLine {
 						@Override
 						public String valuePattern() { return null; }
 					});
+			ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"),
+					"Select a side to deobfuscate/decompile. Values are client and server. Required when \"version\" and \"mapping\" option is set.")
+					.requiredIf(versionO, mappingTypeO).withRequiredArg().ofType(Info.SideType.class);
 			ArgumentAcceptingOptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
 					withRequiredArg();
 			ArgumentAcceptingOptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.").
 					requiredIf(mappingTypeO).withRequiredArg().ofType(File.class);
 			ArgumentAcceptingOptionSpec<String> outDeobfO = parser.accepts("outDeobf", "Output file of deobfuscated jar").withRequiredArg();
-			ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "To decompile or not").withOptionalArg().
-					ofType(Info.DecompilerType.class).defaultsTo(Info.DecompilerType.FERNFLOWER);
+			ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "Decompile deobfuscated jar. " +
+					"Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". ")
+					.withOptionalArg().ofType(Info.DecompilerType.class).defaultsTo(Info.DecompilerType.FERNFLOWER);
+			ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("customDecompilerName",
+					"Use your custom decompiler to decompile, do NOT pass any arg to \"decompile\" option when you use this option").withRequiredArg();
 			AbstractOptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
 
 			OptionSet options = parser.parse(args);

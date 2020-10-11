@@ -21,8 +21,9 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine;
 import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import cn.xiaopangxie732.easynetwork.http.HttpConnection;
-import com.google.gson.JsonElement;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,21 +32,25 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 public abstract class AbstractLibRecommendedDecompiler implements ILibRecommendedDecompiler {
+	private static final Logger LOGGER = LogManager.getLogger("Lib downloader");
 	private final List<String> libs = new ObjectArrayList<>();
 	@Override
-	public void downloadLib(Path libDir, String version) {
+	public void downloadLib(Path libDir, String version) throws IOException {
+		LOGGER.info("downloading libs of " + version);
+		if(Files.notExists(libDir)) Files.createDirectories(libDir);
 		StreamSupport.stream(VersionManifest.getVersion(version).getAsJsonArray("libraries").spliterator(), true)
-				.map(JsonElement::getAsJsonObject).filter(obj->obj.has("artifact")).map(obj->obj.get("artifact").getAsJsonObject())
-				.map(obj->obj.get("url").getAsString()).forEach(url -> {
+				.map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject()).filter(obj->obj.has("artifact"))
+				.map(obj->obj.get("artifact").getAsJsonObject().get("url").getAsString()).forEach(url -> {
 					String fileName = url.substring(url.lastIndexOf('/') + 1);
 					Path file = libDir.resolve(fileName);
+					libs.add(file.toAbsolutePath().normalize().toString());
 					if(Files.exists(file)) return;
 					try {
+						LOGGER.debug("downloading " + url);
 						Files.copy(HttpConnection.newGetConnection(url, DeobfuscatorCommandLine.PROXY).getIn(), file);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					libs.add(file.toAbsolutePath().normalize().toString());
 		});
 	}
 	protected List<String> listLibs() {

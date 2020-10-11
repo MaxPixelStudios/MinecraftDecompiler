@@ -29,10 +29,10 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
 	}
 	@Override
 	public void decompile(Path source, Path target) throws IOException {
-
+		checkArgs(source, target);
 	}
 	@Override
-	public void downloadLib(Path libDir, String version) {
+	public void downloadLib(Path libDir, String version) throws IOException {
 		super.downloadLib(libDir, version);
 	}
 }
