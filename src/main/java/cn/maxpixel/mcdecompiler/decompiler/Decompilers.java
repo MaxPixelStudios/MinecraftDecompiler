@@ -20,21 +20,54 @@ package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumMap;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.ServiceLoader;
 
 public class Decompilers {
 	private static final EnumMap<Info.DecompilerType, IDecompiler> decompilers = new EnumMap<>(Info.DecompilerType.class);
 	private static final Object2ObjectOpenHashMap<String, ICustomizedDecompiler> customizedDecompilers = new Object2ObjectOpenHashMap<>();
 	static {
 		init();
+		initCustomized();
 	}
 	private static void init() {
 		decompilers.put(Info.DecompilerType.FERNFLOWER, new SpigotFernFlowerDecompiler());
 		decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
 		decompilers.put(Info.DecompilerType.OFFICIAL_FERNFLOWER, new FernFlowerDecompiler());
 		decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
-		decompilers.put(Info.DecompilerType.USER_DEFINED, new UserDefinedDecompiler());
+		decompilers.put(Info.DecompilerType.USER_DEFINED, lookForUDDecompiler());
+	}
+	private static UserDefinedDecompiler lookForUDDecompiler() {
+		try {
+			Path path = Paths.get("decompiler", "decompiler.properties");
+			if(Files.exists(path)) {
+				Properties decompilerProperties = new Properties();
+				decompilerProperties.load(Files.newBufferedReader(path));
+				String decompilerPath = Objects.requireNonNull(decompilerProperties.getProperty("decompiler-file"),
+						"decompiler-file is a required field");
+				String sourceType = Objects.requireNonNull(decompilerProperties.getProperty("source-type"),
+						"source-type is a required field");
+				String libRecommended = decompilerProperties.getProperty("lib-recommended", "false");
+				String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required field")
+						.split(" ");
+				return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Paths.get("decompiler", decompilerPath).
+						toAbsolutePath().normalize(), ObjectArrayList.wrap(args), Boolean.parseBoolean(libRecommended));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return UserDefinedDecompiler.NONE;
+	}
+	private static void initCustomized() {
+		ServiceLoader<ICustomizedDecompiler> loader = ServiceLoader.load(ICustomizedDecompiler.class);
 	}
 	public static IDecompiler get(Info.DecompilerType type) {
 		return decompilers.getOrDefault(type, decompilers.get(Info.DecompilerType.FERNFLOWER));

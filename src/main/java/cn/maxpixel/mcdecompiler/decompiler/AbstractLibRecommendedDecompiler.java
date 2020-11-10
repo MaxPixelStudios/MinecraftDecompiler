@@ -18,9 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine;
+import cn.maxpixel.mcdecompiler.util.NetworkUtil;
 import cn.maxpixel.mcdecompiler.util.VersionManifest;
-import cn.xiaopangxie732.easynetwork.http.HttpConnection;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +35,11 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
 	private final List<String> libs = new ObjectArrayList<>();
 	@Override
 	public void downloadLib(Path libDir, String version) throws IOException {
-		LOGGER.info("downloading libs of " + version);
+		if(version == null || version.isEmpty()) {
+			LOGGER.info("Minecraft version is not provided, skipping downloading libs");
+			return;
+		}
+		LOGGER.info("downloading libs of version " + version);
 		if(Files.notExists(libDir)) Files.createDirectories(libDir);
 		StreamSupport.stream(VersionManifest.getVersion(version).getAsJsonArray("libraries").spliterator(), true)
 				.map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject()).filter(obj->obj.has("artifact"))
@@ -47,7 +50,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
 					if(Files.exists(file)) return;
 					try {
 						LOGGER.debug("downloading " + url);
-						Files.copy(HttpConnection.newGetConnection(url, DeobfuscatorCommandLine.PROXY).getIn(), file);
+						Files.copy(NetworkUtil.newBuilder(url).connect().asStream(), file);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}

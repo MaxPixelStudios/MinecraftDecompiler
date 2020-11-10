@@ -50,6 +50,8 @@ public class ProcessUtil {
 					LOGGER.catching(e);
 				}
 			});
+			inT.setDaemon(true);
+			errT.setDaemon(true);
 			inT.start();
 			errT.start();
 			pro.waitFor();

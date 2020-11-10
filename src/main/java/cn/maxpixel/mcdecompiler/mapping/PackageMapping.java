@@ -22,9 +22,7 @@ public class PackageMapping extends Mapping {
 	public PackageMapping(String obfuscatedName, String originalName) {
 		super(obfuscatedName, originalName);
 	}
-	public PackageMapping() {
-		super();
-	}
+	public PackageMapping() {}
 
 	@Override
 	public String toString() {

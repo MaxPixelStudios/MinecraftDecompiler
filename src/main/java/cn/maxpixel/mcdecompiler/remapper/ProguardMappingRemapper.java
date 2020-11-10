@@ -25,6 +25,7 @@ import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 import java.util.List;
@@ -40,14 +41,6 @@ public class ProguardMappingRemapper extends Remapper {
 		this.mappingByObfus = mappingByObfus;
 		this.mappingByOri = mappingByOri;
 		this.superClassMapping = superClassMapping;
-	}
-	@Override
-	public String mapInnerClassName(String name, String ownerName, String innerName) {
-		ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(name));
-		if(classMapping != null) {
-			String innerClassName = NamingUtil.asNativeName(classMapping.getOriginalName());
-			return innerClassName.substring(innerClassName.lastIndexOf('$') + 1);
-		} else return innerName;
 	}
 	@Override
 	public String map(String internalName) {
@@ -74,37 +67,42 @@ public class ProguardMappingRemapper extends Remapper {
 		return name;
 	}
 
-	private String genDescriptor(String arg) {
-		if(arg.contains("[]")) {
-			ClassMapping argClass = mappingByOri.get(arg.replace("[]", ""));
-			if(argClass != null) {
-				StringBuilder arrays = new StringBuilder(2);
-				{
-					int dimension = NamingUtil.getDimension(arg), i = 0;
-					do {
-						arrays.append('[').append(']');
-						i++;
-					} while (i < dimension);
+	private Type mapType(final Type type) {
+		switch (type.getSort()) {
+			case Type.ARRAY:
+				StringBuilder remappedDescriptor = new StringBuilder();
+				for (int i = 0; i < type.getDimensions(); ++i) {
+					remappedDescriptor.append('[');
 				}
-				return NamingUtil.asDescriptor(argClass.getObfuscatedName() + arrays);
-			} else return NamingUtil.asDescriptor(arg);
-		} else {
-			ClassMapping argClass = mappingByOri.get(arg);
-			if(argClass != null) return NamingUtil.asDescriptor(argClass.getObfuscatedName());
-			else return NamingUtil.asDescriptor(arg);
+				remappedDescriptor.append(mapType(type.getElementType()).getDescriptor());
+				return Type.getType(remappedDescriptor.toString());
+			case Type.OBJECT:
+				ClassMapping cm = mappingByOri.get(type.getClassName());
+				return cm != null ? Type.getObjectType(NamingUtil.asNativeName(cm.getObfuscatedName())) : type;
+			default:
+				return type;
 		}
+	}
+	private String getObfuscatedDescriptor(String originalDescriptor) {
+		if ("()V".equals(originalDescriptor)) {
+			return originalDescriptor;
+		}
+
+		StringBuilder stringBuilder = new StringBuilder("(");
+		for (Type argumentType : Type.getArgumentTypes(originalDescriptor)) {
+			stringBuilder.append(mapType(argumentType).getDescriptor());
+		}
+		Type returnType = Type.getReturnType(originalDescriptor);
+		if (returnType == Type.VOID_TYPE) {
+			stringBuilder.append(")V");
+		} else {
+			stringBuilder.append(')').append(mapType(returnType).getDescriptor());
+		}
+		return stringBuilder.toString();
 	}
 
 	private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<MethodMapping> target, MethodMapping compare) {
-		StringBuilder builder = new StringBuilder().append('(');
-		if(compare.getArgTypes() != null) {
-			for(String arg : compare.getArgTypes()) {
-				builder.append(genDescriptor(arg));
-			}
-		}
-		builder.append(')')
-				.append(genDescriptor(compare.getReturnVal()));
-		if(descriptor.contentEquals(builder)) target.set(compare);
+		if(descriptor.equals(getObfuscatedDescriptor(compare.getOriginalDescriptor()))) target.set(compare);
 	}
 
 	private MethodMapping processSuperMethod(String owner, String name, String descriptor) {

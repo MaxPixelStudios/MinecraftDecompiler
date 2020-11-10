@@ -49,7 +49,7 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
 		for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
 		args.add(source.toString());
 		args.add(target.toString());
-		Process process = Runtime.getRuntime().exec(args.elements());
+		Process process = Runtime.getRuntime().exec(args.toArray(new String[0]));
 		ProcessUtil.waitForProcess(process);
 	}
 }

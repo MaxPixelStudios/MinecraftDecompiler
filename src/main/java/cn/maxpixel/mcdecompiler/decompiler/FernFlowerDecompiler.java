@@ -26,10 +26,12 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
-public class FernFlowerDecompiler extends AbstractLibRecommendedDecompiler {
+// Do not extents AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
+// TODO: Make FernFlowerDecompiler read all libraries successfully
+public class FernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
+		implements IDecompiler {
 	FernFlowerDecompiler() {}
 	@Override
 	public SourceType getSourceType() {
@@ -47,8 +49,8 @@ public class FernFlowerDecompiler extends AbstractLibRecommendedDecompiler {
 		options.put("rsy", "1");
 		ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options, new PrintStreamLogger(System.out));
 		decompiler.addSource(source.toFile());
-		List<String> libs = listLibs();
-		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
+//		List<String> libs = listLibs();
+//		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
 		decompiler.decompileContext();
 	}
 	private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {

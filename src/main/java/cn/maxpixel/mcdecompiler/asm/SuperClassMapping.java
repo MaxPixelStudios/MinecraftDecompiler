@@ -30,7 +30,7 @@ import java.util.Map;
 public class SuperClassMapping extends ClassVisitor {
 	private final Map<String, List<String>> superClassMap = new Object2ObjectOpenHashMap<>();
 	public SuperClassMapping() {
-		super(Opcodes.ASM7);
+		super(Opcodes.ASM9);
 	}
 
 	@Override

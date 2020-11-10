@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.BufferedReader;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-public class ProguardMappingReader extends MappingReader {
+public class ProguardMappingReader extends AbstractMappingReader {
 	public ProguardMappingReader(BufferedReader reader) {
 		super(reader);
 	}
@@ -45,12 +46,13 @@ public class ProguardMappingReader extends MappingReader {
 		super(path);
 	}
 
+	private static final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
 	@Override
 	protected ProguardMappingProcessor getProcessor() {
-		return new ProguardMappingProcessor();
+		return PROCESSOR;
 	}
 
-	private static class ProguardMappingProcessor extends NonPackageMappingProcessor {
+	private static class ProguardMappingProcessor extends AbstractNonPackageMappingProcessor {
 		@Override
 		public List<ClassMapping> process(Stream<String> lines) {
 			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
@@ -58,8 +60,8 @@ public class ProguardMappingReader extends MappingReader {
 			lines.forEach(s -> {
 				if(!s.startsWith(" ")) {
 					if(currClass.get() != null) {
-						mappings.add(currClass.getAndSet(processClass(s.substring(0, s.indexOf(':') + 1))));
-					} else currClass.set(processClass(s.substring(0, s.indexOf(':') + 1)));
+						mappings.add(currClass.getAndSet(processClass(s)));
+					} else currClass.set(processClass(s));
 				} else {
 					if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processMethod(s.trim()));
 					else currClass.get().addField(processField(s.trim()));
@@ -77,29 +79,33 @@ public class ProguardMappingReader extends MappingReader {
 
 		@Override
 		protected MethodMapping processMethod(String line) {
-			MethodMapping mapping = new MethodMapping();
-			String[] linenums = line.trim().split(":");
+			MethodMapping methodMapping = new MethodMapping();
+
+			String[] linenums = line.split(":");
 			String[] method;
 			if(linenums.length == 3){
-				mapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
-				method = linenums[2].split(" ");
-			} else method = linenums[0].split(" ");
-			mapping.setReturnVal(method[0]);
-			mapping.setObfuscatedName(method[3]);
-			String ori_arg = method[1];
-			if(ori_arg.contains("()")) mapping.setOriginalName(ori_arg.substring(0, ori_arg.indexOf('(')));
-			else {
-				String[] ori_args = ori_arg.split("([(]|[)])+");
-				mapping.setOriginalName(ori_args[0]);
-				mapping.setArgTypes(ori_args[1].split(","));
-			}
-			return mapping;
+				method = linenums[2].split("( -> )| ");
+				methodMapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
+			} else method = linenums[0].split("( -> )| ");
+			methodMapping.setObfuscatedName(method[2]);
+
+			String[] original_args = method[1].split("\\("); // [0] is original name, [1] is args
+			original_args[1] = original_args[1].substring(0, original_args[1].length() -1);
+			methodMapping.setOriginalName(original_args[0]);
+
+			StringBuilder descriptor = new StringBuilder().append('(');
+			for(String argTypeJN : original_args[1].split(","))
+				if(!argTypeJN.isEmpty()) descriptor.append(NamingUtil.asDescriptor(argTypeJN)); // JN: Java Name
+			descriptor.append(')').append(NamingUtil.asDescriptor(method[0]));
+			methodMapping.setOriginalDescriptor(descriptor.toString());
+
+			return methodMapping;
 		}
 
 		@Override
 		protected FieldMapping processField(String line) {
-			String[] strings = line.trim().split("( -> )| ");
-			return new FieldMapping(strings[2], strings[1], strings[0]);
+			String[] strings = line.split("( -> )| ");
+			return new FieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
 		}
 	}
 }

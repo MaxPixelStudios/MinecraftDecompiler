@@ -25,10 +25,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
-public class SpigotFernFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalJarDecompiler {
+// Do not extents AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
+// TODO: Make SpigotFernFlowerDecompiler read all libraries successfully
+public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
+		implements IExternalJarDecompiler {
 	private Path decompilerJarPath;
 	SpigotFernFlowerDecompiler() {}
 	@Override
@@ -40,8 +42,8 @@ public class SpigotFernFlowerDecompiler extends AbstractLibRecommendedDecompiler
 		checkArgs(source, target);
 		ObjectArrayList<String> args = new ObjectArrayList<>();
 		args.addAll(Arrays.asList("java", "-jar", decompilerJarPath.toString(), "-log=TRACE", "-dgs=1", "-hdc=0", "-asc=1", "-udv=0", "-rsy=1", "-aoa=1"));
-		List<String> libs = listLibs();
-		for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
+//		List<String> libs = listLibs();
+//		for(int i = 0; i < 26; i++) args.add("-e=\"" + libs.get(i) + "\"");
 		args.add(source.toString());
 		args.add(target.toString());
 		Process process = Runtime.getRuntime().exec(args.toArray(new String[0]));

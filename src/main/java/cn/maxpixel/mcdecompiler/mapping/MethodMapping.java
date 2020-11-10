@@ -21,39 +21,45 @@ package cn.maxpixel.mcdecompiler.mapping;
 import java.util.Arrays;
 
 public class MethodMapping extends Mapping {
-	private final int[] linenumber = new int[2];
-	private String returnVal;
-	private String[] argTypes;
-	public MethodMapping() {
-		super();
-	}
+	private final int[] linenumbers = new int[2];
+	private String obfuscatedDescriptor;
+	private String originalDescriptor;
+	public MethodMapping() {}
 	public MethodMapping(String obfuscatedName, String originalName, int linenumber1,
-	                     int linenumber2, String returnVal, String[] argTypes) {
+	                     int linenumber2, String originalDescriptor) { // for Proguard mappings
 		super(obfuscatedName, originalName);
-		this.linenumber[0] = linenumber1;
-		this.linenumber[1] = linenumber2;
-		this.returnVal = returnVal;
-		this.argTypes = argTypes;
+		this.linenumbers[0] = linenumber1;
+		this.linenumbers[1] = linenumber2;
+		this.originalDescriptor = originalDescriptor;
+	}
+	public MethodMapping(String obfuscatedName, String originalName,
+	                     String obfuscatedDescriptor, String originalDescriptor) { // others
+		super(obfuscatedName, originalName);
+		this.obfuscatedDescriptor = obfuscatedDescriptor;
+		this.originalDescriptor = originalDescriptor;
 	}
 
-	public int[] getLinenumber() {
-		return linenumber;
+	// Proguard only -- start
+	public int[] getLinenumbers() {
+		return linenumbers;
 	}
 	public void setLinenumber(int linenumber1, int linenumber2) {
-		this.linenumber[0] = linenumber1;
-		this.linenumber[1] = linenumber2;
+		this.linenumbers[0] = linenumber1;
+		this.linenumbers[1] = linenumber2;
 	}
-	public String getReturnVal() {
-		return returnVal;
+	// Proguard only -- end
+
+	public String getObfuscatedDescriptor() {
+		return obfuscatedDescriptor;
 	}
-	public void setReturnVal(String returnVal) {
-		this.returnVal = returnVal;
+	public void setObfuscatedDescriptor(String obfuscatedDescriptor) {
+		this.obfuscatedDescriptor = obfuscatedDescriptor;
 	}
-	public String[] getArgTypes() {
-		return argTypes;
+	public String getOriginalDescriptor() {
+		return originalDescriptor;
 	}
-	public void setArgTypes(String[] argTypes) {
-		this.argTypes = argTypes;
+	public void setOriginalDescriptor(String originalDescriptor) {
+		this.originalDescriptor = originalDescriptor;
 	}
 
 	@Override
@@ -61,9 +67,9 @@ public class MethodMapping extends Mapping {
 		return "MethodMapping{" +
 				"obfuscated name=" + getObfuscatedName() +
 				", original name=" + getOriginalName() +
-				", linenumber=" + Arrays.toString(linenumber) +
-				", returnVal='" + returnVal + '\'' +
-				", argTypes=" + Arrays.toString(argTypes) +
+				", linenumber=" + Arrays.toString(linenumbers) +
+				", obfuscatedDescriptor='" + obfuscatedDescriptor + '\'' +
+				", originalDescriptor=" + originalDescriptor +
 				'}';
 	}
 }

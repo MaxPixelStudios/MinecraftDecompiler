@@ -23,41 +23,19 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cn.maxpixel</groupId>
 	<artifactId>minecraft-decompiler</artifactId>
-	<version>1.1.1</version>
+	<version>1.2</version>
 	<properties>
-		<depend.asm.ver>9.0-beta</depend.asm.ver>
+		<depend.asm.ver>9.0</depend.asm.ver>
 		<depend.gson.ver>2.8.6</depend.gson.ver>
 		<depend.log4j.ver>2.13.3</depend.log4j.ver>
 		<depend.fastutil.ver>8.4.1</depend.fastutil.ver>
 		<depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
-		<depend.ezntwk.ver>1.0-Dev</depend.ezntwk.ver>
 		<depend.cfr.ver>0.150</depend.cfr.ver>
-		<depend.fernflower.ver>398</depend.fernflower.ver>
+		<depend.fernflower.ver>399</depend.fernflower.ver>
+		<depend.classloaderutils.ver>1.0.0</depend.classloaderutils.ver>
 	</properties>
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<version>3.0.0-M1</version>
-				<executions>
-					<execution>
-						<id>add-dependency</id>
-						<phase>install</phase>
-						<configuration>
-							<file>${basedir}/lib/easynetwork-1.0-Dev.jar</file>
-							<groupId>cn.xiaopangxie732</groupId>
-							<artifactId>easynetwork</artifactId>
-							<version>${depend.ezntwk.ver}</version>
-							<packaging>jar</packaging>
-							<generatePom>true</generatePom>
-						</configuration>
-						<goals>
-							<goal>install-file</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -70,7 +48,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>3.2.4</version>
 				<configuration>
 					<transformers>
 						<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -84,7 +62,7 @@
 				<executions>
 					<execution>
 						<id>shade</id>
-						<phase>install</phase>
+						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
 						</goals>
@@ -94,14 +72,14 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.2.1</version>
 				<configuration>
 					<classifier>source</classifier>
 				</configuration>
 				<executions>
 					<execution>
 						<id>generate-source</id>
-						<phase>install</phase>
+						<phase>package</phase>
 						<goals>
 							<goal>jar</goal>
 						</goals>
@@ -111,6 +89,10 @@
 		</plugins>
 	</build>
 	<repositories>
+		<repository>
+			<id>lx-gaming</id>
+			<url>https://dl.bintray.com/lxgaming/maven</url>
+		</repository>
 		<repository>
 			<id>minecraft-forge</id>
 			<url>https://files.minecraftforge.net/maven/</url>
@@ -131,11 +113,6 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>${depend.gson.ver}</version>
-		</dependency>
-		<dependency>
-			<groupId>cn.xiaopangxie732</groupId>
-			<artifactId>easynetwork</artifactId>
-			<version>${depend.ezntwk.ver}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
@@ -166,6 +143,11 @@
 			<groupId>net.minecraftforge</groupId>
 			<artifactId>fernflower</artifactId>
 			<version>${depend.fernflower.ver}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lxgaming</groupId>
+			<artifactId>classloaderutils</artifactId>
+			<version>${depend.classloaderutils.ver}</version>
 		</dependency>
 	</dependencies>
 </project>

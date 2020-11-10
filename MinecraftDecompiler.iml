@@ -12,17 +12,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm:9.0-beta" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-commons:9.0-beta" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-tree:9.0-beta" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-analysis:9.0-beta" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm:9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-commons:9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-tree:9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-analysis:9.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.6" level="project" />
-    <orderEntry type="library" name="Maven: cn.xiaopangxie732:easynetwork:1.0-Dev" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-api:2.13.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-core:2.13.3" level="project" />
     <orderEntry type="library" name="Maven: it.unimi.dsi:fastutil:8.4.1" level="project" />
     <orderEntry type="library" name="Maven: net.sf.jopt-simple:jopt-simple:6.0-alpha-3" level="project" />
     <orderEntry type="library" name="Maven: org.benf:cfr:0.150" level="project" />
-    <orderEntry type="library" name="Maven: net.minecraftforge:fernflower:398" level="project" />
+    <orderEntry type="library" name="Maven: net.minecraftforge:fernflower:399" level="project" />
+    <orderEntry type="library" name="Maven: io.github.lxgaming:classloaderutils:1.0.0" level="project" />
   </component>
 </module>

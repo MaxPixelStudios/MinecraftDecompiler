@@ -33,38 +33,39 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class MappingReader implements AutoCloseable {
+public abstract class AbstractMappingReader implements AutoCloseable {
 	protected BufferedReader reader;
 	private final List<ClassMapping> mappings;
 	private final List<PackageMapping> packages;
 
-	protected MappingReader(BufferedReader reader) {
+	protected AbstractMappingReader(BufferedReader reader) {
 		this.reader = reader;
 		Stream<String> lines = reader.lines().map(s -> {
 			if(s.startsWith("#")) return null;
 
 			int index = s.indexOf('#');
-			if(index > 0) return s.substring(0, index - 1);
+			if(index > 0) return s.substring(0, index);
+			else if(index == 0) return null;
 
 			if(s.replaceAll("\\s+", "").isEmpty()) return null;
 
 			return s;
 		}).filter(Objects::nonNull);
-		NonPackageMappingProcessor processor = getProcessor();
+		AbstractNonPackageMappingProcessor processor = getProcessor();
 		mappings = processor.process(lines);
-		packages = processor instanceof MappingProcessor ? ((MappingProcessor) processor).processPackage(lines) : Collections.emptyList();
+		packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : Collections.emptyList();
 	}
-	protected MappingReader(Reader rd) {
+	protected AbstractMappingReader(Reader rd) {
 		this(new BufferedReader(rd));
 	}
-	protected MappingReader(InputStream is) {
+	protected AbstractMappingReader(InputStream is) {
 		this(new InputStreamReader(is));
 	}
-	protected MappingReader(String path) throws FileNotFoundException, NullPointerException {
+	protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
 		this(new FileReader(Objects.requireNonNull(path)));
 	}
 
-	protected abstract NonPackageMappingProcessor getProcessor();
+	protected abstract AbstractNonPackageMappingProcessor getProcessor();
 	public List<ClassMapping> getMappings() {
 		return mappings;
 	}
@@ -89,10 +90,11 @@ public abstract class MappingReader implements AutoCloseable {
 			reader = null;
 		}
 	}
-	protected abstract static class MappingProcessor extends NonPackageMappingProcessor {
-		protected abstract List<PackageMapping> processPackage(Stream<String> lines);
+	protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
+		protected abstract List<PackageMapping> getPackages();
+		protected abstract PackageMapping processPackage(String line);
 	}
-	protected abstract static class NonPackageMappingProcessor {
+	protected abstract static class AbstractNonPackageMappingProcessor {
 		public abstract List<ClassMapping> process(Stream<String> lines);
 		protected abstract ClassMapping processClass(String line);
 		protected abstract MethodMapping processMethod(String line);

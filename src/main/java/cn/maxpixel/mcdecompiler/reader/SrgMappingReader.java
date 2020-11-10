@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.BufferedReader;
@@ -31,10 +31,10 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SrgMappingReader extends MappingReader {
+public class SrgMappingReader extends AbstractMappingReader {
 	public SrgMappingReader(BufferedReader reader) {
 		super(reader);
 	}
@@ -47,66 +47,88 @@ public class SrgMappingReader extends MappingReader {
 	public SrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
 		super(path);
 	}
+	private static final SrgMappingProcessor PROCESSOR = new SrgMappingProcessor();
 	@Override
-	protected NonPackageMappingProcessor getProcessor() {
-		return new SrgMappingProcessor();
+	protected AbstractNonPackageMappingProcessor getProcessor() {
+		return PROCESSOR;
 	}
-	private static class SrgMappingProcessor extends MappingProcessor {
-		private Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
+	private static class SrgMappingProcessor extends AbstractMappingProcessor {
+		private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
 		@Override
 		public List<ClassMapping> process(Stream<String> lines) {
-			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>();
-			lines.filter(s -> s.startsWith("CL:")).forEach(s -> mappings.add(processClass(s)));
-			for(int i = 0; i < mappings.size(); ++i)
-				map.put(mappings.get(i).getObfuscatedName(), i); //Use obf name
-			lines.filter(s -> !(s.startsWith("CL:") || s.startsWith("PK:"))).forEach(s -> {
-				if(s.startsWith("FD:")) {
-					FieldMapping mapping = processField(s);
-					String obfClassName = mapping.getObfuscatedName().substring(0, mapping.getObfuscatedName().lastIndexOf('.'));
-					String oriClassName = mapping.getOriginalName().substring(0, mapping.getOriginalName().lastIndexOf('.'));
-					int index = map.getInt(obfClassName);
-					ClassMapping cm;
-					if(index < mappings.size()) {
-						cm = mappings.get(index);
-						if(cm == null) {
-							cm = new ClassMapping(obfClassName, oriClassName);
-							mappings.add(cm);
-						}
-					} else {
-						cm = new ClassMapping(obfClassName, oriClassName);
-						mappings.add(cm);
-					}
-					cm.addField(new FieldMapping(mapping.getObfuscatedName().substring(mapping.getObfuscatedName().lastIndexOf('.') + 1),
-												mapping.getOriginalName().substring(mapping.getOriginalName().lastIndexOf('.') + 1)));
-				} else if(s.startsWith("MD:")) {
-					processMethod(s);
+			final Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>();
+			lines.filter(s -> s.startsWith("CL:") || s.startsWith("PK:")).forEach(s -> {
+				s = s.trim();
+				switch(s.substring(0, 3)) {
+					case "CL:":
+						ClassMapping classMapping = processClass(s);
+						mappings.put(classMapping.getObfuscatedName(), classMapping);
+						break;
+					case "PK:":
+						packages.add(processPackage(s));
+						break;
+					default:
+						throw new RuntimeException("Shouldn't run here");
 				}
 			});
-			return mappings;
+			lines.filter(s -> !(s.startsWith("CL:") || s.startsWith("PK:"))).forEach(s -> {
+				s = s.trim();
+				switch(s.substring(0, 3)) {
+					case "FD:":
+						FieldMapping fieldMapping = processField(s);
+						String obfClassName = fieldMapping.getObfuscatedName().substring(0, fieldMapping.getObfuscatedName().lastIndexOf('/'));
+						ClassMapping cm = mappings.get(obfClassName);
+						if(cm == null) {
+							cm = new ClassMapping(obfClassName,
+									fieldMapping.getOriginalName().substring(0, fieldMapping.getOriginalName().lastIndexOf('/'))// original class name
+							);
+							mappings.put(obfClassName, cm);
+						}
+						cm.addField(new FieldMapping(fieldMapping.getObfuscatedName().substring(fieldMapping.getObfuscatedName().lastIndexOf('/') + 1),
+								fieldMapping.getOriginalName().substring(fieldMapping.getOriginalName().lastIndexOf('/') + 1)));
+						break;
+					case "MD:":
+						MethodMapping methodMapping = processMethod(s);
+						obfClassName = methodMapping.getObfuscatedName().substring(0, methodMapping.getObfuscatedName().lastIndexOf('/'));
+						cm = mappings.get(obfClassName);
+						if(cm == null) {
+							cm = new ClassMapping(obfClassName,
+									methodMapping.getOriginalName().substring(0, methodMapping.getOriginalName().lastIndexOf('/'))// original class name
+							);
+							mappings.put(obfClassName, cm);
+						}
+						cm.addMethod(new MethodMapping(methodMapping.getObfuscatedName().
+								substring(methodMapping.getObfuscatedName().lastIndexOf('/') + 1),
+								methodMapping.getOriginalName().substring(methodMapping.getOriginalName().lastIndexOf('/') + 1),
+								methodMapping.getObfuscatedDescriptor(), methodMapping.getOriginalDescriptor()));
+						break;
+				}
+			});
+			return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
 		}
 		@Override
 		protected ClassMapping processClass(String line) {
-			String[] split = line.split(" ");
-			return new ClassMapping(NamingUtil.asJavaName(split[1]), NamingUtil.asJavaName(split[2]));
+			String[] strings = line.split(" ");
+			return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
 		}
 		@Override
 		protected MethodMapping processMethod(String line) {
-			String[] split = line.split(" ");
-			return null;
+			String[] strings = line.split(" ");
+			return new MethodMapping(strings[1], strings[3], strings[2], strings[4]);
 		}
 		@Override
 		protected FieldMapping processField(String line) {
-			String[] split = line.split(" ");
-			return new FieldMapping(NamingUtil.asJavaName(split[1]), NamingUtil.asJavaName(split[2]));
+			String[] strings = line.split(" ");
+			return new FieldMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
 		}
 		@Override
-		protected List<PackageMapping> processPackage(Stream<String> lines) {
-			ObjectArrayList<PackageMapping> mappings = new ObjectArrayList<>();
-			lines.filter(s -> s.startsWith("PK:")).forEach(s -> {
-				String[] split = s.split(" ");
-				mappings.add(new PackageMapping(NamingUtil.asJavaName(split[1]), NamingUtil.asJavaName(split[2])));
-			});
-			return mappings;
+		protected List<PackageMapping> getPackages() {
+			return packages;
+		}
+		@Override
+		protected PackageMapping processPackage(String line) {
+			String[] strings = line.split(" ");
+			return new PackageMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
 		}
 	}
 }

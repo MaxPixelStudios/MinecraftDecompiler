@@ -18,22 +18,26 @@
 
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
-import cn.maxpixel.mcdecompiler.*;
+import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.InfoProviders;
+import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
 import cn.maxpixel.mcdecompiler.remapper.ProguardMappingRemapper;
-import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.JarUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.xiaopangxie732.easynetwork.http.HttpConnection;
+import cn.maxpixel.mcdecompiler.util.NetworkUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
@@ -50,14 +54,15 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
 		checkVersion();
 		if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
 			throw new RuntimeException("This version doesn't have mappings. Please use 1.14.4 or above");
-		File f = new File(InfoProviders.get().getProguardMappingDownloadPath(version, type));
-		f.getParentFile().mkdirs();
-		if(!f.exists()) {
+		Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
+		try {
+			Files.createDirectories(p.getParent());
+		} catch(IOException ignored) {}
+		if(Files.notExists(p)) {
 			LOGGER.info("downloading mapping...");
-			try(FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
-				channel.transferFrom(HttpConnection.newGetConnection(
-						version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").getAsJsonObject().get("url").getAsString(),
-						DeobfuscatorCommandLine.PROXY).getInChannel(), 0, Long.MAX_VALUE);
+			try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+				channel.transferFrom(NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
+						getAsJsonObject().get("url").getAsString()).connect().asChannel(), 0, Long.MAX_VALUE);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
