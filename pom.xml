@@ -23,7 +23,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cn.maxpixel</groupId>
 	<artifactId>minecraft-decompiler</artifactId>
-	<version>1.2</version>
+	<version>2.0</version>
 	<properties>
 		<depend.asm.ver>9.0</depend.asm.ver>
 		<depend.gson.ver>2.8.6</depend.gson.ver>
