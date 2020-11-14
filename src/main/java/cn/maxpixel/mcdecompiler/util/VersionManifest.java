@@ -31,23 +31,23 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class VersionManifest {
-	public static final JsonObject VERSION_MANIFEST;
-	private static final Map<String, String> versions;
-	private static final Map<String, JsonObject> versionJsonCache = new Object2ObjectOpenHashMap<>();
+    public static final JsonObject VERSION_MANIFEST;
+    private static final Map<String, String> versions;
+    private static final Map<String, JsonObject> versionJsonCache = new Object2ObjectOpenHashMap<>();
 
-	public static JsonObject getVersion(String id) {
-		if(!versions.containsKey(Objects.requireNonNull(id, "id cannot be null!"))) throw new RuntimeException("The given game ID does not exists!");
-		return versionJsonCache.computeIfAbsent(id,
-				_id->JsonParser.parseReader(NetworkUtil.newBuilder(versions.get(_id)).connect().asReader()).getAsJsonObject());
-	}
+    public static JsonObject getVersion(String id) {
+        if(!versions.containsKey(Objects.requireNonNull(id, "id cannot be null!"))) throw new RuntimeException("The given game ID does not exists!");
+        return versionJsonCache.computeIfAbsent(id,
+                _id->JsonParser.parseReader(NetworkUtil.newBuilder(versions.get(_id)).connect().asReader()).getAsJsonObject());
+    }
 
-	static {
-		try(Reader reader = NetworkUtil.newBuilder("https://launchermeta.mojang.com/mc/game/version_manifest.json").connect().asReader()) {
-			VERSION_MANIFEST = JsonParser.parseReader(reader).getAsJsonObject();
-			versions = StreamSupport.stream(VERSION_MANIFEST.getAsJsonArray("versions").spliterator(), true)
-					.map(JsonElement::getAsJsonObject).collect(Collectors.toMap(obj->obj.get("id").getAsString(), obj->obj.get("url").getAsString()));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    static {
+        try(Reader reader = NetworkUtil.newBuilder("https://launchermeta.mojang.com/mc/game/version_manifest.json").connect().asReader()) {
+            VERSION_MANIFEST = JsonParser.parseReader(reader).getAsJsonObject();
+            versions = StreamSupport.stream(VERSION_MANIFEST.getAsJsonArray("versions").spliterator(), true)
+                    .map(JsonElement::getAsJsonObject).collect(Collectors.toMap(obj->obj.get("id").getAsString(), obj->obj.get("url").getAsString()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

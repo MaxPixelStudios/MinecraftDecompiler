@@ -27,26 +27,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
-	CFRDecompiler() {}
-	@Override
-	public SourceType getSourceType() {
-		return SourceType.FILE;
-	}
-	@Override
-	public void decompile(Path source, Path target) {
-		checkArgs(source, target);
-		Map<String, String> options = new HashMap<>();
-		options.put("aexagg", "true");
-		options.put("forceclassfilever", "52.0");
-		options.put("caseinsensitivefs", "false");
-		options.put("clobber", "true");
-		options.put("eclipse", "false");
-		options.put("extraclasspath", String.join(Info.PATH_SEPARATOR, listLibs()));
-		options.put("outputpath", target.toString());
-		options.put("removebadgenerics", "false");
-		options.put("removedeadconditionals", "false");
-		options.put("jarfilter", "^([net.minecraft]|[com.mojang]){1}.*");
-		CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
-		cfr.analyse(Collections.singletonList(source.toString()));
-	}
+    CFRDecompiler() {}
+    @Override
+    public SourceType getSourceType() {
+        return SourceType.FILE;
+    }
+    @Override
+    public void decompile(Path source, Path target) {
+        checkArgs(source, target);
+        Map<String, String> options = new HashMap<>();
+        options.put("aexagg", "true");
+        options.put("forceclassfilever", "52.0");
+        options.put("caseinsensitivefs", "false");
+        options.put("clobber", "true");
+        options.put("eclipse", "false");
+        options.put("extraclasspath", String.join(Info.PATH_SEPARATOR, listLibs()));
+        options.put("outputpath", target.toString());
+        options.put("removebadgenerics", "false");
+        options.put("removedeadconditionals", "false");
+        options.put("jarfilter", "^([net.minecraft]|[com.mojang]){1}.*");
+        CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
+        cfr.analyse(Collections.singletonList(source.toString()));
+    }
 }

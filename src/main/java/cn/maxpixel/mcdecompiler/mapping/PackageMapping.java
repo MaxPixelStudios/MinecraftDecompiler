@@ -19,14 +19,14 @@
 package cn.maxpixel.mcdecompiler.mapping;
 
 public class PackageMapping extends Mapping {
-	public PackageMapping(String obfuscatedName, String originalName) {
-		super(obfuscatedName, originalName);
-	}
-	public PackageMapping() {}
+    public PackageMapping(String obfuscatedName, String originalName) {
+        super(obfuscatedName, originalName);
+    }
+    public PackageMapping() {}
 
-	@Override
-	public String toString() {
-		return "PackageMapping{obfuscated name=" + getObfuscatedName() +
-				", original name=" + getOriginalName() + '}';
-	}
+    @Override
+    public String toString() {
+        return "PackageMapping{obfuscated name=" + getObfuscatedName() +
+                ", original name=" + getOriginalName() + '}';
+    }
 }

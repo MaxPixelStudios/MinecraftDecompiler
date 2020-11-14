@@ -19,5 +19,5 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 public interface ICustomizedDecompiler extends IDecompiler {
-	String name();
+    String name();
 }

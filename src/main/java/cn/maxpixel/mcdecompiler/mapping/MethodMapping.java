@@ -21,55 +21,55 @@ package cn.maxpixel.mcdecompiler.mapping;
 import java.util.Arrays;
 
 public class MethodMapping extends Mapping {
-	private final int[] linenumbers = new int[2];
-	private String obfuscatedDescriptor;
-	private String originalDescriptor;
-	public MethodMapping() {}
-	public MethodMapping(String obfuscatedName, String originalName, int linenumber1,
-	                     int linenumber2, String originalDescriptor) { // for Proguard mappings
-		super(obfuscatedName, originalName);
-		this.linenumbers[0] = linenumber1;
-		this.linenumbers[1] = linenumber2;
-		this.originalDescriptor = originalDescriptor;
-	}
-	public MethodMapping(String obfuscatedName, String originalName,
-	                     String obfuscatedDescriptor, String originalDescriptor) { // others
-		super(obfuscatedName, originalName);
-		this.obfuscatedDescriptor = obfuscatedDescriptor;
-		this.originalDescriptor = originalDescriptor;
-	}
+    private final int[] linenumbers = new int[2];
+    private String obfuscatedDescriptor;
+    private String originalDescriptor;
+    public MethodMapping() {}
+    public MethodMapping(String obfuscatedName, String originalName, int linenumber1,
+                         int linenumber2, String originalDescriptor) { // for Proguard mappings
+        super(obfuscatedName, originalName);
+        this.linenumbers[0] = linenumber1;
+        this.linenumbers[1] = linenumber2;
+        this.originalDescriptor = originalDescriptor;
+    }
+    public MethodMapping(String obfuscatedName, String originalName,
+                         String obfuscatedDescriptor, String originalDescriptor) { // others
+        super(obfuscatedName, originalName);
+        this.obfuscatedDescriptor = obfuscatedDescriptor;
+        this.originalDescriptor = originalDescriptor;
+    }
 
-	// Proguard only -- start
-	public int[] getLinenumbers() {
-		return linenumbers;
-	}
-	public void setLinenumber(int linenumber1, int linenumber2) {
-		this.linenumbers[0] = linenumber1;
-		this.linenumbers[1] = linenumber2;
-	}
-	// Proguard only -- end
+    // Proguard only -- start
+    public int[] getLinenumbers() {
+        return linenumbers;
+    }
+    public void setLinenumber(int linenumber1, int linenumber2) {
+        this.linenumbers[0] = linenumber1;
+        this.linenumbers[1] = linenumber2;
+    }
+    // Proguard only -- end
 
-	public String getObfuscatedDescriptor() {
-		return obfuscatedDescriptor;
-	}
-	public void setObfuscatedDescriptor(String obfuscatedDescriptor) {
-		this.obfuscatedDescriptor = obfuscatedDescriptor;
-	}
-	public String getOriginalDescriptor() {
-		return originalDescriptor;
-	}
-	public void setOriginalDescriptor(String originalDescriptor) {
-		this.originalDescriptor = originalDescriptor;
-	}
+    public String getObfuscatedDescriptor() {
+        return obfuscatedDescriptor;
+    }
+    public void setObfuscatedDescriptor(String obfuscatedDescriptor) {
+        this.obfuscatedDescriptor = obfuscatedDescriptor;
+    }
+    public String getOriginalDescriptor() {
+        return originalDescriptor;
+    }
+    public void setOriginalDescriptor(String originalDescriptor) {
+        this.originalDescriptor = originalDescriptor;
+    }
 
-	@Override
-	public String toString() {
-		return "MethodMapping{" +
-				"obfuscated name=" + getObfuscatedName() +
-				", original name=" + getOriginalName() +
-				", linenumber=" + Arrays.toString(linenumbers) +
-				", obfuscatedDescriptor='" + obfuscatedDescriptor + '\'' +
-				", originalDescriptor=" + originalDescriptor +
-				'}';
-	}
+    @Override
+    public String toString() {
+        return "MethodMapping{" +
+                "obfuscated name=" + getObfuscatedName() +
+                ", original name=" + getOriginalName() +
+                ", linenumber=" + Arrays.toString(linenumbers) +
+                ", obfuscatedDescriptor='" + obfuscatedDescriptor + '\'' +
+                ", originalDescriptor=" + originalDescriptor +
+                '}';
+    }
 }

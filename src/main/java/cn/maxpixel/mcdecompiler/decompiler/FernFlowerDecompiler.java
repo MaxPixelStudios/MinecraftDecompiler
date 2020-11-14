@@ -31,31 +31,31 @@ import java.util.Map;
 // Do not extents AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make FernFlowerDecompiler read all libraries successfully
 public class FernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
-		implements IDecompiler {
-	FernFlowerDecompiler() {}
-	@Override
-	public SourceType getSourceType() {
-		return SourceType.DIRECTORY;
-	}
-	@Override
-	public void decompile(Path source, Path target) throws IOException {
-		checkArgs(source, target);
-		Map<String, Object> options = new Object2ObjectOpenHashMap<>();
-		options.put("log", "TRACE");
-		options.put("dgs", "1");
-		options.put("hdc", "0");
-		options.put("asc", "1");
-		options.put("udv", "0");
-		options.put("rsy", "1");
-		ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options, new PrintStreamLogger(System.out));
-		decompiler.addSource(source.toFile());
+        implements IDecompiler {
+    FernFlowerDecompiler() {}
+    @Override
+    public SourceType getSourceType() {
+        return SourceType.DIRECTORY;
+    }
+    @Override
+    public void decompile(Path source, Path target) throws IOException {
+        checkArgs(source, target);
+        Map<String, Object> options = new Object2ObjectOpenHashMap<>();
+        options.put("log", "TRACE");
+        options.put("dgs", "1");
+        options.put("hdc", "0");
+        options.put("asc", "1");
+        options.put("udv", "0");
+        options.put("rsy", "1");
+        ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options, new PrintStreamLogger(System.out));
+        decompiler.addSource(source.toFile());
 //		List<String> libs = listLibs();
 //		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
-		decompiler.decompileContext();
-	}
-	private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {
-		public AccessibleConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
-			super(destination, options, logger);
-		}
-	}
+        decompiler.decompileContext();
+    }
+    private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {
+        public AccessibleConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
+            super(destination, options, logger);
+        }
+    }
 }

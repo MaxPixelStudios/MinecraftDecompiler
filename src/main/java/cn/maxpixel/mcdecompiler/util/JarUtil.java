@@ -37,86 +37,86 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
 public class JarUtil {
-	private static final Logger LOGGER = LogManager.getLogger();
-	public static void decompressJar(String jarPath, File target) {
-		LOGGER.info("decompressing");
-		try(JarFile jarFile = new JarFile(jarPath)) {
-			jarFile.stream().forEach(entry -> {
-				if(entry.isDirectory()) new File(target, entry.getName()).mkdirs();
-				else {
-					try {
-						File f = new File(target, entry.getName());
-						if(!f.exists()) {
-							File parent = f.getParentFile();
-							if(!parent.exists()) parent.mkdirs();
-							try(ReadableByteChannel readableByteChannel = Channels.newChannel(jarFile.getInputStream(entry));
-								FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
-								fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-							}
-						}
-					} catch (IOException ex) {
-						LOGGER.error("A exception occurred while decompressing jar file", ex);
-					}
-				}
-			});
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	public static void compressJar(String mainClass, File jar, File from) {
-		LOGGER.info("compressing");
-		Manifest manifest = new Manifest();
-		manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-		manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
-		try(FileOutputStream jarOut = new FileOutputStream(jar);
-		    JarOutputStream outputStream = new JarOutputStream(jarOut, manifest)) {
-			for(File child : Objects.requireNonNull(from.listFiles())) {
-				if(child.isDirectory()) {
-					Files.walkFileTree(child.toPath(), new FileVisitor<Path>() {
-						String relativePath = null;
-						@Override
-						public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-							if(relativePath == null)
-								relativePath = dir.getFileName().toString();
-							else
-								relativePath += "/" + dir.getFileName();
-							outputStream.putNextEntry(new ZipEntry(relativePath + "/"));
-							outputStream.closeEntry();
-							return FileVisitResult.CONTINUE;
-						}
-						@Override
-						public FileVisitResult visitFileFailed(Path file, IOException exc) {
-							LOGGER.error("Error while zipping file: " + file, exc);
-							return FileVisitResult.CONTINUE;
-						}
-						@Override
-						public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-							outputStream.putNextEntry(new ZipEntry(relativePath == null ? file.getFileName().toString() : relativePath + "/" + file.getFileName()));
-							try(FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-								channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
-							}
-							outputStream.closeEntry();
-							return FileVisitResult.CONTINUE;
-						}
-						@Override
-						public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-							int index = relativePath.lastIndexOf('/');
-							if(index == -1) relativePath = null;
-							else relativePath = relativePath.substring(0, index);
-							return FileVisitResult.CONTINUE;
-						}
-					});
-				}
-				if(child.isFile()) {
-					outputStream.putNextEntry(new ZipEntry(child.getName()));
-					try(FileChannel channel = FileChannel.open(child.toPath(), StandardOpenOption.READ) ) {
-						channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
-					}
-					outputStream.closeEntry();
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static void decompressJar(String jarPath, File target) {
+        LOGGER.info("decompressing");
+        try(JarFile jarFile = new JarFile(jarPath)) {
+            jarFile.stream().forEach(entry -> {
+                if(entry.isDirectory()) new File(target, entry.getName()).mkdirs();
+                else {
+                    try {
+                        File f = new File(target, entry.getName());
+                        if(!f.exists()) {
+                            File parent = f.getParentFile();
+                            if(!parent.exists()) parent.mkdirs();
+                            try(ReadableByteChannel readableByteChannel = Channels.newChannel(jarFile.getInputStream(entry));
+                                FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+                                fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+                            }
+                        }
+                    } catch (IOException ex) {
+                        LOGGER.error("A exception occurred while decompressing jar file", ex);
+                    }
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void compressJar(String mainClass, File jar, File from) {
+        LOGGER.info("compressing");
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
+        try(FileOutputStream jarOut = new FileOutputStream(jar);
+            JarOutputStream outputStream = new JarOutputStream(jarOut, manifest)) {
+            for(File child : Objects.requireNonNull(from.listFiles())) {
+                if(child.isDirectory()) {
+                    Files.walkFileTree(child.toPath(), new FileVisitor<Path>() {
+                        String relativePath = null;
+                        @Override
+                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                            if(relativePath == null)
+                                relativePath = dir.getFileName().toString();
+                            else
+                                relativePath += "/" + dir.getFileName();
+                            outputStream.putNextEntry(new ZipEntry(relativePath + "/"));
+                            outputStream.closeEntry();
+                            return FileVisitResult.CONTINUE;
+                        }
+                        @Override
+                        public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                            LOGGER.error("Error while zipping file: " + file, exc);
+                            return FileVisitResult.CONTINUE;
+                        }
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            outputStream.putNextEntry(new ZipEntry(relativePath == null ? file.getFileName().toString() : relativePath + "/" + file.getFileName()));
+                            try(FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+                                channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
+                            }
+                            outputStream.closeEntry();
+                            return FileVisitResult.CONTINUE;
+                        }
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                            int index = relativePath.lastIndexOf('/');
+                            if(index == -1) relativePath = null;
+                            else relativePath = relativePath.substring(0, index);
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+                }
+                if(child.isFile()) {
+                    outputStream.putNextEntry(new ZipEntry(child.getName()));
+                    try(FileChannel channel = FileChannel.open(child.toPath(), StandardOpenOption.READ) ) {
+                        channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
+                    }
+                    outputStream.closeEntry();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

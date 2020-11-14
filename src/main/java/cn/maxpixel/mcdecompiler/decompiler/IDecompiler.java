@@ -23,15 +23,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface IDecompiler {
-	SourceType getSourceType();
-	void decompile(Path source, Path target) throws IOException;
-	default void checkArgs(Path source, Path target) {
-		if(!Files.isDirectory(target)) throw new IllegalArgumentException("target must be directory");
-		if(getSourceType() == SourceType.FILE && Files.isDirectory(source)) throw new IllegalArgumentException("source must be file");
-		if(getSourceType() == SourceType.DIRECTORY && !Files.isDirectory(source)) throw new IllegalArgumentException("source must be directory!");
-	}
-	enum SourceType {
-		FILE,
-		DIRECTORY
-	}
+    SourceType getSourceType();
+    void decompile(Path source, Path target) throws IOException;
+    default void checkArgs(Path source, Path target) {
+        if(!Files.isDirectory(target)) throw new IllegalArgumentException("target must be directory");
+        if(getSourceType() == SourceType.FILE && Files.isDirectory(source)) throw new IllegalArgumentException("source must be file");
+        if(getSourceType() == SourceType.DIRECTORY && !Files.isDirectory(source)) throw new IllegalArgumentException("source must be directory!");
+    }
+    enum SourceType {
+        FILE,
+        DIRECTORY
+    }
 }

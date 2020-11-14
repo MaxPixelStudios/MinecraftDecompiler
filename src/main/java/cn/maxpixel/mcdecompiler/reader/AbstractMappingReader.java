@@ -34,70 +34,70 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractMappingReader implements AutoCloseable {
-	protected BufferedReader reader;
-	private final List<ClassMapping> mappings;
-	private final List<PackageMapping> packages;
+    protected BufferedReader reader;
+    private final List<ClassMapping> mappings;
+    private final List<PackageMapping> packages;
 
-	protected AbstractMappingReader(BufferedReader reader) {
-		this.reader = reader;
-		Stream<String> lines = reader.lines().map(s -> {
-			if(s.startsWith("#")) return null;
+    protected AbstractMappingReader(BufferedReader reader) {
+        this.reader = reader;
+        Stream<String> lines = reader.lines().map(s -> {
+            if(s.startsWith("#")) return null;
 
-			int index = s.indexOf('#');
-			if(index > 0) return s.substring(0, index);
-			else if(index == 0) return null;
+            int index = s.indexOf('#');
+            if(index > 0) return s.substring(0, index);
+            else if(index == 0) return null;
 
-			if(s.replaceAll("\\s+", "").isEmpty()) return null;
+            if(s.replaceAll("\\s+", "").isEmpty()) return null;
 
-			return s;
-		}).filter(Objects::nonNull);
-		AbstractNonPackageMappingProcessor processor = getProcessor();
-		mappings = processor.process(lines);
-		packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : Collections.emptyList();
-	}
-	protected AbstractMappingReader(Reader rd) {
-		this(new BufferedReader(rd));
-	}
-	protected AbstractMappingReader(InputStream is) {
-		this(new InputStreamReader(is));
-	}
-	protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
-		this(new FileReader(Objects.requireNonNull(path)));
-	}
+            return s;
+        }).filter(Objects::nonNull);
+        AbstractNonPackageMappingProcessor processor = getProcessor();
+        mappings = processor.process(lines);
+        packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : Collections.emptyList();
+    }
+    protected AbstractMappingReader(Reader rd) {
+        this(new BufferedReader(rd));
+    }
+    protected AbstractMappingReader(InputStream is) {
+        this(new InputStreamReader(is));
+    }
+    protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
+        this(new FileReader(Objects.requireNonNull(path)));
+    }
 
-	protected abstract AbstractNonPackageMappingProcessor getProcessor();
-	public List<ClassMapping> getMappings() {
-		return mappings;
-	}
-	public List<PackageMapping> getPackages() {
-		return packages;
-	}
-	public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
-		return getMappings().stream().collect(Collectors.toMap(ClassMapping::getObfuscatedName, Function.identity(),
-				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
-	}
-	public Map<String, ClassMapping> getMappingsMapByOriginalName() {
-		return getMappings().stream().collect(Collectors.toMap(ClassMapping::getOriginalName, Function.identity(),
-				(classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
-	}
-	@Override
-	public void close() {
-		try {
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			reader = null;
-		}
-	}
-	protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
-		protected abstract List<PackageMapping> getPackages();
-		protected abstract PackageMapping processPackage(String line);
-	}
-	protected abstract static class AbstractNonPackageMappingProcessor {
-		public abstract List<ClassMapping> process(Stream<String> lines);
-		protected abstract ClassMapping processClass(String line);
-		protected abstract MethodMapping processMethod(String line);
-		protected abstract FieldMapping processField(String line);
-	}
+    protected abstract AbstractNonPackageMappingProcessor getProcessor();
+    public List<ClassMapping> getMappings() {
+        return mappings;
+    }
+    public List<PackageMapping> getPackages() {
+        return packages;
+    }
+    public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
+        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getObfuscatedName, Function.identity(),
+                (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+    }
+    public Map<String, ClassMapping> getMappingsMapByOriginalName() {
+        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getOriginalName, Function.identity(),
+                (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+    }
+    @Override
+    public void close() {
+        try {
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            reader = null;
+        }
+    }
+    protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
+        protected abstract List<PackageMapping> getPackages();
+        protected abstract PackageMapping processPackage(String line);
+    }
+    protected abstract static class AbstractNonPackageMappingProcessor {
+        public abstract List<ClassMapping> process(Stream<String> lines);
+        protected abstract ClassMapping processClass(String line);
+        protected abstract MethodMapping processMethod(String line);
+        protected abstract FieldMapping processField(String line);
+    }
 }

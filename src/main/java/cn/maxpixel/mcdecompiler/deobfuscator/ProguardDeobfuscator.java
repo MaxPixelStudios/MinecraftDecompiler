@@ -45,124 +45,124 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
-	public ProguardDeobfuscator(String version, Info.SideType type) {
-		super(version, type);
-		downloadMapping();
-		downloadJar();
-	}
-	private void downloadMapping() {
-		checkVersion();
-		if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
-			throw new RuntimeException("This version doesn't have mappings. Please use 1.14.4 or above");
-		Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
-		try {
-			Files.createDirectories(p.getParent());
-		} catch(IOException ignored) {}
-		if(Files.notExists(p)) {
-			LOGGER.info("downloading mapping...");
-			try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
-				channel.transferFrom(NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
-						getAsJsonObject().get("url").getAsString()).connect().asChannel(), 0, Long.MAX_VALUE);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	@Override
-	public ProguardDeobfuscator deobfuscate() {
-		try {
-			LOGGER.info("deobfuscating...");
-			File deobfuscateJar = new File(InfoProviders.get().getDeobfuscateJarPath(version, type));
-			deobfuscateJar.getParentFile().mkdirs();
-			deobfuscateJar.createNewFile();
-			File originalClasses = new File(InfoProviders.get().getTempOriginalClassesPath(version, type));
-			originalClasses.mkdirs();
-			JarUtil.decompressJar(InfoProviders.get().getMcJarPath(version, type), originalClasses);
-			LOGGER.info("remapping...");
-			try(ProguardMappingReader mappingReader = new ProguardMappingReader(InfoProviders.get().getProguardMappingDownloadPath(version, type))) {
-				SuperClassMapping superClassMapping = new SuperClassMapping();
-				listMcClassFiles(originalClasses, path -> {
-					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
-						ClassReader reader = new ClassReader(inputStream);
-						reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				});
-				ProguardMappingRemapper remapper = new ProguardMappingRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
-				Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
-				Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
-				listMcClassFiles(originalClasses, path -> {
-					try(InputStream inputStream = Files.newInputStream(path.toPath())) {
-						ClassReader reader = new ClassReader(inputStream);
-						ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-						reader.accept(new ClassRemapper(writer, remapper), ClassReader.SKIP_DEBUG);
-						String mappingKey;
-						if(path.getPath().contains("minecraft" + Info.FILE_SEPARATOR)) {
-							mappingKey = NamingUtil.asJavaName("net/minecraft" + path.getPath().substring(path.getPath().
-									indexOf("minecraft" + Info.FILE_SEPARATOR) + 9));
-						} else if(path.getPath().contains("mojang" + Info.FILE_SEPARATOR)) {
-							mappingKey = NamingUtil.asJavaName("com/mojang" + path.getPath().substring(path.getPath().
-									indexOf("mojang" + Info.FILE_SEPARATOR) + 6));
-						} else {
-							mappingKey = NamingUtil.asJavaName(path.getName());
-						}
-						ClassMapping mapping = mappings.get(mappingKey);
-						if(mapping != null) {
-							String s = NamingUtil.asNativeName(mapping.getOriginalName());
-							Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s.substring(0, s.lastIndexOf('/'))));
-							Files.write(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s + ".class"), writer.toByteArray(),
-									StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				});
-			}
-			copyOthers(originalClasses);
-			JarUtil.compressJar(type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer",
-					deobfuscateJar, new File(InfoProviders.get().getTempRemappedClassesPath(version, type)));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return this;
-	}
-	private void copyOthers(File baseDir) {
-		for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
-			if(childFile.isFile() && !childFile.getPath().endsWith(".class")) {
-				FileUtil.copyFile(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), childFile.getName()));
-			} else if(childFile.isDirectory() && !childFile.getAbsolutePath().contains("net")
-					&& !childFile.getAbsolutePath().contains("blaze3d") && !childFile.getAbsolutePath().contains("realmsclient")) {
-				FileUtil.copyDirectory(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
-			}
-		}
-		File manifest = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MANIFEST.MF").toFile();
-		if(manifest.exists()) manifest.delete();
-		File mojangRSA = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.RSA").toFile();
-		if(mojangRSA.exists()) mojangRSA.delete();
-		File mojangSF = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.SF").toFile();
-		if(mojangSF.exists()) mojangSF.delete();
-	}
-	private void listMcClassFiles(File baseDir, Consumer<File> fileConsumer) {
-		for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
-			if(childFile.isFile() && childFile.getPath().endsWith(".class")) fileConsumer.accept(childFile);
-		}
-		for(File minecraft : Objects.requireNonNull(new File(baseDir, "net/minecraft").listFiles())) {
-			if (minecraft.isDirectory()) processPackage(minecraft, fileConsumer);
-		}
-		if(type == Info.SideType.CLIENT) {
-			for(File mojang : Objects.requireNonNull(new File(baseDir, "com/mojang").listFiles())) {
-				if (mojang.isDirectory()) processPackage(mojang, fileConsumer);
-			}
-		}
-	}
-	private void processPackage(File dir, Consumer<File> fileConsumer) {
-		for(File f : Objects.requireNonNull(dir.listFiles())) {
-			if(f.isFile()) {
-				fileConsumer.accept(f);
-			} else if(f.isDirectory()) {
-				processPackage(f, fileConsumer);
-			}
-		}
-	}
+    public ProguardDeobfuscator(String version, Info.SideType type) {
+        super(version, type);
+        downloadMapping();
+        downloadJar();
+    }
+    private void downloadMapping() {
+        checkVersion();
+        if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
+            throw new RuntimeException("This version doesn't have mappings. Please use 1.14.4 or above");
+        Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
+        try {
+            Files.createDirectories(p.getParent());
+        } catch(IOException ignored) {}
+        if(Files.notExists(p)) {
+            LOGGER.info("downloading mapping...");
+            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+                channel.transferFrom(NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
+                        getAsJsonObject().get("url").getAsString()).connect().asChannel(), 0, Long.MAX_VALUE);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    @Override
+    public ProguardDeobfuscator deobfuscate() {
+        try {
+            LOGGER.info("deobfuscating...");
+            File deobfuscateJar = new File(InfoProviders.get().getDeobfuscateJarPath(version, type));
+            deobfuscateJar.getParentFile().mkdirs();
+            deobfuscateJar.createNewFile();
+            File originalClasses = new File(InfoProviders.get().getTempOriginalClassesPath(version, type));
+            originalClasses.mkdirs();
+            JarUtil.decompressJar(InfoProviders.get().getMcJarPath(version, type), originalClasses);
+            LOGGER.info("remapping...");
+            try(ProguardMappingReader mappingReader = new ProguardMappingReader(InfoProviders.get().getProguardMappingDownloadPath(version, type))) {
+                SuperClassMapping superClassMapping = new SuperClassMapping();
+                listMcClassFiles(originalClasses, path -> {
+                    try(InputStream inputStream = Files.newInputStream(path.toPath())) {
+                        ClassReader reader = new ClassReader(inputStream);
+                        reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+                ProguardMappingRemapper remapper = new ProguardMappingRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
+                Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
+                Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
+                listMcClassFiles(originalClasses, path -> {
+                    try(InputStream inputStream = Files.newInputStream(path.toPath())) {
+                        ClassReader reader = new ClassReader(inputStream);
+                        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+                        reader.accept(new ClassRemapper(writer, remapper), ClassReader.SKIP_DEBUG);
+                        String mappingKey;
+                        if(path.getPath().contains("minecraft" + Info.FILE_SEPARATOR)) {
+                            mappingKey = NamingUtil.asJavaName("net/minecraft" + path.getPath().substring(path.getPath().
+                                    indexOf("minecraft" + Info.FILE_SEPARATOR) + 9));
+                        } else if(path.getPath().contains("mojang" + Info.FILE_SEPARATOR)) {
+                            mappingKey = NamingUtil.asJavaName("com/mojang" + path.getPath().substring(path.getPath().
+                                    indexOf("mojang" + Info.FILE_SEPARATOR) + 6));
+                        } else {
+                            mappingKey = NamingUtil.asJavaName(path.getName());
+                        }
+                        ClassMapping mapping = mappings.get(mappingKey);
+                        if(mapping != null) {
+                            String s = NamingUtil.asNativeName(mapping.getOriginalName());
+                            Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s.substring(0, s.lastIndexOf('/'))));
+                            Files.write(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s + ".class"), writer.toByteArray(),
+                                    StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+            copyOthers(originalClasses);
+            JarUtil.compressJar(type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer",
+                    deobfuscateJar, new File(InfoProviders.get().getTempRemappedClassesPath(version, type)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return this;
+    }
+    private void copyOthers(File baseDir) {
+        for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
+            if(childFile.isFile() && !childFile.getPath().endsWith(".class")) {
+                FileUtil.copyFile(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), childFile.getName()));
+            } else if(childFile.isDirectory() && !childFile.getAbsolutePath().contains("net")
+                    && !childFile.getAbsolutePath().contains("blaze3d") && !childFile.getAbsolutePath().contains("realmsclient")) {
+                FileUtil.copyDirectory(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
+            }
+        }
+        File manifest = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MANIFEST.MF").toFile();
+        if(manifest.exists()) manifest.delete();
+        File mojangRSA = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.RSA").toFile();
+        if(mojangRSA.exists()) mojangRSA.delete();
+        File mojangSF = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.SF").toFile();
+        if(mojangSF.exists()) mojangSF.delete();
+    }
+    private void listMcClassFiles(File baseDir, Consumer<File> fileConsumer) {
+        for(File childFile : Objects.requireNonNull(baseDir.listFiles())) {
+            if(childFile.isFile() && childFile.getPath().endsWith(".class")) fileConsumer.accept(childFile);
+        }
+        for(File minecraft : Objects.requireNonNull(new File(baseDir, "net/minecraft").listFiles())) {
+            if (minecraft.isDirectory()) processPackage(minecraft, fileConsumer);
+        }
+        if(type == Info.SideType.CLIENT) {
+            for(File mojang : Objects.requireNonNull(new File(baseDir, "com/mojang").listFiles())) {
+                if (mojang.isDirectory()) processPackage(mojang, fileConsumer);
+            }
+        }
+    }
+    private void processPackage(File dir, Consumer<File> fileConsumer) {
+        for(File f : Objects.requireNonNull(dir.listFiles())) {
+            if(f.isFile()) {
+                fileConsumer.accept(f);
+            } else if(f.isDirectory()) {
+                processPackage(f, fileConsumer);
+            }
+        }
+    }
 }

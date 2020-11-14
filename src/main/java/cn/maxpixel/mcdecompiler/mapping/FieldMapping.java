@@ -19,29 +19,29 @@
 package cn.maxpixel.mcdecompiler.mapping;
 
 public class FieldMapping extends Mapping {
-	private String descriptor;
-	public FieldMapping(String obfuscatedName, String originalName, String descriptor) {
-		super(obfuscatedName, originalName);
-		this.descriptor = descriptor;
-	}
-	public FieldMapping(String obfuscatedName, String originalName) {
-		super(obfuscatedName, originalName);
-	}
-	public FieldMapping() {}
+    private String descriptor;
+    public FieldMapping(String obfuscatedName, String originalName, String descriptor) {
+        super(obfuscatedName, originalName);
+        this.descriptor = descriptor;
+    }
+    public FieldMapping(String obfuscatedName, String originalName) {
+        super(obfuscatedName, originalName);
+    }
+    public FieldMapping() {}
 
-	public String getDescriptor() {
-		return descriptor;
-	}
-	public void setDescriptor(String descriptor) {
-		this.descriptor = descriptor;
-	}
+    public String getDescriptor() {
+        return descriptor;
+    }
+    public void setDescriptor(String descriptor) {
+        this.descriptor = descriptor;
+    }
 
-	@Override
-	public String toString() {
-		return "FieldMapping{" +
-				"obfuscated name=" + getObfuscatedName() +
-				", original name=" + getOriginalName() +
-				", descriptor='" + descriptor + '\'' +
-				'}';
-	}
+    @Override
+    public String toString() {
+        return "FieldMapping{" +
+                "obfuscated name=" + getObfuscatedName() +
+                ", original name=" + getOriginalName() +
+                ", descriptor='" + descriptor + '\'' +
+                '}';
+    }
 }

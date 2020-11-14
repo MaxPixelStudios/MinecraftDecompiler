@@ -19,11 +19,11 @@
 package cn.maxpixel.mcdecompiler;
 
 public class InfoProviders {
-	private static Info info = new DefaultedInfo();
-	public static Info get() {
-		return info;
-	}
-	public static void set(Info information) {
-		info = information;
-	}
+    private static Info info = new DefaultedInfo();
+    public static Info get() {
+        return info;
+    }
+    public static void set(Info information) {
+        info = information;
+    }
 }

@@ -33,79 +33,78 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 public class ProguardMappingReader extends AbstractMappingReader {
-	public ProguardMappingReader(BufferedReader reader) {
-		super(reader);
-	}
-	public ProguardMappingReader(Reader rd) {
-		super(rd);
-	}
-	public ProguardMappingReader(InputStream is) {
-		super(is);
-	}
-	public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
-		super(path);
-	}
+    public ProguardMappingReader(BufferedReader reader) {
+        super(reader);
+    }
+    public ProguardMappingReader(Reader rd) {
+        super(rd);
+    }
+    public ProguardMappingReader(InputStream is) {
+        super(is);
+    }
+    public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
+        super(path);
+    }
 
-	private static final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
-	@Override
-	protected ProguardMappingProcessor getProcessor() {
-		return PROCESSOR;
-	}
+    private static final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
+    @Override
+    protected ProguardMappingProcessor getProcessor() {
+        return PROCESSOR;
+    }
 
-	private static class ProguardMappingProcessor extends AbstractNonPackageMappingProcessor {
-		@Override
-		public List<ClassMapping> process(Stream<String> lines) {
-			ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
-			AtomicReference<ClassMapping> currClass = new AtomicReference<>();
-			lines.forEach(s -> {
-				if(!s.startsWith(" ")) {
-					if(currClass.get() != null) {
-						mappings.add(currClass.getAndSet(processClass(s)));
-					} else currClass.set(processClass(s));
-				} else {
-					if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processMethod(s.trim()));
-					else currClass.get().addField(processField(s.trim()));
-				}
-			});
-			if(currClass.get() != null) mappings.add(currClass.get());
-			return mappings;
-		}
+    private static class ProguardMappingProcessor extends AbstractNonPackageMappingProcessor {
+        @Override
+        public List<ClassMapping> process(Stream<String> lines) {
+            ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+            AtomicReference<ClassMapping> currClass = new AtomicReference<>();
+            lines.forEach(s -> {
+                if(!s.startsWith(" ")) {
+                    if(currClass.get() != null) {
+                        mappings.add(currClass.getAndSet(processClass(s)));
+                    } else currClass.set(processClass(s));
+                } else {
+                    if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processMethod(s.trim()));
+                    else currClass.get().addField(processField(s.trim()));
+                }
+            });
+            if(currClass.get() != null) mappings.add(currClass.get());
+            return mappings;
+        }
 
-		@Override
-		protected ClassMapping processClass(String line) {
-			String[] split = line.split("( -> )|:");
-			return new ClassMapping(split[1], split[0]);
-		}
+        @Override
+        protected ClassMapping processClass(String line) {
+            String[] split = line.split("( -> )|:");
+            return new ClassMapping(split[1], split[0]);
+        }
 
-		@Override
-		protected MethodMapping processMethod(String line) {
-			MethodMapping methodMapping = new MethodMapping();
+        @Override
+        protected MethodMapping processMethod(String line) {
+            MethodMapping methodMapping = new MethodMapping();
 
-			String[] linenums = line.split(":");
-			String[] method;
-			if(linenums.length == 3){
-				method = linenums[2].split("( -> )| ");
-				methodMapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
-			} else method = linenums[0].split("( -> )| ");
-			methodMapping.setObfuscatedName(method[2]);
+            String[] linenums = line.split(":");
+            String[] method;
+            if(linenums.length == 3){
+                method = linenums[2].split("( -> )| ");
+                methodMapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
+            } else method = linenums[0].split("( -> )| ");
+            methodMapping.setObfuscatedName(method[2]);
 
-			String[] original_args = method[1].split("\\("); // [0] is original name, [1] is args
-			original_args[1] = original_args[1].substring(0, original_args[1].length() -1);
-			methodMapping.setOriginalName(original_args[0]);
+            String[] original_args = method[1].split("\\("); // [0] is original name, [1] is args
+            original_args[1] = original_args[1].substring(0, original_args[1].length() -1);
+            methodMapping.setOriginalName(original_args[0]);
 
-			StringBuilder descriptor = new StringBuilder().append('(');
-			for(String argTypeJN : original_args[1].split(","))
-				if(!argTypeJN.isEmpty()) descriptor.append(NamingUtil.asDescriptor(argTypeJN)); // JN: Java Name
-			descriptor.append(')').append(NamingUtil.asDescriptor(method[0]));
-			methodMapping.setOriginalDescriptor(descriptor.toString());
+            StringBuilder descriptor = new StringBuilder().append('(');
+            for(String argTypeJN : original_args[1].split(",")) descriptor.append(NamingUtil.asDescriptor(argTypeJN)); // JN: Java Name
+            descriptor.append(')').append(NamingUtil.asDescriptor(method[0]));
+            methodMapping.setOriginalDescriptor(descriptor.toString());
 
-			return methodMapping;
-		}
+            return methodMapping;
+        }
 
-		@Override
-		protected FieldMapping processField(String line) {
-			String[] strings = line.split("( -> )| ");
-			return new FieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
-		}
-	}
+        @Override
+        protected FieldMapping processField(String line) {
+            String[] strings = line.split("( -> )| ");
+            return new FieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
+        }
+    }
 }

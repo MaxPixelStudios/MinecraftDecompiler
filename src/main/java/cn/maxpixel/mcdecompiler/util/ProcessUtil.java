@@ -26,37 +26,37 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class ProcessUtil {
-	public static void waitForProcess(Process pro) {
-		final Logger LOGGER = LogManager.getLogger("Process " + pro);
-		try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
-		    BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
-			Thread inT = new Thread(() -> {
-				try {
-					String ins;
-					while ((ins = in.readLine()) != null) {
-						LOGGER.debug(ins);
-					}
-				} catch (Throwable e) {
-					LOGGER.catching(e);
-				}
-			});
-			Thread errT = new Thread(() -> {
-				try {
-					String ins;
-					while ((ins = err.readLine()) != null) {
-						LOGGER.error(ins);
-					}
-				} catch (Throwable e) {
-					LOGGER.catching(e);
-				}
-			});
-			inT.setDaemon(true);
-			errT.setDaemon(true);
-			inT.start();
-			errT.start();
-			pro.waitFor();
-		} catch (IOException | InterruptedException e) {
-			LOGGER.catching(e);
-		}
-	}
+    public static void waitForProcess(Process pro) {
+        final Logger LOGGER = LogManager.getLogger("Process " + pro);
+        try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
+            BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
+            Thread inT = new Thread(() -> {
+                try {
+                    String ins;
+                    while ((ins = in.readLine()) != null) {
+                        LOGGER.debug(ins);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.catching(e);
+                }
+            });
+            Thread errT = new Thread(() -> {
+                try {
+                    String ins;
+                    while ((ins = err.readLine()) != null) {
+                        LOGGER.error(ins);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.catching(e);
+                }
+            });
+            inT.setDaemon(true);
+            errT.setDaemon(true);
+            inT.start();
+            errT.start();
+            pro.waitFor();
+        } catch (IOException | InterruptedException e) {
+            LOGGER.catching(e);
+        }
+    }
 }

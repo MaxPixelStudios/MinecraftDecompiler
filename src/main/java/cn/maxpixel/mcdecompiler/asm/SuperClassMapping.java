@@ -28,22 +28,22 @@ import java.util.List;
 import java.util.Map;
 
 public class SuperClassMapping extends ClassVisitor {
-	private final Map<String, List<String>> superClassMap = new Object2ObjectOpenHashMap<>();
-	public SuperClassMapping() {
-		super(Opcodes.ASM9);
-	}
+    private final Map<String, List<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    public SuperClassMapping() {
+        super(Opcodes.ASM9);
+    }
 
-	@Override
-	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		List<String> list = new ObjectArrayList<>(2);
-		if(!superName.contains("java/lang/Object")) {
-			list.add(NamingUtil.asJavaName(superName));
-		}
-		if(interfaces != null) for(String interface_ : interfaces) list.add(NamingUtil.asJavaName(interface_));
-		if(!list.isEmpty()) superClassMap.put(NamingUtil.asJavaName(name), list);
-	}
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        List<String> list = new ObjectArrayList<>(2);
+        if(!superName.contains("java/lang/Object")) {
+            list.add(NamingUtil.asJavaName(superName));
+        }
+        if(interfaces != null) for(String interface_ : interfaces) list.add(NamingUtil.asJavaName(interface_));
+        if(!list.isEmpty()) superClassMap.put(NamingUtil.asJavaName(name), list);
+    }
 
-	public Map<String, List<String>> getMap() {
-		return superClassMap;
-	}
+    public Map<String, List<String>> getMap() {
+        return superClassMap;
+    }
 }

@@ -26,56 +26,56 @@ import java.util.List;
 import java.util.Map;
 
 public class ClassMapping extends Mapping {
-	private final List<MethodMapping> methods;
-	private final Map<String, FieldMapping> fields;
-	public ClassMapping() {
-		this.methods = new ObjectArrayList<>();
-		this.fields = new Object2ObjectOpenHashMap<>();
-	}
-	public ClassMapping(String obfuscatedName, String originalName) {
-		super(obfuscatedName, originalName);
-		this.methods = new ObjectArrayList<>();
-		this.fields = new Object2ObjectOpenHashMap<>();
-	}
+    private final List<MethodMapping> methods;
+    private final Map<String, FieldMapping> fields;
+    public ClassMapping() {
+        this.methods = new ObjectArrayList<>();
+        this.fields = new Object2ObjectOpenHashMap<>();
+    }
+    public ClassMapping(String obfuscatedName, String originalName) {
+        super(obfuscatedName, originalName);
+        this.methods = new ObjectArrayList<>();
+        this.fields = new Object2ObjectOpenHashMap<>();
+    }
 
-	public ClassMapping addFields(FieldMapping... fields) {
-		for (FieldMapping field : fields) {
-			this.fields.put(field.getObfuscatedName(), field);
-		}
-		return this;
-	}
-	public ClassMapping addMethods(MethodMapping... methods) {
-		this.methods.addAll(Arrays.asList(methods));
-		return this;
-	}
-	public ClassMapping addField(FieldMapping field) {
-		this.fields.put(field.getObfuscatedName(), field);
-		return this;
-	}
-	public ClassMapping addMethod(MethodMapping method) {
-		this.methods.add(method);
-		return this;
-	}
-	public List<MethodMapping> getMethods() {
-		return methods;
-	}
-	public List<FieldMapping> getFields() {
-		return new ObjectArrayList<>(fields.values());
-	}
-	public Map<String, FieldMapping> getFieldMap() {
-		return fields;
-	}
-	public FieldMapping getField(String obfuscatedName) {
-		return fields.get(obfuscatedName);
-	}
+    public ClassMapping addFields(FieldMapping... fields) {
+        for (FieldMapping field : fields) {
+            this.fields.put(field.getObfuscatedName(), field);
+        }
+        return this;
+    }
+    public ClassMapping addMethods(MethodMapping... methods) {
+        this.methods.addAll(Arrays.asList(methods));
+        return this;
+    }
+    public ClassMapping addField(FieldMapping field) {
+        this.fields.put(field.getObfuscatedName(), field);
+        return this;
+    }
+    public ClassMapping addMethod(MethodMapping method) {
+        this.methods.add(method);
+        return this;
+    }
+    public List<MethodMapping> getMethods() {
+        return methods;
+    }
+    public List<FieldMapping> getFields() {
+        return new ObjectArrayList<>(fields.values());
+    }
+    public Map<String, FieldMapping> getFieldMap() {
+        return fields;
+    }
+    public FieldMapping getField(String obfuscatedName) {
+        return fields.get(obfuscatedName);
+    }
 
-	@Override
-	public String toString() {
-		return "ClassMapping{" +
-				"obfuscated name=" + getObfuscatedName() +
-				", original name=" + getOriginalName() +
-				", methods=" + Arrays.toString(methods.toArray()) +
-				", fields=" + Arrays.toString(fields.values().toArray()) +
-				'}';
-	}
+    @Override
+    public String toString() {
+        return "ClassMapping{" +
+                "obfuscated name=" + getObfuscatedName() +
+                ", original name=" + getOriginalName() +
+                ", methods=" + Arrays.toString(methods.toArray()) +
+                ", fields=" + Arrays.toString(fields.values().toArray()) +
+                '}';
+    }
 }

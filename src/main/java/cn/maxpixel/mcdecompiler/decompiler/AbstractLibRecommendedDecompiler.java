@@ -31,32 +31,32 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 public abstract class AbstractLibRecommendedDecompiler implements ILibRecommendedDecompiler {
-	private static final Logger LOGGER = LogManager.getLogger("Lib downloader");
-	private final List<String> libs = new ObjectArrayList<>();
-	@Override
-	public void downloadLib(Path libDir, String version) throws IOException {
-		if(version == null || version.isEmpty()) {
-			LOGGER.info("Minecraft version is not provided, skipping downloading libs");
-			return;
-		}
-		LOGGER.info("downloading libs of version " + version);
-		if(Files.notExists(libDir)) Files.createDirectories(libDir);
-		StreamSupport.stream(VersionManifest.getVersion(version).getAsJsonArray("libraries").spliterator(), true)
-				.map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject()).filter(obj->obj.has("artifact"))
-				.map(obj->obj.get("artifact").getAsJsonObject().get("url").getAsString()).forEach(url -> {
-					String fileName = url.substring(url.lastIndexOf('/') + 1);
-					Path file = libDir.resolve(fileName);
-					libs.add(file.toAbsolutePath().normalize().toString());
-					if(Files.exists(file)) return;
-					try {
-						LOGGER.debug("downloading " + url);
-						Files.copy(NetworkUtil.newBuilder(url).connect().asStream(), file);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-		});
-	}
-	protected List<String> listLibs() {
-		return libs;
-	}
+    private static final Logger LOGGER = LogManager.getLogger("Lib downloader");
+    private final List<String> libs = new ObjectArrayList<>();
+    @Override
+    public void downloadLib(Path libDir, String version) throws IOException {
+        if(version == null || version.isEmpty()) {
+            LOGGER.info("Minecraft version is not provided, skipping downloading libs");
+            return;
+        }
+        LOGGER.info("downloading libs of version " + version);
+        if(Files.notExists(libDir)) Files.createDirectories(libDir);
+        StreamSupport.stream(VersionManifest.getVersion(version).getAsJsonArray("libraries").spliterator(), true)
+                .map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject()).filter(obj->obj.has("artifact"))
+                .map(obj->obj.get("artifact").getAsJsonObject().get("url").getAsString()).forEach(url -> {
+            String fileName = url.substring(url.lastIndexOf('/') + 1);
+            Path file = libDir.resolve(fileName);
+            libs.add(file.toAbsolutePath().normalize().toString());
+            if(Files.exists(file)) return;
+            try {
+                LOGGER.debug("downloading " + url);
+                Files.copy(NetworkUtil.newBuilder(url).connect().asStream(), file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+    protected List<String> listLibs() {
+        return libs;
+    }
 }

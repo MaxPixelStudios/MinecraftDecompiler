@@ -21,24 +21,24 @@ package cn.maxpixel.mcdecompiler;
 import java.io.File;
 
 public class DefaultedInfo implements Info {
-	@Override
-	public String getDownloadPath() {
-		return "downloads";
-	}
-	@Override
-	public File getMappingPath() {
-		return null;
-	}
-	@Override
-	public String getDecompileDirectory(String version, SideType type) {
-		return "output/" + version + "_" + type + "_decompiled/";
-	}
-	@Override
-	public String getDeobfuscateJarPath(String version, SideType type) {
-		return "output/" + version + "_" + type + "_deobfuscated.jar";
-	}
-	@Override
-	public String getTempPath() {
-		return "temp";
-	}
+    @Override
+    public String getDownloadPath() {
+        return "downloads";
+    }
+    @Override
+    public File getMappingPath() {
+        return null;
+    }
+    @Override
+    public String getDecompileDirectory(String version, SideType type) {
+        return "output/" + version + "_" + type + "_decompiled/";
+    }
+    @Override
+    public String getDeobfuscateJarPath(String version, SideType type) {
+        return "output/" + version + "_" + type + "_deobfuscated.jar";
+    }
+    @Override
+    public String getTempPath() {
+        return "temp";
+    }
 }

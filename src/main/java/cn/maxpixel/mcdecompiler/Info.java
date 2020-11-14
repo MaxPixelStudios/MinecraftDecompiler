@@ -21,58 +21,58 @@ package cn.maxpixel.mcdecompiler;
 import java.io.File;
 
 public interface Info {
-	String getDownloadPath();
-	default String getProguardMappingDownloadPath(String version, SideType type) {
-		return getDownloadPath() + "/" + version + "/" + type + "_mappings.txt";
-	}
-	default String getLibDownloadPath() {
-		return getDownloadPath() + "/libs/";
-	}
-	File getMappingPath();
-	String getDecompileDirectory(String version, SideType type);
-	default String getMcJarPath(String version, SideType type) {
-		return getDownloadPath() + "/" + version + "/" + type + ".jar";
-	}
-	String getDeobfuscateJarPath(String version, SideType type);
-	default String getTempOriginalClassesPath(String version, SideType type) {
-		return getTempPath() + "/" + version + "/" + type + "/originalClasses";
-	}
-	default String getTempRemappedClassesPath(String version, SideType type) {
-		return getTempPath() + "/" + version + "/" + type + "/remappedClasses";
-	}
-	default String getTempDecompileClassesPath(String version, SideType type) {
-		return getTempPath() + "/" + version + "/" + type + "/decompileClasses";
-	}
-	default String getTempDecompilerPath(DecompilerType type) {
-		return getTempPath() + "/" + type + ".jar";
-	}
-	String getTempPath();
-	String FILE_SEPARATOR = System.getProperty("file.separator");
-	String PATH_SEPARATOR = System.getProperty("path.separator");
-	enum SideType {
-		CLIENT,
-		SERVER;
-		@Override
-		public String toString() {
-			return name().toLowerCase();
-		}
-	}
-	enum MappingType {
-		PROGUARD,
-		SRG,
-		TSRG,
-		CSRG,
-		TINY
-	}
-	enum DecompilerType {
-		FERNFLOWER,
-		OFFICIAL_FERNFLOWER,
-		FORGEFLOWER,
-		CFR,
-		USER_DEFINED;
-		@Override
-		public String toString() {
-			return name().toLowerCase();
-		}
-	}
+    String getDownloadPath();
+    default String getProguardMappingDownloadPath(String version, SideType type) {
+        return getDownloadPath() + "/" + version + "/" + type + "_mappings.txt";
+    }
+    default String getLibDownloadPath() {
+        return getDownloadPath() + "/libs/";
+    }
+    File getMappingPath();
+    String getDecompileDirectory(String version, SideType type);
+    default String getMcJarPath(String version, SideType type) {
+        return getDownloadPath() + "/" + version + "/" + type + ".jar";
+    }
+    String getDeobfuscateJarPath(String version, SideType type);
+    default String getTempOriginalClassesPath(String version, SideType type) {
+        return getTempPath() + "/" + version + "/" + type + "/originalClasses";
+    }
+    default String getTempRemappedClassesPath(String version, SideType type) {
+        return getTempPath() + "/" + version + "/" + type + "/remappedClasses";
+    }
+    default String getTempDecompileClassesPath(String version, SideType type) {
+        return getTempPath() + "/" + version + "/" + type + "/decompileClasses";
+    }
+    default String getTempDecompilerPath(DecompilerType type) {
+        return getTempPath() + "/" + type + ".jar";
+    }
+    String getTempPath();
+    String FILE_SEPARATOR = System.getProperty("file.separator");
+    String PATH_SEPARATOR = System.getProperty("path.separator");
+    enum SideType {
+        CLIENT,
+        SERVER;
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
+    enum MappingType {
+        PROGUARD,
+        SRG,
+        TSRG,
+        CSRG,
+        TINY
+    }
+    enum DecompilerType {
+        FERNFLOWER,
+        OFFICIAL_FERNFLOWER,
+        FORGEFLOWER,
+        CFR,
+        USER_DEFINED;
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
+    }
 }
