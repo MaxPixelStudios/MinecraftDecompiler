@@ -16,32 +16,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping;
+package cn.maxpixel.mcdecompiler.mapping.base;
 
-public class FieldMapping extends Mapping {
-    private String descriptor;
-    public FieldMapping(String obfuscatedName, String originalName, String descriptor) {
-        super(obfuscatedName, originalName);
-        this.descriptor = descriptor;
-    }
-    public FieldMapping(String obfuscatedName, String originalName) {
-        super(obfuscatedName, originalName);
-    }
-    public FieldMapping() {}
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
-    public String getDescriptor() {
-        return descriptor;
+public class BaseMethodMapping extends BaseMapping implements Descriptor {
+    private String unmappedDescriptor;
+    public BaseMethodMapping() {}
+    public BaseMethodMapping(String unmappedName, String mappedName,
+                             String unmappedDescriptor) {
+        super(unmappedName, mappedName);
+        this.unmappedDescriptor = unmappedDescriptor;
     }
-    public void setDescriptor(String descriptor) {
-        this.descriptor = descriptor;
+
+    public String getUnmappedDescriptor() {
+        return unmappedDescriptor;
+    }
+    public void setUnmappedDescriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
     }
 
     @Override
     public String toString() {
-        return "FieldMapping{" +
-                "obfuscated name=" + getObfuscatedName() +
-                ", original name=" + getOriginalName() +
-                ", descriptor='" + descriptor + '\'' +
+        return "BaseMethodMapping{" +
+                "obfuscated name=" + getUnmappedName() +
+                ", original name=" + getMappedName() +
                 '}';
     }
 }

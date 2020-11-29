@@ -19,8 +19,8 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -78,8 +78,8 @@ public class ProguardMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected MethodMapping processMethod(String line) {
-            MethodMapping methodMapping = new MethodMapping();
+        protected BaseMethodMapping processMethod(String line) {
+            BaseMethodMapping methodMapping = new BaseMethodMapping();
 
             String[] linenums = line.split(":");
             String[] method;
@@ -87,11 +87,11 @@ public class ProguardMappingReader extends AbstractMappingReader {
                 method = linenums[2].split("( -> )| ");
                 methodMapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
             } else method = linenums[0].split("( -> )| ");
-            methodMapping.setObfuscatedName(method[2]);
+            methodMapping.setUnmappedName(method[2]);
 
             String[] original_args = method[1].split("\\("); // [0] is original name, [1] is args
             original_args[1] = original_args[1].substring(0, original_args[1].length() -1);
-            methodMapping.setOriginalName(original_args[0]);
+            methodMapping.setMappedName(original_args[0]);
 
             StringBuilder descriptor = new StringBuilder().append('(');
             for(String argTypeJN : original_args[1].split(",")) descriptor.append(NamingUtil.asDescriptor(argTypeJN)); // JN: Java Name
@@ -102,9 +102,9 @@ public class ProguardMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected FieldMapping processField(String line) {
+        protected BaseFieldMapping processField(String line) {
             String[] strings = line.split("( -> )| ");
-            return new FieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
+            return new BaseFieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
         }
     }
 }

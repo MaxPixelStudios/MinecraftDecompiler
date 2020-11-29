@@ -16,7 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.mapping.base;
 
-public abstract class CustomizeInfo extends DefaultedInfo {
+public abstract class BaseMapping {
+    private String unmappedName;
+    private String mappedName;
+    protected BaseMapping(String unmappedName, String mappedName) {
+        this.unmappedName = unmappedName;
+        this.mappedName = mappedName;
+    }
+    protected BaseMapping() {}
+    public String getUnmappedName() {
+        return unmappedName;
+    }
+    public void setUnmappedName(String unmappedName) {
+        this.unmappedName = unmappedName;
+    }
+    public String getMappedName() {
+        return mappedName;
+    }
+    public void setMappedName(String mappedName) {
+        this.mappedName = mappedName;
+    }
 }

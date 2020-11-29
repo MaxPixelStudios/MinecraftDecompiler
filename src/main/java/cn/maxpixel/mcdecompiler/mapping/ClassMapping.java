@@ -18,6 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -25,55 +28,55 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ClassMapping extends Mapping {
-    private final List<MethodMapping> methods;
-    private final Map<String, FieldMapping> fields;
+public class ClassMapping extends BaseMapping {
+    private final List<BaseMethodMapping> methods;
+    private final Map<String, BaseFieldMapping> fields;
     public ClassMapping() {
         this.methods = new ObjectArrayList<>();
         this.fields = new Object2ObjectOpenHashMap<>();
     }
-    public ClassMapping(String obfuscatedName, String originalName) {
-        super(obfuscatedName, originalName);
+    public ClassMapping(String unmappedName, String mappedName) {
+        super(unmappedName, mappedName);
         this.methods = new ObjectArrayList<>();
         this.fields = new Object2ObjectOpenHashMap<>();
     }
 
-    public ClassMapping addFields(FieldMapping... fields) {
-        for (FieldMapping field : fields) {
-            this.fields.put(field.getObfuscatedName(), field);
+    public ClassMapping addFields(BaseFieldMapping... fields) {
+        for (BaseFieldMapping field : fields) {
+            this.fields.put(field.getUnmappedName(), field);
         }
         return this;
     }
-    public ClassMapping addMethods(MethodMapping... methods) {
+    public ClassMapping addMethods(BaseMethodMapping... methods) {
         this.methods.addAll(Arrays.asList(methods));
         return this;
     }
-    public ClassMapping addField(FieldMapping field) {
-        this.fields.put(field.getObfuscatedName(), field);
+    public ClassMapping addField(BaseFieldMapping field) {
+        this.fields.put(field.getUnmappedName(), field);
         return this;
     }
-    public ClassMapping addMethod(MethodMapping method) {
+    public ClassMapping addMethod(BaseMethodMapping method) {
         this.methods.add(method);
         return this;
     }
-    public List<MethodMapping> getMethods() {
+    public List<BaseMethodMapping> getMethods() {
         return methods;
     }
-    public List<FieldMapping> getFields() {
+    public List<BaseFieldMapping> getFields() {
         return new ObjectArrayList<>(fields.values());
     }
-    public Map<String, FieldMapping> getFieldMap() {
+    public Map<String, BaseFieldMapping> getFieldMap() {
         return fields;
     }
-    public FieldMapping getField(String obfuscatedName) {
-        return fields.get(obfuscatedName);
+    public BaseFieldMapping getField(String unmappedName) {
+        return fields.get(unmappedName);
     }
 
     @Override
     public String toString() {
         return "ClassMapping{" +
-                "obfuscated name=" + getObfuscatedName() +
-                ", original name=" + getOriginalName() +
+                "unmapped name=" + getUnmappedName() +
+                ", mapped name=" + getMappedName() +
                 ", methods=" + Arrays.toString(methods.toArray()) +
                 ", fields=" + Arrays.toString(fields.values().toArray()) +
                 '}';

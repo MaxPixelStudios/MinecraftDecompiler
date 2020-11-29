@@ -20,8 +20,8 @@ package cn.maxpixel.mcdecompiler.remapper;
 
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +45,7 @@ public class ProguardMappingRemapper extends Remapper {
     @Override
     public String map(String internalName) {
         ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(internalName));
-        if(classMapping != null) return NamingUtil.asNativeName(classMapping.getOriginalName());
+        if(classMapping != null) return NamingUtil.asNativeName(classMapping.getMappedName());
         else return internalName;
     }
     @Override
@@ -53,15 +53,15 @@ public class ProguardMappingRemapper extends Remapper {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
             ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
             if(classMapping != null) {
-                AtomicReference<MethodMapping> methodMapping = new AtomicReference<>();
+                AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
                 classMapping.getMethods().forEach(mapping -> {
                     if(methodMapping.get() != null) return;
-                    if(mapping.getObfuscatedName().equals(name)) {
+                    if(mapping.getUnmappedName().equals(name)) {
                         compareMethodDescriptorAndSet(descriptor, methodMapping, mapping);
                     }
                 });
                 if(methodMapping.get() == null) methodMapping.set(processSuperMethod(owner, name, descriptor));
-                if(methodMapping.get() != null) return methodMapping.get().getOriginalName();
+                if(methodMapping.get() != null) return methodMapping.get().getMappedName();
             }
         }
         return name;
@@ -78,7 +78,7 @@ public class ProguardMappingRemapper extends Remapper {
                 return Type.getType(remappedDescriptor.toString());
             case Type.OBJECT:
                 ClassMapping cm = mappingByOri.get(type.getClassName());
-                return cm != null ? Type.getObjectType(NamingUtil.asNativeName(cm.getObfuscatedName())) : type;
+                return cm != null ? Type.getObjectType(NamingUtil.asNativeName(cm.getUnmappedName())) : type;
             default:
                 return type;
         }
@@ -101,20 +101,20 @@ public class ProguardMappingRemapper extends Remapper {
         return stringBuilder.toString();
     }
 
-    private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<MethodMapping> target, MethodMapping compare) {
+    private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<BaseMethodMapping> target, BaseMethodMapping compare) {
         if(descriptor.equals(getObfuscatedDescriptor(compare.getOriginalDescriptor()))) target.set(compare);
     }
 
-    private MethodMapping processSuperMethod(String owner, String name, String descriptor) {
+    private BaseMethodMapping processSuperMethod(String owner, String name, String descriptor) {
         List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
         if(superNames != null) {
-            AtomicReference<MethodMapping> methodMapping = new AtomicReference<>();
+            AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
             superNames.forEach(superClass -> {
                 if(methodMapping.get() != null) return;
                 ClassMapping superClassMapping = mappingByObfus.get(superClass);
                 if(superClassMapping != null) {
                     superClassMapping.getMethods().forEach(methodMapping1 -> {
-                        if(methodMapping1.getObfuscatedName().equals(name)) {
+                        if(methodMapping1.getUnmappedName().equals(name)) {
                             compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1);
                         }
                     });
@@ -125,7 +125,7 @@ public class ProguardMappingRemapper extends Remapper {
                     if(methodMapping.get() != null) return;
                     ClassMapping superClassMapping = mappingByObfus.get(superClass);
                     if(superClassMapping != null) {
-                        methodMapping.set(processSuperMethod(superClassMapping.getObfuscatedName(), name, descriptor));
+                        methodMapping.set(processSuperMethod(superClassMapping.getUnmappedName(), name, descriptor));
                     }
                 });
             }
@@ -137,15 +137,15 @@ public class ProguardMappingRemapper extends Remapper {
     public String mapFieldName(String owner, String name, String descriptor) {
         ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
         if(classMapping != null) {
-            FieldMapping fieldMapping = classMapping.getField(name);
+            BaseFieldMapping fieldMapping = classMapping.getField(name);
             if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
-            if(fieldMapping != null) return fieldMapping.getOriginalName();
+            if(fieldMapping != null) return fieldMapping.getMappedName();
         }
         return name;
     }
-    private FieldMapping processSuperField(String owner, String name) {
+    private BaseFieldMapping processSuperField(String owner, String name) {
         if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
-            AtomicReference<FieldMapping> fieldMapping = new AtomicReference<>();
+            AtomicReference<BaseFieldMapping> fieldMapping = new AtomicReference<>();
             superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
                 ClassMapping supermapping = mappingByObfus.get(superClass);
                 if(supermapping != null && fieldMapping.get() == null) {
@@ -157,7 +157,7 @@ public class ProguardMappingRemapper extends Remapper {
                     if(fieldMapping.get() == null) {
                         ClassMapping supermapping = mappingByObfus.get(superClass);
                         if(supermapping != null) {
-                            fieldMapping.set(processSuperField(supermapping.getObfuscatedName(), name));
+                            fieldMapping.set(processSuperField(supermapping.getUnmappedName(), name));
                         }
                     }
                 });

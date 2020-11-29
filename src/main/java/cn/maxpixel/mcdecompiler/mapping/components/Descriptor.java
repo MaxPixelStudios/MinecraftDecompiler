@@ -16,7 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.mapping.components;
 
-public abstract class CustomizeInfo extends DefaultedInfo {
+public interface Descriptor {
+    String getUnmappedDescriptor();
+    void setUnmappedDescriptor(String descriptor);
+    interface Mapped {
+        String getMappedDescriptor();
+        void setMappedDescriptor(String mappedDescriptor);
+    }
 }

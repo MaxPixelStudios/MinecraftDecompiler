@@ -16,7 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.mapping.proguard;
 
-public abstract class CustomizeInfo extends DefaultedInfo {
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
+
+public class ProguardMethodMapping extends BaseMethodMapping implements LineNumber {
+    @Override
+    public int getLinenumberS() {
+        return 0;
+    }
+    @Override
+    public int getLinenumberE() {
+        return 0;
+    }
+    @Override
+    public void setLinenumberS(int ns) {
+
+    }
+    @Override
+    public void setLinenumberE(int ne) {
+
+    }
 }

@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
+import cn.maxpixel.mcdecompiler.util.optparse.EnumConverter;
 import io.github.lxgaming.classloader.ClassLoaderUtils;
 import joptsimple.*;
 import org.apache.logging.log4j.LogManager;
@@ -44,20 +45,8 @@ public class DeobfuscatorCommandLine {
         Info.MappingType mappingType;
 
         OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. " +
-                "Values are: srg, proguard, csrg, tsrg, tiny").withRequiredArg()
-                .ofType(Info.MappingType.class).defaultsTo(Info.MappingType.PROGUARD).withValuesConvertedBy(new ValueConverter<Info.MappingType>() {
-                    @Override
-                    public Info.MappingType convert(String value) {
-                        return Info.MappingType.valueOf(value.toUpperCase());
-                    }
-                    @Override
-                    public Class<? extends Info.MappingType> valueType() {
-                        return Info.MappingType.class;
-                    }
-                    @Override
-                    public String valuePattern() { return null; }
-                });
+        ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. Values are: srg, " +
+                "proguard, csrg, tsrg, tiny").withRequiredArg().withValuesConvertedBy(new EnumConverter<>(Info.MappingType.class)).defaultsTo(Info.MappingType.PROGUARD);
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
                 "Required when inputJar or mapping.").requiredIf(mappingTypeO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"),

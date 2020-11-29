@@ -16,7 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.mapping.proguard;
 
-public abstract class CustomizeInfo extends DefaultedInfo {
+import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
+
+public class ProguardFieldMapping extends BaseFieldMapping implements Descriptor {
+    private String unmappedDescriptor;
+    public ProguardFieldMapping(String unmappedName, String mappedName, String unmappedDescriptor) {
+        super(unmappedName, mappedName);
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+    public ProguardFieldMapping() {}
+    @Override
+    public String getUnmappedDescriptor() {
+        return unmappedDescriptor;
+    }
+    @Override
+    public void setUnmappedDescriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
 }

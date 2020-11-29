@@ -109,7 +109,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                         }
                         ClassMapping mapping = mappings.get(mappingKey);
                         if(mapping != null) {
-                            String s = NamingUtil.asNativeName(mapping.getOriginalName());
+                            String s = NamingUtil.asNativeName(mapping.getMappedName());
                             Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s.substring(0, s.lastIndexOf('/'))));
                             Files.write(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s + ".class"), writer.toByteArray(),
                                     StandardOpenOption.CREATE, StandardOpenOption.WRITE);

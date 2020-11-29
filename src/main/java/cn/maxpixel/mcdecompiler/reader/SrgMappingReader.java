@@ -19,9 +19,9 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -62,7 +62,7 @@ public class SrgMappingReader extends AbstractMappingReader {
                 switch(s.substring(0, 3)) {
                     case "CL:":
                         ClassMapping classMapping = processClass(s);
-                        mappings.put(classMapping.getObfuscatedName(), classMapping);
+                        mappings.put(classMapping.getUnmappedName(), classMapping);
                         break;
                     case "PK:":
                         packages.add(processPackage(s));
@@ -75,31 +75,31 @@ public class SrgMappingReader extends AbstractMappingReader {
                 s = s.trim();
                 switch(s.substring(0, 3)) {
                     case "FD:":
-                        FieldMapping fieldMapping = processField(s);
-                        String obfClassName = fieldMapping.getObfuscatedName().substring(0, fieldMapping.getObfuscatedName().lastIndexOf('/'));
+                        BaseFieldMapping fieldMapping = processField(s);
+                        String obfClassName = fieldMapping.getUnmappedName().substring(0, fieldMapping.getUnmappedName().lastIndexOf('/'));
                         ClassMapping cm = mappings.get(obfClassName);
                         if(cm == null) {
                             cm = new ClassMapping(obfClassName,
-                                    fieldMapping.getOriginalName().substring(0, fieldMapping.getOriginalName().lastIndexOf('/'))// original class name
+                                    fieldMapping.getMappedName().substring(0, fieldMapping.getMappedName().lastIndexOf('/'))// original class name
                             );
                             mappings.put(obfClassName, cm);
                         }
-                        cm.addField(new FieldMapping(fieldMapping.getObfuscatedName().substring(fieldMapping.getObfuscatedName().lastIndexOf('/') + 1),
-                                fieldMapping.getOriginalName().substring(fieldMapping.getOriginalName().lastIndexOf('/') + 1)));
+                        cm.addField(new BaseFieldMapping(fieldMapping.getUnmappedName().substring(fieldMapping.getUnmappedName().lastIndexOf('/') + 1),
+                                fieldMapping.getMappedName().substring(fieldMapping.getMappedName().lastIndexOf('/') + 1)));
                         break;
                     case "MD:":
-                        MethodMapping methodMapping = processMethod(s);
-                        obfClassName = methodMapping.getObfuscatedName().substring(0, methodMapping.getObfuscatedName().lastIndexOf('/'));
+                        BaseMethodMapping methodMapping = processMethod(s);
+                        obfClassName = methodMapping.getUnmappedName().substring(0, methodMapping.getUnmappedName().lastIndexOf('/'));
                         cm = mappings.get(obfClassName);
                         if(cm == null) {
                             cm = new ClassMapping(obfClassName,
-                                    methodMapping.getOriginalName().substring(0, methodMapping.getOriginalName().lastIndexOf('/'))// original class name
+                                    methodMapping.getMappedName().substring(0, methodMapping.getMappedName().lastIndexOf('/'))// original class name
                             );
                             mappings.put(obfClassName, cm);
                         }
-                        cm.addMethod(new MethodMapping(methodMapping.getObfuscatedName().
-                                substring(methodMapping.getObfuscatedName().lastIndexOf('/') + 1),
-                                methodMapping.getOriginalName().substring(methodMapping.getOriginalName().lastIndexOf('/') + 1),
+                        cm.addMethod(new BaseMethodMapping(methodMapping.getUnmappedName().
+                                substring(methodMapping.getUnmappedName().lastIndexOf('/') + 1),
+                                methodMapping.getMappedName().substring(methodMapping.getMappedName().lastIndexOf('/') + 1),
                                 methodMapping.getObfuscatedDescriptor(), methodMapping.getOriginalDescriptor()));
                         break;
                 }
@@ -112,14 +112,14 @@ public class SrgMappingReader extends AbstractMappingReader {
             return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
         }
         @Override
-        protected MethodMapping processMethod(String line) {
+        protected BaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new MethodMapping(strings[1], strings[3], strings[2], strings[4]);
+            return new BaseMethodMapping(strings[1], strings[3], strings[2], strings[4]);
         }
         @Override
-        protected FieldMapping processField(String line) {
+        protected BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new FieldMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
+            return new BaseFieldMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
         }
         @Override
         protected List<PackageMapping> getPackages() {

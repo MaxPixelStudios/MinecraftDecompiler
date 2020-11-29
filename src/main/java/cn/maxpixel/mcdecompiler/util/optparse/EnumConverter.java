@@ -16,7 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.util.optparse;
 
-public abstract class CustomizeInfo extends DefaultedInfo {
+public class EnumConverter<V extends Enum<V>> extends joptsimple.util.EnumConverter<V> {
+    public EnumConverter(Class<V> clazz) {
+        super(clazz);
+    }
 }

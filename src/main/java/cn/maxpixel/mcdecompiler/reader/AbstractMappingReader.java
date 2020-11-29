@@ -19,9 +19,10 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.FieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.MethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.io.*;
@@ -73,11 +74,11 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         return packages;
     }
     public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
-        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getObfuscatedName, Function.identity(),
+        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(),
                 (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
     }
     public Map<String, ClassMapping> getMappingsMapByOriginalName() {
-        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getOriginalName, Function.identity(),
+        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(),
                 (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
     }
     @Override
@@ -85,7 +86,7 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         try {
             reader.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LambdaUtil.rethrowAsRuntime(e);
         } finally {
             reader = null;
         }
@@ -97,7 +98,7 @@ public abstract class AbstractMappingReader implements AutoCloseable {
     protected abstract static class AbstractNonPackageMappingProcessor {
         public abstract List<ClassMapping> process(Stream<String> lines);
         protected abstract ClassMapping processClass(String line);
-        protected abstract MethodMapping processMethod(String line);
-        protected abstract FieldMapping processField(String line);
+        protected abstract BaseMethodMapping processMethod(String line);
+        protected abstract BaseFieldMapping processField(String line);
     }
 }
