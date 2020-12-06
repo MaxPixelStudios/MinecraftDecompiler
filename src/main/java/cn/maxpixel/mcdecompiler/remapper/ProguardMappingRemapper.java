@@ -20,8 +20,8 @@ package cn.maxpixel.mcdecompiler.remapper;
 
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,11 +53,11 @@ public class ProguardMappingRemapper extends Remapper {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
             ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
             if(classMapping != null) {
-                AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
+                AtomicReference<ProguardMethodMapping> methodMapping = new AtomicReference<>();
                 classMapping.getMethods().forEach(mapping -> {
                     if(methodMapping.get() != null) return;
                     if(mapping.getUnmappedName().equals(name)) {
-                        compareMethodDescriptorAndSet(descriptor, methodMapping, mapping);
+                        compareMethodDescriptorAndSet(descriptor, methodMapping, mapping.asProguard());
                     }
                 });
                 if(methodMapping.get() == null) methodMapping.set(processSuperMethod(owner, name, descriptor));
@@ -101,21 +101,21 @@ public class ProguardMappingRemapper extends Remapper {
         return stringBuilder.toString();
     }
 
-    private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<BaseMethodMapping> target, BaseMethodMapping compare) {
-        if(descriptor.equals(getObfuscatedDescriptor(compare.getOriginalDescriptor()))) target.set(compare);
+    private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<ProguardMethodMapping> target, ProguardMethodMapping compare) {
+        if(descriptor.equals(getObfuscatedDescriptor(compare.getMappedDescriptor()))) target.set(compare);
     }
 
-    private BaseMethodMapping processSuperMethod(String owner, String name, String descriptor) {
+    private ProguardMethodMapping processSuperMethod(String owner, String name, String descriptor) {
         List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
         if(superNames != null) {
-            AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
+            AtomicReference<ProguardMethodMapping> methodMapping = new AtomicReference<>();
             superNames.forEach(superClass -> {
                 if(methodMapping.get() != null) return;
                 ClassMapping superClassMapping = mappingByObfus.get(superClass);
                 if(superClassMapping != null) {
                     superClassMapping.getMethods().forEach(methodMapping1 -> {
                         if(methodMapping1.getUnmappedName().equals(name)) {
-                            compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1);
+                            compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1.asProguard());
                         }
                     });
                 }
@@ -137,19 +137,19 @@ public class ProguardMappingRemapper extends Remapper {
     public String mapFieldName(String owner, String name, String descriptor) {
         ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
         if(classMapping != null) {
-            BaseFieldMapping fieldMapping = classMapping.getField(name);
+            ProguardFieldMapping fieldMapping = classMapping.getField(name).asProguard();
             if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
             if(fieldMapping != null) return fieldMapping.getMappedName();
         }
         return name;
     }
-    private BaseFieldMapping processSuperField(String owner, String name) {
+    private ProguardFieldMapping processSuperField(String owner, String name) {
         if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
-            AtomicReference<BaseFieldMapping> fieldMapping = new AtomicReference<>();
+            AtomicReference<ProguardFieldMapping> fieldMapping = new AtomicReference<>();
             superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
                 ClassMapping supermapping = mappingByObfus.get(superClass);
                 if(supermapping != null && fieldMapping.get() == null) {
-                    fieldMapping.set(supermapping.getField(name));
+                    fieldMapping.set(supermapping.getField(name).asProguard());
                 }
             });
             if(fieldMapping.get() == null) {

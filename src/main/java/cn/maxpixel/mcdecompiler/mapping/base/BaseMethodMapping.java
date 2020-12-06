@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler.mapping.base;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
+import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
 
 public class BaseMethodMapping extends BaseFieldMethodShared {
     public BaseMethodMapping(String unmappedName, String mappedName) {
@@ -29,6 +30,9 @@ public class BaseMethodMapping extends BaseFieldMethodShared {
 
     public LineNumber asLineNumber() {
         return (LineNumber) this;
+    }
+    public ProguardMethodMapping asProguard() {
+        return (ProguardMethodMapping) this;
     }
     @Override
     public BaseMethodMapping setOwner(ClassMapping owner) {
