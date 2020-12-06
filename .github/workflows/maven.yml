@@ -29,5 +29,5 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v2
       with:
-        name: MinecraftDecompiler-with-java${{ matrix.java }}
+        name: MinecraftDecompiler-with-java${{ matrix.java }}${{ matrix.architecture }}
         path: MinecraftDecompiler.jar
