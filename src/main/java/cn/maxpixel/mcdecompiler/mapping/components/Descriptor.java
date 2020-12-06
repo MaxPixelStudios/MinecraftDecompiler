@@ -20,7 +20,7 @@ package cn.maxpixel.mcdecompiler.mapping.components;
 
 public interface Descriptor {
     String getUnmappedDescriptor();
-    void setUnmappedDescriptor(String descriptor);
+    void setUnmappedDescriptor(String unmappedDescriptor);
     interface Mapped {
         String getMappedDescriptor();
         void setMappedDescriptor(String mappedDescriptor);

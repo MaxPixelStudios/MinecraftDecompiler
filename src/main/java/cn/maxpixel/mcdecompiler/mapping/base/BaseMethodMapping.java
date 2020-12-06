@@ -18,22 +18,22 @@
 
 package cn.maxpixel.mcdecompiler.mapping.base;
 
-import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
+import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
 
-public class BaseMethodMapping extends BaseMapping implements Descriptor {
-    private String unmappedDescriptor;
-    public BaseMethodMapping() {}
-    public BaseMethodMapping(String unmappedName, String mappedName,
-                             String unmappedDescriptor) {
+public class BaseMethodMapping extends BaseFieldMethodShared {
+    public BaseMethodMapping(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);
-        this.unmappedDescriptor = unmappedDescriptor;
     }
+    public BaseMethodMapping() {}
 
-    public String getUnmappedDescriptor() {
-        return unmappedDescriptor;
+    public LineNumber asLineNumber() {
+        return (LineNumber) this;
     }
-    public void setUnmappedDescriptor(String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
+    @Override
+    public BaseMethodMapping setOwner(ClassMapping owner) {
+        super.setOwner(owner);
+        return this;
     }
 
     @Override

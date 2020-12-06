@@ -19,8 +19,8 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -58,7 +58,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
             ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
             AtomicReference<ClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {
-                if(!s.startsWith(" ")) {
+                if(!s.startsWith("    ")) {
                     if(currClass.get() != null) {
                         mappings.add(currClass.getAndSet(processClass(s)));
                     } else currClass.set(processClass(s));
@@ -67,7 +67,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
                     else currClass.get().addField(processField(s.trim()));
                 }
             });
-            if(currClass.get() != null) mappings.add(currClass.get());
+            if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
             return mappings;
         }
 
@@ -78,14 +78,15 @@ public class ProguardMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected BaseMethodMapping processMethod(String line) {
-            BaseMethodMapping methodMapping = new BaseMethodMapping();
+        protected ProguardMethodMapping processMethod(String line) {
+            ProguardMethodMapping methodMapping = new ProguardMethodMapping();
 
             String[] linenums = line.split(":");
             String[] method;
             if(linenums.length == 3){
                 method = linenums[2].split("( -> )| ");
-                methodMapping.setLinenumber(Integer.parseInt(linenums[0]), Integer.parseInt(linenums[1]));
+                methodMapping.setLineNumberS(Integer.parseInt(linenums[0]));
+                methodMapping.setLineNumberE(Integer.parseInt(linenums[1]));
             } else method = linenums[0].split("( -> )| ");
             methodMapping.setUnmappedName(method[2]);
 
@@ -96,15 +97,15 @@ public class ProguardMappingReader extends AbstractMappingReader {
             StringBuilder descriptor = new StringBuilder().append('(');
             for(String argTypeJN : original_args[1].split(",")) descriptor.append(NamingUtil.asDescriptor(argTypeJN)); // JN: Java Name
             descriptor.append(')').append(NamingUtil.asDescriptor(method[0]));
-            methodMapping.setOriginalDescriptor(descriptor.toString());
+            methodMapping.setMappedDescriptor(descriptor.toString());
 
             return methodMapping;
         }
 
         @Override
-        protected BaseFieldMapping processField(String line) {
+        protected ProguardFieldMapping processField(String line) {
             String[] strings = line.split("( -> )| ");
-            return new BaseFieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
+            return new ProguardFieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
         }
     }
 }

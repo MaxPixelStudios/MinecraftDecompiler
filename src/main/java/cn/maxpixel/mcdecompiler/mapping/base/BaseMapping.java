@@ -18,6 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.mapping.base;
 
+import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
+import cn.maxpixel.mcdecompiler.mapping.components.Owner;
+
 public abstract class BaseMapping {
     private String unmappedName;
     private String mappedName;
@@ -37,5 +41,29 @@ public abstract class BaseMapping {
     }
     public void setMappedName(String mappedName) {
         this.mappedName = mappedName;
+    }
+}
+class BaseFieldMethodShared extends BaseMapping implements Owner<BaseFieldMethodShared> {
+    private ClassMapping owner;
+    protected BaseFieldMethodShared(String unmappedName, String mappedName) {
+        super(unmappedName, mappedName);
+    }
+    protected BaseFieldMethodShared() {}
+
+    public Descriptor asDescriptor() {
+        return (Descriptor) this;
+    }
+    public Descriptor.Mapped asMappedDescriptor() {
+        return (Descriptor.Mapped) this;
+    }
+
+    @Override
+    public ClassMapping getOwner() {
+        return owner;
+    }
+    @Override
+    public BaseFieldMethodShared setOwner(ClassMapping owner) {
+        this.owner = owner;
+        return this;
     }
 }

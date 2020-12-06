@@ -16,27 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.base;
+package cn.maxpixel.mcdecompiler.mapping.srg;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
-public class BaseFieldMapping extends BaseFieldMethodShared {
-    public BaseFieldMapping(String unmappedName, String mappedName) {
+/*
+ * Both CSRG and TSRG mappings use this class
+ */
+public class CTsrgMethodMapping extends BaseMethodMapping implements Descriptor {
+    private String unmappedDescriptor;
+    public CTsrgMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor) {
         super(unmappedName, mappedName);
+        this.unmappedDescriptor = unmappedDescriptor;
     }
-    public BaseFieldMapping() {}
-
+    public CTsrgMethodMapping() {}
     @Override
-    public BaseFieldMapping setOwner(ClassMapping owner) {
+    public String getUnmappedDescriptor() {
+        return unmappedDescriptor;
+    }
+    @Override
+    public void setUnmappedDescriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+    @Override
+    public CTsrgMethodMapping setOwner(ClassMapping owner) {
         super.setOwner(owner);
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "BaseFieldMapping{" +
-                "unmapped name=" + getUnmappedName() +
-                ", mapped name=" + getMappedName() +
-                '}';
     }
 }

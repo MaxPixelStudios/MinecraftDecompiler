@@ -21,8 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.srg.SrgMethodMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.mapping.srg.CTsrgMethodMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -31,78 +30,69 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SrgMappingReader extends AbstractMappingReader {
-    public SrgMappingReader(BufferedReader reader) {
+public class CsrgMappingReader extends AbstractMappingReader {
+    public CsrgMappingReader(BufferedReader reader) {
         super(reader);
     }
-    public SrgMappingReader(Reader rd) {
+    public CsrgMappingReader(Reader rd) {
         super(rd);
     }
-    public SrgMappingReader(InputStream is) {
+    public CsrgMappingReader(InputStream is) {
         super(is);
     }
-    public SrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
+    public CsrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
-    private static final SrgMappingProcessor PROCESSOR = new SrgMappingProcessor();
+    private static final CsrgMappingProcessor PROCESSOR = new CsrgMappingProcessor();
     @Override
-    protected SrgMappingProcessor getProcessor() {
+    protected CsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
-    private static class SrgMappingProcessor extends AbstractMappingProcessor {
+    private static class CsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         @Override
         public List<ClassMapping> process(Stream<String> lines) {
             Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             lines.map(String::trim).forEach(s -> {
-                switch(s.substring(0, 3)) {
-                    case "CL:":
-                        ClassMapping classMapping = processClass(s);
-                        mappings.putIfAbsent(classMapping.getUnmappedName(), classMapping);
+                String[] sa = s.split(" ");
+                switch(sa.length) {
+                    case 2: // Class / Package
+                        if(sa[0].endsWith("/")) packages.add(processPackage(s));
+                        else {
+                            ClassMapping classMapping = processClass(s);
+                            mappings.putIfAbsent(classMapping.getUnmappedName(), classMapping);
+                        }
                         break;
-                    case "PK:":
-                        packages.add(processPackage(s));
-                        break;
-                    case "FD:":
+                    case 3: // Field
                         BaseFieldMapping fieldMapping = processField(s);
-                        String unmClassName = fieldMapping.getOwner().getUnmappedName();
-                        ClassMapping cm = mappings.computeIfAbsent(unmClassName, k -> new ClassMapping(unmClassName, fieldMapping.getOwner().getMappedName()));
+                        ClassMapping cm = mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(), ClassMapping::new);
                         cm.addField(fieldMapping.setOwner(cm));
                         break;
-                    case "MD:":
-                        SrgMethodMapping methodMapping = processMethod(s);
-                        unmClassName = methodMapping.getOwner().getUnmappedName();
-                        cm = mappings.computeIfAbsent(unmClassName, k -> new ClassMapping(unmClassName, methodMapping.getOwner().getMappedName()));
+                    case 4: // Method
+                        CTsrgMethodMapping methodMapping = processMethod(s);
+                        cm = mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), ClassMapping::new);
                         cm.addMethod(methodMapping.setOwner(cm));
                         break;
                 }
             });
-            return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            return null;
         }
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
-        }
-        private String getClassName(String s) {
-            return NamingUtil.asJavaName(s.substring(s.lastIndexOf('/')));
-        }
-        private String getName(String s) {
-            return s.substring(s.lastIndexOf('/') + 1);
+            return new ClassMapping(strings[0], strings[1]);
         }
         @Override
-        protected SrgMethodMapping processMethod(String line) {
+        protected CTsrgMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new SrgMethodMapping(getName(strings[1]), getName(strings[3]), strings[2], strings[4])
-                    .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[3])));
+            return new CTsrgMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(strings[0]));
         }
         @Override
         protected BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(getName(strings[1]), getName(strings[2])).setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[2])));
+            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(strings[0]));
         }
         @Override
         protected List<PackageMapping> getPackages() {
@@ -111,7 +101,7 @@ public class SrgMappingReader extends AbstractMappingReader {
         @Override
         protected PackageMapping processPackage(String line) {
             String[] strings = line.split(" ");
-            return new PackageMapping(strings[1], strings[2]);
+            return new PackageMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
         }
     }
 }

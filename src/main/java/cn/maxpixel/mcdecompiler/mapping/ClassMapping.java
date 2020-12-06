@@ -31,23 +31,25 @@ import java.util.Map;
 public class ClassMapping extends BaseMapping {
     private final List<BaseMethodMapping> methods;
     private final Map<String, BaseFieldMapping> fields;
-    public ClassMapping() {
+    {
         this.methods = new ObjectArrayList<>();
         this.fields = new Object2ObjectOpenHashMap<>();
     }
+    public ClassMapping() {}
     public ClassMapping(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);
-        this.methods = new ObjectArrayList<>();
-        this.fields = new Object2ObjectOpenHashMap<>();
+    }
+    public ClassMapping(String targetName) { // CSRG
+        super(targetName, targetName);
     }
 
-    public ClassMapping addFields(BaseFieldMapping... fields) {
+    public ClassMapping addField(BaseFieldMapping... fields) {
         for (BaseFieldMapping field : fields) {
             this.fields.put(field.getUnmappedName(), field);
         }
         return this;
     }
-    public ClassMapping addMethods(BaseMethodMapping... methods) {
+    public ClassMapping addMethod(BaseMethodMapping... methods) {
         this.methods.addAll(Arrays.asList(methods));
         return this;
     }

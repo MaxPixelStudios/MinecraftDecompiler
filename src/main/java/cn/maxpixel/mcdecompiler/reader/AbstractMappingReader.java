@@ -26,6 +26,7 @@ import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,13 +43,11 @@ public abstract class AbstractMappingReader implements AutoCloseable {
     protected AbstractMappingReader(BufferedReader reader) {
         this.reader = reader;
         Stream<String> lines = reader.lines().map(s -> {
-            if(s.startsWith("#")) return null;
+            if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
 
             int index = s.indexOf('#');
             if(index > 0) return s.substring(0, index);
             else if(index == 0) return null;
-
-            if(s.replaceAll("\\s+", "").isEmpty()) return null;
 
             return s;
         }).filter(Objects::nonNull);
@@ -57,10 +56,10 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : Collections.emptyList();
     }
     protected AbstractMappingReader(Reader rd) {
-        this(new BufferedReader(rd));
+        this(new BufferedReader(Objects.requireNonNull(rd)));
     }
     protected AbstractMappingReader(InputStream is) {
-        this(new InputStreamReader(is));
+        this(new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8));
     }
     protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
         this(new FileReader(Objects.requireNonNull(path)));

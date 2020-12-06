@@ -16,23 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.proguard;
+package cn.maxpixel.mcdecompiler.mapping.srg;
 
+import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
 
-public class ProguardMethodMapping extends BaseMethodMapping implements LineNumber, Descriptor.Mapped {
-    private int[] lineNums = new int[2];
+public class SrgMethodMapping extends BaseMethodMapping implements Descriptor, Descriptor.Mapped {
+    private String unmappedDescriptor;
     private String mappedDescriptor;
-    public ProguardMethodMapping(String unmappedName, String mappedName,
-                                 String mappedDescriptor, int lineNumberS, int lineNumberE) {
+    public SrgMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor, String mappedDescriptor) {
         super(unmappedName, mappedName);
+        this.unmappedDescriptor = unmappedDescriptor;
         this.mappedDescriptor = mappedDescriptor;
-        this.lineNums[0] = lineNumberS;
-        this.lineNums[1] = lineNumberE;
     }
-    public ProguardMethodMapping() {}
+    public SrgMethodMapping() {}
+    @Override
+    public String getUnmappedDescriptor() {
+        return unmappedDescriptor;
+    }
+    @Override
+    public void setUnmappedDescriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
     @Override
     public String getMappedDescriptor() {
         return mappedDescriptor;
@@ -42,19 +48,8 @@ public class ProguardMethodMapping extends BaseMethodMapping implements LineNumb
         this.mappedDescriptor = mappedDescriptor;
     }
     @Override
-    public int getLineNumberS() {
-        return lineNums[0];
-    }
-    @Override
-    public int getLineNumberE() {
-        return lineNums[1];
-    }
-    @Override
-    public void setLineNumberS(int ns) {
-        this.lineNums[0] = ns;
-    }
-    @Override
-    public void setLineNumberE(int ne) {
-        this.lineNums[1] = ne;
+    public SrgMethodMapping setOwner(ClassMapping owner) {
+        super.setOwner(owner);
+        return this;
     }
 }

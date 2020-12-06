@@ -21,19 +21,19 @@ package cn.maxpixel.mcdecompiler.mapping.proguard;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
-public class ProguardFieldMapping extends BaseFieldMapping implements Descriptor {
-    private String unmappedDescriptor;
-    public ProguardFieldMapping(String unmappedName, String mappedName, String unmappedDescriptor) {
+public class ProguardFieldMapping extends BaseFieldMapping implements Descriptor.Mapped {
+    private String mappedDescriptor;
+    public ProguardFieldMapping(String unmappedName, String mappedName, String mappedDescriptor) {
         super(unmappedName, mappedName);
-        this.unmappedDescriptor = unmappedDescriptor;
+        this.mappedDescriptor = mappedDescriptor;
     }
     public ProguardFieldMapping() {}
     @Override
-    public String getUnmappedDescriptor() {
-        return unmappedDescriptor;
+    public String getMappedDescriptor() {
+        return mappedDescriptor;
     }
     @Override
-    public void setUnmappedDescriptor(String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
+    public void setMappedDescriptor(String mappedDescriptor) {
+        this.mappedDescriptor = mappedDescriptor;
     }
 }

@@ -16,27 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.base;
+package cn.maxpixel.mcdecompiler.mapping.components;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 
-public class BaseFieldMapping extends BaseFieldMethodShared {
-    public BaseFieldMapping(String unmappedName, String mappedName) {
-        super(unmappedName, mappedName);
-    }
-    public BaseFieldMapping() {}
-
-    @Override
-    public BaseFieldMapping setOwner(ClassMapping owner) {
-        super.setOwner(owner);
-        return this;
-    }
-
-    @Override
-    public String toString() {
-        return "BaseFieldMapping{" +
-                "unmapped name=" + getUnmappedName() +
-                ", mapped name=" + getMappedName() +
-                '}';
-    }
+public interface Owner<THIS> {
+    ClassMapping getOwner();
+    THIS setOwner(ClassMapping owner);
 }
