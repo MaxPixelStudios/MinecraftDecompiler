@@ -40,16 +40,17 @@ public class Deobfuscator {
     private final AbstractDeobfuscator deobfuscator;
     private final String version;
     private final Info.SideType type;
-    public Deobfuscator(String version, Info.SideType type, Info.MappingType mapping) {
+    public Deobfuscator(String version, Info.SideType type) {
         this.version = Objects.requireNonNull(version, "version cannot be null!");
         this.type = Objects.requireNonNull(type, "type cannot be null!");
-        switch(mapping) {
-            case PROGUARD:
-                deobfuscator = new ProguardDeobfuscator(version, type);
-                break;
-            default:
-                throw new IllegalArgumentException("MappingType " + mapping + " is not supported now");
-        }
+        this.deobfuscator = new ProguardDeobfuscator(version, type);
+//        switch(mapping) {
+//            case PROGUARD:
+//                deobfuscator = new ProguardDeobfuscator(version, type);
+//                break;
+//            default:
+//                throw new IllegalArgumentException("MappingType " + mapping + " is not supported now");
+//        }
     }
     public void deobfuscate() {
         try {

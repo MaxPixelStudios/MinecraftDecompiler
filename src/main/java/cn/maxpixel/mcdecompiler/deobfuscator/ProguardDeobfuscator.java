@@ -20,14 +20,12 @@ package cn.maxpixel.mcdecompiler.deobfuscator;
 
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.InfoProviders;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
-import cn.maxpixel.mcdecompiler.remapper.ProguardMappingRemapper;
-import cn.maxpixel.mcdecompiler.util.FileUtil;
-import cn.maxpixel.mcdecompiler.util.JarUtil;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.util.NetworkUtil;
+import cn.maxpixel.mcdecompiler.util.*;
+import com.google.gson.JsonObject;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -36,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,13 +44,17 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
+    private final String version;
+    private final Info.SideType type;
+    private JsonObject version_json;
     public ProguardDeobfuscator(String version, Info.SideType type) {
-        super(version, type);
+        this.version = Objects.requireNonNull(version);
+        this.type = Objects.requireNonNull(type);
         downloadMapping();
         downloadJar();
     }
     private void downloadMapping() {
-        checkVersion();
+        version_json = VersionManifest.getVersion(version);
         if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
             throw new RuntimeException("This version doesn't have mappings. Please use 1.14.4 or above");
         Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
@@ -63,6 +66,22 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
             try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
                 channel.transferFrom(NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
                         getAsJsonObject().get("url").getAsString()).connect().asChannel(), 0, Long.MAX_VALUE);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private void downloadJar() {
+        Path p = Paths.get(InfoProviders.get().getMcJarPath(version, type));
+        if(Files.notExists(p)) {
+            try {
+                Files.createDirectories(p.getParent());
+            }catch(IOException ignored){}
+            LOGGER.info("downloading jar...");
+            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject()
+                        .get("url").getAsString()).connect().asChannel()) {
+                channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -89,8 +108,8 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                         e.printStackTrace();
                     }
                 });
-                ProguardMappingRemapper remapper = new ProguardMappingRemapper(mappingReader.getMappingsMapByObfuscatedName(), mappingReader.getMappingsMapByOriginalName(), superClassMapping);
-                Map<String, ClassMapping> mappings = mappingReader.getMappingsMapByObfuscatedName();
+                MappingRemapper remapper = new MappingRemapper(mappingReader, superClassMapping);
+                Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
                 Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
                 listMcClassFiles(originalClasses, path -> {
                     try(InputStream inputStream = Files.newInputStream(path.toPath())) {
@@ -136,7 +155,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                 FileUtil.copyDirectory(childFile.toPath(), Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
             }
         }
-        File manifest = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MANIFEST.MF").toFile();
+        File manifest = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "META-INF/MANIFEST.MF").toFile();
         if(manifest.exists()) manifest.delete();
         File mojangRSA = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.RSA").toFile();
         if(mojangRSA.exists()) mojangRSA.delete();

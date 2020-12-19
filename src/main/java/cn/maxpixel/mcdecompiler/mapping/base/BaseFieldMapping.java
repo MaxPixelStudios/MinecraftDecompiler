@@ -19,7 +19,6 @@
 package cn.maxpixel.mcdecompiler.mapping.base;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
 
 public class BaseFieldMapping extends BaseFieldMethodShared {
     public BaseFieldMapping(String unmappedName, String mappedName) {
@@ -27,9 +26,6 @@ public class BaseFieldMapping extends BaseFieldMethodShared {
     }
     public BaseFieldMapping() {}
 
-    public ProguardFieldMapping asProguard() {
-        return (ProguardFieldMapping) this;
-    }
     @Override
     public BaseFieldMapping setOwner(ClassMapping owner) {
         super.setOwner(owner);

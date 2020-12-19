@@ -72,11 +72,11 @@ public abstract class AbstractMappingReader implements AutoCloseable {
     public List<PackageMapping> getPackages() {
         return packages;
     }
-    public Map<String, ClassMapping> getMappingsMapByObfuscatedName() {
+    public Map<String, ClassMapping> getMappingsByUnmappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(),
                 (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
     }
-    public Map<String, ClassMapping> getMappingsMapByOriginalName() {
+    public Map<String, ClassMapping> getMappingsByMappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(),
                 (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
     }

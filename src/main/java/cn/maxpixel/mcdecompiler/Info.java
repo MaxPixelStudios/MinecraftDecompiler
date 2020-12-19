@@ -29,11 +29,16 @@ public interface Info {
         return getDownloadPath() + "/libs/";
     }
     File getMappingPath();
-    String getDecompileDirectory(String version, SideType type);
+    default String getDecompileDirectory(String version, SideType type) {
+        return getOutputPath() + "/" + version + "_" + type + "_decompiled/";
+    }
     default String getMcJarPath(String version, SideType type) {
         return getDownloadPath() + "/" + version + "/" + type + ".jar";
     }
-    String getDeobfuscateJarPath(String version, SideType type);
+    default String getDeobfuscateJarPath(String version, SideType type) {
+        return getOutputPath() + "/" + version + "_" + type + "_deobfuscated.jar";
+    }
+    String getOutputPath();
     default String getTempOriginalClassesPath(String version, SideType type) {
         return getTempPath() + "/" + version + "/" + type + "/originalClasses";
     }

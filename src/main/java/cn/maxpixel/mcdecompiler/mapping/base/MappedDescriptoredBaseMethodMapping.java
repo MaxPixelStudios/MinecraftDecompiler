@@ -16,33 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.srg;
+package cn.maxpixel.mcdecompiler.mapping.base;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
-/*
- * Both CSRG and TSRG mappings use this class
- */
-public class CTsrgMethodMapping extends BaseMethodMapping implements Descriptor {
-    private String unmappedDescriptor;
-    public CTsrgMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor) {
+public class MappedDescriptoredBaseMethodMapping extends BaseMethodMapping implements Descriptor.Mapped {
+    private String mappedDescriptor;
+    public MappedDescriptoredBaseMethodMapping(String unmappedName, String mappedName, String mappedDescriptor) {
         super(unmappedName, mappedName);
-        this.unmappedDescriptor = unmappedDescriptor;
+        this.mappedDescriptor = mappedDescriptor;
     }
-    public CTsrgMethodMapping() {}
+    public MappedDescriptoredBaseMethodMapping() {}
     @Override
-    public String getUnmappedDescriptor() {
-        return unmappedDescriptor;
-    }
-    @Override
-    public void setUnmappedDescriptor(String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
+    public String getMappedDescriptor() {
+        return mappedDescriptor;
     }
     @Override
-    public CTsrgMethodMapping setOwner(ClassMapping owner) {
-        super.setOwner(owner);
-        return this;
+    public void setMappedDescriptor(String mappedDescriptor) {
+        this.mappedDescriptor = mappedDescriptor;
     }
 }

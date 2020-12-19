@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.util;
 import java.util.function.Consumer;
 
 public class LambdaUtil {
+    @FunctionalInterface
     public interface ConsumerWithThrows<T, E extends Throwable> {
         void accept(T t) throws E;
     }

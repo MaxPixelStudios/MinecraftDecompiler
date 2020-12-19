@@ -30,12 +30,8 @@ public class DefaultedInfo implements Info {
         return null;
     }
     @Override
-    public String getDecompileDirectory(String version, SideType type) {
-        return "output/" + version + "_" + type + "_decompiled/";
-    }
-    @Override
-    public String getDeobfuscateJarPath(String version, SideType type) {
-        return "output/" + version + "_" + type + "_deobfuscated.jar";
+    public String getOutputPath() {
+        return "output";
     }
     @Override
     public String getTempPath() {

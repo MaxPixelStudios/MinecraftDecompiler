@@ -19,28 +19,26 @@
 package cn.maxpixel.mcdecompiler.mapping.base;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
-public abstract class BaseMethodMapping extends BaseFieldMethodShared {
-    public BaseMethodMapping(String unmappedName, String mappedName) {
+public class DescriptoredBaseMethodMapping extends BaseMethodMapping implements Descriptor {
+    private String unmappedDescriptor;
+    public DescriptoredBaseMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor) {
         super(unmappedName, mappedName);
+        this.unmappedDescriptor = unmappedDescriptor;
     }
-    public BaseMethodMapping() {}
-
-    public LineNumber asLineNumber() {
-        return (LineNumber) this;
+    public DescriptoredBaseMethodMapping() {}
+    @Override
+    public String getUnmappedDescriptor() {
+        return unmappedDescriptor;
     }
     @Override
-    public BaseMethodMapping setOwner(ClassMapping owner) {
+    public void setUnmappedDescriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+    @Override
+    public DescriptoredBaseMethodMapping setOwner(ClassMapping owner) {
         super.setOwner(owner);
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "BaseMethodMapping{" +
-                "obfuscated name=" + getUnmappedName() +
-                ", original name=" + getMappedName() +
-                '}';
     }
 }

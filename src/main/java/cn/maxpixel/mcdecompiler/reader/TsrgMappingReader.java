@@ -21,7 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.srg.CTsrgMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.BufferedReader;
@@ -76,9 +76,9 @@ public class TsrgMappingReader extends AbstractMappingReader {
             return new ClassMapping(strings[0], strings[1]);
         }
         @Override
-        protected CTsrgMethodMapping processMethod(String line) {
+        protected DescriptoredBaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new CTsrgMethodMapping(strings[0], strings[2], strings[1]);
+            return new DescriptoredBaseMethodMapping(strings[0], strings[2], strings[1]);
         }
         @Override
         protected BaseFieldMapping processField(String line) {

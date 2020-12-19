@@ -21,7 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.srg.CTsrgMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -71,7 +71,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
                         cm.addField(fieldMapping.setOwner(cm));
                         break;
                     case 4: // Method
-                        CTsrgMethodMapping methodMapping = processMethod(s);
+                        DescriptoredBaseMethodMapping methodMapping = processMethod(s);
                         cm = mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), ClassMapping::new);
                         cm.addMethod(methodMapping.setOwner(cm));
                         break;
@@ -85,9 +85,9 @@ public class CsrgMappingReader extends AbstractMappingReader {
             return new ClassMapping(strings[0], strings[1]);
         }
         @Override
-        protected CTsrgMethodMapping processMethod(String line) {
+        protected DescriptoredBaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new CTsrgMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(strings[0]));
+            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(strings[0]));
         }
         @Override
         protected BaseFieldMapping processField(String line) {

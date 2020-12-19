@@ -4,5 +4,6 @@
 /download/
 /output/
 /.idea/
+/temp/
 
 *.iml

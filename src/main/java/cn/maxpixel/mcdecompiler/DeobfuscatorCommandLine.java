@@ -19,7 +19,6 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
-import cn.maxpixel.mcdecompiler.util.optparse.EnumConverter;
 import io.github.lxgaming.classloader.ClassLoaderUtils;
 import joptsimple.*;
 import org.apache.logging.log4j.LogManager;
@@ -36,33 +35,28 @@ import java.util.Arrays;
 
 public class DeobfuscatorCommandLine {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static final Proxy INTERNAL_PROXY = Boolean.parseBoolean(System.getProperty("mcd.internalProxy", "false")) ?
+    public static final Proxy INTERNAL_PROXY = System.console() == null &&
+            Boolean.parseBoolean(System.getProperty("mcd.internalProxy", "false")) ?
             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : //Just for internal testing.
             Proxy.NO_PROXY;
     public static void main(String[] args) {
-        String version;
-        Info.SideType sideType;
-        Info.MappingType mappingType;
-
         OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<Info.MappingType> mappingTypeO = parser.accepts("mapping", "Select a mapping to deobfuscate. Values are: srg, " +
-                "proguard, csrg, tsrg, tiny").withRequiredArg().withValuesConvertedBy(new EnumConverter<>(Info.MappingType.class)).defaultsTo(Info.MappingType.PROGUARD);
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
-                "Required when inputJar or mapping.").requiredIf(mappingTypeO).withRequiredArg();
+                "Only works on Proguard mappings.").withRequiredArg();
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"),
-                "Select a side to deobfuscate/decompile. Values are client and server. Required when \"version\" and \"mapping\" option is set.")
+                "Select a side to deobfuscate/decompile. Values are client and server. Only works with \"version\" option.")
                 .requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
         ArgumentAcceptingOptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
                 withRequiredArg();
-        ArgumentAcceptingOptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.").
-                requiredIf(mappingTypeO).withRequiredArg().ofType(File.class);
-        ArgumentAcceptingOptionSpec<String> outDeobfO = parser.accepts("outDeobf", "Output file of deobfuscated jar").withRequiredArg();
-        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "Decompile deobfuscated jar. " +
+        ArgumentAcceptingOptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.")
+                .requiredUnless(versionO, sideTypeO).withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<String> outO = parser.accepts("out", "The output directory of deobfuscated jar and decompiled dir").withRequiredArg();
+        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "Whether to decompile the deobfuscated jar. " +
                 "Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to \"FERNFLOWER\". Do NOT pass any " +
-                "arg to this option when you are using \"customDecompilerName\" option").withOptionalArg().ofType(Info.DecompilerType.class)
+                "arg to this option when \"customDecompilerName\" option is specified").withOptionalArg().ofType(Info.DecompilerType.class)
                 .defaultsTo(Info.DecompilerType.FERNFLOWER);
-        ArgumentAcceptingOptionSpec<URL> customDecompilerJarsO = parser.accepts("customDecompilerJars", "The jars of classes contain implementations of ICustomizedDecompiler that can be loaded by SPI. " +
-                "Without this option, you need to add them to classpath").withRequiredArg().withValuesSeparatedBy(';')
+        ArgumentAcceptingOptionSpec<URL> customDecompilerJarsO = parser.accepts("customDecompilerJars", "The jars of classes contain implementations " +
+                "of ICustomizedDecompiler that can be loaded by SPI. Without this option, you need to add them to classpath").withRequiredArg().withValuesSeparatedBy(';')
                 .withValuesConvertedBy(new ValueConverter<URL>() {
                     @Override
                     public URL convert(String value) {
@@ -85,6 +79,7 @@ public class DeobfuscatorCommandLine {
         OptionSet options = parser.parse(args);
         if(options.has(help)) {
             try {
+                System.out.println("Minecraft Decompiler version " + DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
                 parser.printHelpOn(System.out);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -94,29 +89,29 @@ public class DeobfuscatorCommandLine {
         if(options.has(customDecompilerJarsO))
             options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(ClassLoaderUtils::appendToClassPath, LambdaUtil::rethrowAsRuntime));
 
-        version = options.valueOf(versionO);
-        sideType = options.valueOf(sideTypeO);
-        mappingType = options.valueOf(mappingTypeO);
-        if(options.has(tempDirO) || options.has(mappingPathO)) {
-            InfoProviders.set(new CustomizeInfo() {
-                @Override
-                public String getTempPath() {
-                    return options.valueOfOptional(tempDirO).orElse(super.getTempPath());
+        String version = options.valueOf(versionO);
+        Info.SideType sideType = options.valueOf(sideTypeO);
+        InfoProviders.set(new CustomizeInfo() {
+            @Override
+            public String getTempPath() {
+                return options.valueOfOptional(tempDirO).orElse(super.getTempPath());
+            }
+            @Override
+            public File getMappingPath() {
+                if(options.has(versionO) && options.has(sideTypeO)) {
+                    if(options.has(mappingPathO)) throw new IllegalArgumentException("Do NOT specify --mapFile option when --version and --side is specified");
+                    return super.getMappingPath();
                 }
-                @Override
-                public File getMappingPath() {
-                    if(mappingType == MappingType.PROGUARD) throw new IllegalArgumentException("Custom the Proguard mapping file is not allowed");
-                    return options.valueOfOptional(mappingPathO).orElseThrow(() ->
-                            new IllegalArgumentException("--mapFile arg is required when you deobfuscate with SRG/CSRG/TSRG mapping"));
-                }
-                @Override
-                public String getDeobfuscateJarPath(String version, SideType type) {
-                    return options.valueOfOptional(outDeobfO).orElse(super.getDeobfuscateJarPath(version, type));
-                }
-            });
-        }
+                return options.valueOfOptional(mappingPathO).orElseThrow(() ->
+                        new IllegalArgumentException("--mapFile is required when you deobfuscate with SRG/CSRG/TSRG mapping"));
+            }
+            @Override
+            public String getOutputPath() {
+                return options.valueOfOptional(outO).orElse(super.getOutputPath());
+            }
+        });
 
-        Deobfuscator deobfuscator = new Deobfuscator(version, sideType, mappingType);
+        Deobfuscator deobfuscator = new Deobfuscator(version, sideType);
         deobfuscator.deobfuscate();
 
         if(options.has(decompileO)) {
