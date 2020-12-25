@@ -21,15 +21,16 @@ package cn.maxpixel.mcdecompiler;
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import io.github.lxgaming.classloader.ClassLoaderUtils;
 import joptsimple.*;
+import joptsimple.util.PathConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
@@ -48,8 +49,8 @@ public class DeobfuscatorCommandLine {
                 .requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
         ArgumentAcceptingOptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
                 withRequiredArg();
-        ArgumentAcceptingOptionSpec<File> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.")
-                .requiredUnless(versionO, sideTypeO).withRequiredArg().ofType(File.class);
+        ArgumentAcceptingOptionSpec<Path> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.")
+                .requiredUnless(versionO, sideTypeO).withRequiredArg().ofType(Path.class).withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<String> outO = parser.accepts("out", "The output directory of deobfuscated jar and decompiled dir").withRequiredArg();
         ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "Whether to decompile the deobfuscated jar. " +
                 "Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to \"FERNFLOWER\". Do NOT pass any " +
@@ -97,7 +98,7 @@ public class DeobfuscatorCommandLine {
                 return options.valueOfOptional(tempDirO).orElse(super.getTempPath());
             }
             @Override
-            public File getMappingPath() {
+            public Path getMappingPath() {
                 if(options.has(versionO) && options.has(sideTypeO)) {
                     if(options.has(mappingPathO)) throw new IllegalArgumentException("Do NOT specify --mapFile option when --version and --side is specified");
                     return super.getMappingPath();

@@ -72,7 +72,7 @@ public class JarUtil {
         try(OutputStream os = Channels.newOutputStream(FileChannel.open(jar, WRITE, CREATE, TRUNCATE_EXISTING));
             JarOutputStream outputStream = new JarOutputStream(os, manifest)) {
             Files.walkFileTree(from, new FileVisitor<Path>() {
-                final FileUtil.RelativePathWalkHelper helper = new FileUtil.RelativePathWalkHelper();
+                final FileUtil.RelativePathWalkerHelper helper = new FileUtil.RelativePathWalkerHelper();
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     helper.doPreVisitDir(dir);

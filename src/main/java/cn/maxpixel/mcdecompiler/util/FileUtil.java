@@ -35,7 +35,7 @@ public class FileUtil {
             LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
             Files.copy(source, target, copyOptions);
             Files.walkFileTree(source, new FileVisitor<Path>() {
-                private RelativePathWalkHelper helper = new RelativePathWalkHelper();
+                private final RelativePathWalkerHelper helper = new RelativePathWalkerHelper();
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     helper.doPreVisitDir(dir);
@@ -104,7 +104,7 @@ public class FileUtil {
             LOGGER.error("Error when deleting directory", e);
         }
     }
-    public static class RelativePathWalkHelper {
+    public static class RelativePathWalkerHelper {
         private String relativePath = null;
         public String getRelativePath() {
             return relativePath;

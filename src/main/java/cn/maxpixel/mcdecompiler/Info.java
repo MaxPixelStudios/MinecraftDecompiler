@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public interface Info {
     String getDownloadPath();
@@ -28,7 +28,7 @@ public interface Info {
     default String getLibDownloadPath() {
         return getDownloadPath() + "/libs/";
     }
-    File getMappingPath();
+    Path getMappingPath();
     default String getDecompileDirectory(String version, SideType type) {
         return getOutputPath() + "/" + version + "_" + type + "_decompiled/";
     }

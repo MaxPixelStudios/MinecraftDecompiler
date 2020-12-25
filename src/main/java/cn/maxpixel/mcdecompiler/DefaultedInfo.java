@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class DefaultedInfo implements Info {
     @Override
@@ -26,7 +26,7 @@ public class DefaultedInfo implements Info {
         return "downloads";
     }
     @Override
-    public File getMappingPath() {
+    public Path getMappingPath() {
         return null;
     }
     @Override
