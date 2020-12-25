@@ -67,7 +67,7 @@ public class Deobfuscator {
     public void decompile(Info.DecompilerType type) {
         LOGGER.info("decompiling");
         try {
-            Path remappedClasses = InfoProviders.get().getTempRemappedClassesPath();
+            Path remappedClasses = InfoProviders.get().getTempMappedClassesPath();
             Path decompileDir = Paths.get(InfoProviders.get().getDecompileDirectory(version, this.type));
             Files.createDirectories(decompileDir);
             Path decompilerJarPath = InfoProviders.get().getTempDecompilerPath(type).toAbsolutePath().normalize();

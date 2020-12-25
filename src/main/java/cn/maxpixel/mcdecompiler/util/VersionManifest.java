@@ -44,7 +44,7 @@ public class VersionManifest {
     static {
         try(Reader reader = NetworkUtil.newBuilder("https://launchermeta.mojang.com/mc/game/version_manifest.json").connect().asReader()) {
             VERSION_MANIFEST = JsonParser.parseReader(reader).getAsJsonObject();
-            versions = StreamSupport.stream(VERSION_MANIFEST.getAsJsonArray("versions").spliterator(), true)
+            versions = StreamSupport.stream(VERSION_MANIFEST.getAsJsonArray("versions").spliterator(), false)
                     .map(JsonElement::getAsJsonObject).collect(Collectors.toMap(obj->obj.get("id").getAsString(), obj->obj.get("url").getAsString()));
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -39,11 +39,11 @@ public interface Info {
         return getOutputPath() + "/" + version + "_" + type + "_deobfuscated.jar";
     }
     String getOutputPath();
-    default Path getTempOriginalClassesPath() {
-        return getTempPath().resolve("originalClasses");
+    default Path getTempUnmappedClassesPath() {
+        return getTempPath().resolve("unmappedClasses");
     }
-    default Path getTempRemappedClassesPath() {
-        return getTempPath().resolve("remappedClasses");
+    default Path getTempMappedClassesPath() {
+        return getTempPath().resolve("mappedClasses");
     }
     default Path getTempDecompileClassesPath() {
         return getTempPath().resolve("decompileClasses");
@@ -52,8 +52,8 @@ public interface Info {
         return getTempPath().resolve(type + ".jar");
     }
     Path getTempPath();
-    String FILE_SEPARATOR = System.getProperty("file.separator");
-    String PATH_SEPARATOR = System.getProperty("path.separator");
+    String FILE_SEPARATOR = System.getProperty("file.separator"); // / \\
+    String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
     enum SideType {
         CLIENT,
         SERVER;

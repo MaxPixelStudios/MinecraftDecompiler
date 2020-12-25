@@ -48,9 +48,9 @@ public class DeobfuscatorCommandLine {
                 "Select a side to deobfuscate/decompile. Values are client and server. Only works with \"version\" option.")
                 .requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped " +
-                "files").withRequiredArg().ofType(Path.class).withValuesConvertedBy(new PathConverter());
+                "files").withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.")
-                .requiredUnless(versionO, sideTypeO).withRequiredArg().ofType(Path.class).withValuesConvertedBy(new PathConverter());
+                .requiredUnless(versionO, sideTypeO).withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<String> outO = parser.accepts("out", "The output directory of deobfuscated jar and decompiled dir").withRequiredArg();
         ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "Whether to decompile the deobfuscated jar. " +
                 "Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to \"FERNFLOWER\". Do NOT pass any " +
