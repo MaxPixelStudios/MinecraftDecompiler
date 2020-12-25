@@ -47,8 +47,8 @@ public class DeobfuscatorCommandLine {
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"),
                 "Select a side to deobfuscate/decompile. Values are client and server. Only works with \"version\" option.")
                 .requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
-        ArgumentAcceptingOptionSpec<String> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped files").
-                withRequiredArg();
+        ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped " +
+                "files").withRequiredArg().ofType(Path.class).withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.")
                 .requiredUnless(versionO, sideTypeO).withRequiredArg().ofType(Path.class).withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<String> outO = parser.accepts("out", "The output directory of deobfuscated jar and decompiled dir").withRequiredArg();
@@ -94,7 +94,7 @@ public class DeobfuscatorCommandLine {
         Info.SideType sideType = options.valueOf(sideTypeO);
         InfoProviders.set(new CustomizeInfo() {
             @Override
-            public String getTempPath() {
+            public Path getTempPath() {
                 return options.valueOfOptional(tempDirO).orElse(super.getTempPath());
             }
             @Override

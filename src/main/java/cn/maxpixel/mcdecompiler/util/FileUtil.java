@@ -27,10 +27,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtil {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) throws IOException {
-        if(Files.notExists(source)) throw new IOException("Source not exist");
-        if(!Files.isDirectory(source)) throw new IOException("Source isn't a directory");
-        if(Files.exists(target) && !Files.isDirectory(target)) throw new IOException("Target isn't a directory");
+    public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
+        if(Files.notExists(source)) {
+            LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
+            return;
+        }
+        if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
+        if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
         try {
             LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
             Files.copy(source, target, copyOptions);
@@ -81,6 +84,11 @@ public class FileUtil {
         }
     }
     public static void deleteDirectory(Path directory) {
+        if(!Files.exists(directory)) {
+            LOGGER.debug("\"{}\" does not exist, skipping this operation...", directory);
+            return;
+        }
+        if(!Files.isDirectory(directory)) throw new IllegalArgumentException("Not a directory!");
         try {
             LOGGER.debug("Deleting directory \"{}\"...", directory);
             Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {

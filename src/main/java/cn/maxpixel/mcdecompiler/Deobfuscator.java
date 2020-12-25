@@ -54,7 +54,8 @@ public class Deobfuscator {
     }
     public void deobfuscate() {
         try {
-            Path tempPath = Paths.get(InfoProviders.get().getTempPath());
+            Path tempPath = InfoProviders.get().getTempPath();
+            FileUtil.deleteDirectory(tempPath);
             Files.createDirectories(tempPath);
             Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteDirectory(tempPath)));
         } catch (FileAlreadyExistsException ignored) {
@@ -66,19 +67,19 @@ public class Deobfuscator {
     public void decompile(Info.DecompilerType type) {
         LOGGER.info("decompiling");
         try {
-            Path remappedClasses = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, this.type));
+            Path remappedClasses = InfoProviders.get().getTempRemappedClassesPath();
             Path decompileDir = Paths.get(InfoProviders.get().getDecompileDirectory(version, this.type));
             Files.createDirectories(decompileDir);
-            Path decompilerJarPath = Paths.get(InfoProviders.get().getTempDecompilerPath(type)).toAbsolutePath().normalize();
+            Path decompilerJarPath = InfoProviders.get().getTempDecompilerPath(type).toAbsolutePath().normalize();
             IDecompiler decompiler = Decompilers.get(type);
             Path libDownloadPath = Paths.get(InfoProviders.get().getLibDownloadPath()).toAbsolutePath().normalize();
             if(decompiler instanceof IExternalJarDecompiler) ((IExternalJarDecompiler) decompiler).extractDecompilerTo(decompilerJarPath);
             if(decompiler instanceof ILibRecommendedDecompiler) ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
             switch(decompiler.getSourceType()) {
                 case DIRECTORY:
-                    Path decompileClasses = Paths.get(InfoProviders.get().getTempDecompileClassesPath(version, this.type));
+                    Path decompileClasses = InfoProviders.get().getTempDecompileClassesPath();
                     FileUtil.copyDirectory(remappedClasses.resolve("net"), decompileClasses);
-                    FileUtil.copyDirectory(remappedClasses.resolve("com/mojang"), decompileClasses.resolve("com"));
+                    FileUtil.copyDirectory(remappedClasses.resolve("com").resolve("mojang"), decompileClasses.resolve("com"));
                     decompiler.decompile(decompileClasses.toAbsolutePath().normalize(), decompileDir.toAbsolutePath().normalize());
                     break;
                 case FILE:

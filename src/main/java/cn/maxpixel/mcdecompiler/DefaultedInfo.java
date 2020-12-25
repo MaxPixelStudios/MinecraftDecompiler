@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class DefaultedInfo implements Info {
     @Override
@@ -34,7 +35,7 @@ public class DefaultedInfo implements Info {
         return "output";
     }
     @Override
-    public String getTempPath() {
-        return "temp";
+    public Path getTempPath() {
+        return Paths.get("temp");
     }
 }

@@ -25,6 +25,10 @@ import java.nio.file.Path;
 
 public abstract class AbstractDeobfuscator {
     protected static final Logger LOGGER = LogManager.getLogger();
+    protected String mappingPath;
     protected AbstractDeobfuscator() {}
+    protected AbstractDeobfuscator(String mappingPath) {
+        this.mappingPath = mappingPath;
+    }
     public abstract AbstractDeobfuscator deobfuscate(Path source, Path target);
 }

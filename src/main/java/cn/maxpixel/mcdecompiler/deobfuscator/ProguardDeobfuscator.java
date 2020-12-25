@@ -43,41 +43,45 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
-    private final String version;
-    private final Info.SideType type;
     private JsonObject version_json;
+    private String version;
+    private Info.SideType type;
+    public ProguardDeobfuscator(String mappingPath) {
+        super(mappingPath);
+    }
     public ProguardDeobfuscator(String version, Info.SideType type) {
         this.version = Objects.requireNonNull(version);
         this.type = Objects.requireNonNull(type);
-        downloadMapping();
-        downloadJar();
+        downloadMapping(version, type);
+        downloadJar(version, type);
     }
-    private void downloadMapping() {
+    private void downloadMapping(String version, Info.SideType type) {
         version_json = VersionManifest.getVersion(version);
         if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
-            throw new RuntimeException("This version doesn't have mappings. Please use 1.14.4 or above");
+            throw new RuntimeException("Version \"" + version + "\" doesn't have Proguard mappings. Please use 1.14.4 or above");
         Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
-        try {
-            Files.createDirectories(p.getParent());
-        } catch(IOException ignored) {}
         if(Files.notExists(p)) {
-            LOGGER.info("downloading mapping...");
-            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
-                channel.transferFrom(NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
-                        getAsJsonObject().get("url").getAsString()).connect().asChannel(), 0, Long.MAX_VALUE);
+            try {
+                Files.createDirectories(p.getParent());
+            } catch(IOException ignored) {}
+            LOGGER.info("Downloading mapping...");
+            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
+                        getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
+                channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
-    private void downloadJar() {
+    private void downloadJar(String version, Info.SideType type) {
         Path p = Paths.get(InfoProviders.get().getMcJarPath(version, type));
         if(Files.notExists(p)) {
             try {
                 Files.createDirectories(p.getParent());
             }catch(IOException ignored){}
-            LOGGER.info("downloading jar...");
-            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+            LOGGER.info("Downloading jar...");
+            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
                 ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject()
                         .get("url").getAsString()).connect().asChannel()) {
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
@@ -89,14 +93,17 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
     @Override
     public ProguardDeobfuscator deobfuscate(Path source, Path target) {
         try {
-            LOGGER.info("deobfuscating...");
-            Files.createDirectories(target.getParent());
-            if(Files.notExists(target)) Files.createFile(target);
-            Path originalClasses = Paths.get(InfoProviders.get().getTempOriginalClassesPath(version, type));
+            LOGGER.info("Deobfuscating...");
+            if(Files.notExists(target)) {
+                Files.createDirectories(target.getParent());
+                Files.createFile(target);
+            }
+            Path originalClasses = InfoProviders.get().getTempOriginalClassesPath();
             Files.createDirectories(originalClasses);
             JarUtil.decompressJar(source, originalClasses);
-            LOGGER.info("remapping...");
-            try(ProguardMappingReader mappingReader = new ProguardMappingReader(InfoProviders.get().getProguardMappingDownloadPath(version, type))) {
+            LOGGER.info("Remapping...");
+            try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ?
+                    InfoProviders.get().getProguardMappingDownloadPath(version, type) : mappingPath)) {
                 SuperClassMapping superClassMapping = new SuperClassMapping();
                 listMcClassFiles(originalClasses, path -> {
                     try(InputStream inputStream = Files.newInputStream(path)) {
@@ -108,7 +115,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                 });
                 MappingRemapper remapper = new MappingRemapper(mappingReader, superClassMapping);
                 Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
-                Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
+                Files.createDirectories(InfoProviders.get().getTempRemappedClassesPath());
                 listMcClassFiles(originalClasses, path -> {
                     try(InputStream inputStream = Files.newInputStream(path)) {
                         ClassReader reader = new ClassReader(inputStream);
@@ -127,8 +134,8 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                         ClassMapping mapping = mappings.get(mappingKey);
                         if(mapping != null) {
                             String s = NamingUtil.asNativeName(mapping.getMappedName());
-                            Files.createDirectories(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s.substring(0, s.lastIndexOf('/'))));
-                            Files.write(Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), s + ".class"), writer.toByteArray(),
+                            Files.createDirectories(InfoProviders.get().getTempRemappedClassesPath().resolve(s.substring(0, s.lastIndexOf('/'))));
+                            Files.write(InfoProviders.get().getTempRemappedClassesPath().resolve(s + ".class"), writer.toByteArray(),
                                     StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                         }
                     } catch (IOException e) {
@@ -138,7 +145,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
             }
             copyOthers(originalClasses);
             JarUtil.compressJar(type == Info.SideType.CLIENT ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer",
-                    target, Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
+                    target, InfoProviders.get().getTempRemappedClassesPath());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -147,21 +154,17 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
     private void copyOthers(Path baseDir) throws IOException {
         Files.list(baseDir).forEach(childPath -> {
             if(Files.isRegularFile(childPath) && !childPath.toString().endsWith(".class")) {
-                FileUtil.copyFile(childPath, Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), childPath.getFileName().toString()));
+                FileUtil.copyFile(childPath, InfoProviders.get().getTempRemappedClassesPath().resolve(childPath.getFileName().toString()));
             } else if(Files.isDirectory(childPath) && !childPath.toAbsolutePath().toString().contains("net")
                     && !childPath.toAbsolutePath().toString().contains("blaze3d") && !childPath.toAbsolutePath().toString().contains("realmsclient")) {
-                try {
-                    FileUtil.copyDirectory(childPath, Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type)));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                FileUtil.copyDirectory(childPath, InfoProviders.get().getTempRemappedClassesPath());
             }
         });
-        Path manifest = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MANIFEST.MF");
+        Path manifest = InfoProviders.get().getTempRemappedClassesPath().resolve("META-INF").resolve("MANIFEST.MF");
         Files.deleteIfExists(manifest);
-        Path mojangRSA = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.RSA");
+        Path mojangRSA = InfoProviders.get().getTempRemappedClassesPath().resolve("META-INF").resolve("MOJANGCS.RSA");
         Files.deleteIfExists(mojangRSA);
-        Path mojangSF = Paths.get(InfoProviders.get().getTempRemappedClassesPath(version, type), "META-INF", "MOJANGCS.SF");
+        Path mojangSF = InfoProviders.get().getTempRemappedClassesPath().resolve("META-INF").resolve("MOJANGCS.SF");
         Files.deleteIfExists(mojangSF);
     }
     private void listMcClassFiles(Path baseDir, Consumer<Path> fileConsumer) {
