@@ -27,52 +27,46 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtil {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
+    public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) throws IOException {
+        if(Files.notExists(source)) throw new IOException("Source not exist");
+        if(!Files.isDirectory(source)) throw new IOException("Source isn't a directory");
+        if(Files.exists(target) && !Files.isDirectory(target)) throw new IOException("Target isn't a directory");
         try {
-            if(Files.notExists(source)) throw new IOException("Source not exist");
-            if(!Files.isDirectory(source)) throw new IOException("Source isn't a directory");
-            if(Files.exists(target) && !Files.isDirectory(target)) throw new IOException("Target isn't a directory");
-            LOGGER.debug("Coping directory {} to {} ...", source, target);
+            LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
             Files.copy(source, target, copyOptions);
             Files.walkFileTree(source, new FileVisitor<Path>() {
-                private String relativePath = null;
-
+                private RelativePathWalkHelper helper = new RelativePathWalkHelper();
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    if(relativePath == null)
-                        relativePath = dir.getFileName().toString();
-                    else
-                        relativePath += "/" + dir.getFileName();
+                    helper.doPreVisitDir(dir);
                     try {
-                        Files.copy(dir, target.resolve(relativePath), copyOptions);
+                        Files.copy(dir, target.resolve(helper.getRelativePath()), copyOptions);
                     } catch(FileAlreadyExistsException ignored) {}
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    LOGGER.error("Error while coping file: " + file, exc);
+                    LOGGER.error("Error when coping file \"{}\"", file, exc);
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     try {
-                        Files.copy(file, relativePath == null ?
+                        Files.copy(file, helper.getRelativePath() == null ?
                                 target.resolve(file.getFileName()) :
-                                target.resolve(relativePath).resolve(file.getFileName()), copyOptions);
+                                target.resolve(helper.getRelativePath()).resolve(file.getFileName()), copyOptions);
                     } catch(FileAlreadyExistsException ignored) {}
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                    int index = relativePath.lastIndexOf('/');
-                    if(index == -1) relativePath = null;
-                    else relativePath = relativePath.substring(0, index);
+                    helper.doPostVisitDir(dir);
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch(FileAlreadyExistsException ignored) {
         } catch (IOException e) {
-            LOGGER.error("Error while coping directory", e);
+            LOGGER.error("Error when coping directory", e);
         }
     }
     public static void copyFile(Path source, Path target, CopyOption... copyOptions) {
@@ -88,11 +82,11 @@ public class FileUtil {
     }
     public static void deleteDirectory(Path directory) {
         try {
-            LOGGER.debug("deleting directory {} ...", directory);
+            LOGGER.debug("Deleting directory \"{}\"...", directory);
             Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    LOGGER.error("Error while deleting file: " + file, exc);
+                    LOGGER.error("Error when deleting file \"{}\"", file, exc);
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
@@ -107,7 +101,22 @@ public class FileUtil {
                 }
             });
         } catch (IOException e) {
-            LOGGER.error("Error while deleting directory", e);
+            LOGGER.error("Error when deleting directory", e);
+        }
+    }
+    public static class RelativePathWalkHelper {
+        private String relativePath = null;
+        public String getRelativePath() {
+            return relativePath;
+        }
+        public void doPreVisitDir(Path dir) {
+            if(relativePath == null) relativePath = dir.getFileName().toString();
+            else relativePath += "/" + dir.getFileName();
+        }
+        public void doPostVisitDir(Path dir) {
+            int index = relativePath.lastIndexOf('/');
+            if(index == -1) relativePath = null;
+            else relativePath = relativePath.substring(0, index);
         }
     }
 }

@@ -21,8 +21,10 @@ package cn.maxpixel.mcdecompiler.deobfuscator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.file.Path;
+
 public abstract class AbstractDeobfuscator {
     protected static final Logger LOGGER = LogManager.getLogger();
     protected AbstractDeobfuscator() {}
-    public abstract AbstractDeobfuscator deobfuscate();
+    public abstract AbstractDeobfuscator deobfuscate(Path source, Path target);
 }

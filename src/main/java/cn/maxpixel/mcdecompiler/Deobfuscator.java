@@ -61,7 +61,7 @@ public class Deobfuscator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        deobfuscator.deobfuscate();
+        deobfuscator.deobfuscate(Paths.get(InfoProviders.get().getMcJarPath(version, type)), Paths.get(InfoProviders.get().getDeobfuscateJarPath(version, type)));
     }
     public void decompile(Info.DecompilerType type) {
         LOGGER.info("decompiling");

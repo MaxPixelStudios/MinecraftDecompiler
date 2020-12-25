@@ -21,100 +21,86 @@ package cn.maxpixel.mcdecompiler.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
+import static java.nio.file.StandardOpenOption.*;
+
 public class JarUtil {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static void decompressJar(String jarPath, File target) {
-        LOGGER.info("decompressing");
-        try(JarFile jarFile = new JarFile(jarPath)) {
+    public static void decompressJar(Path jar, Path target) {
+        LOGGER.info("Decompressing jar file \"{}\" into \"{}\"...", jar, target);
+        try(JarFile jarFile = new JarFile(jar.toFile())) {
             jarFile.stream().forEach(entry -> {
-                if(entry.isDirectory()) new File(target, entry.getName()).mkdirs();
-                else {
-                    try {
-                        File f = new File(target, entry.getName());
-                        if(!f.exists()) {
-                            File parent = f.getParentFile();
-                            if(!parent.exists()) parent.mkdirs();
-                            try(ReadableByteChannel readableByteChannel = Channels.newChannel(jarFile.getInputStream(entry));
-                                FileChannel fileChannel = FileChannel.open(f.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
-                                fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-                            }
+                LOGGER.trace("Decompressing \"{}\"...", entry);
+                try {
+                    if(entry.isDirectory()) Files.createDirectories(target.resolve(entry.getName()));
+                    else {
+                        Path p = target.resolve(entry.getName());
+                        Files.createDirectories(p.getParent());
+                        try(ReadableByteChannel rc = Channels.newChannel(jarFile.getInputStream(entry));
+                            FileChannel fileChannel = FileChannel.open(p, WRITE, CREATE, TRUNCATE_EXISTING)) {
+                            fileChannel.transferFrom(rc, 0, Long.MAX_VALUE);
                         }
-                    } catch (IOException ex) {
-                        LOGGER.error("A exception occurred while decompressing jar file", ex);
                     }
+                } catch (IOException e) {
+                    LOGGER.error("IO error occurred when decompressing jar file", e);
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("IO error occurred when opening or closing jar file", e);
         }
     }
-    public static void compressJar(String mainClass, File jar, File from) {
-        LOGGER.info("compressing");
+    public static void compressJar(String mainClass, Path jar, Path from) {
+        LOGGER.info("Compressing jar file \"{}\" from \"{}\"", jar, from);
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
-        try(FileOutputStream jarOut = new FileOutputStream(jar);
-            JarOutputStream outputStream = new JarOutputStream(jarOut, manifest)) {
-            for(File child : Objects.requireNonNull(from.listFiles())) {
-                if(child.isDirectory()) {
-                    Files.walkFileTree(child.toPath(), new FileVisitor<Path>() {
-                        String relativePath = null;
-                        @Override
-                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                            if(relativePath == null)
-                                relativePath = dir.getFileName().toString();
-                            else
-                                relativePath += "/" + dir.getFileName();
-                            outputStream.putNextEntry(new ZipEntry(relativePath + "/"));
-                            outputStream.closeEntry();
-                            return FileVisitResult.CONTINUE;
-                        }
-                        @Override
-                        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                            LOGGER.error("Error while zipping file: " + file, exc);
-                            return FileVisitResult.CONTINUE;
-                        }
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            outputStream.putNextEntry(new ZipEntry(relativePath == null ? file.getFileName().toString() : relativePath + "/" + file.getFileName()));
-                            try(FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-                                channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
-                            }
-                            outputStream.closeEntry();
-                            return FileVisitResult.CONTINUE;
-                        }
-                        @Override
-                        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                            int index = relativePath.lastIndexOf('/');
-                            if(index == -1) relativePath = null;
-                            else relativePath = relativePath.substring(0, index);
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
+        try(OutputStream os = Channels.newOutputStream(FileChannel.open(jar, WRITE, CREATE, TRUNCATE_EXISTING));
+            JarOutputStream outputStream = new JarOutputStream(os, manifest)) {
+            Files.walkFileTree(from, new FileVisitor<Path>() {
+                final FileUtil.RelativePathWalkHelper helper = new FileUtil.RelativePathWalkHelper();
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    helper.doPreVisitDir(dir);
+                    outputStream.putNextEntry(new ZipEntry(helper.getRelativePath() + "/"));
+                    outputStream.closeEntry();
+                    return FileVisitResult.CONTINUE;
                 }
-                if(child.isFile()) {
-                    outputStream.putNextEntry(new ZipEntry(child.getName()));
-                    try(FileChannel channel = FileChannel.open(child.toPath(), StandardOpenOption.READ) ) {
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    LOGGER.error("Error while zipping file: " + file, exc);
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    outputStream.putNextEntry(new ZipEntry(helper.getRelativePath() == null ? file.getFileName().toString() :
+                            helper.getRelativePath() + "/" + file.getFileName()));
+                    try(FileChannel channel = FileChannel.open(file, READ)) {
                         channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
                     }
                     outputStream.closeEntry();
+                    return FileVisitResult.CONTINUE;
                 }
-            }
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                    helper.doPostVisitDir(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }

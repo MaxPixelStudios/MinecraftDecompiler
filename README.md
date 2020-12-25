@@ -1,3 +1,4 @@
+![Java CI with Maven](https://github.com/MaxPixelStudios/MinecraftDecompiler/workflows/Java%20CI%20with%20Maven/badge.svg)
 # MinecraftDecompiler
 A useful tool to decompile and deobfuscate Minecraft by CFR/FernFlower and Proguard(official)/SRG(Searge 1.13-)/CSRG(Bukkit,Spigot,Paper)/TSRG(Searge 1.13+)/Tiny(Intermediary, Yarn) mappings
 ## TODO/In Progress/Done
