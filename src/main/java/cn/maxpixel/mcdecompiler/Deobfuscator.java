@@ -65,9 +65,9 @@ public class Deobfuscator {
         deobfuscator.deobfuscate(Paths.get(InfoProviders.get().getMcJarPath(version, type)), Paths.get(InfoProviders.get().getDeobfuscateJarPath(version, type)));
     }
     public void decompile(Info.DecompilerType type) {
-        LOGGER.info("decompiling");
+        LOGGER.info("Decompiling");
         try {
-            Path remappedClasses = InfoProviders.get().getTempMappedClassesPath();
+            Path mappedClasses = InfoProviders.get().getTempMappedClassesPath();
             Path decompileDir = Paths.get(InfoProviders.get().getDecompileDirectory(version, this.type));
             Files.createDirectories(decompileDir);
             Path decompilerJarPath = InfoProviders.get().getTempDecompilerPath(type).toAbsolutePath().normalize();
@@ -78,8 +78,8 @@ public class Deobfuscator {
             switch(decompiler.getSourceType()) {
                 case DIRECTORY:
                     Path decompileClasses = InfoProviders.get().getTempDecompileClassesPath();
-                    FileUtil.copyDirectory(remappedClasses.resolve("net"), decompileClasses);
-                    FileUtil.copyDirectory(remappedClasses.resolve("com").resolve("mojang"), decompileClasses.resolve("com"));
+                    FileUtil.copyDirectory(mappedClasses.resolve("net"), decompileClasses);
+                    FileUtil.copyDirectory(mappedClasses.resolve("com").resolve("mojang"), decompileClasses.resolve("com"));
                     decompiler.decompile(decompileClasses.toAbsolutePath().normalize(), decompileDir.toAbsolutePath().normalize());
                     break;
                 case FILE:

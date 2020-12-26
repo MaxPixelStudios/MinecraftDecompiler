@@ -29,6 +29,7 @@ import java.util.Map;
 
 public class SuperClassMapping extends ClassVisitor {
     private final Map<String, List<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    private final Object mapLock = new Object();
     public SuperClassMapping() {
         super(Opcodes.ASM9);
     }
@@ -40,7 +41,11 @@ public class SuperClassMapping extends ClassVisitor {
             list.add(NamingUtil.asJavaName(superName));
         }
         if(interfaces != null) for(String interface_ : interfaces) list.add(NamingUtil.asJavaName(interface_));
-        if(!list.isEmpty()) superClassMap.put(NamingUtil.asJavaName(name), list);
+        if(!list.isEmpty()) {
+            synchronized(mapLock) {
+                superClassMap.put(NamingUtil.asJavaName(name), list);
+            }
+        }
     }
 
     public Map<String, List<String>> getMap() {

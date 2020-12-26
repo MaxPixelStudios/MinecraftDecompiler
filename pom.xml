@@ -55,6 +55,7 @@
 							<manifestEntries>
 								<Main-Class>cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine</Main-Class>
 								<Implementation-Version>${project.version}</Implementation-Version>
+								<Multi-Release>true</Multi-Release><!-- Log4j 2 -->
 							</manifestEntries>
 						</transformer>
 					</transformers>

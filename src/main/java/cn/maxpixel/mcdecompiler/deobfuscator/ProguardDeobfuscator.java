@@ -44,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
     private JsonObject version_json;
@@ -67,10 +68,10 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
             try {
                 Files.createDirectories(p.getParent());
             } catch(IOException ignored) {}
-            LOGGER.info("Downloading mapping...");
             try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
                 ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
                         getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
+                LOGGER.info("Downloading mapping...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -83,10 +84,10 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
             try {
                 Files.createDirectories(p.getParent());
             }catch(IOException ignored){}
-            LOGGER.info("Downloading jar...");
             try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
                 ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject()
                         .get("url").getAsString()).connect().asChannel()) {
+                LOGGER.info("Downloading jar...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -140,7 +141,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                             Files.write(InfoProviders.get().getTempMappedClassesPath().resolve(s + ".class"), writer.toByteArray(),
                                     StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                         }
-                    } catch (IOException e) {
+                    } catch(IOException e) {
                         e.printStackTrace();
                     }
                 });
@@ -168,15 +169,18 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
         }
     }
     private void listMcClassFiles(Path baseDir, Consumer<Path> fileConsumer) {
-        try {
-            Files.list(baseDir).forEach(childPath -> {
-                if(Files.isRegularFile(childPath) && childPath.getFileName().toString().endsWith(".class")) fileConsumer.accept(childPath);
-            });
-            Files.walk(baseDir.resolve("net").resolve("minecraft")).filter(Files::isRegularFile).forEach(fileConsumer);
+        try(Stream<Path> baseClasses = Files.list(baseDir).parallel().filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".class"));
+            Stream<Path> minecraftClasses = Files.walk(baseDir.resolve("net").resolve("minecraft")).parallel().filter(Files::isRegularFile)) {
+            baseClasses.forEach(fileConsumer);
+            minecraftClasses.forEach(fileConsumer);
             Path mojang = baseDir.resolve("com").resolve("mojang");
-            if(Files.exists(mojang)) Files.walk(mojang).filter(Files::isRegularFile).forEach(fileConsumer);
+            if(Files.exists(mojang)) {
+                try(Stream<Path> mojangClasses = Files.walk(mojang).parallel().filter(Files::isRegularFile)) {
+                    mojangClasses.forEach(fileConsumer);
+                }
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot list all Minecraft class files", e);
         }
     }
 }
