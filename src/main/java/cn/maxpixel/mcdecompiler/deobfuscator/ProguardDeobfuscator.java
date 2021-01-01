@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,10 +41,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
-import java.util.stream.Stream;
 
 public class ProguardDeobfuscator extends AbstractDeobfuscator {
     private JsonObject version_json;
@@ -74,7 +70,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                 LOGGER.info("Downloading mapping...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Error when downloading Proguard mapping file", e);
             }
         }
     }
@@ -89,8 +85,8 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                         .get("url").getAsString()).connect().asChannel()) {
                 LOGGER.info("Downloading jar...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch(IOException e) {
+                LOGGER.error("Error when downloading Minecraft jar", e);
             }
         }
     }
@@ -99,88 +95,52 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
         try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ?
                 InfoProviders.get().getProguardMappingDownloadPath(version, type) : mappingPath)) {
             LOGGER.info("Deobfuscating...");
-            if(Files.notExists(target)) {
-                Files.createDirectories(target.getParent());
-                Files.createFile(target);
-            }
+            FileUtil.ensureFileExist(target);
             Path unmappedClasses = InfoProviders.get().getTempUnmappedClassesPath();
+            Path mappedClasses = InfoProviders.get().getTempMappedClassesPath();
             Files.createDirectories(unmappedClasses);
             JarUtil.decompressJar(source, unmappedClasses);
             LOGGER.info("Remapping...");
-            Files.createDirectories(InfoProviders.get().getTempMappedClassesPath());
-            CompletableFuture<Void> task = CompletableFuture.supplyAsync(() -> {
-                SuperClassMapping superClassMapping = new SuperClassMapping();
-                listMcClassFiles(unmappedClasses, path -> {
-                    try(InputStream inputStream = Files.newInputStream(path)) {
-                        ClassReader reader = new ClassReader(inputStream);
-                        reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-                return superClassMapping;
-            }).thenApplyAsync(superClassMapping -> new MappingRemapper(mappingReader, superClassMapping)).thenAcceptAsync(remapper -> {
-                Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
-                listMcClassFiles(unmappedClasses, path -> {
-                    try(InputStream inputStream = Files.newInputStream(path)) {
-                        ClassReader reader = new ClassReader(inputStream);
-                        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-                        reader.accept(new ClassRemapper(writer, remapper), ClassReader.SKIP_DEBUG);
-                        String mappingKey;
-                        if(path.toString().contains("net" + Info.FILE_SEPARATOR + "minecraft" + Info.FILE_SEPARATOR)) {
-                            mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("net" + Info.FILE_SEPARATOR + "minecraft" +
-                                    Info.FILE_SEPARATOR)));
-                        } else if(path.toString().contains("com" + Info.FILE_SEPARATOR + "mojang" + Info.FILE_SEPARATOR)) {
-                            mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("com" + Info.FILE_SEPARATOR + "mojang" +
-                                    Info.FILE_SEPARATOR)));
-                        } else mappingKey = NamingUtil.asJavaName(path.getFileName().toString());
-                        ClassMapping mapping = mappings.get(mappingKey);
-                        if(mapping != null) {
-                            String s = NamingUtil.asNativeName(mapping.getMappedName());
-                            Files.createDirectories(InfoProviders.get().getTempMappedClassesPath().resolve(s.substring(0, s.lastIndexOf('/'))));
-                            Files.write(InfoProviders.get().getTempMappedClassesPath().resolve(s + ".class"), writer.toByteArray(),
-                                    StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-                        }
-                    } catch(IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+            Files.createDirectories(mappedClasses);
+            CompletableFuture<String> task = CompletableFuture.supplyAsync(() -> copyOthers(unmappedClasses, mappedClasses));
+            SuperClassMapping superClassMapping = new SuperClassMapping();
+            listMcClassFiles(unmappedClasses, path -> {
+                try(InputStream inputStream = Files.newInputStream(path)) {
+                    ClassReader reader = new ClassReader(inputStream);
+                    reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
+                } catch(IOException e) {
+                    LOGGER.error("Error when creating super class mapping", e);
+                }
             });
-            String mainClass = copyOthers(unmappedClasses);
-            task.get();
-            JarUtil.compressJar(mainClass, target, InfoProviders.get().getTempMappedClassesPath());
+            Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
+            listMcClassFiles(unmappedClasses, path -> {
+                try(InputStream inputStream = Files.newInputStream(path)) {
+                    ClassReader reader = new ClassReader(inputStream);
+                    ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+                    reader.accept(new ClassRemapper(writer, new MappingRemapper(mappingReader, superClassMapping)), ClassReader.SKIP_DEBUG);
+                    String mappingKey;
+                    if(path.toString().contains("net" + Info.FILE_SEPARATOR + "minecraft" + Info.FILE_SEPARATOR)) {
+                        mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("net" + Info.FILE_SEPARATOR + "minecraft" +
+                                Info.FILE_SEPARATOR)));
+                    } else if(path.toString().contains("com" + Info.FILE_SEPARATOR + "mojang" + Info.FILE_SEPARATOR)) {
+                        mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("com" + Info.FILE_SEPARATOR + "mojang" +
+                                Info.FILE_SEPARATOR)));
+                    } else mappingKey = NamingUtil.asJavaName(path.getFileName().toString());
+                    ClassMapping mapping = mappings.get(mappingKey);
+                    if(mapping != null) {
+                        String s = NamingUtil.asNativeName(mapping.getMappedName());
+                        Files.createDirectories(mappedClasses.resolve(s.substring(0, s.lastIndexOf('/'))));
+                        Files.write(mappedClasses.resolve(s + ".class"), writer.toByteArray(),
+                                StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                    }
+                } catch(IOException e) {
+                    LOGGER.error("Error when remapping classes", e);
+                }
+            });
+            JarUtil.compressJar(task.get(), target, mappedClasses);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return this;
-    }
-    private String copyOthers(Path baseDir) throws IOException {
-        Files.list(baseDir).forEach(childPath -> {
-            if(Files.isRegularFile(childPath) && !childPath.toString().endsWith(".class")) {
-                FileUtil.copyFile(childPath, InfoProviders.get().getTempMappedClassesPath().resolve(childPath.getFileName().toString()));
-            } else if(Files.isDirectory(childPath) && !childPath.toAbsolutePath().toString().contains("net")
-                    && !childPath.toAbsolutePath().toString().contains("com" + Info.FILE_SEPARATOR + "mojang")) {
-                FileUtil.copyDirectory(childPath, InfoProviders.get().getTempMappedClassesPath());
-            }
-        });
-        try(InputStream is = Files.newInputStream(InfoProviders.get().getTempUnmappedClassesPath().resolve("META-INF").resolve("MANIFEST.MF"))) {
-            Manifest man = new Manifest(is);
-            return man.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-        }
-    }
-    private void listMcClassFiles(Path baseDir, Consumer<Path> fileConsumer) {
-        try(Stream<Path> baseClasses = Files.list(baseDir).parallel().filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".class"));
-            Stream<Path> minecraftClasses = Files.walk(baseDir.resolve("net").resolve("minecraft")).parallel().filter(Files::isRegularFile)) {
-            baseClasses.forEach(fileConsumer);
-            minecraftClasses.forEach(fileConsumer);
-            Path mojang = baseDir.resolve("com").resolve("mojang");
-            if(Files.exists(mojang)) {
-                try(Stream<Path> mojangClasses = Files.walk(mojang).parallel().filter(Files::isRegularFile)) {
-                    mojangClasses.forEach(fileConsumer);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Cannot list all Minecraft class files", e);
-        }
     }
 }

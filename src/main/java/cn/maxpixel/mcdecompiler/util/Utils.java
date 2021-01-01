@@ -16,23 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.base;
+package cn.maxpixel.mcdecompiler.util;
 
-import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
-
-public class MappedDescriptoredBaseMethodMapping extends BaseMethodMapping implements Descriptor.Mapped {
-    private String mappedDescriptor;
-    public MappedDescriptoredBaseMethodMapping(String unmappedName, String mappedName, String mappedDescriptor) {
-        super(unmappedName, mappedName);
-        this.mappedDescriptor = mappedDescriptor;
-    }
-    public MappedDescriptoredBaseMethodMapping() {}
-    @Override
-    public String getMappedDescriptor() {
-        return mappedDescriptor;
-    }
-    @Override
-    public void setMappedDescriptor(String mappedDescriptor) {
-        this.mappedDescriptor = mappedDescriptor;
+public class Utils {
+    public static RuntimeException wrapInRuntime(Throwable e) {
+        return new RuntimeException(e);
     }
 }

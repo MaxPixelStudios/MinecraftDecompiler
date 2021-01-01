@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtil {
     private static final Logger LOGGER = LogManager.getLogger();
+    public static void copy(Path source, Path target, CopyOption... copyOptions) {
+        if(Files.isDirectory(source)) copyDirectory(source, target, copyOptions);
+        else copyFile(source, target, copyOptions);
+    }
     public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
         if(Files.notExists(source)) {
             LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
@@ -36,7 +40,9 @@ public class FileUtil {
         if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
         try {
             LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
-            Files.copy(source, target, copyOptions);
+            try {
+                Files.copy(source, target, copyOptions);
+            } catch(FileAlreadyExistsException ignored) {}
             Files.walkFileTree(source, new FileVisitor<Path>() {
                 private final RelativePathWalkerHelper helper = new RelativePathWalkerHelper();
                 @Override
@@ -67,49 +73,78 @@ public class FileUtil {
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } catch(FileAlreadyExistsException ignored) {
         } catch (IOException e) {
             LOGGER.error("Error when coping directory", e);
         }
     }
     public static void copyFile(Path source, Path target, CopyOption... copyOptions) {
+        target = target.resolve(source.getFileName());
+        if(Files.notExists(source)) {
+            LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
+            return;
+        }
+        if(Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a file");
+        if(Files.exists(target) && Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a file");
         LOGGER.debug("Coping file {} to {} ...", source, target);
         try {
             Files.createDirectories(target.getParent());
-            try {
-                Files.copy(source, target, copyOptions);
-            } catch(FileAlreadyExistsException ignored) {}
+            Files.copy(source, target, copyOptions);
+        } catch(FileAlreadyExistsException ignored) {
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     public static void deleteDirectory(Path directory) {
-        if(!Files.exists(directory)) {
+        if(Files.notExists(directory)) {
             LOGGER.debug("\"{}\" does not exist, skipping this operation...", directory);
             return;
         }
         if(!Files.isDirectory(directory)) throw new IllegalArgumentException("Not a directory!");
         try {
             LOGGER.debug("Deleting directory \"{}\"...", directory);
-            Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(directory, new FileVisitor<Path>() {
                 @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
                     LOGGER.error("Error when deleting file \"{}\"", file, exc);
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.deleteIfExists(file);
+                    Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    Files.deleteIfExists(dir);
+                    Files.delete(dir);
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch (IOException e) {
             LOGGER.error("Error when deleting directory", e);
+        }
+    }
+    public static void checkExist(Path p) {
+        if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
+    }
+    public static void ensureFileExist(Path p) {
+        if(Files.exists(p)) return;
+        try {
+            Files.createDirectories(p.getParent());
+            Files.createFile(p);
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(e);
+        }
+    }
+    public static void ensureDirectoryExist(Path p) {
+        if(Files.exists(p)) return;
+        try {
+            Files.createDirectories(p);
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(e);
         }
     }
     public static class RelativePathWalkerHelper {
@@ -122,6 +157,7 @@ public class FileUtil {
             else relativePath += "/" + dir.getFileName();
         }
         public void doPostVisitDir(Path dir) {
+            if(relativePath == null) return;
             int index = relativePath.lastIndexOf('/');
             if(index == -1) relativePath = null;
             else relativePath = relativePath.substring(0, index);

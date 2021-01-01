@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
-import cn.maxpixel.mcdecompiler.util.LambdaUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.io.*;
@@ -85,7 +85,7 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         try {
             reader.close();
         } catch (IOException e) {
-            LambdaUtil.rethrowAsRuntime(e);
+            throw Utils.wrapInRuntime(e);
         } finally {
             reader = null;
         }

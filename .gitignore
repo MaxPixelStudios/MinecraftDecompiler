@@ -1,7 +1,7 @@
 # Project exclude paths
 /target/
 /out/
-/download/
+/downloads/
 /output/
 /.idea/
 /temp/

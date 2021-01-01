@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import io.github.lxgaming.classloader.ClassLoaderUtils;
 import joptsimple.*;
 import joptsimple.util.PathConverter;
@@ -64,8 +65,7 @@ public class DeobfuscatorCommandLine {
                         try {
                             return Paths.get(value).toAbsolutePath().normalize().toUri().toURL();
                         } catch (MalformedURLException e) {
-                            LambdaUtil.rethrowAsRuntime(e);
-                            return null;
+                            throw Utils.wrapInRuntime(e);
                         }
                     }
                     @Override
@@ -83,7 +83,7 @@ public class DeobfuscatorCommandLine {
                 System.out.println("Minecraft Decompiler version " + DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
                 parser.printHelpOn(System.out);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw Utils.wrapInRuntime(e);
             }
             return;
         }
@@ -122,5 +122,6 @@ public class DeobfuscatorCommandLine {
 
     static {
         System.setProperty("log4j2.skipJansi", "false");
+        Runtime.getRuntime().addShutdownHook(new Thread(LOGGER::traceExit));
     }
 }

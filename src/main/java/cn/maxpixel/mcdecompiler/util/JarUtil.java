@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,8 @@ public class JarUtil {
     private static final Logger LOGGER = LogManager.getLogger();
     public static void decompressJar(Path jar, Path target) {
         LOGGER.info("Decompressing jar file \"{}\" into \"{}\"...", jar, target);
+        FileUtil.checkExist(jar);
+        FileUtil.ensureDirectoryExist(target);
         try(JarFile jarFile = new JarFile(jar.toFile())) {
             jarFile.stream().forEach(entry -> {
                 LOGGER.trace("Decompressing \"{}\"...", entry);
@@ -66,6 +68,7 @@ public class JarUtil {
     }
     public static void compressJar(String mainClass, Path jar, Path from) {
         LOGGER.info("Compressing jar file \"{}\" from \"{}\"", jar, from);
+        FileUtil.checkExist(from);
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
@@ -75,9 +78,11 @@ public class JarUtil {
                 final FileUtil.RelativePathWalkerHelper helper = new FileUtil.RelativePathWalkerHelper();
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    helper.doPreVisitDir(dir);
-                    outputStream.putNextEntry(new ZipEntry(helper.getRelativePath() + "/"));
-                    outputStream.closeEntry();
+                    if(!dir.getFileName().toString().startsWith(from.getFileName().toString())) {
+                        helper.doPreVisitDir(dir);
+                        outputStream.putNextEntry(new ZipEntry(helper.getRelativePath() + "/"));
+                        outputStream.closeEntry();
+                    }
                     return FileVisitResult.CONTINUE;
                 }
                 @Override

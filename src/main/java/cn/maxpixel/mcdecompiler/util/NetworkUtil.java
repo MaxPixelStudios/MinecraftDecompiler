@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -195,7 +195,7 @@ public class NetworkUtil {
         try {
             return new Net.NetBuilder(new URL(url));
         } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+            throw Utils.wrapInRuntime(e);
         }
     }
     public static Net.NetBuilder newBuilder(URL url) {

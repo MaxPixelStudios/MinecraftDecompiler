@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2020  MaxPixelStudios
+ * Copyright (C) 2019-2021  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.ProcessUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -45,7 +45,7 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
     UserDefinedDecompiler(SourceType sourceType, Path decompilerPath, ObjectArrayList<String> options, boolean libRecommended) {
         this.sourceType = Objects.requireNonNull(sourceType);
         this.decompilerPath = Objects.requireNonNull(decompilerPath);
-        if(Files.notExists(decompilerPath)) throw new RuntimeException("decompiler path \"" + decompilerPath + "\" does not exist");
+        FileUtil.checkExist(decompilerPath);
         this.options = Objects.requireNonNull(options);
         this.libRecommended = libRecommended;
     }
