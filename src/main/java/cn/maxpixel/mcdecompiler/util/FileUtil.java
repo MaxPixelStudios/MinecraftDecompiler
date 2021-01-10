@@ -78,7 +78,7 @@ public class FileUtil {
         }
     }
     public static void copyFile(Path source, Path target, CopyOption... copyOptions) {
-        target = target.resolve(source.getFileName());
+        if(Files.isDirectory(target)) target = target.resolve(source.getFileName());
         if(Files.notExists(source)) {
             LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
             return;
@@ -94,6 +94,21 @@ public class FileUtil {
             e.printStackTrace();
         }
     }
+    /** Delete if exists */
+    public static void delete(Path path) {
+        if(Files.notExists(path)) {
+            LOGGER.debug("\"{}\" does not exist, skipping this operation...", path);
+            return;
+        }
+        if(Files.isDirectory(path)) deleteDirectory(path);
+        else {
+            try {
+                Files.delete(path);
+            } catch (IOException e) {
+                LOGGER.error("Error when deleting file \"{}\"", path, e);
+            }
+        }
+    }
     public static void deleteDirectory(Path directory) {
         if(Files.notExists(directory)) {
             LOGGER.debug("\"{}\" does not exist, skipping this operation...", directory);
@@ -105,7 +120,7 @@ public class FileUtil {
             Files.walkFileTree(directory, new FileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    LOGGER.error("Error when deleting file \"{}\"", file, exc);
+                    LOGGER.error("Error when deleting file \"{}\" in directory \"{}\"", file, directory, exc);
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
@@ -124,27 +139,29 @@ public class FileUtil {
                 }
             });
         } catch (IOException e) {
-            LOGGER.error("Error when deleting directory", e);
+            LOGGER.error("Error when deleting directory \"{}\"", directory, e);
         }
     }
-    public static void checkExist(Path p) {
+    public static void requireExist(Path p) {
         if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
     }
     public static void ensureFileExist(Path p) {
-        if(Files.exists(p)) return;
-        try {
-            Files.createDirectories(p.getParent());
-            Files.createFile(p);
-        } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
+        if(Files.notExists(p)) {
+            try {
+                ensureDirectoryExist(p.getParent());
+                Files.createFile(p);
+            } catch (IOException e) {
+                throw Utils.wrapInRuntime(e);
+            }
         }
     }
     public static void ensureDirectoryExist(Path p) {
-        if(Files.exists(p)) return;
-        try {
-            Files.createDirectories(p);
-        } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
+        if(Files.notExists(p)) {
+            try {
+                Files.createDirectories(p);
+            } catch (IOException e) {
+                throw Utils.wrapInRuntime(e);
+            }
         }
     }
     public static class RelativePathWalkerHelper {

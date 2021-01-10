@@ -45,7 +45,7 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
     UserDefinedDecompiler(SourceType sourceType, Path decompilerPath, ObjectArrayList<String> options, boolean libRecommended) {
         this.sourceType = Objects.requireNonNull(sourceType);
         this.decompilerPath = Objects.requireNonNull(decompilerPath);
-        FileUtil.checkExist(decompilerPath);
+        FileUtil.requireExist(decompilerPath);
         this.options = Objects.requireNonNull(options);
         this.libRecommended = libRecommended;
     }

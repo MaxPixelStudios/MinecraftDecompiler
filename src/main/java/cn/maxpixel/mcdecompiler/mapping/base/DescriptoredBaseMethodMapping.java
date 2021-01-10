@@ -41,4 +41,21 @@ public class DescriptoredBaseMethodMapping extends BaseMethodMapping implements 
         super.setOwner(owner);
         return this;
     }
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) return true;
+        if(obj instanceof DescriptoredBaseMethodMapping) {
+            DescriptoredBaseMethodMapping obj1 = (DescriptoredBaseMethodMapping) obj;
+            return super.equals(obj) && getUnmappedDescriptor().equals(obj1.getUnmappedDescriptor());
+        }
+        return false;
+    }
+    @Override
+    public String toString() {
+        return "DescriptoredBaseMethodMapping{" +
+                "UnmappedName=" + getUnmappedName() +
+                ", MappedName=" + getMappedName() +
+                ", UnmappedDescriptor" + getUnmappedDescriptor() +
+                '}';
+    }
 }

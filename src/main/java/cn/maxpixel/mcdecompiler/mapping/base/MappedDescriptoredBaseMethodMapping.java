@@ -35,4 +35,21 @@ public class MappedDescriptoredBaseMethodMapping extends BaseMethodMapping imple
     public void setMappedDescriptor(String mappedDescriptor) {
         this.mappedDescriptor = mappedDescriptor;
     }
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) return true;
+        if(obj instanceof MappedDescriptoredBaseMethodMapping) {
+            MappedDescriptoredBaseMethodMapping obj1 = (MappedDescriptoredBaseMethodMapping) obj;
+            return super.equals(obj) && getMappedDescriptor().equals(obj1.getMappedDescriptor());
+        }
+        return false;
+    }
+    @Override
+    public String toString() {
+        return "MappedDescriptoredBaseMethodMapping{" +
+                "UnmappedName=" + getUnmappedName() +
+                ", MappedName=" + getMappedName() +
+                ", MappedDescriptor" + getMappedDescriptor() +
+                '}';
+    }
 }

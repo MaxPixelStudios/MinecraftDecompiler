@@ -24,10 +24,10 @@ import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +53,7 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         }).filter(Objects::nonNull);
         AbstractNonPackageMappingProcessor processor = getProcessor();
         mappings = processor.process(lines);
-        packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : Collections.emptyList();
+        packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
     }
     protected AbstractMappingReader(Reader rd) {
         this(new BufferedReader(Objects.requireNonNull(rd)));

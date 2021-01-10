@@ -23,77 +23,29 @@ import cn.maxpixel.mcdecompiler.InfoProviders;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
-import cn.maxpixel.mcdecompiler.util.*;
-import com.google.gson.JsonObject;
+import cn.maxpixel.mcdecompiler.reader.CsrgMappingReader;
+import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.JarUtil;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-public class ProguardDeobfuscator extends AbstractDeobfuscator {
-    private JsonObject version_json;
-    private String version;
-    private Info.SideType type;
-    public ProguardDeobfuscator(String mappingPath) {
+public class CsrgDeobfuscator extends AbstractDeobfuscator {
+    protected CsrgDeobfuscator(String mappingPath) {
         super(mappingPath);
     }
-    public ProguardDeobfuscator(String version, Info.SideType type) {
-        this.version = Objects.requireNonNull(version);
-        this.type = Objects.requireNonNull(type);
-        downloadMapping(version, type);
-        downloadJar(version, type);
-    }
-    private void downloadMapping(String version, Info.SideType type) {
-        version_json = VersionManifest.getVersion(version);
-        if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
-            throw new RuntimeException("Version \"" + version + "\" doesn't have Proguard mappings. Please use 1.14.4 or above");
-        Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
-        if(Files.notExists(p)) {
-            try {
-                Files.createDirectories(p.getParent());
-            } catch(IOException ignored) {}
-            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
-                        getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
-                LOGGER.info("Downloading mapping...");
-                channel.transferFrom(from, 0, Long.MAX_VALUE);
-            } catch (IOException e) {
-                LOGGER.error("Error when downloading Proguard mapping file", e);
-            }
-        }
-    }
-    private void downloadJar(String version, Info.SideType type) {
-        Path p = Paths.get(InfoProviders.get().getMcJarPath(version, type));
-        if(Files.notExists(p)) {
-            try {
-                Files.createDirectories(p.getParent());
-            }catch(IOException ignored){}
-            try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject()
-                        .get("url").getAsString()).connect().asChannel()) {
-                LOGGER.info("Downloading jar...");
-                channel.transferFrom(from, 0, Long.MAX_VALUE);
-            } catch(IOException e) {
-                LOGGER.error("Error when downloading Minecraft jar", e);
-            }
-        }
-    }
     @Override
-    public ProguardDeobfuscator deobfuscate(Path source, Path target) {
-        try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ?
-                InfoProviders.get().getProguardMappingDownloadPath(version, type) : mappingPath)) {
+    public CsrgDeobfuscator deobfuscate(Path source, Path target) {
+        try(CsrgMappingReader mappingReader = new CsrgMappingReader(mappingPath)) {
             LOGGER.info("Deobfuscating...");
             FileUtil.ensureFileExist(target);
             Path unmappedClasses = InfoProviders.get().getTempUnmappedClassesPath();

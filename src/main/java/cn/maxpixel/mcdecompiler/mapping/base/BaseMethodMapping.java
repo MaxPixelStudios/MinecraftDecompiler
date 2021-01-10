@@ -37,10 +37,20 @@ public abstract class BaseMethodMapping extends BaseFieldMethodShared {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if(obj == null) return false;
+        if(this == obj) return true;
+        if(obj instanceof BaseMethodMapping) {
+            BaseMethodMapping obj1 = (BaseMethodMapping) obj;
+            return getUnmappedName().equals(obj1.getUnmappedName()) && getMappedName().equals(obj1.getMappedName());
+        }
+        return false;
+    }
+    @Override
     public String toString() {
         return "BaseMethodMapping{" +
-                "obfuscated name=" + getUnmappedName() +
-                ", original name=" + getMappedName() +
+                "UnmappedName=" + getUnmappedName() +
+                ", MappedName=" + getMappedName() +
                 '}';
     }
 }

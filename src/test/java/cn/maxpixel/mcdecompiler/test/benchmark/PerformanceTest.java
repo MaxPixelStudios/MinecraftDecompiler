@@ -18,92 +18,96 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.InfoProviders;
-import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
+import java.security.MessageDigest;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /*
  * This class is for internal test
  */
 @Fork(1)
-@Threads(1)
+@Threads(8)
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
 public class PerformanceTest {
-    private static final Path f = InfoProviders.get().getTempPath().resolve("unmappedClasses");
+    private static final Path f = InfoProviders.get().getTempUnmappedClassesPath();
     private static final Path t = InfoProviders.get().getTempPath().resolve("tar");
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
                 .shouldDoGC(true)
-                .measurementIterations(1)
-                .warmupIterations(0)
+                .measurementIterations(5)
+                .warmupIterations(3)
                 .build();
-        new Runner(options).run();
+//        new Runner(options).run();
     }
-//    @TearDown(Level.Iteration)
     public void setUp() {
-        FileUtil.deleteDirectory(t);
     }
-    @Benchmark
-    public String newM() {
-        return copyOthers(f, t);
-    }
-//    @Benchmark
-    public String oldM() throws IOException {
-        return copyOthersOld(f, t);
-    }
-    private String copyOthers(Path from, Path to) {
-        try(Stream<Path> paths = Files.list(from).parallel().filter(p -> !p.toString().endsWith(".class") && !p.endsWith("net"));
-            InputStream is = Files.newInputStream(from.resolve("META-INF").resolve("MANIFEST.MF"))) {
-            paths.forEach(childPath -> {
-                if(Files.isDirectory(childPath) && childPath.endsWith("com")) {
-                    try(Stream<Path> s = Files.walk(childPath, 2);
-                        Stream<Path> s1 = Files.list(childPath)) {
-                        // Unmapped client only has com.mojang.blaze3d package
-                        // If unmapped jar doesn't have this package, it will be treated as unmapped server
-                        // In unmapped server jar, packages in com.mojang are its libraries, so we directly copy them
-                        if(s.anyMatch(p -> p.endsWith("blaze3d")))
-                            s1.filter(p -> !p.endsWith("mojang")).forEach(p -> FileUtil.copyDirectory(p, to.resolve("com")));
-                        else FileUtil.copyDirectory(childPath, to);
-                    } catch (IOException e) {
-                        throw Utils.wrapInRuntime(e);
-                    }
-                } else FileUtil.copy(childPath, to);
-            });
-
-            Manifest man = new Manifest(is);
-            return man.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    private String copyOthersOld(Path from, Path to) throws IOException {
-        Files.list(from).forEach(childPath -> {
-            if(Files.isRegularFile(childPath) && !childPath.toString().endsWith(".class")) {
-                FileUtil.copyFile(childPath, to);
-            } else if(Files.isDirectory(childPath) && !childPath.toAbsolutePath().toString().contains("net")
-                    && !childPath.toAbsolutePath().toString().contains("com" + Info.FILE_SEPARATOR + "mojang")) {
-                FileUtil.copyDirectory(childPath, to);
+    private void fill(Map<String, String> map) {
+        Stream.generate(() -> 1).limit((long) Math.pow(2, 16)).parallel().forEach(i -> {
+            try {
+                byte[] bytes = new byte[2048];
+                Random r = new Random();
+                r.nextBytes(bytes);
+                byte[] out = MessageDigest.getInstance("SHA-512").digest(bytes);
+                StringBuilder builder = new StringBuilder();
+                for(byte b : out) {
+                    String s = Integer.toHexString(b);
+                    if(s.length() == 1) s = s.concat("0");
+                    builder.append(s);
+                }
+                map.put(builder.toString(), Base64.getEncoder().encodeToString(out));
+            } catch (Throwable e) {
+                throw Utils.wrapInRuntime(e);
             }
         });
-        try(InputStream is = Files.newInputStream(from.resolve("META-INF").resolve("MANIFEST.MF"))) {
-            Manifest man = new Manifest(is);
-            return man.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-        }
+    }
+    private void consume(Map<String, String> map, Blackhole blackhole) {
+        ObjectBigArrayBigList<String> list = new ObjectBigArrayBigList<>();
+        map.forEach((k, v) -> list.add(k.concat("_").concat(v)));
+        blackhole.consume(list);
+    }
+    @Benchmark
+    public void a(Blackhole blackhole) throws Throwable {
+        Object2ObjectMap<String, String> map = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
+                CompletableFuture.runAsync(() -> consume(map, blackhole)));
+        blackhole.consume(task.join());
+    }
+    @Benchmark
+    public void b(Blackhole blackhole) throws Throwable {
+        Map<String, String> map = new ConcurrentHashMap<>();
+        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
+                CompletableFuture.runAsync(() -> consume(map, blackhole)));
+        blackhole.consume(task.join());
+    }
+    @Benchmark
+    public void c(Blackhole blackhole) throws Throwable {
+        Map<String, String> map = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
+        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
+                CompletableFuture.runAsync(() -> consume(map, blackhole)));
+        blackhole.consume(task.join());
+    }
+    @Benchmark
+    public void d(Blackhole blackhole) throws Throwable {
+        Map<String, String> map = Collections.synchronizedMap(new HashMap<>());
+        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
+                CompletableFuture.runAsync(() -> consume(map, blackhole)));
+        blackhole.consume(task.join());
     }
 }

@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -110,7 +111,7 @@ public class NetworkUtil {
                 connection.setRequestMethod(method.name());
                 connection.setReadTimeout((int) timeout.toMillis());
                 connection.setConnectTimeout((int) timeout.toMillis());
-                if(headers != null && !headers.isEmpty()) {
+                if(!(headers == null || headers.isEmpty())) {
                     Map<String, List<String>> requestProperties = connection.getRequestProperties();
                     headers.forEach((key, value) -> requestProperties.merge(key, value, (ov, nv) -> {ov.addAll(nv); return ov;}));
                 }
@@ -147,12 +148,12 @@ public class NetworkUtil {
                 return new NetBuilder(url);
             }
             public NetBuilder proxy(Proxy proxy) {
-                if(this.proxy != null && this.proxy != Proxy.NO_PROXY) throw new RuntimeException("Proxy already set");
+                if(!(this.proxy == null || this.proxy == Proxy.NO_PROXY)) throw new RuntimeException("Proxy already set");
                 this.proxy = Objects.requireNonNull(proxy, "proxy cannot be null");
                 return this;
             }
             public NetBuilder requestMethod(Method method) {
-                if(this.method != null && this.method != Method.GET) throw new RuntimeException("Method already set");
+                if(!(this.method == null || this.method == Method.GET)) throw new RuntimeException("Method already set");
                 this.method = Objects.requireNonNull(method, "method cannot be null");
                 return this;
             }
@@ -161,7 +162,7 @@ public class NetworkUtil {
                 return this;
             }
             public NetBuilder header(String key, String value) {
-                headers.merge(Objects.requireNonNull(key), Collections.singletonList(Objects.requireNonNull(value)), (oldVal, newVal) -> {oldVal.addAll(newVal); return oldVal;});
+                headers.merge(Objects.requireNonNull(key), ObjectLists.singleton(Objects.requireNonNull(value)), (oldVal, newVal) -> {oldVal.addAll(newVal); return oldVal;});
                 return this;
             }
             public NetBuilder header(String key, String... value) {
@@ -169,7 +170,7 @@ public class NetworkUtil {
                 return this;
             }
             public NetBuilder setHeader(String key, String value) {
-                headers.put(Objects.requireNonNull(key), Collections.singletonList(Objects.requireNonNull(value)));
+                headers.put(Objects.requireNonNull(key), ObjectLists.singleton(Objects.requireNonNull(value)));
                 return this;
             }
             public NetBuilder setHeader(String key, String... value) {

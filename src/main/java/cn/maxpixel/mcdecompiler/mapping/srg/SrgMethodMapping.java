@@ -52,4 +52,23 @@ public class SrgMethodMapping extends BaseMethodMapping implements Descriptor, D
         super.setOwner(owner);
         return this;
     }
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) return true;
+        if(obj instanceof SrgMethodMapping) {
+            SrgMethodMapping obj1 = (SrgMethodMapping) obj;
+            return super.equals(obj) && getUnmappedDescriptor().equals(obj1.getUnmappedDescriptor()) &&
+                    getMappedDescriptor().equals(obj1.getMappedDescriptor());
+        }
+        return false;
+    }
+    @Override
+    public String toString() {
+        return "SrgMethodMapping{" +
+                "UnmappedName=" + getUnmappedName() +
+                ", MappedName=" + getMappedName() +
+                ", UnmappedDescriptor" + getUnmappedDescriptor() +
+                ", MappedDescriptor" + getMappedDescriptor() +
+                '}';
+    }
 }

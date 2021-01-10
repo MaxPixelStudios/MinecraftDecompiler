@@ -46,4 +46,12 @@ public class ProguardMethodMapping extends MappedDescriptoredBaseMethodMapping i
     public void setLineNumberE(int ne) {
         this.lineNums[1] = ne;
     }
+    @Override
+    public String toString() {
+        return "ProguardMethodMapping{" +
+                "UnmappedName=" + getUnmappedName() +
+                ", MappedName=" + getMappedName() +
+                ", StartLineNumber=" + getLineNumberS() + ", EndLineNumber=" + getLineNumberE() +
+                '}';
+    }
 }

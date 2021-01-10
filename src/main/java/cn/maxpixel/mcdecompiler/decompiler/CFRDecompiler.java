@@ -19,10 +19,10 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.benf.cfr.reader.api.CfrDriver;
 
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +47,6 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
         options.put("removedeadconditionals", "false");
         options.put("jarfilter", "^([net.minecraft]|[com.mojang]){1}.*");
         CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
-        cfr.analyse(Collections.singletonList(source.toString()));
+        cfr.analyse(ObjectLists.singleton(source.toString()));
     }
 }

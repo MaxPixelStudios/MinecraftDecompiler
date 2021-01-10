@@ -14,14 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 15]
         architecture: ['x86', 'x64']
     steps:
     - uses: actions/checkout@v2.3.4
     - name: Set up JDK
       uses: actions/setup-java@v1.4.3
       with:
-        java-version: ${{ matrix.java }}
+        java-version: 8
         architecture: ${{ matrix.architecture }}
     - name: Build with Maven
       run: mvn -B package --file pom.xml
@@ -29,5 +28,5 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v2
       with:
-        name: MinecraftDecompiler-with-java${{ matrix.java }}${{ matrix.architecture }}
+        name: MinecraftDecompiler-with-java${{ matrix.architecture }}
         path: MinecraftDecompiler.jar

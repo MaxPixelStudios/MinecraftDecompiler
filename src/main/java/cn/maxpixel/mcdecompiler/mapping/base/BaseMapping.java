@@ -50,6 +50,12 @@ class BaseFieldMethodShared extends BaseMapping implements Owner<BaseFieldMethod
     }
     protected BaseFieldMethodShared() {}
 
+    public boolean isDescriptor() {
+        return this instanceof Descriptor;
+    }
+    public boolean isMappedDescriptor() {
+        return this instanceof Descriptor.Mapped;
+    }
     public Descriptor asDescriptor() {
         return (Descriptor) this;
     }

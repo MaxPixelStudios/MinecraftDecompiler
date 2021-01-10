@@ -30,41 +30,24 @@ import org.objectweb.asm.commons.Remapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MappingRemapper extends Remapper {
-    private final Map<String, ClassMapping> mappingByObfus;
-    private final Map<String, ClassMapping> mappingByOri;
+    private final Map<String, ClassMapping> mappingByUnm;
+    private final Map<String, ClassMapping> mappingByMap;
     private final SuperClassMapping superClassMapping;
     private static final Logger LOGGER = LogManager.getLogger("Remapper");
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {
-        this.mappingByObfus = mappingReader.getMappingsByUnmappedNameMap();
-        this.mappingByOri = mappingReader.getMappingsByMappedNameMap();
+        this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
+        this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
         this.superClassMapping = superClassMapping;
     }
     @Override
     public String map(String internalName) {
-        ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(internalName));
+        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(internalName));
         if(classMapping != null) return NamingUtil.asNativeName(classMapping.getMappedName());
         else return internalName;
-    }
-    @Override
-    public String mapMethodName(String owner, String name, String descriptor) {
-        if(!(name.contains("<init>") || name.contains("<clinit>"))) {
-            ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
-            if(classMapping != null) {
-                AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
-                classMapping.getMethods().forEach(mapping -> {
-                    if(methodMapping.get() != null) return;
-                    if(mapping.getUnmappedName().equals(name)) {
-                        compareMethodDescriptorAndSet(descriptor, methodMapping, mapping);
-                    }
-                });
-                if(methodMapping.get() == null) methodMapping.set(processSuperMethod(owner, name, descriptor));
-                if(methodMapping.get() != null) return methodMapping.get().getMappedName();
-            }
-        }
-        return name;
     }
 
     private Type mapType(final Type type) {
@@ -77,17 +60,16 @@ public class MappingRemapper extends Remapper {
                 remappedDescriptor.append(mapType(type.getElementType()).getDescriptor());
                 return Type.getType(remappedDescriptor.toString());
             case Type.OBJECT:
-                ClassMapping cm = mappingByOri.get(type.getClassName());
+                ClassMapping cm = mappingByMap.get(type.getClassName());
                 return cm != null ? Type.getObjectType(NamingUtil.asNativeName(cm.getUnmappedName())) : type;
             default:
                 return type;
         }
     }
-    private String getObfuscatedDescriptor(String originalDescriptor) {
+    private String getUnmappedDescByMappedDesc(String originalDescriptor) {
         if ("()V".equals(originalDescriptor)) {
             return originalDescriptor;
         }
-
         StringBuilder stringBuilder = new StringBuilder("(");
         for (Type argumentType : Type.getArgumentTypes(originalDescriptor)) {
             stringBuilder.append(mapType(argumentType).getDescriptor());
@@ -100,42 +82,53 @@ public class MappingRemapper extends Remapper {
         }
         return stringBuilder.toString();
     }
-
-    private void compareMethodDescriptorAndSet(String descriptor, AtomicReference<BaseMethodMapping> target, BaseMethodMapping compare) {
-        if(descriptor.equals(getObfuscatedDescriptor(compare.asMappedDescriptor().getMappedDescriptor()))) target.set(compare);
+    private String getUnmappedDesc(BaseMethodMapping mapping) {
+        if(mapping.isDescriptor()) return mapping.asDescriptor().getUnmappedDescriptor();
+        else if(mapping.isMappedDescriptor()) return getUnmappedDescByMappedDesc(mapping.asMappedDescriptor().getMappedDescriptor());
+        else throw new IllegalArgumentException("Impls of MethodMapping must implement at least one of Descriptor or Descriptor.Mapped");
     }
 
+    @Override
+    public String mapMethodName(String owner, String name, String descriptor) {
+        if(!(name.contains("<init>") || name.contains("<clinit>"))) {
+            ClassMapping cm = mappingByUnm.get(NamingUtil.asJavaName(owner));
+            if(cm != null) {
+                AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
+                cm.getMethods().parallelStream().filter(m -> m.getUnmappedName().equals(name)).forEach(mapping -> {
+                    if(methodMapping.get() == null && getUnmappedDesc(mapping).equals(descriptor) && !methodMapping.compareAndSet(null, mapping))
+                        throw new RuntimeException("Method duplicated...This should not happen!");
+                });
+                if(methodMapping.get() != null) return methodMapping.get().getMappedName();
+                else {
+                    BaseMethodMapping result = processSuperMethod(owner, name, descriptor);
+                    if(result != null) return result.getMappedName();
+                }
+            }
+        }
+        return name;
+    }
     private BaseMethodMapping processSuperMethod(String owner, String name, String descriptor) {
         List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
         if(superNames != null) {
             AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
-            superNames.forEach(superClass -> {
-                if(methodMapping.get() != null) return;
-                ClassMapping superClassMapping = mappingByObfus.get(superClass);
-                if(superClassMapping != null) {
-                    superClassMapping.getMethods().forEach(methodMapping1 -> {
-                        if(methodMapping1.getUnmappedName().equals(name)) {
-                            compareMethodDescriptorAndSet(descriptor, methodMapping, methodMapping1);
-                        }
-                    });
-                }
+            superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).flatMap(cm -> cm.getMethods().stream()).filter(m -> {
+                String mapped = m.getMappedName();
+                return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") && m.getUnmappedName().equals(name) &&
+                        getUnmappedDesc(m).equals(descriptor);
+            }).distinct().findAny().ifPresent(mapping -> {
+                if(!methodMapping.compareAndSet(null, mapping)) throw new RuntimeException("Method duplicated... This should not happen!");
             });
-            if(methodMapping.get() == null) {
-                superNames.forEach(superClass -> {
-                    if(methodMapping.get() != null) return;
-                    ClassMapping superClassMapping = mappingByObfus.get(superClass);
-                    if(superClassMapping != null) {
-                        methodMapping.set(processSuperMethod(superClassMapping.getUnmappedName(), name, descriptor));
-                    }
+            if(methodMapping.get() == null) superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull)
+                .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor)).filter(Objects::nonNull).distinct().findAny().ifPresent(result -> {
+                    if(!methodMapping.compareAndSet(null, result)) throw new RuntimeException("Method duplicated... This should not happen!");
                 });
-            }
             if(methodMapping.get() != null) return methodMapping.get();
         }
         return null;
     }
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
-        ClassMapping classMapping = mappingByObfus.get(NamingUtil.asJavaName(owner));
+        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(owner));
         if(classMapping != null) {
             BaseFieldMapping fieldMapping = classMapping.getField(name);
             if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
@@ -144,24 +137,17 @@ public class MappingRemapper extends Remapper {
         return name;
     }
     private BaseFieldMapping processSuperField(String owner, String name) {
-        if(superClassMapping.getMap().get(NamingUtil.asJavaName(owner)) != null) {
+        List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
+        if(superNames != null) {
             AtomicReference<BaseFieldMapping> fieldMapping = new AtomicReference<>();
-            superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
-                ClassMapping supermapping = mappingByObfus.get(superClass);
-                if(supermapping != null && fieldMapping.get() == null) {
-                    fieldMapping.set(supermapping.getField(name));
-                }
+            superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).map(cm -> cm.getField(name)).filter(Objects::nonNull)
+                .findAny().ifPresent(fm -> {
+                if(!fieldMapping.compareAndSet(null, fm)) throw new RuntimeException("Field duplicated... This should not happen!");
             });
-            if(fieldMapping.get() == null) {
-                superClassMapping.getMap().get(NamingUtil.asJavaName(owner)).forEach(superClass -> {
-                    if(fieldMapping.get() == null) {
-                        ClassMapping supermapping = mappingByObfus.get(superClass);
-                        if(supermapping != null) {
-                            fieldMapping.set(processSuperField(supermapping.getUnmappedName(), name));
-                        }
-                    }
+            if(fieldMapping.get() == null) superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull)
+                .map(cm -> processSuperField(cm.getUnmappedName(), name)).filter(Objects::nonNull).forEach(fm -> {
+                    if(!fieldMapping.compareAndSet(null, fm)) throw new RuntimeException("Field duplicated... This should not happen!");
                 });
-            }
             if(fieldMapping.get() != null) return fieldMapping.get();
         }
         return null;
