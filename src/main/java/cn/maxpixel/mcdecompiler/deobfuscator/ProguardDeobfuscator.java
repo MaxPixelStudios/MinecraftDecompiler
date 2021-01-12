@@ -121,15 +121,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
                     ClassReader reader = new ClassReader(inputStream);
                     ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
                     reader.accept(new ClassRemapper(writer, new MappingRemapper(mappingReader, taskSuperClassMapping.get())), ClassReader.SKIP_DEBUG);
-                    String mappingKey;
-                    if(path.toString().contains("net" + Info.FILE_SEPARATOR + "minecraft" + Info.FILE_SEPARATOR)) {
-                        mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("net" + Info.FILE_SEPARATOR + "minecraft" +
-                                Info.FILE_SEPARATOR)));
-                    } else if(path.toString().contains("com" + Info.FILE_SEPARATOR + "mojang" + Info.FILE_SEPARATOR)) {
-                        mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("com" + Info.FILE_SEPARATOR + "mojang" +
-                                Info.FILE_SEPARATOR)));
-                    } else mappingKey = NamingUtil.asJavaName(path.getFileName().toString());
-                    ClassMapping mapping = mappings.get(mappingKey);
+                    ClassMapping mapping = mappings.get(NamingUtil.asJavaName(unmappedClasses.relativize(path).toString()));
                     if(mapping != null) {
                         String s = NamingUtil.asNativeName(mapping.getMappedName());
                         FileUtil.ensureDirectoryExist(mappedClasses.resolve(s.substring(0, s.lastIndexOf('/'))));

@@ -28,7 +28,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -48,7 +47,7 @@ public abstract class AbstractDeobfuscator {
             paths.forEach(childPath -> {
                 if(Files.isDirectory(childPath)) {
                     if(childPath.endsWith("com")) {
-                        try(Stream<Path> s = Files.walk(childPath, 2);
+                        try(Stream<Path> s = Files.walk(childPath, 2).skip(2L); // Skip com/ and com/mojang at least
                             Stream<Path> s1 = Files.list(childPath).filter(p -> !p.endsWith("mojang"))) {
                             // Unmapped client only has com.mojang.blaze3d package
                             // If unmapped jar doesn't have this package, it will be treated as unmapped server
@@ -62,12 +61,14 @@ public abstract class AbstractDeobfuscator {
                     } else if(childPath.endsWith("META-INF")) {
                         try(Stream<Path> s = Files.list(childPath).filter(p -> !(p.endsWith("MANIFEST.MF") || p.endsWith("MOJANGCS.RSA") ||
                                 p.endsWith("MOJANGCS.SF")))) {
-                            s.forEach(p -> FileUtil.copy(p, to.resolve("META-INF")));
+                            Path metaInf = to.resolve("META-INF");
+                            FileUtil.ensureDirectoryExist(metaInf);
+                            s.forEach(p -> FileUtil.copy(p, metaInf));
                         } catch (IOException e) {
                             throw Utils.wrapInRuntime(e);
                         }
-                    }
-                } else FileUtil.copy(childPath, to);
+                    } else FileUtil.copyDirectory(childPath, to);
+                } else FileUtil.copyFile(childPath, to);
             });
 
             Manifest man = new Manifest(is);
@@ -78,19 +79,17 @@ public abstract class AbstractDeobfuscator {
         }
     }
     protected final void listMcClassFiles(Path baseDir, Consumer<Path> fileConsumer) {
-        try(Stream<Path> baseClasses = Files.list(baseDir).parallel().filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".class"));
-            Stream<Path> minecraftClasses = Files.walk(baseDir.resolve("net").resolve("minecraft")).parallel().filter(Files::isRegularFile)) {
-            CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> baseClasses.forEach(fileConsumer)),
-                    CompletableFuture.runAsync(() -> minecraftClasses.forEach(fileConsumer)));
+        try(Stream<Path> baseClasses = Files.list(baseDir).filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".class"));
+            Stream<Path> minecraftClasses = Files.walk(baseDir.resolve("net").resolve("minecraft")).filter(Files::isRegularFile)) {
+            Stream<Path> contacted = Stream.concat(baseClasses, minecraftClasses).parallel();
             Path mojang = baseDir.resolve("com").resolve("mojang");
             if(Files.exists(mojang)) {
-                try(Stream<Path> mojangClasses = Files.walk(mojang).parallel().filter(Files::isRegularFile)) {
-                    mojangClasses.forEach(fileConsumer);
+                try(Stream<Path> mojangClassesContacted = Stream.concat(contacted, Files.walk(mojang).filter(Files::isRegularFile))) {
+                    mojangClassesContacted.forEach(fileConsumer);
                 }
-            }
-            task.join();
+            } else contacted.forEach(fileConsumer);
         } catch (IOException e) {
-            LOGGER.error("Cannot list all Minecraft class files", e);
+            LOGGER.error("Error when listing all Minecraft class files", e);
         }
     }
 }
