@@ -35,6 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+import static java.util.Arrays.asList;
+
 public class DeobfuscatorCommandLine {
     private static final Logger LOGGER = LogManager.getLogger();
     public static final Proxy INTERNAL_PROXY = System.console() == null &&
@@ -43,23 +45,31 @@ public class DeobfuscatorCommandLine {
             Proxy.NO_PROXY;
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(Arrays.asList("v", "ver", "version"), "Select a version to deobfuscate/decompile. " +
-                "Only works on Proguard mappings.").withRequiredArg();
-        ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(Arrays.asList("s", "side"),
-                "Select a side to deobfuscate/decompile. Values are client and server. Only works with \"version\" option.")
-                .requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
-        ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("tempDir", "Select a temp directory for saving decompressed and remapped " +
-                "files").withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<Path> mappingPathO = parser.accepts("mapFile", "Which mapping file needs to use.")
-                .requiredUnless(versionO, sideTypeO).withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<String> outO = parser.accepts("out", "The output directory of deobfuscated jar and decompiled dir").withRequiredArg();
-        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.accepts("decompile", "Whether to decompile the deobfuscated jar. " +
-                "Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to \"FERNFLOWER\". Do NOT pass any " +
-                "arg to this option when \"customDecompilerName\" option is specified").withOptionalArg().ofType(Info.DecompilerType.class)
+        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(asList("v", "ver", "version"),
+                "Version to deobfuscate/decompile. Only works on Proguard mappings. With this option, you must specify --side option " +
+                "and mustn't specify --input or --mappingPath option.").withRequiredArg();
+        ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(asList("s", "side"), "Side to deobfuscate/" +
+                "decompile. Values are \"CLIENT\" and \"SERVER\". Only works on Proguard mappings. With this option, you must specify --version " +
+                "option and mustn't specify --input or --mappingPath option.").requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
+        ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
+                "specify --mappingPath option and musn't specify --version or --side option.").requiredUnless(versionO, sideTypeO).withRequiredArg()
+                .withValuesConvertedBy(new PathConverter());
+        ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(asList("m", "map", "mappingPath"), "Mapping file use to " +
+                "deobfuscate. With this option, you must specify --input option and mustn't specify --version or --side option.")
+                .requiredUnless(versionO, sideTypeO).requiredIf(inputO).withRequiredArg();
+        ArgumentAcceptingOptionSpec<Path> outDirO = parser.acceptsAll(asList("o", "outDir"), "The output directory of deobfuscated jar " +
+                "and decompiled dir.").withRequiredArg().withValuesConvertedBy(new PathConverter());
+        ArgumentAcceptingOptionSpec<String> outDeobfNameO = parser.accepts("outDeobfName", "The name of deobfuscated jar in the " +
+                "outDir which specified by --outDir option. Do NOT add suffix.").withRequiredArg().defaultsTo("deobfuscated");
+        ArgumentAcceptingOptionSpec<String> outDecomNameO = parser.accepts("outDecomName", "The name of decompiled dir in the " +
+                "outDir which specified by --outDir option.").withRequiredArg().defaultsTo("decompiled");
+        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(asList("d", "decompile"), "Decompile the " +
+                "deobfuscated jar. Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Do NOT pass " +
+                "any arg to this option when \"customDecompilerName\" option is specified.").withOptionalArg().ofType(Info.DecompilerType.class)
                 .defaultsTo(Info.DecompilerType.FERNFLOWER);
-        ArgumentAcceptingOptionSpec<URL> customDecompilerJarsO = parser.accepts("customDecompilerJars", "The jars of classes contain implementations " +
-                "of ICustomizedDecompiler that can be loaded by SPI. Without this option, you need to add them to classpath").withRequiredArg().withValuesSeparatedBy(';')
-                .withValuesConvertedBy(new ValueConverter<URL>() {
+        ArgumentAcceptingOptionSpec<URL> customDecompilerJarsO = parser.accepts("customDecompilerJars", "Jars that " +
+                "contain implementations of ICustomizedDecompiler that can be loaded by SPI. Without this option, you need to add them to classpath.")
+                .withRequiredArg().withValuesSeparatedBy(';').withValuesConvertedBy(new ValueConverter<URL>() {
                     @Override
                     public URL convert(String value) {
                         try {
@@ -73,8 +83,10 @@ public class DeobfuscatorCommandLine {
                     @Override
                     public String valuePattern() { return null; }
                 });
-        ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("customDecompilerName",
-                "Use your custom decompiler to decompile, do NOT pass any arg to \"decompile\" option when you use this option").withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("customDecompiler", "Use your custom decompiler " +
+                "to decompile, do NOT pass any arg to \"decompile\" option when you use this option").withRequiredArg();
+        ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("tempDir", "Temp directory for saving unzipped and remapped " +
+                "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
         AbstractOptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
 
         OptionSet options = parser.parse(args);
@@ -87,41 +99,41 @@ public class DeobfuscatorCommandLine {
             }
             return;
         }
+        if(options.has(customDecompilerO) && options.hasArgument(decompileO)) {
+            throw new IllegalArgumentException("Do NOT pass args to \"decompile\" option when you use --customDecompiler option");
+        }
+        if((options.has(versionO) || options.has(sideTypeO)) && (options.has(mappingPathO) || options.has(inputO))) {
+            throw new IllegalArgumentException("Do NOT specify --mappingPath or --input option when --version and --side are specified");
+        }
         if(options.has(customDecompilerJarsO))
-            options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(ClassLoaderUtils::appendToClassPath, LambdaUtil::rethrowAsRuntime));
+            options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(ClassLoaderUtils::appendToClassPath,
+                                                            LambdaUtil::rethrowAsRuntime));
 
-        String version = options.valueOf(versionO);
-        Info.SideType sideType = options.valueOf(sideTypeO);
-        InfoProviders.set(new CustomizeInfo() {
-            @Override
-            public Path getTempPath() {
-                return options.valueOfOptional(tempDirO).orElse(super.getTempPath());
-            }
-            @Override
-            public Path getMappingPath() {
-                if(options.has(versionO) && options.has(sideTypeO)) {
-                    if(options.has(mappingPathO)) throw new IllegalArgumentException("Do NOT specify --mapFile option when --version and --side is specified");
-                    return super.getMappingPath();
-                }
-                return options.valueOfOptional(mappingPathO).orElseThrow(() ->
-                        new IllegalArgumentException("--mapFile is required when you deobfuscate with SRG/CSRG/TSRG mapping"));
-            }
-            @Override
-            public String getOutputPath() {
-                return options.valueOfOptional(outO).orElse(super.getOutputPath());
-            }
-        });
+        options.valueOfOptional(tempDirO).ifPresent(p -> Properties.put(Properties.Key.TEMP_DIR, p));
+        if(!(options.has(versionO) || options.has(sideTypeO))) {
+            Properties.put(Properties.Key.INPUT_JAR, options.valueOfOptional(inputO).orElseThrow(() -> new IllegalArgumentException(
+                    "--input is required when you doesn't specify --version and --side options")));
+            Properties.put(Properties.Key.MAPPING_PATH, options.valueOfOptional(mappingPathO).orElseThrow(() -> new IllegalArgumentException(
+                    "--mappingPath is required when you doesn't specify --version and --side options")));
+        }
+        options.valueOfOptional(outDirO).ifPresent(p -> Properties.put(Properties.Key.OUTPUT_DIR, p));
+        options.valueOfOptional(outDeobfNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DEOBFUSCATED_NAME, s));
+        options.valueOfOptional(outDecomNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DECOMPILED_NAME, s));
 
-        Deobfuscator deobfuscator = new Deobfuscator(version, sideType);
+        Deobfuscator deobfuscator;
+        if(options.has(versionO) || options.has(sideTypeO)) deobfuscator = new Deobfuscator(options.valueOf(versionO), options.valueOf(sideTypeO));
+        else deobfuscator = new Deobfuscator(Properties.get(Properties.Key.MAPPING_PATH));
         deobfuscator.deobfuscate();
 
         if(options.has(decompileO)) {
-            deobfuscator.decompile(options.valueOf(decompileO));
+            if(options.has(customDecompilerO)) deobfuscator.decompileCustomized(options.valueOf(customDecompilerO));
+            else deobfuscator.decompile(options.valueOf(decompileO));
         }
     }
 
     static {
         System.setProperty("log4j2.skipJansi", "false");
-        Runtime.getRuntime().addShutdownHook(new Thread(LOGGER::traceExit));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info("Exited. Thanks for using Minecraft Decompiler " +
+                DeobfuscatorCommandLine.class.getPackage().getImplementationVersion())));
     }
 }

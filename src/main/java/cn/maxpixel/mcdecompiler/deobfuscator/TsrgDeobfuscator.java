@@ -18,8 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
-import cn.maxpixel.mcdecompiler.Info;
-import cn.maxpixel.mcdecompiler.InfoProviders;
+import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
@@ -40,7 +39,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class TsrgDeobfuscator extends AbstractDeobfuscator {
-    protected TsrgDeobfuscator(String mappingPath) {
+    public TsrgDeobfuscator(String mappingPath) {
         super(mappingPath);
     }
     @Override
@@ -48,45 +47,35 @@ public class TsrgDeobfuscator extends AbstractDeobfuscator {
         try(TsrgMappingReader mappingReader = new TsrgMappingReader(mappingPath)) {
             LOGGER.info("Deobfuscating...");
             FileUtil.ensureFileExist(target);
-            Path unmappedClasses = InfoProviders.get().getTempUnmappedClassesPath();
-            Path mappedClasses = InfoProviders.get().getTempMappedClassesPath();
+            Path unmappedClasses = Properties.getTempUnmappedClassesPath();
+            Path mappedClasses = Properties.getTempMappedClassesPath();
             FileUtil.ensureDirectoryExist(unmappedClasses);
             JarUtil.unzipJar(source, unmappedClasses);
             LOGGER.info("Remapping...");
             FileUtil.ensureDirectoryExist(mappedClasses);
             CompletableFuture<String> taskCopyThenReturnMain = CompletableFuture.supplyAsync(() -> copyOthers(unmappedClasses, mappedClasses));
-            CompletableFuture<SuperClassMapping> taskSuperClassMapping = CompletableFuture.supplyAsync(() -> {
-                SuperClassMapping superClassMapping = new SuperClassMapping();
-                listMcClassFiles(unmappedClasses, path -> {
-                    try(InputStream inputStream = Files.newInputStream(path)) {
-                        ClassReader reader = new ClassReader(inputStream);
-                        reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
-                    } catch(IOException e) {
-                        LOGGER.error("Error when creating super class mapping", e);
-                    }
-                });
-                return superClassMapping;
+            SuperClassMapping superClassMapping = new SuperClassMapping();
+            listMcClassFiles(unmappedClasses, path -> {
+                try(InputStream inputStream = Files.newInputStream(path)) {
+                    ClassReader reader = new ClassReader(inputStream);
+                    reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
+                } catch(IOException e) {
+                    LOGGER.error("Error when creating super class mapping", e);
+                }
             });
+            MappingRemapper mappingRemapper = new MappingRemapper(mappingReader, superClassMapping);
             Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
             listMcClassFiles(unmappedClasses, path -> {
                 try(InputStream inputStream = Files.newInputStream(path)) {
                     ClassReader reader = new ClassReader(inputStream);
                     ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-                    reader.accept(new ClassRemapper(writer, new MappingRemapper(mappingReader, taskSuperClassMapping.get())), ClassReader.SKIP_DEBUG);
-                    String mappingKey;
-                    if(path.toString().contains("net" + Info.FILE_SEPARATOR + "minecraft" + Info.FILE_SEPARATOR)) {
-                        mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("net" + Info.FILE_SEPARATOR + "minecraft" +
-                                Info.FILE_SEPARATOR)));
-                    } else if(path.toString().contains("com" + Info.FILE_SEPARATOR + "mojang" + Info.FILE_SEPARATOR)) {
-                        mappingKey = NamingUtil.asJavaName(path.toString().substring(path.toString().indexOf("com" + Info.FILE_SEPARATOR + "mojang" +
-                                Info.FILE_SEPARATOR)));
-                    } else mappingKey = NamingUtil.asJavaName(path.getFileName().toString());
-                    ClassMapping mapping = mappings.get(mappingKey);
+                    reader.accept(new ClassRemapper(writer, mappingRemapper), ClassReader.SKIP_DEBUG);
+                    ClassMapping mapping = mappings.get(NamingUtil.asJavaName(unmappedClasses.relativize(path).toString()));
                     if(mapping != null) {
                         String s = NamingUtil.asNativeName(mapping.getMappedName());
-                        FileUtil.ensureDirectoryExist(mappedClasses.resolve(s.substring(0, s.lastIndexOf('/'))));
-                        Files.write(mappedClasses.resolve(s + ".class"), writer.toByteArray(),
-                                StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                        Path output = mappedClasses.resolve(s + ".class");
+                        FileUtil.ensureDirectoryExist(output.getParent());
+                        Files.write(output, writer.toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                     }
                 } catch(Exception e) {
                     LOGGER.error("Error when remapping classes", e);

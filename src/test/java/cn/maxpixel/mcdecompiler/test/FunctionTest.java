@@ -20,6 +20,8 @@ package cn.maxpixel.mcdecompiler.test;
 
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -29,12 +31,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.nio.file.StandardOpenOption.*;
 
 public class FunctionTest {
-    public void test() {}
+    public static class a {}
+    public void test() throws InterruptedException {
+        Logger logger = LogManager.getLogger();
+        logger.info(1);
+        CompletableFuture.runAsync(() -> logger.info(2));
+    }
     private static final FileSystemProvider JAR_FSP;
     static {
         FileSystemProvider provider = null;

@@ -42,7 +42,8 @@ public abstract class AbstractMappingReader implements AutoCloseable {
 
     protected AbstractMappingReader(BufferedReader reader) {
         this.reader = reader;
-        Stream<String> lines = reader.lines().map(s -> {
+        AbstractNonPackageMappingProcessor processor = getProcessor();
+        mappings = processor.process(reader.lines().map(s -> {
             if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
 
             int index = s.indexOf('#');
@@ -50,9 +51,7 @@ public abstract class AbstractMappingReader implements AutoCloseable {
             else if(index == 0) return null;
 
             return s;
-        }).filter(Objects::nonNull);
-        AbstractNonPackageMappingProcessor processor = getProcessor();
-        mappings = processor.process(lines);
+        }).filter(Objects::nonNull));
         packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
     }
     protected AbstractMappingReader(Reader rd) {
@@ -73,12 +72,12 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         return packages;
     }
     public Map<String, ClassMapping> getMappingsByUnmappedNameMap() {
-        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(),
-                (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(), (cm1, cm2) ->
+        {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
     public Map<String, ClassMapping> getMappingsByMappedNameMap() {
-        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(),
-                (classMapping, classMapping2) -> {throw new IllegalArgumentException("Key duplicated!");}, Object2ObjectOpenHashMap::new));
+        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(), (cm1, cm2) ->
+        {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
     @Override
     public void close() {

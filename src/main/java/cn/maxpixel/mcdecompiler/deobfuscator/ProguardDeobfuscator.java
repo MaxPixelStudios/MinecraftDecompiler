@@ -19,7 +19,7 @@
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
 import cn.maxpixel.mcdecompiler.Info;
-import cn.maxpixel.mcdecompiler.InfoProviders;
+import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
@@ -36,7 +36,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Objects;
@@ -59,14 +58,12 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
         version_json = VersionManifest.getVersion(version);
         if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
             throw new RuntimeException("Version \"" + version + "\" doesn't have Proguard mappings. Please use 1.14.4 or above");
-        Path p = Paths.get(InfoProviders.get().getProguardMappingDownloadPath(version, type));
+        Path p = Properties.getDownloadedProguardMappingPath(version, type);
         if(Files.notExists(p)) {
-            try {
-                Files.createDirectories(p.getParent());
-            } catch(IOException ignored) {}
+            FileUtil.ensureDirectoryExist(p.getParent());
             try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings").
-                        getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
+                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings")
+                        .getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
                 LOGGER.info("Downloading mapping...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch (IOException e) {
@@ -75,14 +72,12 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
         }
     }
     private void downloadJar(String version, Info.SideType type) {
-        Path p = Paths.get(InfoProviders.get().getMcJarPath(version, type));
+        Path p = Properties.getDownloadedMcJarPath(version, type);
         if(Files.notExists(p)) {
-            try {
-                Files.createDirectories(p.getParent());
-            }catch(IOException ignored){}
+            FileUtil.ensureDirectoryExist(p.getParent());
             try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString()).getAsJsonObject()
-                        .get("url").getAsString()).connect().asChannel()) {
+                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString())
+                        .getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
                 LOGGER.info("Downloading jar...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
             } catch(IOException e) {
@@ -92,41 +87,39 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
     }
     @Override
     public ProguardDeobfuscator deobfuscate(Path source, Path target) {
-        try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ?
-                InfoProviders.get().getProguardMappingDownloadPath(version, type) : mappingPath)) {
+        try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ? Properties.getDownloadedProguardMappingPath(
+                Objects.requireNonNull(version), Objects.requireNonNull(type)).toString() : mappingPath)) {
             LOGGER.info("Deobfuscating...");
             FileUtil.ensureFileExist(target);
-            Path unmappedClasses = InfoProviders.get().getTempUnmappedClassesPath();
-            Path mappedClasses = InfoProviders.get().getTempMappedClassesPath();
+            Path unmappedClasses = Properties.getTempUnmappedClassesPath();
+            Path mappedClasses = Properties.getTempMappedClassesPath();
             FileUtil.ensureDirectoryExist(unmappedClasses);
             JarUtil.unzipJar(source, unmappedClasses);
             LOGGER.info("Remapping...");
             FileUtil.ensureDirectoryExist(mappedClasses);
             CompletableFuture<String> taskCopyThenReturnMain = CompletableFuture.supplyAsync(() -> copyOthers(unmappedClasses, mappedClasses));
-            CompletableFuture<SuperClassMapping> taskSuperClassMapping = CompletableFuture.supplyAsync(() -> {
-                SuperClassMapping superClassMapping = new SuperClassMapping();
-                listMcClassFiles(unmappedClasses, path -> {
-                    try(InputStream inputStream = Files.newInputStream(path)) {
-                        ClassReader reader = new ClassReader(inputStream);
-                        reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
-                    } catch(IOException e) {
-                        LOGGER.error("Error when creating super class mapping", e);
-                    }
-                });
-                return superClassMapping;
+            SuperClassMapping superClassMapping = new SuperClassMapping();
+            listMcClassFiles(unmappedClasses, path -> {
+                try(InputStream inputStream = Files.newInputStream(path)) {
+                    ClassReader reader = new ClassReader(inputStream);
+                    reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
+                } catch(IOException e) {
+                    LOGGER.error("Error when creating super class mapping", e);
+                }
             });
+            MappingRemapper mappingRemapper = new MappingRemapper(mappingReader, superClassMapping);
             Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
             listMcClassFiles(unmappedClasses, path -> {
                 try(InputStream inputStream = Files.newInputStream(path)) {
                     ClassReader reader = new ClassReader(inputStream);
                     ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-                    reader.accept(new ClassRemapper(writer, new MappingRemapper(mappingReader, taskSuperClassMapping.get())), ClassReader.SKIP_DEBUG);
+                    reader.accept(new ClassRemapper(writer, mappingRemapper), ClassReader.SKIP_DEBUG);
                     ClassMapping mapping = mappings.get(NamingUtil.asJavaName(unmappedClasses.relativize(path).toString()));
                     if(mapping != null) {
                         String s = NamingUtil.asNativeName(mapping.getMappedName());
-                        FileUtil.ensureDirectoryExist(mappedClasses.resolve(s.substring(0, s.lastIndexOf('/'))));
-                        Files.write(mappedClasses.resolve(s + ".class"), writer.toByteArray(),
-                                StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                        Path output = mappedClasses.resolve(s + ".class");
+                        FileUtil.ensureDirectoryExist(output.getParent());
+                        Files.write(output, writer.toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                     }
                 } catch(Exception e) {
                     LOGGER.error("Error when remapping classes", e);

@@ -88,7 +88,7 @@ public class SrgMappingReader extends AbstractMappingReader {
             return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
         }
         private String getClassName(String s) {
-            return NamingUtil.asJavaName(s.substring(s.lastIndexOf('/')));
+            return NamingUtil.asJavaName(s.substring(0, s.lastIndexOf('/')));
         }
         private String getName(String s) {
             return s.substring(s.lastIndexOf('/') + 1);
@@ -102,7 +102,8 @@ public class SrgMappingReader extends AbstractMappingReader {
         @Override
         protected BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(getName(strings[1]), getName(strings[2])).setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[2])));
+            return new BaseFieldMapping(getName(strings[1]), getName(strings[2]))
+                    .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[2])));
         }
         @Override
         protected List<PackageMapping> getPackages() {

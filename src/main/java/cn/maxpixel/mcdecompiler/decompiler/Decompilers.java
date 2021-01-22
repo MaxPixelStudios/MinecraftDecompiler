@@ -53,11 +53,11 @@ public class Decompilers {
                 Properties decompilerProperties = new Properties();
                 decompilerProperties.load(Files.newBufferedReader(path));
                 String decompilerPath = Objects.requireNonNull(decompilerProperties.getProperty("decompiler-file"),
-                        "decompiler-file is a required field");
+                        "decompiler-file is a required property");
                 String sourceType = Objects.requireNonNull(decompilerProperties.getProperty("source-type"),
-                        "source-type is a required field");
+                        "source-type is a required property");
                 String libRecommended = decompilerProperties.getProperty("lib-recommended", "false");
-                String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required field")
+                String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required property")
                         .split(" ");
                 return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Paths.get("decompiler", decompilerPath).
                         toAbsolutePath().normalize(), ObjectArrayList.wrap(args), Boolean.parseBoolean(libRecommended));

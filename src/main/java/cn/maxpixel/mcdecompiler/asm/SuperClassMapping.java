@@ -19,18 +19,12 @@
 package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.List;
-import java.util.Map;
-
 public class SuperClassMapping extends ClassVisitor {
-    private final Object2ObjectMap<String, List<String>> superClassMap = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    private final Object2ObjectMap<String, ObjectList<String>> superClassMap = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     public SuperClassMapping() {
         super(Opcodes.ASM9);
     }
@@ -38,7 +32,7 @@ public class SuperClassMapping extends ClassVisitor {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         ObjectArrayList<String> list = new ObjectArrayList<>();
-        if(!superName.contains("java/lang/Object")) {
+        if(!superName.equals("java/lang/Object")) {
             list.add(NamingUtil.asJavaName(superName));
         }
         if(interfaces != null) for(String interface_ : interfaces) list.add(NamingUtil.asJavaName(interface_));
@@ -47,7 +41,7 @@ public class SuperClassMapping extends ClassVisitor {
         }
     }
 
-    public Map<String, List<String>> getMap() {
+    public Object2ObjectMap<String, ObjectList<String>> getMap() {
         return Object2ObjectMaps.unmodifiable(superClassMap);
     }
 }

@@ -40,6 +40,7 @@ public class FileUtil {
         if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
         try {
             LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
+            FileUtil.ensureDirectoryExist(target);
             try {
                 Files.copy(source, target, copyOptions);
             } catch(FileAlreadyExistsException ignored) {}

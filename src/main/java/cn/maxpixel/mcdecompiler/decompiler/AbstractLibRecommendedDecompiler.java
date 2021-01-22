@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.NetworkUtil;
 import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -41,7 +40,6 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
             return;
         }
         LOGGER.info("downloading libs of version " + version);
-        FileUtil.ensureDirectoryExist(libDir);
         StreamSupport.stream(VersionManifest.getVersion(version).getAsJsonArray("libraries").spliterator(), true)
                 .map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject()).filter(obj->obj.has("artifact"))
                 .map(obj->obj.get("artifact").getAsJsonObject().get("url").getAsString()).forEach(url -> {

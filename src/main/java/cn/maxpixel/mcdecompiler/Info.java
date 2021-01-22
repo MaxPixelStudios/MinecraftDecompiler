@@ -18,41 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import java.nio.file.Path;
-
 public interface Info {
-    String getDownloadPath();
-    default String getProguardMappingDownloadPath(String version, SideType type) {
-        return getDownloadPath() + "/" + version + "/" + type + "_mappings.txt";
-    }
-    default String getLibDownloadPath() {
-        return getDownloadPath() + "/libs/";
-    }
-    Path getMappingPath();
-    default String getDecompileDirectory(String version, SideType type) {
-        return getOutputPath() + "/" + version + "_" + type + "_decompiled/";
-    }
-    default String getMcJarPath(String version, SideType type) {
-        return getDownloadPath() + "/" + version + "/" + type + ".jar";
-    }
-    default String getDeobfuscateJarPath(String version, SideType type) {
-        return getOutputPath() + "/" + version + "_" + type + "_deobfuscated.jar";
-    }
-    String getOutputPath();
-    default Path getTempUnmappedClassesPath() {
-        return getTempPath().resolve("unmappedClasses");
-    }
-    default Path getTempMappedClassesPath() {
-        return getTempPath().resolve("mappedClasses");
-    }
-    default Path getTempDecompileClassesPath() {
-        return getTempPath().resolve("decompileClasses");
-    }
-    default Path getTempDecompilerPath(DecompilerType type) {
-        return getTempPath().resolve(type + ".jar");
-    }
-    Path getTempPath();
-    String FILE_SEPARATOR = System.getProperty("file.separator"); // / \\
     String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
     enum SideType {
         CLIENT,

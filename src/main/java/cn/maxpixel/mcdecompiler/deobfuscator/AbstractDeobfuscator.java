@@ -61,6 +61,7 @@ public abstract class AbstractDeobfuscator {
                     } else if(childPath.endsWith("META-INF")) {
                         try(Stream<Path> s = Files.list(childPath).filter(p -> !(p.endsWith("MANIFEST.MF") || p.endsWith("MOJANGCS.RSA") ||
                                 p.endsWith("MOJANGCS.SF")))) {
+                            // Due to FileUtil.copy* limitations, we need to be sure that META-INF is exist as directory
                             Path metaInf = to.resolve("META-INF");
                             FileUtil.ensureDirectoryExist(metaInf);
                             s.forEach(p -> FileUtil.copy(p, metaInf));
@@ -79,15 +80,16 @@ public abstract class AbstractDeobfuscator {
         }
     }
     protected final void listMcClassFiles(Path baseDir, Consumer<Path> fileConsumer) {
-        try(Stream<Path> baseClasses = Files.list(baseDir).filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".class"));
-            Stream<Path> minecraftClasses = Files.walk(baseDir.resolve("net").resolve("minecraft")).filter(Files::isRegularFile)) {
-            Stream<Path> contacted = Stream.concat(baseClasses, minecraftClasses).parallel();
+        try(Stream<Path> baseClasses = Files.list(baseDir).filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".class")).parallel();
+            Stream<Path> minecraftClasses = Files.walk(baseDir.resolve("net").resolve("minecraft")).filter(Files::isRegularFile).parallel()) {
+            baseClasses.forEach(fileConsumer);
+            minecraftClasses.forEach(fileConsumer);
             Path mojang = baseDir.resolve("com").resolve("mojang");
             if(Files.exists(mojang)) {
-                try(Stream<Path> mojangClassesContacted = Stream.concat(contacted, Files.walk(mojang).filter(Files::isRegularFile))) {
-                    mojangClassesContacted.forEach(fileConsumer);
+                try(Stream<Path> mojangClasses = Files.walk(mojang).filter(Files::isRegularFile).parallel()) {
+                    mojangClasses.forEach(fileConsumer);
                 }
-            } else contacted.forEach(fileConsumer);
+            }
         } catch (IOException e) {
             LOGGER.error("Error when listing all Minecraft class files", e);
         }

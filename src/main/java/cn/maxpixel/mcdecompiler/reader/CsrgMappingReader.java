@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CsrgMappingReader extends AbstractMappingReader {
@@ -77,7 +78,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
                         break;
                 }
             });
-            return null;
+            return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
         }
         @Override
         protected ClassMapping processClass(String line) {

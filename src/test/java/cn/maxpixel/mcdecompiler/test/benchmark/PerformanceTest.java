@@ -18,24 +18,16 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.InfoProviders;
-import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
+import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 /*
  * This class is for internal test
@@ -45,69 +37,30 @@ import java.util.stream.Stream;
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
 public class PerformanceTest {
-    private static final Path f = InfoProviders.get().getTempUnmappedClassesPath();
-    private static final Path t = InfoProviders.get().getTempPath().resolve("tar");
+    private Path temp;
+    private Path f;
+    private Path t;
+    @Setup(Level.Trial)
+    public void setUp() {
+        temp = Paths.get("temp");
+        f = Paths.get("temp").resolve("f/a/b/d/d/ds/dfsg/g/fd");
+        t = Paths.get("temp").resolve("t/e/s/a/a/q/q/f/sa/a");
+    }
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
                 .shouldDoGC(true)
-                .measurementIterations(5)
+                .timeUnit(TimeUnit.MILLISECONDS)
+                .measurementIterations(10)
                 .warmupIterations(3)
                 .build();
-//        new Runner(options).run();
-    }
-    public void setUp() {
-    }
-    private void fill(Map<String, String> map) {
-        Stream.generate(() -> 1).limit((long) Math.pow(2, 16)).parallel().forEach(i -> {
-            try {
-                byte[] bytes = new byte[2048];
-                Random r = new Random();
-                r.nextBytes(bytes);
-                byte[] out = MessageDigest.getInstance("SHA-512").digest(bytes);
-                StringBuilder builder = new StringBuilder();
-                for(byte b : out) {
-                    String s = Integer.toHexString(b);
-                    if(s.length() == 1) s = s.concat("0");
-                    builder.append(s);
-                }
-                map.put(builder.toString(), Base64.getEncoder().encodeToString(out));
-            } catch (Throwable e) {
-                throw Utils.wrapInRuntime(e);
-            }
-        });
-    }
-    private void consume(Map<String, String> map, Blackhole blackhole) {
-        ObjectBigArrayBigList<String> list = new ObjectBigArrayBigList<>();
-        map.forEach((k, v) -> list.add(k.concat("_").concat(v)));
-        blackhole.consume(list);
+        new Runner(options).run();
     }
     @Benchmark
-    public void a(Blackhole blackhole) throws Throwable {
-        Object2ObjectMap<String, String> map = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
-        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
-                CompletableFuture.runAsync(() -> consume(map, blackhole)));
-        blackhole.consume(task.join());
-    }
-    @Benchmark
-    public void b(Blackhole blackhole) throws Throwable {
-        Map<String, String> map = new ConcurrentHashMap<>();
-        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
-                CompletableFuture.runAsync(() -> consume(map, blackhole)));
-        blackhole.consume(task.join());
-    }
-    @Benchmark
-    public void c(Blackhole blackhole) throws Throwable {
-        Map<String, String> map = Collections.synchronizedMap(new Object2ObjectOpenHashMap<>());
-        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
-                CompletableFuture.runAsync(() -> consume(map, blackhole)));
-        blackhole.consume(task.join());
-    }
-    @Benchmark
-    public void d(Blackhole blackhole) throws Throwable {
-        Map<String, String> map = Collections.synchronizedMap(new HashMap<>());
-        CompletableFuture<Void> task = CompletableFuture.allOf(CompletableFuture.runAsync(() -> fill(map)),
-                CompletableFuture.runAsync(() -> consume(map, blackhole)));
-        blackhole.consume(task.join());
+    public void a(Blackhole blackhole) {
+        for(int i = 0; i < 5000; i++) {
+            blackhole.consume(temp.relativize(f));
+            blackhole.consume(temp.relativize(t));
+        }
     }
 }
