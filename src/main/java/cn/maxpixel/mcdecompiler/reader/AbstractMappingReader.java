@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractMappingReader implements AutoCloseable {
-    protected BufferedReader reader;
+    protected volatile BufferedReader reader;
     private final List<ClassMapping> mappings;
     private final List<PackageMapping> packages;
 
@@ -65,22 +65,22 @@ public abstract class AbstractMappingReader implements AutoCloseable {
     }
 
     protected abstract AbstractNonPackageMappingProcessor getProcessor();
-    public List<ClassMapping> getMappings() {
+    public final List<ClassMapping> getMappings() {
         return mappings;
     }
-    public List<PackageMapping> getPackages() {
+    public final List<PackageMapping> getPackages() {
         return packages;
     }
-    public Map<String, ClassMapping> getMappingsByUnmappedNameMap() {
+    public final Map<String, ClassMapping> getMappingsByUnmappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
-    public Map<String, ClassMapping> getMappingsByMappedNameMap() {
+    public final Map<String, ClassMapping> getMappingsByMappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
     @Override
-    public void close() {
+    public final void close() {
         try {
             reader.close();
         } catch (IOException e) {

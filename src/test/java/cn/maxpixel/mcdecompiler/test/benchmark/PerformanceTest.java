@@ -20,7 +20,6 @@ package cn.maxpixel.mcdecompiler.test.benchmark;
 
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
-import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -54,7 +53,7 @@ public class PerformanceTest {
                 .measurementIterations(10)
                 .warmupIterations(3)
                 .build();
-        new Runner(options).run();
+//        new Runner(options).run();
     }
     @Benchmark
     public void a(Blackhole blackhole) {

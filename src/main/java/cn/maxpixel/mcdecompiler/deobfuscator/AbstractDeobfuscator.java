@@ -18,16 +18,29 @@
 
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
+import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.JarUtil;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -41,6 +54,44 @@ public abstract class AbstractDeobfuscator {
         this.mappingPath = Objects.requireNonNull(mappingPath, "Provided mappingPath cannot be null");
     }
     public abstract AbstractDeobfuscator deobfuscate(Path source, Path target);
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader) throws Exception {
+        LOGGER.info("Deobfuscating...");
+        FileUtil.ensureFileExist(target);
+        Path unmappedClasses = Properties.getTempUnmappedClassesPath();
+        Path mappedClasses = Properties.getTempMappedClassesPath();
+        FileUtil.ensureDirectoryExist(unmappedClasses);
+        JarUtil.unzipJar(source, unmappedClasses);
+        LOGGER.info("Remapping...");
+        FileUtil.ensureDirectoryExist(mappedClasses);
+        CompletableFuture<String> taskCopyThenReturnMain = CompletableFuture.supplyAsync(() -> copyOthers(unmappedClasses, mappedClasses));
+        SuperClassMapping superClassMapping = new SuperClassMapping();
+        listMcClassFiles(unmappedClasses, path -> {
+            try(InputStream inputStream = Files.newInputStream(path)) {
+                ClassReader reader = new ClassReader(inputStream);
+                reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
+            } catch(IOException e) {
+                LOGGER.error("Error when creating super class mapping", e);
+            }
+        });
+        MappingRemapper mappingRemapper = new MappingRemapper(mappingReader, superClassMapping);
+        Map<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
+        listMcClassFiles(unmappedClasses, path -> {
+            try(InputStream inputStream = Files.newInputStream(path)) {
+                ClassReader reader = new ClassReader(inputStream);
+                ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+                reader.accept(new ClassRemapper(writer, mappingRemapper), ClassReader.SKIP_DEBUG);
+                ClassMapping mapping = mappings.get(NamingUtil.asJavaName(unmappedClasses.relativize(path).toString()));
+                if(mapping != null) {
+                    Path output = mappedClasses.resolve(NamingUtil.asNativeName(mapping.getMappedName()) + ".class");
+                    FileUtil.ensureDirectoryExist(output.getParent());
+                    Files.write(output, writer.toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                }
+            } catch(Exception e) {
+                LOGGER.error("Error when remapping classes", e);
+            }
+        });
+        JarUtil.zipJar(taskCopyThenReturnMain.get(), target, mappedClasses);
+    }
     protected final String copyOthers(Path from, Path to) {
         try(Stream<Path> paths = Files.list(from).parallel().filter(p -> !(p.toString().endsWith(".class") || p.endsWith("net")));
             InputStream is = Files.newInputStream(from.resolve("META-INF").resolve("MANIFEST.MF"))) {

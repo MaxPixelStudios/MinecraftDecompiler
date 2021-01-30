@@ -34,7 +34,7 @@ public class Properties {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Key)) return false;
-            @SuppressWarnings("unchecked") Key<V> key = (Key<V>) o;
+            @SuppressWarnings("rawtypes") Key key = (Key) o;
             return name.equals(key.name);
         }
         @Override
