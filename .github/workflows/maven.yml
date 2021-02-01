@@ -12,16 +12,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        architecture: ['x86', 'x64']
     steps:
     - uses: actions/checkout@v2.3.4
     - name: Set up JDK
       uses: actions/setup-java@v1.4.3
       with:
         java-version: 8
-        architecture: ${{ matrix.architecture }}
+        architecture: x64
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - name: Upload target
