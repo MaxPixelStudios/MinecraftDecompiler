@@ -56,6 +56,7 @@ public abstract class AbstractDeobfuscator {
     public abstract AbstractDeobfuscator deobfuscate(Path source, Path target);
     protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader) throws Exception {
         LOGGER.info("Deobfuscating...");
+        FileUtil.requireExist(source);
         FileUtil.ensureFileExist(target);
         Path unmappedClasses = Properties.getTempUnmappedClassesPath();
         Path mappedClasses = Properties.getTempMappedClassesPath();

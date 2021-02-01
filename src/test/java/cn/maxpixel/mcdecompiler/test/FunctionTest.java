@@ -23,8 +23,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -41,13 +39,6 @@ public class FunctionTest {
     public static class a {}
     public void test() throws Throwable {
         Logger logger = LogManager.getLogger();
-        try(BufferedReader rd = new BufferedReader(new FileReader("downloads/1.12.2/1.12.2.tsrg"))) {
-            rd.mark(50);
-            String s = rd.readLine();
-            logger.fatal(s);
-            rd.reset();
-            logger.fatal(rd.readLine());
-        }
     }
     private static final FileSystemProvider JAR_FSP;
     static {

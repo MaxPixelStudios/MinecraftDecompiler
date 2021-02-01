@@ -85,9 +85,9 @@ public class JarUtil {
                     String[] paths = new String[relativePath.getNameCount()];
                     for(int i = 0; i < relativePath.getNameCount(); i++) paths[i] = relativePath.getName(i).toString();
                     Path p = jarFs.getPath("/", paths);
-                    if(Files.isDirectory(path)) Files.createDirectories(p);
+                    if(Files.isDirectory(path)) FileUtil.ensureDirectoryExist(p);
                     else {
-                        Files.createDirectories(p.getParent());
+                        FileUtil.ensureFileExist(p);
                         Set<OpenOption> options = new HashSet<>();
                         Collections.addAll(options, WRITE, CREATE, TRUNCATE_EXISTING);
                         try(WritableByteChannel to = JAR_FSP.newByteChannel(p, options);
