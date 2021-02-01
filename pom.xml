@@ -193,7 +193,7 @@
     </dependencies>
     <distributionManagement>
         <repository>
-            <id>gh-publish</id>
+            <id>github</id>
             <url>https://maven.pkg.github.com/MaxPixelStudios/MinecraftDecompiler</url>
         </repository>
     </distributionManagement>
