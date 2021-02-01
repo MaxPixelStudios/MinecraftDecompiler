@@ -107,11 +107,11 @@ public class Properties {
         return get(Key.DOWNLOAD_DIR).resolve(version).resolve(type + ".jar");
     }
     public static Path getOutputDecompiledDirectory(String version, Info.SideType type) {
-        if(version == null || type == null) return getOutputDecompiledDirectory();
+        if(version == null || type == null || !get(Key.OUTPUT_DECOMPILED_NAME).equals("decompiled")) return getOutputDecompiledDirectory();
         return get(Key.OUTPUT_DIR).resolve(version + "_" + type + "_decompiled");
     }
     public static Path getOutputDeobfuscatedJarPath(String version, Info.SideType type) {
-        if(version == null || type == null) return getOutputDeobfuscatedJarPath();
+        if(version == null || type == null || !get(Key.OUTPUT_DEOBFUSCATED_NAME).equals("deobfuscated")) return getOutputDeobfuscatedJarPath();
         return get(Key.OUTPUT_DIR).resolve(version + "_" + type + "_deobfuscated.jar");
     }
     // Proguard only -- end
