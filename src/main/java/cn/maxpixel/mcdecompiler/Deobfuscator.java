@@ -63,6 +63,9 @@ public class Deobfuscator {
                 throw new IllegalArgumentException("This type of mapping is currently unsupported");
         }
     }
+    public Deobfuscator(AbstractDeobfuscator deobfuscator) {
+        this.deobfuscator = deobfuscator;
+    }
     private Info.MappingType getMappingType(String mappingPath) {
         try(Stream<String> lines = Files.lines(Paths.get(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#")).limit(2)) {
             List<String> list = lines.collect(Collectors.toList());

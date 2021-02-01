@@ -38,7 +38,7 @@ import java.util.Arrays;
 import static java.util.Arrays.asList;
 
 public class DeobfuscatorCommandLine {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER;
     public static final Proxy INTERNAL_PROXY = System.console() == null &&
             Boolean.parseBoolean(System.getProperty("mcd.internalProxy", "false")) ?
             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : //Just for internal testing.
@@ -133,6 +133,7 @@ public class DeobfuscatorCommandLine {
 
     static {
         System.setProperty("log4j2.skipJansi", "false");
+        LOGGER = LogManager.getLogger();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info("Exited. Thanks for using Minecraft Decompiler " +
                 DeobfuscatorCommandLine.class.getPackage().getImplementationVersion())));
     }
