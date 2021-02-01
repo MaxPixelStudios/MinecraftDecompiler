@@ -27,5 +27,3 @@ jobs:
       with:
         name: MinecraftDecompiler-with-java${{ matrix.architecture }}
         path: MinecraftDecompiler.jar
-    - name: Deploy to GitHub Packages
-      run: mvn deploy
