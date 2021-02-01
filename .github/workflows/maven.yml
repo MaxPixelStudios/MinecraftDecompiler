@@ -28,4 +28,4 @@ jobs:
         name: MinecraftDecompiler-with-java${{ matrix.architecture }}
         path: MinecraftDecompiler.jar
     - name: Deploy to GitHub Packages
-      run: mvn deploy -Dregistry=https://maven.pkg.github.com/${{ env.GITHUB_REPOSITORY }} -Dtoken=${{ secrets.GITHUB_TOKEN }}
+      run: mvn deploy -Dregistry=https://maven.pkg.github.com/${{ GITHUB_REPOSITORY }} -Dtoken=${{ secrets.GITHUB_TOKEN }}
