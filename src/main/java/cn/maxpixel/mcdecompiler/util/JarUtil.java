@@ -46,6 +46,9 @@ import static java.nio.file.StandardOpenOption.*;
 public class JarUtil {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final FileSystemProvider JAR_FSP;
+    public static FileSystemProvider getJarFileSystemProvider() {
+        return JAR_FSP;
+    }
     public static void unzipJar(Path jar, Path dest) {
         LOGGER.info("Unzipping jar file \"{}\" into \"{}\"...", jar, dest);
         FileUtil.requireExist(jar);

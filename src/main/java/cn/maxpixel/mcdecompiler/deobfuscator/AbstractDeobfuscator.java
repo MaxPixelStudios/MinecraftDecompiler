@@ -53,8 +53,11 @@ public abstract class AbstractDeobfuscator {
     protected AbstractDeobfuscator(String mappingPath) {
         this.mappingPath = Objects.requireNonNull(mappingPath, "Provided mappingPath cannot be null");
     }
-    public abstract AbstractDeobfuscator deobfuscate(Path source, Path target);
-    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader) throws Exception {
+    public AbstractDeobfuscator deobfuscate(Path source, Path target) {
+        return deobfuscate(source, target, true);
+    }
+    public abstract AbstractDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers);
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers) throws Exception {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         FileUtil.ensureFileExist(target);
@@ -64,7 +67,7 @@ public abstract class AbstractDeobfuscator {
         JarUtil.unzipJar(source, unmappedClasses);
         LOGGER.info("Remapping...");
         FileUtil.ensureDirectoryExist(mappedClasses);
-        CompletableFuture<String> taskCopyThenReturnMain = CompletableFuture.supplyAsync(() -> copyOthers(unmappedClasses, mappedClasses));
+        CompletableFuture<String> taskCopyThenReturnMain = CompletableFuture.supplyAsync(() -> copyOthers(unmappedClasses, mappedClasses, includeOthers));
         SuperClassMapping superClassMapping = new SuperClassMapping();
         listMcClassFiles(unmappedClasses, path -> {
             try(InputStream inputStream = Files.newInputStream(path)) {
@@ -93,36 +96,39 @@ public abstract class AbstractDeobfuscator {
         });
         JarUtil.zipJar(taskCopyThenReturnMain.get(), target, mappedClasses);
     }
-    protected final String copyOthers(Path from, Path to) {
-        try(Stream<Path> paths = Files.list(from).parallel().filter(p -> !(p.toString().endsWith(".class") || p.endsWith("net")));
-            InputStream is = Files.newInputStream(from.resolve("META-INF").resolve("MANIFEST.MF"))) {
-            paths.forEach(childPath -> {
-                if(Files.isDirectory(childPath)) {
-                    if(childPath.endsWith("com")) {
-                        try(Stream<Path> s = Files.walk(childPath, 2).skip(2L); // Skip com/ and com/mojang at least
-                            Stream<Path> s1 = Files.list(childPath).filter(p -> !p.endsWith("mojang"))) {
-                            // Unmapped client only has com.mojang.blaze3d package
-                            // If unmapped jar doesn't have this package, it will be treated as unmapped server
-                            // In unmapped server jar, packages in com.mojang are its libraries, so we directly copy them
-                            if(s.anyMatch(p -> p.endsWith("blaze3d")))
-                                s1.forEach(p -> FileUtil.copyDirectory(p, to.resolve("com")));
-                            else FileUtil.copyDirectory(childPath, to);
-                        } catch (IOException e) {
-                            throw Utils.wrapInRuntime(e);
-                        }
-                    } else if(childPath.endsWith("META-INF")) {
-                        try(Stream<Path> s = Files.list(childPath).filter(p -> !(p.endsWith("MANIFEST.MF") || p.endsWith("MOJANGCS.RSA") ||
-                                p.endsWith("MOJANGCS.SF")))) {
-                            // Due to FileUtil.copy* limitations, we need to be sure that META-INF is exist as directory
-                            Path metaInf = to.resolve("META-INF");
-                            FileUtil.ensureDirectoryExist(metaInf);
-                            s.forEach(p -> FileUtil.copy(p, metaInf));
-                        } catch (IOException e) {
-                            throw Utils.wrapInRuntime(e);
-                        }
-                    } else FileUtil.copyDirectory(childPath, to);
-                } else FileUtil.copyFile(childPath, to);
-            });
+    protected final String copyOthers(Path from, Path to, boolean execute) {
+        try(InputStream is = Files.newInputStream(from.resolve("META-INF").resolve("MANIFEST.MF"))) {
+            if(execute) {
+                try(Stream<Path> paths = Files.list(from).parallel().filter(p -> !(p.toString().endsWith(".class") || p.endsWith("net")))) {
+                    paths.forEach(childPath -> {
+                        if(Files.isDirectory(childPath)) {
+                            if(childPath.endsWith("com")) {
+                                try(Stream<Path> s = Files.walk(childPath, 2).skip(2L); // Skip com/ and com/mojang at least
+                                    Stream<Path> s1 = Files.list(childPath).filter(p -> !p.endsWith("mojang"))) {
+                                    // Unmapped client only has com.mojang.blaze3d package
+                                    // If unmapped jar doesn't have this package, it will be treated as unmapped server
+                                    // In unmapped server jar, packages in com.mojang are its libraries, so we directly copy them
+                                    if(s.anyMatch(p -> p.endsWith("blaze3d")))
+                                        s1.forEach(p -> FileUtil.copyDirectory(p, to.resolve("com")));
+                                    else FileUtil.copyDirectory(childPath, to);
+                                } catch (IOException e) {
+                                    throw Utils.wrapInRuntime(e);
+                                }
+                            } else if(childPath.endsWith("META-INF")) {
+                                try(Stream<Path> s = Files.list(childPath).filter(p -> !(p.endsWith("MANIFEST.MF") ||
+                                        p.endsWith("MOJANGCS.RSA") || p.endsWith("MOJANGCS.SF")))) {
+                                    // Due to FileUtil.copy* limitations, we need to be sure that META-INF is exist as directory
+                                    Path metaInf = to.resolve("META-INF");
+                                    FileUtil.ensureDirectoryExist(metaInf);
+                                    s.forEach(p -> FileUtil.copy(p, metaInf));
+                                } catch (IOException e) {
+                                    throw Utils.wrapInRuntime(e);
+                                }
+                            } else FileUtil.copyDirectory(childPath, to);
+                        } else FileUtil.copyFile(childPath, to);
+                    });
+                }
+            }
 
             Manifest man = new Manifest(is);
             return man.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);

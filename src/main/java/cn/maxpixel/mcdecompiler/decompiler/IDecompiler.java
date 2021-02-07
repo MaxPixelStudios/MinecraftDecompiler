@@ -26,9 +26,9 @@ public interface IDecompiler {
     SourceType getSourceType();
     /**
      * @param source Path for input. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
-     * @param target Path for output. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
+     * @param targetDir Path for output. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      */
-    void decompile(Path source, Path target) throws IOException;
+    void decompile(Path source, Path targetDir) throws IOException;
     default void checkArgs(Path source, Path target) {
         if(!Files.isDirectory(target)) throw new IllegalArgumentException("target must be directory");
         if(getSourceType() == SourceType.FILE && Files.isDirectory(source)) throw new IllegalArgumentException("source must be file");

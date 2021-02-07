@@ -21,12 +21,15 @@ package cn.maxpixel.mcdecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.*;
 import cn.maxpixel.mcdecompiler.deobfuscator.*;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.JarUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -97,66 +100,142 @@ public class Deobfuscator {
         deobfuscator.deobfuscate(input, output);
     }
     public void decompile(Info.DecompilerType decompilerType) {
-        LOGGER.info("Decompiling using \"{}\"", decompilerType);
         try {
             Path mappedClasses = Properties.getTempMappedClassesPath();
-            Path decompileDir = Properties.getOutputDecompiledDirectory(version, type);
+            Path decompileDir = Properties.getOutputDecompiledDirectory(version, type).toAbsolutePath().normalize();
+            Path outputDeobfuscatedJarPath = Properties.getOutputDeobfuscatedJarPath(version, type).toAbsolutePath().normalize();
+            if(Files.notExists(mappedClasses)) {
+                decompile(decompilerType, outputDeobfuscatedJarPath, decompileDir);
+                return;
+            }
             Files.createDirectories(decompileDir);
-            Path decompilerJarPath = Properties.getTempDecompilerPath().toAbsolutePath().normalize();
             IDecompiler decompiler = Decompilers.get(decompilerType);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
-            if(decompiler instanceof IExternalJarDecompiler) ((IExternalJarDecompiler) decompiler).extractDecompilerTo(decompilerJarPath);
+            if(decompiler instanceof IExternalJarDecompiler)
+                ((IExternalJarDecompiler) decompiler).extractDecompilerTo(Properties.getTempDecompilerPath().toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler && version != null)
                 ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
+            LOGGER.info("Decompiling using \"{}\"", decompilerType);
             switch(decompiler.getSourceType()) {
                 case DIRECTORY:
-                    Path decompileClasses = Properties.getTempDecompileClassesPath();
+                    Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
                     FileUtil.copyDirectory(mappedClasses.resolve("net"), decompileClasses);
-                    try(Stream<Path> mjDirs = Files.list(mappedClasses.resolve("com").resolve("mojang")).filter(p -> !(p.endsWith("authlib") ||
-                            p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") || p.endsWith("serialization") ||
-                            p.endsWith("util")))) {
+                    try(Stream<Path> mjDirs = Files.list(mappedClasses.resolve("com").resolve("mojang")).filter(p ->
+                            !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
+                                    p.endsWith("serialization") || p.endsWith("util")))) {
                         Path decompiledMj = decompileClasses.resolve("com").resolve("mojang");
                         mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompiledMj));
                     }
-                    decompiler.decompile(decompileClasses.toAbsolutePath().normalize(), decompileDir.toAbsolutePath().normalize());
+                    decompiler.decompile(decompileClasses, decompileDir);
                     break;
                 case FILE:
-                    decompiler.decompile(Properties.getOutputDeobfuscatedJarPath(version, type).toAbsolutePath().normalize(),
-                            decompileDir.toAbsolutePath().normalize());
+                    decompiler.decompile(outputDeobfuscatedJarPath, decompileDir);
                     break;
             }
         } catch (IOException e) {
             LOGGER.fatal("Error when decompiling", e);
         }
     }
+    public void decompile(Info.DecompilerType decompilerType, Path inputJar, Path outputDir) {
+        try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
+            FileUtil.ensureDirectoryExist(outputDir);
+            IDecompiler decompiler = Decompilers.get(decompilerType);
+            Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
+            FileUtil.ensureDirectoryExist(libDownloadPath);
+            if(decompiler instanceof IExternalJarDecompiler)
+                ((IExternalJarDecompiler) decompiler).extractDecompilerTo(Properties.getTempDecompilerPath().toAbsolutePath().normalize());
+            if(decompiler instanceof ILibRecommendedDecompiler && version != null)
+                ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
+            LOGGER.info("Decompiling using \"{}\"", decompilerType);
+            switch(decompiler.getSourceType()) {
+                case DIRECTORY:
+                    Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
+                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses);
+                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com", "mojang")).filter(p ->
+                            !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
+                                    p.endsWith("serialization") || p.endsWith("util")))) {
+                        Path decompiledMj = decompileClasses.resolve("com").resolve("mojang");
+                        mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompiledMj));
+                    }
+                    decompiler.decompile(decompileClasses, outputDir);
+                    break;
+                case FILE:
+                    decompiler.decompile(inputJar, outputDir);
+                    break;
+            }
+        } catch (IOException e) {
+            LOGGER.fatal("Error when decompiling", e);
+        }
+    }
+
     public void decompileCustomized(String customizedDecompilerName) {
-        LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
         try {
             Path mappedClasses = Properties.getTempMappedClassesPath();
-            Path decompileDir = Properties.getOutputDecompiledDirectory(version, type);
+            Path decompileDir = Properties.getOutputDecompiledDirectory(version, type).toAbsolutePath().normalize();
+            Path outputDeobfuscatedJarPath = Properties.getOutputDeobfuscatedJarPath(version, type).toAbsolutePath().normalize();
+            if(Files.notExists(mappedClasses)) {
+                decompileCustomized(customizedDecompilerName, outputDeobfuscatedJarPath, decompileDir);
+                return;
+            }
             Files.createDirectories(decompileDir);
-            Path decompilerJarPath = Properties.getTempDecompilerPath().toAbsolutePath().normalize();
             ICustomizedDecompiler decompiler = Decompilers.getCustomized(customizedDecompilerName);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
-            if(decompiler instanceof IExternalJarDecompiler) ((IExternalJarDecompiler) decompiler).extractDecompilerTo(decompilerJarPath);
+            if(decompiler instanceof IExternalJarDecompiler)
+                ((IExternalJarDecompiler) decompiler).extractDecompilerTo(Properties.getTempDecompilerPath().toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler && version != null)
                 ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
+            LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
             switch(decompiler.getSourceType()) {
                 case DIRECTORY:
-                    Path decompileClasses = Properties.getTempDecompileClassesPath();
+                    Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
                     FileUtil.copyDirectory(mappedClasses.resolve("net"), decompileClasses);
-                    FileUtil.copyDirectory(mappedClasses.resolve("com").resolve("mojang"), decompileClasses.resolve("com"));
-                    decompiler.decompile(decompileClasses.toAbsolutePath().normalize(), decompileDir.toAbsolutePath().normalize());
+                    try(Stream<Path> mjDirs = Files.list(mappedClasses.resolve("com").resolve("mojang")).filter(p ->
+                            !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
+                                    p.endsWith("serialization") || p.endsWith("util")))) {
+                        Path decompiledMj = decompileClasses.resolve("com").resolve("mojang");
+                        mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompiledMj));
+                    }
+                    decompiler.decompile(decompileClasses, decompileDir);
                     break;
                 case FILE:
-                    decompiler.decompile(Properties.getOutputDeobfuscatedJarPath(version, type).toAbsolutePath().normalize(),
-                            decompileDir.toAbsolutePath().normalize());
+                    decompiler.decompile(outputDeobfuscatedJarPath, decompileDir);
                     break;
             }
         } catch (IOException e) {
             LOGGER.fatal("Error when decompiling using customized decompiler", e);
+        }
+    }
+    public void decompileCustomized(String customizedDecompilerName, Path inputJar, Path outputDir) {
+        try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
+            FileUtil.ensureDirectoryExist(outputDir);
+            ICustomizedDecompiler decompiler = Decompilers.getCustomized(customizedDecompilerName);
+            Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
+            FileUtil.ensureDirectoryExist(libDownloadPath);
+            if(decompiler instanceof IExternalJarDecompiler)
+                ((IExternalJarDecompiler) decompiler).extractDecompilerTo(Properties.getTempDecompilerPath().toAbsolutePath().normalize());
+            if(decompiler instanceof ILibRecommendedDecompiler && version != null)
+                ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
+            LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
+            switch(decompiler.getSourceType()) {
+                case DIRECTORY:
+                    Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
+                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses);
+                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com", "mojang")).filter(p ->
+                            !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
+                                    p.endsWith("serialization") || p.endsWith("util")))) {
+                        Path decompiledMj = decompileClasses.resolve("com").resolve("mojang");
+                        mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompiledMj));
+                    }
+                    decompiler.decompile(decompileClasses, outputDir);
+                    break;
+                case FILE:
+                    decompiler.decompile(inputJar, outputDir);
+                    break;
+            }
+        } catch (IOException e) {
+            LOGGER.fatal("Error when decompiling", e);
         }
     }
 }

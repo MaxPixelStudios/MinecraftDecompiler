@@ -79,10 +79,10 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
         }
     }
     @Override
-    public ProguardDeobfuscator deobfuscate(Path source, Path target) {
+    public ProguardDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers) {
         try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ? Properties.getDownloadedProguardMappingPath(
                 Objects.requireNonNull(version), Objects.requireNonNull(type)).toString() : mappingPath)) {
-            sharedDeobfuscate(source, target, mappingReader);
+            sharedDeobfuscate(source, target, mappingReader, includeOthers);
         } catch (Exception e) {
             LOGGER.catching(e);
         }
