@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
-  ~ Copyright (C) 2019-2020  MaxPixelStudios
+  ~ Copyright (C) 2019-2021  MaxPixelStudios
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -27,13 +27,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <encoding>UTF-8</encoding>
-        <depend.asm.ver>9.0</depend.asm.ver>
+        <depend.asm.ver>9.1</depend.asm.ver>
         <depend.gson.ver>2.8.6</depend.gson.ver>
-        <depend.log4j.ver>2.13.3</depend.log4j.ver>
-        <depend.fastutil.ver>8.4.4</depend.fastutil.ver>
+        <depend.log4j.ver>2.14.0</depend.log4j.ver>
+        <depend.fastutil.ver>8.5.2</depend.fastutil.ver>
         <depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
-        <depend.cfr.ver>0.150</depend.cfr.ver>
-        <depend.fernflower.ver>399</depend.fernflower.ver>
+        <depend.cfr.ver>0.151</depend.cfr.ver>
+        <depend.fernflower.ver>403</depend.fernflower.ver>
         <depend.classloaderutils.ver>1.0.0</depend.classloaderutils.ver>
         <depend.jmh.ver>1.27</depend.jmh.ver>
     </properties>
