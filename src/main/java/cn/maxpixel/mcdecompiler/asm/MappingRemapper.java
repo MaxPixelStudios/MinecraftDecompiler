@@ -23,19 +23,19 @@ import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MappingRemapper extends Remapper {
-    private final Map<String, ClassMapping> mappingByUnm;
-    private final Map<String, ClassMapping> mappingByMap;
+    private final Object2ObjectOpenHashMap<String, ClassMapping> mappingByUnm;
+    private final Object2ObjectOpenHashMap<String, ClassMapping> mappingByMap;
     private final SuperClassMapping superClassMapping;
     private static final Logger LOGGER = LogManager.getLogger("Remapper");
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {
@@ -45,25 +45,25 @@ public class MappingRemapper extends Remapper {
     }
     @Override
     public String map(String internalName) {
-        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(internalName));
+        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName0(internalName));
         if(classMapping != null) return NamingUtil.asNativeName(classMapping.getMappedName());
         else return internalName;
     }
 
-    private Type mapType(final Type type) {
+    private String mapType(final Type type) {
         switch (type.getSort()) {
             case Type.ARRAY:
                 StringBuilder remappedDescriptor = new StringBuilder();
                 for (int i = 0; i < type.getDimensions(); ++i) {
                     remappedDescriptor.append('[');
                 }
-                remappedDescriptor.append(mapType(type.getElementType()).getDescriptor());
-                return Type.getType(remappedDescriptor.toString());
+                remappedDescriptor.append(mapType(type.getElementType()));
+                return remappedDescriptor.toString();
             case Type.OBJECT:
                 ClassMapping cm = mappingByMap.get(type.getClassName());
-                return cm != null ? Type.getObjectType(NamingUtil.asNativeName(cm.getUnmappedName())) : type;
+                return cm != null ? NamingUtil.asDescriptor(cm.getUnmappedName()) : type.getDescriptor();
             default:
-                return type;
+                return type.getDescriptor();
         }
     }
     private String getUnmappedDescByMappedDesc(String originalDescriptor) {
@@ -72,13 +72,13 @@ public class MappingRemapper extends Remapper {
         }
         StringBuilder stringBuilder = new StringBuilder("(");
         for (Type argumentType : Type.getArgumentTypes(originalDescriptor)) {
-            stringBuilder.append(mapType(argumentType).getDescriptor());
+            stringBuilder.append(mapType(argumentType));
         }
         Type returnType = Type.getReturnType(originalDescriptor);
         if (returnType == Type.VOID_TYPE) {
             stringBuilder.append(")V");
         } else {
-            stringBuilder.append(')').append(mapType(returnType).getDescriptor());
+            stringBuilder.append(')').append(mapType(returnType));
         }
         return stringBuilder.toString();
     }

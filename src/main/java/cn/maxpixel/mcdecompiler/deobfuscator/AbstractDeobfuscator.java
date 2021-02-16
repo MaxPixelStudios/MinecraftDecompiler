@@ -39,6 +39,7 @@ import java.io.OutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
@@ -57,15 +58,16 @@ public abstract class AbstractDeobfuscator {
     protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers) throws Exception {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
+        Files.deleteIfExists(target);
         Object2ObjectOpenHashMap<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
         SuperClassMapping superClassMapping = new SuperClassMapping();
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             Stream<Path> classes = Files.walk(fs.getPath("/")).filter(p -> Files.isRegularFile(p) &&
                     mappings.containsKey(NamingUtil.asJavaName(p.toString().substring(1)))).parallel()) {
             classes.forEach(path -> {
-                try(InputStream inputStream = Files.newInputStream(path)) {
-                    ClassReader reader = new ClassReader(inputStream);
-                    reader.accept(superClassMapping, ClassReader.SKIP_DEBUG);
+                try {
+                    new ClassReader(Files.readAllBytes(path)).accept(superClassMapping,
+                            ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
                 } catch(IOException e) {
                     LOGGER.error("Error when creating super class mapping", e);
                 }
@@ -78,17 +80,17 @@ public abstract class AbstractDeobfuscator {
                         String classKeyName = NamingUtil.asJavaName(path.toString().substring(1));
                         if(mappings.containsKey(classKeyName)) {
                             ClassReader reader = new ClassReader(inputStream);
-                            ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-                            reader.accept(new ClassRemapper(writer, mappingRemapper), ClassReader.SKIP_FRAMES);
+                            ClassWriter writer = new ClassWriter(reader, 0);
+                            reader.accept(new ClassRemapper(writer, mappingRemapper), 0);
                             Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
                             FileUtil.ensureDirectoryExist(output.getParent());
-                            Files.write(output, writer.toByteArray());
+                            Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         } else if(includeOthers) {
                             String outputPath = path.toString();
                             if(outputPath.endsWith(".SF") || outputPath.endsWith(".RSA")) return;
                             Path output = targetFs.getPath(outputPath);
                             FileUtil.ensureDirectoryExist(output.getParent());
-                            try(OutputStream os = Files.newOutputStream(output)) {
+                            try(OutputStream os = Files.newOutputStream(output, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                                 if(path.endsWith("META-INF/MANIFEST.MF")) {
                                     Manifest man = new Manifest(inputStream);
                                     man.getEntries().clear();

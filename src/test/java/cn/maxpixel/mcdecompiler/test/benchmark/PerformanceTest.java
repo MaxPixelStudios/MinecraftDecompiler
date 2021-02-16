@@ -18,26 +18,23 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.reader.CsrgMappingReader;
-import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
-import cn.maxpixel.mcdecompiler.reader.SrgMappingReader;
-import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
 @Threads(8)
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
-public class MappingReadSpeedTest {
+public class PerformanceTest {
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
-                .include(".*" + MappingReadSpeedTest.class.getSimpleName() + ".*")
+                .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
                 .shouldDoGC(true)
                 .timeUnit(TimeUnit.MILLISECONDS)
                 .measurementIterations(10)
@@ -47,33 +44,21 @@ public class MappingReadSpeedTest {
     }
 
     @Benchmark
-    public void readSrg(Blackhole bh) {
-        try(SrgMappingReader mappingReader = new SrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.srg"))) {
-            bh.consume(mappingReader.getMappings());
-            bh.consume(mappingReader.getPackages());
-        }
+    public void javaNio(Blackhole bh) throws IOException {
+//        bh.consume(Files.readAllBytes(p));
     }
 
     @Benchmark
-    public void readCsrg(Blackhole bh) {
-        try(CsrgMappingReader mappingReader = new CsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.csrg"))) {
-            bh.consume(mappingReader.getMappings());
-            bh.consume(mappingReader.getPackages());
-        }
-    }
-
-    @Benchmark
-    public void readTsrg(Blackhole bh) {
-        try(TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"))) {
-            bh.consume(mappingReader.getMappings());
-            bh.consume(mappingReader.getPackages());
-        }
-    }
-
-    @Benchmark
-    public void readProguard(Blackhole bh) {
-        try(ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.txt"))) {
-            bh.consume(mappingReader.getMappings());
-        }
+    public void javaBAO(Blackhole bh) throws IOException {
+//        try (InputStream inputStream = Files.newInputStream(p);
+//             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+//            byte[] data = new byte[4096];
+//            int bytesRead;
+//            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
+//                outputStream.write(data, 0, bytesRead);
+//            }
+//            outputStream.flush();
+//            bh.consume(outputStream.toByteArray());
+//        }
     }
 }
