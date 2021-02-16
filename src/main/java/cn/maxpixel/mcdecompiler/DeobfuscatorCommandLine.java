@@ -134,7 +134,7 @@ public class DeobfuscatorCommandLine {
     static {
         System.setProperty("log4j2.skipJansi", "false");
         LOGGER = LogManager.getLogger();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info("Exited. Thanks for using Minecraft Decompiler " +
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info("Done. Thanks for using Minecraft Decompiler " +
                 DeobfuscatorCommandLine.class.getPackage().getImplementationVersion())));
     }
 }

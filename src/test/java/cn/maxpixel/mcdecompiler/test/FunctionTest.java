@@ -36,9 +36,8 @@ import java.util.stream.Stream;
 import static java.nio.file.StandardOpenOption.*;
 
 public class FunctionTest {
-    public static class a {}
+    private static final Logger LOGGER = LogManager.getLogger();
     public void test() throws Throwable {
-        Logger logger = LogManager.getLogger();
     }
     private static final FileSystemProvider JAR_FSP;
     static {

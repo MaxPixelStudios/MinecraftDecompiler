@@ -25,12 +25,12 @@ import cn.maxpixel.mcdecompiler.mapping.srg.SrgMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,7 +55,7 @@ public class SrgMappingReader extends AbstractMappingReader {
     private static class SrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         @Override
-        public List<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<ClassMapping> process(Stream<String> lines) {
             Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             lines.map(String::trim).forEach(s -> {
                 switch(s.substring(0, 3)) {
@@ -78,6 +78,7 @@ public class SrgMappingReader extends AbstractMappingReader {
                         cm = mappings.computeIfAbsent(unmClassName, k -> new ClassMapping(unmClassName, methodMapping.getOwner().getMappedName()));
                         cm.addMethod(methodMapping.setOwner(cm));
                         break;
+                    default: throw new IllegalArgumentException("Is this a SRG mapping file?");
                 }
             });
             return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
@@ -106,7 +107,7 @@ public class SrgMappingReader extends AbstractMappingReader {
                     .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[2])));
         }
         @Override
-        protected List<PackageMapping> getPackages() {
+        public ObjectList<PackageMapping> getPackages() {
             return packages;
         }
         @Override

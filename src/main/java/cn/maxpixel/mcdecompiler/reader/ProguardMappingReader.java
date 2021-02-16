@@ -23,12 +23,12 @@ import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -54,7 +54,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
 
     private static class ProguardMappingProcessor extends AbstractNonPackageMappingProcessor {
         @Override
-        public List<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<ClassMapping> process(Stream<String> lines) {
             ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
             AtomicReference<ClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {

@@ -22,13 +22,14 @@ import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -53,7 +54,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
     private static class TsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         @Override
-        public List<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<ClassMapping> process(Stream<String> lines) {
             ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
             AtomicReference<ClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {
@@ -65,6 +66,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
                     int len = s.split(" ").length;
                     if(len == 3) curr.addMethod(processMethod(s.trim()).setOwner(curr));
                     else if(len == 2) curr.addField(processField(s.trim()).setOwner(curr));
+                    else throw new IllegalArgumentException("Is this a TSRG mapping file?");
                 }
             });
             if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
@@ -73,7 +75,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(strings[0], strings[1]);
+            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
         }
         @Override
         protected DescriptoredBaseMethodMapping processMethod(String line) {
@@ -86,7 +88,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
             return new BaseFieldMapping(strings[0], strings[1]);
         }
         @Override
-        protected List<PackageMapping> getPackages() {
+        public ObjectList<PackageMapping> getPackages() {
             return packages;
         }
         @Override

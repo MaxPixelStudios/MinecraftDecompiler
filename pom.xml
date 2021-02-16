@@ -80,6 +80,12 @@
                         </transformer>
                     </transformers>
                     <outputFile>MinecraftDecompiler.jar</outputFile>
+                    <minimizeJar>true</minimizeJar>
+<!--                    <filters>-->
+<!--                        <filter>-->
+<!--                            <artifact>fastutil</artifact>-->
+<!--                        </filter>-->
+<!--                    </filters>-->
                 </configuration>
                 <executions>
                     <execution>

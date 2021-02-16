@@ -22,14 +22,15 @@ import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,7 +55,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
     private static class CsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         @Override
-        public List<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<ClassMapping> process(Stream<String> lines) {
             Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             lines.map(String::trim).forEach(s -> {
                 String[] sa = s.split(" ");
@@ -76,6 +77,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
                         cm = mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), ClassMapping::new);
                         cm.addMethod(methodMapping.setOwner(cm));
                         break;
+                    default: throw new IllegalArgumentException("Is this a CSRG mapping file?");
                 }
             });
             return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
@@ -83,20 +85,20 @@ public class CsrgMappingReader extends AbstractMappingReader {
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(strings[0], strings[1]);
+            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
         }
         @Override
         protected DescriptoredBaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(strings[0]));
+            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
         }
         @Override
         protected BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(strings[0]));
+            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
         }
         @Override
-        protected List<PackageMapping> getPackages() {
+        public ObjectList<PackageMapping> getPackages() {
             return packages;
         }
         @Override

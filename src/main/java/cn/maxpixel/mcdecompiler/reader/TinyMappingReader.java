@@ -21,10 +21,10 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
-import java.util.List;
 import java.util.stream.Stream;
 
 public class TinyMappingReader extends AbstractMappingReader {
@@ -58,7 +58,7 @@ public class TinyMappingReader extends AbstractMappingReader {
 
     public static class V1TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
         @Override
-        public List<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<ClassMapping> process(Stream<String> lines) {
             return null;
         }
         @Override
@@ -76,7 +76,7 @@ public class TinyMappingReader extends AbstractMappingReader {
     }
     public static class V2TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
         @Override
-        public List<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<ClassMapping> process(Stream<String> lines) {
             return null;
         }
         @Override

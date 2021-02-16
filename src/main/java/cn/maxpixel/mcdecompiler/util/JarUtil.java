@@ -49,6 +49,9 @@ public class JarUtil {
     public static FileSystemProvider getJarFileSystemProvider() {
         return JAR_FSP;
     }
+    public static FileSystem createZipFs(Path zipPath) throws IOException {
+        return JAR_FSP.newFileSystem(zipPath, Object2ObjectMaps.singleton("create", "true"));
+    }
     public static void unzipJar(Path jar, Path dest) {
         LOGGER.info("Unzipping jar file \"{}\" into \"{}\"...", jar, dest);
         FileUtil.requireExist(jar);
@@ -80,7 +83,7 @@ public class JarUtil {
         LOGGER.info("Zipping jar file \"{}\" from \"{}\"", jar, source);
         FileUtil.requireExist(source);
         FileUtil.delete(jar);
-        try(FileSystem jarFs = JAR_FSP.newFileSystem(jar, Object2ObjectMaps.singleton("create", "true"));
+        try(FileSystem jarFs = createZipFs(jar);
             Stream<Path> s = Files.walk(source).skip(1L).parallel()) {
             s.forEach(path -> {
                 try {
@@ -111,43 +114,6 @@ public class JarUtil {
         } catch (IOException e) {
             LOGGER.error("IO error occurred when zipping jar file", e);
         }
-//        try(OutputStream os = Channels.newOutputStream(FileChannel.open(jar, WRITE, CREATE, TRUNCATE_EXISTING));
-//            JarOutputStream outputStream = new JarOutputStream(os, manifest)) {
-//            Files.walkFileTree(source, new FileVisitor<Path>() {
-//                final FileUtil.RelativePathWalkerHelper helper = new FileUtil.RelativePathWalkerHelper();
-//                @Override
-//                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-//                    if(!dir.getFileName().toString().startsWith(source.getFileName().toString())) {
-//                        helper.doPreVisitDir(dir);
-//                        outputStream.putNextEntry(new ZipEntry(helper.getRelativePath() + "/"));
-//                        outputStream.closeEntry();
-//                    }
-//                    return FileVisitResult.CONTINUE;
-//                }
-//                @Override
-//                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-//                    LOGGER.error("Error when zipping file: " + file, exc);
-//                    return FileVisitResult.CONTINUE;
-//                }
-//                @Override
-//                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//                    outputStream.putNextEntry(new ZipEntry(helper.getRelativePath() == null ? file.getFileName().toString() :
-//                            helper.getRelativePath() + "/" + file.getFileName()));
-//                    try(FileChannel channel = FileChannel.open(file, READ)) {
-//                        channel.transferTo(0, Long.MAX_VALUE, Channels.newChannel(outputStream));
-//                    }
-//                    outputStream.closeEntry();
-//                    return FileVisitResult.CONTINUE;
-//                }
-//                @Override
-//                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-//                    helper.doPostVisitDir(dir);
-//                    return FileVisitResult.CONTINUE;
-//                }
-//            });
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
     static {
         FileSystemProvider provider = null;

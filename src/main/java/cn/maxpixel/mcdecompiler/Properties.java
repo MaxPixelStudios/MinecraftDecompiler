@@ -70,12 +70,6 @@ public class Properties {
     }
 
     // Methods have to do with Key.TEMP_DIR
-    public static Path getTempUnmappedClassesPath() {
-        return get(Key.TEMP_DIR).resolve("unmappedClasses");
-    }
-    public static Path getTempMappedClassesPath() {
-        return get(Key.TEMP_DIR).resolve("mappedClasses");
-    }
     public static Path getTempDecompileClassesPath() {
         return get(Key.TEMP_DIR).resolve("decompileClasses");
     }

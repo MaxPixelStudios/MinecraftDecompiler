@@ -24,12 +24,12 @@ import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -71,11 +71,11 @@ public abstract class AbstractMappingReader implements AutoCloseable {
     public final List<PackageMapping> getPackages() {
         return packages;
     }
-    public final Map<String, ClassMapping> getMappingsByUnmappedNameMap() {
+    public final Object2ObjectOpenHashMap<String, ClassMapping> getMappingsByUnmappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
-    public final Map<String, ClassMapping> getMappingsByMappedNameMap() {
+    public final Object2ObjectOpenHashMap<String, ClassMapping> getMappingsByMappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
@@ -90,11 +90,11 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         }
     }
     protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
-        protected abstract List<PackageMapping> getPackages();
+        public abstract ObjectList<PackageMapping> getPackages();
         protected abstract PackageMapping processPackage(String line);
     }
     protected abstract static class AbstractNonPackageMappingProcessor {
-        public abstract List<ClassMapping> process(Stream<String> lines);
+        public abstract ObjectList<ClassMapping> process(Stream<String> lines);
         protected abstract ClassMapping processClass(String line);
         protected abstract BaseMethodMapping processMethod(String line);
         protected abstract BaseFieldMapping processField(String line);
