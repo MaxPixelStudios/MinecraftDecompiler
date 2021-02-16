@@ -81,11 +81,22 @@
                     </transformers>
                     <outputFile>MinecraftDecompiler.jar</outputFile>
                     <minimizeJar>true</minimizeJar>
-<!--                    <filters>-->
-<!--                        <filter>-->
-<!--                            <artifact>fastutil</artifact>-->
-<!--                        </filter>-->
-<!--                    </filters>-->
+                    <filters>
+                        <filter>
+                            <artifact>it.unimi.dsi:fastutil</artifact>
+                            <excludes>
+                                <exclude>it/unimi/dsi/fastutil/booleans/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/chars/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/bytes/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/doubles/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/floats/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/ints/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/io/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/longs/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/shorts/**</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>
