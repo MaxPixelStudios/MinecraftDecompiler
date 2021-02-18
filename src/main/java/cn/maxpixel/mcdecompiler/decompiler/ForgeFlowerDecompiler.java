@@ -37,13 +37,13 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
     @Override
     public void extractDecompilerTo(Path decompilerJarPath) throws IOException {
         if(Files.notExists(decompilerJarPath))
-            Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("forgeflower-1.5.478.18.jar")), decompilerJarPath);
+            Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("forgeflower-1.5.478.19.jar")), decompilerJarPath);
         this.decompilerJarPath = decompilerJarPath;
     }
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
-        ObjectArrayList<String> args = new ObjectArrayList<>(new String[] {"java", "-jar", decompilerJarPath.toString(), "-dgs=1", "-asc=1", "-rsy=1", "-iec=1", "-jvn=1", "-inn=0", "-log=INFO"});
+        ObjectArrayList<String> args = new ObjectArrayList<>(new String[] {"java", "-jar", decompilerJarPath.toString(), "-rsy=1", "-dgs=1", "-asc=1", "-bsm=1", "-iec=1", "-jvn=1", "-log=TRACE"});
         List<String> libs = listLibs();
         for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
         args.add(source.toString());

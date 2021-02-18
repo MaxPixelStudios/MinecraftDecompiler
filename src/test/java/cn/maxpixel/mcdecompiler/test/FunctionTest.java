@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
+import cn.maxpixel.mcdecompiler.util.JarUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +29,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -39,19 +38,8 @@ public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
     public void test() throws Throwable {
     }
-    private static final FileSystemProvider JAR_FSP;
-    static {
-        FileSystemProvider provider = null;
-        for (FileSystemProvider p: FileSystemProvider.installedProviders()) {
-            if(p.getScheme().equalsIgnoreCase("jar")) {
-                provider = p;
-            }
-        }
-        if(provider == null) throw new IllegalStateException("jar/zip file system provider does not exist");
-        JAR_FSP = provider;
-    }
     public static void zipFsUnzip(Path jar, Path dest) {
-        try(FileSystem jarFs = JAR_FSP.newFileSystem(jar, Object2ObjectMaps.emptyMap());
+        try(FileSystem jarFs = JarUtil.createZipFs(jar);
             Stream<Path> s = Files.walk(jarFs.getPath("/")).parallel()) {
             Path jarRoot = jarFs.getPath("/");
             s.forEach(path -> {
@@ -62,7 +50,7 @@ public class FunctionTest {
                     if(Files.isDirectory(path)) Files.createDirectories(p);
                     else {
                         Files.createDirectories(p.getParent());
-                        try(ReadableByteChannel from = JAR_FSP.newByteChannel(path, Collections.singleton(READ));
+                        try(ReadableByteChannel from = JarUtil.getJarFileSystemProvider().newByteChannel(path, Collections.singleton(READ));
                             FileChannel to = FileChannel.open(p, WRITE, CREATE, TRUNCATE_EXISTING)) {
                             to.transferFrom(from, 0, Long.MAX_VALUE);
                         }

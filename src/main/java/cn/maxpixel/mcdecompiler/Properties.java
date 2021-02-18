@@ -46,6 +46,7 @@ public class Properties {
         public static final Key<Path> DOWNLOAD_DIR = new Key<>("downloadDir");
         public static final Key<Path> INPUT_JAR = new Key<>("inputJar");
         public static final Key<String> MAPPING_PATH = new Key<>("mappingPath");
+        public static final Key<Boolean> REGEN_VAR_NAME = new Key<>("regenerateVariableNames");
 
         public static final Key<Path> OUTPUT_DIR = new Key<>("outputDir");
         public static final Key<String> OUTPUT_DEOBFUSCATED_NAME = new Key<>("outputDeobfuscatedName");
@@ -64,6 +65,7 @@ public class Properties {
         // Default values
         put(Key.TEMP_DIR, Paths.get("temp"));
         put(Key.DOWNLOAD_DIR, Paths.get("downloads"));
+        put(Key.REGEN_VAR_NAME, false);
         put(Key.OUTPUT_DIR, Paths.get("output"));
         put(Key.OUTPUT_DEOBFUSCATED_NAME, "deobfuscated");
         put(Key.OUTPUT_DECOMPILED_NAME, "decompiled");

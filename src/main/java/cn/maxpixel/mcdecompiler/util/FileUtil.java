@@ -44,34 +44,13 @@ public class FileUtil {
             try {
                 Files.copy(source, target, copyOptions);
             } catch(FileAlreadyExistsException ignored) {}
-            Files.walkFileTree(source, new FileVisitor<Path>() {
-                private final RelativePathWalkerHelper helper = new RelativePathWalkerHelper();
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    helper.doPreVisitDir(dir);
-                    try {
-                        Files.copy(dir, target.resolve(helper.getRelativePath()), copyOptions);
-                    } catch(FileAlreadyExistsException ignored) {}
-                    return FileVisitResult.CONTINUE;
-                }
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    LOGGER.error("Error when coping file \"{}\"", file, exc);
-                    return FileVisitResult.CONTINUE;
-                }
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    try {
-                        Files.copy(file, helper.getRelativePath() == null ?
-                                target.resolve(file.getFileName()) :
-                                target.resolve(helper.getRelativePath()).resolve(file.getFileName()), copyOptions);
-                    } catch(FileAlreadyExistsException ignored) {}
-                    return FileVisitResult.CONTINUE;
-                }
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                    helper.doPostVisitDir(dir);
-                    return FileVisitResult.CONTINUE;
+            Files.walk(source).skip(1L).parallel().filter(Files::isRegularFile).forEach(path -> {
+                try {
+                    Path p = target.resolve(path.toString().substring(1));
+                    FileUtil.ensureDirectoryExist(p.getParent());
+                    Files.copy(path, p, copyOptions);
+                } catch(FileAlreadyExistsException ignored) {} catch (IOException e) {
+                    LOGGER.error("Error when coping file \"{}\"", path, e);
                 }
             });
         } catch (IOException e) {
@@ -163,22 +142,6 @@ public class FileUtil {
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
             }
-        }
-    }
-    public static class RelativePathWalkerHelper {
-        private String relativePath = null;
-        public String getRelativePath() {
-            return relativePath;
-        }
-        public void doPreVisitDir(Path dir) {
-            if(relativePath == null) relativePath = dir.getFileName().toString();
-            else relativePath += "/" + dir.getFileName();
-        }
-        public void doPostVisitDir(Path dir) {
-            if(relativePath == null) return;
-            int index = relativePath.lastIndexOf('/');
-            if(index == -1) relativePath = null;
-            else relativePath = relativePath.substring(0, index);
         }
     }
 }

@@ -28,16 +28,16 @@ import java.io.*;
 import java.util.stream.Stream;
 
 public class TinyMappingReader extends AbstractMappingReader {
-    protected TinyMappingReader(BufferedReader reader) {
+    public TinyMappingReader(BufferedReader reader) {
         super(reader);
     }
-    protected TinyMappingReader(Reader rd) {
+    public TinyMappingReader(Reader rd) {
         super(rd);
     }
-    protected TinyMappingReader(InputStream is) {
+    public TinyMappingReader(InputStream is) {
         super(is);
     }
-    protected TinyMappingReader(String path) throws FileNotFoundException, NullPointerException {
+    public TinyMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
     private static final V1TinyMappingProcessor V1_PROCESSOR = new V1TinyMappingProcessor();

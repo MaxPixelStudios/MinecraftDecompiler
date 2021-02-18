@@ -43,6 +43,16 @@ public class Deobfuscator {
     private final AbstractDeobfuscator deobfuscator;
     private String version;
     private Info.SideType type;
+    {
+        Path tempPath = Properties.get(Properties.Key.TEMP_DIR);
+        FileUtil.deleteDirectory(tempPath);
+        try {
+            Files.createDirectories(tempPath);
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(e);
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteDirectory(tempPath)));
+    }
     public Deobfuscator(String version, Info.SideType type) {
         this.version = Objects.requireNonNull(version, "version cannot be null!");
         this.type = Objects.requireNonNull(type, "type cannot be null!");
@@ -62,6 +72,8 @@ public class Deobfuscator {
             case TSRG:
                 this.deobfuscator = new TsrgDeobfuscator(mappingPath);
                 break;
+            case TINY:
+                this.deobfuscator = new TinyDeobfuscator(mappingPath);
             default:
                 throw new IllegalArgumentException("This type of mapping is currently unsupported");
         }
@@ -75,6 +87,7 @@ public class Deobfuscator {
             String s = list.get(1);
             if(s.startsWith("    ")) return Info.MappingType.PROGUARD;
             else if(s.startsWith("\t")) return Info.MappingType.TSRG;
+            else if(s.startsWith("tiny\t2\t0") || s.startsWith("v1")) return Info.MappingType.TINY;
             s = list.get(0);
             if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return Info.MappingType.SRG;
             else return Info.MappingType.CSRG;
@@ -93,10 +106,6 @@ public class Deobfuscator {
         }
     }
     public void deobfuscate(Path input, Path output) {
-        Path tempPath = Properties.get(Properties.Key.TEMP_DIR);
-        FileUtil.deleteDirectory(tempPath);
-        FileUtil.ensureDirectoryExist(tempPath);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteDirectory(tempPath)));
         deobfuscator.deobfuscate(input, output);
     }
     public void decompile(Info.DecompilerType decompilerType) {
@@ -108,7 +117,8 @@ public class Deobfuscator {
     }
     public void decompile(Info.DecompilerType decompilerType, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
-            FileUtil.ensureDirectoryExist(outputDir);
+            FileUtil.deleteDirectory(outputDir);
+            Files.createDirectories(outputDir);
             IDecompiler decompiler = Decompilers.get(decompilerType);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
@@ -120,12 +130,11 @@ public class Deobfuscator {
             switch(decompiler.getSourceType()) {
                 case DIRECTORY:
                     Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
-                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses);
-                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com", "mojang")).filter(p ->
+                    FileUtil.copyDirectory(jarFs.getPath("/net"), decompileClasses);
+                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
                             !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
                                     p.endsWith("serialization") || p.endsWith("util")))) {
-                        Path decompiledMj = decompileClasses.resolve("com").resolve("mojang");
-                        mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompiledMj));
+                        mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompileClasses));
                     }
                     decompiler.decompile(decompileClasses, outputDir);
                     break;
@@ -147,7 +156,8 @@ public class Deobfuscator {
     }
     public void decompileCustomized(String customizedDecompilerName, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
-            FileUtil.ensureDirectoryExist(outputDir);
+            FileUtil.deleteDirectory(outputDir);
+            Files.createDirectories(outputDir);
             ICustomizedDecompiler decompiler = Decompilers.getCustomized(customizedDecompilerName);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
@@ -159,8 +169,8 @@ public class Deobfuscator {
             switch(decompiler.getSourceType()) {
                 case DIRECTORY:
                     Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
-                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses);
-                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com", "mojang")).filter(p ->
+                    FileUtil.copyDirectory(jarFs.getPath("/net"), decompileClasses);
+                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
                             !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
                                     p.endsWith("serialization") || p.endsWith("util")))) {
                         Path decompiledMj = decompileClasses.resolve("com").resolve("mojang");

@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
+import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.asm.JADNameGenerator;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
@@ -73,6 +75,7 @@ public abstract class AbstractDeobfuscator {
                 }
             });
             MappingRemapper mappingRemapper = new MappingRemapper(mappingReader, superClassMapping);
+            boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
             try(FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
                 Stream<Path> paths = Files.walk(fs.getPath("/")).skip(1L).filter(Files::isRegularFile).parallel()) {
                 paths.forEach(path -> {
@@ -81,7 +84,7 @@ public abstract class AbstractDeobfuscator {
                         if(mappings.containsKey(classKeyName)) {
                             ClassReader reader = new ClassReader(inputStream);
                             ClassWriter writer = new ClassWriter(reader, 0);
-                            reader.accept(new ClassRemapper(writer, mappingRemapper), 0);
+                            reader.accept(new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper), 0);
                             Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
                             FileUtil.ensureDirectoryExist(output.getParent());
                             Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);

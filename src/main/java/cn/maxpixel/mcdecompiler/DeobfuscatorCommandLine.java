@@ -48,6 +48,8 @@ public class DeobfuscatorCommandLine {
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(asList("v", "ver", "version"),
                 "Version to deobfuscate/decompile. Only works on Proguard mappings. With this option, you must specify --side option " +
                 "and mustn't specify --input or --mappingPath option.").withRequiredArg();
+        OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("regenVarName", "rvn", "jvn"), "Regenerate all local variable " +
+                "names using JAD style");
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(asList("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". Only works on Proguard mappings. With this option, you must specify --version " +
                 "option and mustn't specify --input or --mappingPath option.").requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
@@ -108,6 +110,7 @@ public class DeobfuscatorCommandLine {
         if(options.has(customDecompilerJarsO))
             options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(ClassLoaderUtils::appendToClassPath,
                                                             LambdaUtil::rethrowAsRuntime));
+        if(options.has(regenVarNameO)) Properties.put(Properties.Key.REGEN_VAR_NAME, true);
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.put(Properties.Key.TEMP_DIR, p));
         if(!(options.has(versionO) || options.has(sideTypeO))) {
