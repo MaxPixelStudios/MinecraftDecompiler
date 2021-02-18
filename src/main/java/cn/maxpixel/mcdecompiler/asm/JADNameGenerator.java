@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
+import cn.maxpixel.mcdecompiler.util.IntLocal;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -25,10 +26,10 @@ import org.objectweb.asm.*;
 
 import java.util.Collections;
 import java.util.Locale;
+import java.util.UUID;
 
 public class JADNameGenerator extends ClassVisitor {
     private static final Object2ObjectOpenHashMap<String, Holder> PREDEF = new Object2ObjectOpenHashMap<>();
-    private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
     static {
         PREDEF.put("int",     new Holder(0, true,  "i", "j", "k", "l"));
         PREDEF.put("byte",    new Holder(0, false, "b"       ));
@@ -48,18 +49,14 @@ public class JADNameGenerator extends ClassVisitor {
         PREDEF.put("Enum",    new Holder(0, true,  "oenum"   ));
         PREDEF.put("Void",    new Holder(0, true,  "ovoid"   ));
     }
-    {
-        vars.defaultReturnValue(0);
-    }
     public JADNameGenerator(ClassVisitor classVisitor) {
         super(Opcodes.ASM9, classVisitor);
     }
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-            {
-                vars.clear();
-            }
+            private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
+            private final Object2ObjectOpenHashMap<Holder, UUID> uuids = new Object2ObjectOpenHashMap<>();
             private String getVarName(Type type) {
                 boolean isArray = false;
                 if(type.getSort() == Type.ARRAY) {
@@ -77,15 +74,17 @@ public class JADNameGenerator extends ClassVisitor {
                         vars.put(varBaseName, count + 1);
                         return varBaseName + (count == 0 && holder.skip_zero ? "" : count);
                     } else {
+                        UUID identifier = uuids.computeIfAbsent(holder, h -> h.tempId.requestNew());
                         for(;;) {
                             for(int i = 0; i < holder.names.size(); ++i) {
                                 varBaseName = holder.names.get(i);
                                 if(!vars.containsKey(varBaseName)) {
-                                    vars.put(varBaseName, holder.id);
-                                    return varBaseName + (holder.id == 0 && holder.skip_zero ? "" : holder.id);
+                                    int j = holder.tempId.get(identifier);
+                                    vars.put(varBaseName, j);
+                                    return varBaseName + (j == 0 && holder.skip_zero ? "" : j);
                                 }
                             }
-                            holder.id++;
+                            holder.tempId.increment(identifier);
                             for(int i = 0; i < holder.names.size(); ++i) vars.removeInt(holder.names.get(i));
                         }
                     }
@@ -101,15 +100,21 @@ public class JADNameGenerator extends ClassVisitor {
                     super.visitLocalVariable(name, descriptor, signature, start, end, index);
                 else super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
             }
+            @Override
+            public void visitEnd() {
+                uuids.forEach((holder, uuid) -> holder.tempId.delete(uuid));
+            }
         };
     }
     private static class Holder {
-        public int id;
+        public final int id;
+        public final IntLocal tempId;
         public final boolean skip_zero;
         public final ObjectArrayList<String> names = new ObjectArrayList<>();
 
         public Holder(int t1, boolean skip_zero, String... names) {
             this.id = t1;
+            this.tempId = new IntLocal(this.id);
             this.skip_zero = skip_zero;
             Collections.addAll(this.names, names);
         }
