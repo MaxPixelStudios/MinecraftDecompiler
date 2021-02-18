@@ -48,7 +48,7 @@ public class DeobfuscatorCommandLine {
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(asList("v", "ver", "version"),
                 "Version to deobfuscate/decompile. Only works on Proguard mappings. With this option, you must specify --side option " +
                 "and mustn't specify --input or --mappingPath option.").withRequiredArg();
-        OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("regenVarName", "rvn", "jvn"), "Regenerate all local variable " +
+        OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "jvn", "regenVarName"), "Regenerate all local variable " +
                 "names using JAD style");
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(asList("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". Only works on Proguard mappings. With this option, you must specify --version " +
@@ -68,7 +68,7 @@ public class DeobfuscatorCommandLine {
         ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(asList("d", "decompile"), "Decompile the " +
                 "deobfuscated jar. Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Do NOT pass " +
                 "any arg to this option when \"customDecompilerName\" option is specified.").withOptionalArg().ofType(Info.DecompilerType.class)
-                .defaultsTo(Info.DecompilerType.FERNFLOWER);
+                .defaultsTo(Info.DecompilerType.FORGEFLOWER);
         ArgumentAcceptingOptionSpec<URL> customDecompilerJarsO = parser.accepts("customDecompilerJars", "Jars that " +
                 "contain implementations of ICustomizedDecompiler that can be loaded by SPI. Without this option, you need to add them to classpath.")
                 .withRequiredArg().withValuesSeparatedBy(';').withValuesConvertedBy(new ValueConverter<URL>() {
@@ -132,12 +132,11 @@ public class DeobfuscatorCommandLine {
             if(options.has(customDecompilerO)) deobfuscator.decompileCustomized(options.valueOf(customDecompilerO));
             else deobfuscator.decompile(options.valueOf(decompileO));
         }
+        LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
     }
 
     static {
         System.setProperty("log4j2.skipJansi", "false");
         LOGGER = LogManager.getLogger();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> LOGGER.info("Done. Thanks for using Minecraft Decompiler " +
-                DeobfuscatorCommandLine.class.getPackage().getImplementationVersion())));
     }
 }
