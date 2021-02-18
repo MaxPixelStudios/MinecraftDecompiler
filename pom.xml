@@ -90,11 +90,22 @@
                                 <exclude>it/unimi/dsi/fastutil/bytes/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/doubles/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/floats/**</exclude>
-                                <exclude>it/unimi/dsi/fastutil/ints/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/io/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/longs/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/shorts/**</exclude>
                             </excludes>
+                        </filter>
+                        <filter>
+                            <artifact>org.apache.logging.log4j:log4j-core</artifact>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                        </filter>
+                        <filter>
+                            <artifact>org.apache.logging.log4j:log4j-api</artifact>
+                            <includes>
+                                <include>**</include>
+                            </includes>
                         </filter>
                     </filters>
                 </configuration>

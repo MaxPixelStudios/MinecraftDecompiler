@@ -54,57 +54,63 @@ public class JADNameGenerator extends ClassVisitor {
     }
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-            private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
-            private final Object2ObjectOpenHashMap<Holder, UUID> uuids = new Object2ObjectOpenHashMap<>();
-            private String getVarName(Type type) {
-                boolean isArray = false;
-                if(type.getSort() == Type.ARRAY) {
-                    type = type.getElementType();
-                    isArray = true;
-                }
-                String varBaseName = type.getClassName();
-                if(type.getSort() == Type.OBJECT) varBaseName = varBaseName.substring(varBaseName.lastIndexOf('.') + 1);
-                Holder holder = isArray ? null : PREDEF.get(varBaseName.equals("long") ? "int" : varBaseName);
-                varBaseName = (isArray ? "a" : "") + varBaseName.replace('$','_').toLowerCase(Locale.ENGLISH);
-                if(holder != null) {
-                    if(holder.names.size() == 1) {
-                        varBaseName = holder.names.get(0);
-                        int count = vars.getOrDefault(varBaseName, holder.id);
-                        vars.put(varBaseName, count + 1);
-                        return varBaseName + (count == 0 && holder.skip_zero ? "" : count);
-                    } else {
-                        UUID identifier = uuids.computeIfAbsent(holder, h -> h.tempId.requestNew());
-                        for(;;) {
-                            for(int i = 0; i < holder.names.size(); ++i) {
-                                varBaseName = holder.names.get(i);
-                                if(!vars.containsKey(varBaseName)) {
-                                    int j = holder.tempId.get(identifier);
-                                    vars.put(varBaseName, j);
-                                    return varBaseName + (j == 0 && holder.skip_zero ? "" : j);
-                                }
-                            }
-                            holder.tempId.increment(identifier);
-                            for(int i = 0; i < holder.names.size(); ++i) vars.removeInt(holder.names.get(i));
-                        }
-                    }
-                } else {
-                    int count = vars.getInt(varBaseName);
+        return new LVTRenamer(access, super.visitMethod(access, name, descriptor, signature, exceptions));
+    }
+    public static class LVTRenamer extends MethodVisitor {
+        private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
+        private final Object2ObjectOpenHashMap<Holder, UUID> uuids = new Object2ObjectOpenHashMap<>();
+        private final int access;
+        public LVTRenamer(int access, MethodVisitor methodVisitor) {
+            super(Opcodes.ASM9, methodVisitor);
+            this.access = access;
+        }
+        private String getVarName(Type type) {
+            boolean isArray = false;
+            if(type.getSort() == Type.ARRAY) {
+                type = type.getElementType();
+                isArray = true;
+            }
+            String varBaseName = type.getClassName();
+            if(type.getSort() == Type.OBJECT) varBaseName = varBaseName.substring(varBaseName.lastIndexOf('.') + 1);
+            Holder holder = isArray ? null : PREDEF.get(varBaseName.equals("long") ? "int" : varBaseName);
+            varBaseName = (isArray ? "a" : "") + varBaseName.replace('$','_').toLowerCase(Locale.ENGLISH);
+            if(holder != null) {
+                if(holder.names.size() == 1) {
+                    varBaseName = holder.names.get(0);
+                    int count = vars.getOrDefault(varBaseName, holder.id);
                     vars.put(varBaseName, count + 1);
-                    return varBaseName + (count > 0 ? count : "");
+                    return varBaseName + (count == 0 && holder.skip_zero ? "" : count);
+                } else {
+                    UUID identifier = uuids.computeIfAbsent(holder, h -> h.tempId.requestNew());
+                    for(;;) {
+                        for(int i = 0; i < holder.names.size(); ++i) {
+                            varBaseName = holder.names.get(i);
+                            if(!vars.containsKey(varBaseName)) {
+                                int j = holder.tempId.get(identifier);
+                                vars.put(varBaseName, j);
+                                return varBaseName + (j == 0 && holder.skip_zero ? "" : j);
+                            }
+                        }
+                        holder.tempId.increment(identifier);
+                        for(int i = 0; i < holder.names.size(); ++i) vars.removeInt(holder.names.get(i));
+                    }
                 }
+            } else {
+                int count = vars.getInt(varBaseName);
+                vars.put(varBaseName, count + 1);
+                return varBaseName + (count > 0 ? count : "");
             }
-            @Override
-            public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                if(name.equals("this") && index == 0 && (access & Opcodes.ACC_STATIC) == 0)
-                    super.visitLocalVariable(name, descriptor, signature, start, end, index);
-                else super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
-            }
-            @Override
-            public void visitEnd() {
-                uuids.forEach((holder, uuid) -> holder.tempId.delete(uuid));
-            }
-        };
+        }
+        @Override
+        public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+            if(name.equals("this") && index == 0 && (access & Opcodes.ACC_STATIC) == 0)
+                super.visitLocalVariable(name, descriptor, signature, start, end, index);
+            else super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
+        }
+        @Override
+        public void visitEnd() {
+            uuids.forEach((holder, uuid) -> holder.tempId.delete(uuid));
+        }
     }
     private static class Holder {
         public final int id;
