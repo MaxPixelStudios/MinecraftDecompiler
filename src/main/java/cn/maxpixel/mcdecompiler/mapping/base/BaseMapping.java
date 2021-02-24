@@ -43,7 +43,7 @@ public abstract class BaseMapping {
         this.mappedName = mappedName;
     }
 }
-class BaseFieldMethodShared extends BaseMapping implements Owner<BaseFieldMethodShared> {
+class BaseFieldMethodShared extends BaseMapping implements Owner<BaseFieldMethodShared, ClassMapping> {
     private ClassMapping owner;
     protected BaseFieldMethodShared(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);

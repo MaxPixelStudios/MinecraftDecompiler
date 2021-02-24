@@ -18,9 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.components;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-
-public interface Owner<THIS, T extends ClassMapping> {
-    T getOwner();
-    THIS setOwner(T owner);
+public interface Namespaced {
+    String getName(String namespace);
+    void setName(cn.maxpixel.mcdecompiler.mapping.tiny.Namespaced name);
 }

@@ -29,18 +29,19 @@ import java.util.List;
 import java.util.Map;
 
 public class ClassMapping extends BaseMapping {
-    private final List<BaseMethodMapping> methods;
-    private final Map<String, BaseFieldMapping> fields;
-    {
+    private final ObjectArrayList<BaseMethodMapping> methods;
+    private final Object2ObjectOpenHashMap<String, BaseFieldMapping> fields;
+    ClassMapping() {
+        this.methods = null;
+        this.fields = null;
+    }
+    public ClassMapping(String unmappedName, String mappedName) {
+        super(unmappedName, mappedName);
         this.methods = new ObjectArrayList<>();
         this.fields = new Object2ObjectOpenHashMap<>();
     }
-    public ClassMapping() {}
-    public ClassMapping(String unmappedName, String mappedName) {
-        super(unmappedName, mappedName);
-    }
     public ClassMapping(String targetName) { // CSRG
-        super(targetName, targetName);
+        this(targetName, targetName);
     }
 
     public ClassMapping addField(BaseFieldMapping... fields) {
@@ -61,13 +62,13 @@ public class ClassMapping extends BaseMapping {
         this.methods.add(method);
         return this;
     }
-    public List<BaseMethodMapping> getMethods() {
+    public List<? extends BaseMethodMapping> getMethods() {
         return methods;
     }
-    public List<BaseFieldMapping> getFields() {
+    public List<? extends BaseFieldMapping> getFields() {
         return new ObjectArrayList<>(fields.values());
     }
-    public Map<String, BaseFieldMapping> getFieldMap() {
+    public Map<String, ? extends BaseFieldMapping> getFieldMap() {
         return fields;
     }
     public BaseFieldMapping getField(String unmappedName) {

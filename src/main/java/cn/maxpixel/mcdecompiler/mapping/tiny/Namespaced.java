@@ -16,11 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.components;
+package cn.maxpixel.mcdecompiler.mapping.tiny;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+public class Namespaced {
+    public static final String OFFICIAL = "official";
+    public static final String INTERMEDIARY = "intermediary";
+    public static final String YARN = "named";
+    private final String namespace;
+    private final String name;
 
-public interface Owner<THIS, T extends ClassMapping> {
-    T getOwner();
-    THIS setOwner(T owner);
+    public Namespaced(String namespace, String name) {
+        this.namespace = namespace;
+        this.name = name;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

@@ -56,6 +56,7 @@ public class SrgMappingReader extends AbstractMappingReader {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         @Override
         public ObjectList<ClassMapping> process(Stream<String> lines) {
+            packages.clear();
             Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             lines.map(String::trim).forEach(s -> {
                 switch(s.substring(0, 3)) {

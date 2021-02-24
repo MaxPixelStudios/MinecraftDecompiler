@@ -55,6 +55,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         @Override
         public ObjectList<ClassMapping> process(Stream<String> lines) {
+            packages.clear();
             ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
             AtomicReference<ClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {
