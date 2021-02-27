@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TinyMappingReader extends AbstractMappingReader {
+    public int version;
     public TinyMappingReader(BufferedReader reader) {
         super(reader);
     }
@@ -56,8 +57,13 @@ public class TinyMappingReader extends AbstractMappingReader {
             reader.mark(50);
             String s = reader.readLine();
             reader.reset();
-            if(s.startsWith("tiny\t2\t0\t")) return V2_PROCESSOR;
-            else if(s.startsWith("v1\t")) return V1_PROCESSOR;
+            if(s.startsWith("tiny\t2\t0\t")) {
+                version = 2;
+                return V2_PROCESSOR;
+            } else if(s.startsWith("v1\t")) {
+                version = 1;
+                return V1_PROCESSOR;
+            }
         } catch(IOException e) {
             LogManager.getLogger().catching(e);
         }

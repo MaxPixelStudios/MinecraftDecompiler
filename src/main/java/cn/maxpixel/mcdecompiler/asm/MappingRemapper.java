@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
@@ -32,6 +33,8 @@ import org.objectweb.asm.commons.Remapper;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class MappingRemapper extends Remapper {
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappingByUnm;
@@ -41,6 +44,13 @@ public class MappingRemapper extends Remapper {
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {
         this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
         this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
+        this.superClassMapping = superClassMapping;
+    }
+    public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping, String fromNamespace, String toNamespace) {
+        this.mappingByUnm = ((List<TinyClassMapping>) mappingReader.getMappings()).stream()
+                .collect(Collectors.toMap(cm -> cm.getName(fromNamespace), Function.identity(), (cm1, cm2) -> {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
+        this.mappingByMap = ((List<TinyClassMapping>) mappingReader.getMappings()).stream()
+                .collect(Collectors.toMap(cm -> cm.getName(toNamespace), Function.identity(), (cm1, cm2) -> {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
         this.superClassMapping = superClassMapping;
     }
     @Override
