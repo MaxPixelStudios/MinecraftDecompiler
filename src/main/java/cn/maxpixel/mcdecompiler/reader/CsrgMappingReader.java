@@ -92,17 +92,17 @@ public class CsrgMappingReader extends AbstractMappingReader {
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
+            return new ClassMapping(NamingUtil.asJavaName0(strings[0]), NamingUtil.asJavaName0(strings[1]));
         }
         @Override
         protected DescriptoredBaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
+            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName0(strings[0])));
         }
         @Override
         protected BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
+            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName0(strings[0])));
         }
         @Override
         public ObjectList<PackageMapping> getPackages() {

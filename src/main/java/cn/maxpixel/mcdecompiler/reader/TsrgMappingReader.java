@@ -76,7 +76,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
+            return new ClassMapping(NamingUtil.asJavaName0(strings[0]), NamingUtil.asJavaName0(strings[1]));
         }
         @Override
         protected DescriptoredBaseMethodMapping processMethod(String line) {

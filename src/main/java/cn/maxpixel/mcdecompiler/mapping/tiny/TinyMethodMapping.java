@@ -21,9 +21,11 @@ package cn.maxpixel.mcdecompiler.mapping.tiny;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements cn.maxpixel.mcdecompiler.mapping.components.Namespaced {
+    private final Int2ObjectOpenHashMap<String> lvt = new Int2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
     public TinyMethodMapping(String unmappedDescriptor, Namespaced... names) {
         for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
@@ -56,7 +58,8 @@ public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements 
 
     @Override
     public String getUnmappedName() {
-        return getName(Namespaced.OFFICIAL);
+        String s = getName(Namespaced.OFFICIAL);
+        return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
     @Override
@@ -67,13 +70,19 @@ public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements 
 
     @Override
     public void setUnmappedName(String unmappedName) {
-        setName(new Namespaced(Namespaced.OFFICIAL, unmappedName));
+        throw new IllegalStateException();
     }
 
     @Override
     public void setMappedName(String mappedName) {
-        String s = getName(Namespaced.YARN);
-        if(s == null) setName(new Namespaced(Namespaced.INTERMEDIARY, mappedName));
-        else setName(new Namespaced(Namespaced.YARN, mappedName));
+        throw new IllegalStateException();
+    }
+
+    public void addLocalVariable(int index, String name) {
+        lvt.put(index, name);
+    }
+
+    public String getLocalVariable(int index) {
+        return lvt.get(index);
     }
 }

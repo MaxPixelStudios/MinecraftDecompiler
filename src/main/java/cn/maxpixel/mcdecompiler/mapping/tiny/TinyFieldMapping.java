@@ -58,7 +58,8 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
 
     @Override
     public String getUnmappedName() {
-        return getName(Namespaced.OFFICIAL);
+        String s = getName(Namespaced.OFFICIAL);
+        return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
     @Override
@@ -69,14 +70,12 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
 
     @Override
     public void setUnmappedName(String unmappedName) {
-        setName(new Namespaced(Namespaced.OFFICIAL, unmappedName));
+        throw new IllegalStateException();
     }
 
     @Override
     public void setMappedName(String mappedName) {
-        String s = getName(Namespaced.YARN);
-        if(s == null) setName(new Namespaced(Namespaced.INTERMEDIARY, mappedName));
-        else setName(new Namespaced(Namespaced.YARN, mappedName));
+        throw new IllegalStateException();
     }
 
     @Override

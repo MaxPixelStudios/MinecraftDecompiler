@@ -89,10 +89,10 @@ public class SrgMappingReader extends AbstractMappingReader {
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
+            return new ClassMapping(NamingUtil.asJavaName0(strings[1]), NamingUtil.asJavaName0(strings[2]));
         }
         private String getClassName(String s) {
-            return NamingUtil.asJavaName(s.substring(0, s.lastIndexOf('/')));
+            return NamingUtil.asJavaName0(s.substring(0, s.lastIndexOf('/')));
         }
         private String getName(String s) {
             return s.substring(s.lastIndexOf('/') + 1);
