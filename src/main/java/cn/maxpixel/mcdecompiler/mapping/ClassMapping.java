@@ -25,40 +25,55 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public class ClassMapping extends BaseMapping {
     private final ObjectArrayList<BaseMethodMapping> methods;
     private final Object2ObjectOpenHashMap<String, BaseFieldMapping> fields;
+    public final boolean onlyUnmappedName;
     ClassMapping() {
+        this.onlyUnmappedName = false;
         this.methods = null;
         this.fields = null;
     }
     public ClassMapping(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);
+        this.onlyUnmappedName = false;
         this.methods = new ObjectArrayList<>();
         this.fields = new Object2ObjectOpenHashMap<>();
     }
-    public ClassMapping(String targetName) { // CSRG
-        this(targetName, targetName);
+    public ClassMapping(String targetName) { // CSRG / Tiny
+        super(targetName, targetName);
+        this.onlyUnmappedName = true;
+        this.methods = new ObjectArrayList<>();
+        this.fields = new Object2ObjectOpenHashMap<>();
     }
 
     public ClassMapping addField(BaseFieldMapping... fields) {
-        for (BaseFieldMapping field : fields) {
-            this.fields.put(field.getUnmappedName(), field);
-        }
+        for (BaseFieldMapping field : fields) addField(field);
+        return this;
+    }
+    public ClassMapping addField(Collection<? extends BaseFieldMapping> fields) {
+        fields.forEach(this::addField);
         return this;
     }
     public ClassMapping addMethod(BaseMethodMapping... methods) {
-        this.methods.addAll(Arrays.asList(methods));
+        for (BaseMethodMapping method : methods) addMethod(method);
+        return this;
+    }
+    public ClassMapping addMethod(Collection<? extends BaseMethodMapping> methods) {
+        methods.forEach(this::addMethod);
         return this;
     }
     public ClassMapping addField(BaseFieldMapping field) {
+        if(field.getOwner() != this) field.setOwner(this);
         this.fields.put(field.getUnmappedName(), field);
         return this;
     }
     public ClassMapping addMethod(BaseMethodMapping method) {
+        if(method.getOwner() != this) method.setOwner(this);
         this.methods.add(method);
         return this;
     }
@@ -73,6 +88,18 @@ public class ClassMapping extends BaseMapping {
     }
     public BaseFieldMapping getField(String unmappedName) {
         return fields.get(unmappedName);
+    }
+
+    @Override
+    public String getMappedName() {
+        if(onlyUnmappedName) throw new IllegalStateException();
+        return super.getMappedName();
+    }
+
+    @Override
+    public void setMappedName(String mappedName) {
+        if(onlyUnmappedName) throw new IllegalStateException();
+        super.setMappedName(mappedName);
     }
 
     @Override

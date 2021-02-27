@@ -46,16 +46,17 @@ public class ProguardMappingReader extends AbstractMappingReader {
         super(path);
     }
 
-    private static final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
+    private final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
     @Override
     protected ProguardMappingProcessor getProcessor() {
         return PROCESSOR;
     }
 
     private static class ProguardMappingProcessor extends AbstractNonPackageMappingProcessor {
+        private final ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        public ObjectList<ClassMapping> process(Stream<String> lines) {
-            ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+        ObjectList<ClassMapping> process(Stream<String> lines) {
+            if(!mappings.isEmpty()) return mappings;
             AtomicReference<ClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {
                 if(!s.startsWith("    ")) {

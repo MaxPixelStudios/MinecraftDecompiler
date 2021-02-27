@@ -47,16 +47,17 @@ public class SrgMappingReader extends AbstractMappingReader {
     public SrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
-    private static final SrgMappingProcessor PROCESSOR = new SrgMappingProcessor();
+    private final SrgMappingProcessor PROCESSOR = new SrgMappingProcessor();
     @Override
     protected SrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
     private static class SrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
+        private ObjectArrayList<ClassMapping> mappingCache;
         @Override
-        public ObjectList<ClassMapping> process(Stream<String> lines) {
-            packages.clear();
+        ObjectList<ClassMapping> process(Stream<String> lines) {
+            if(mappingCache != null && !mappingCache.isEmpty()) return mappingCache;
             Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             lines.map(String::trim).forEach(s -> {
                 switch(s.substring(0, 3)) {
@@ -82,7 +83,8 @@ public class SrgMappingReader extends AbstractMappingReader {
                     default: throw new IllegalArgumentException("Is this a SRG mapping file?");
                 }
             });
-            return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            mappingCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            return mappingCache;
         }
         @Override
         protected ClassMapping processClass(String line) {

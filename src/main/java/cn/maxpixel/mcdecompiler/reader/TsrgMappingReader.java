@@ -46,17 +46,17 @@ public class TsrgMappingReader extends AbstractMappingReader {
     public TsrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
-    private static final TsrgMappingProcessor PROCESSOR = new TsrgMappingProcessor();
+    private final TsrgMappingProcessor PROCESSOR = new TsrgMappingProcessor();
     @Override
     protected TsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
     private static class TsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
+        private final ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        public ObjectList<ClassMapping> process(Stream<String> lines) {
-            packages.clear();
-            ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+        ObjectList<ClassMapping> process(Stream<String> lines) {
+            if(!mappings.isEmpty()) return mappings;
             AtomicReference<ClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {
                 if(!s.startsWith("\t")) {

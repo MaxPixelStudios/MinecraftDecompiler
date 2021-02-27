@@ -34,8 +34,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MappingRemapper extends Remapper {
-    private final Object2ObjectOpenHashMap<String, ClassMapping> mappingByUnm;
-    private final Object2ObjectOpenHashMap<String, ClassMapping> mappingByMap;
+    private final Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappingByUnm;
+    private final Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappingByMap;
     private final SuperClassMapping superClassMapping;
     private static final Logger LOGGER = LogManager.getLogger("Remapper");
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {

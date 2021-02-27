@@ -61,7 +61,7 @@ public abstract class AbstractDeobfuscator {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
-        Object2ObjectOpenHashMap<String, ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
+        Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
         SuperClassMapping superClassMapping = new SuperClassMapping();
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             Stream<Path> classes = Files.walk(fs.getPath("/")).filter(p -> Files.isRegularFile(p) &&

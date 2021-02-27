@@ -33,12 +33,15 @@ import java.util.Map;
 public class TinyClassMapping extends ClassMapping implements cn.maxpixel.mcdecompiler.mapping.components.Namespaced {
     private final ObjectArrayList<TinyMethodMapping> methods = new ObjectArrayList<>();
     private final Object2ObjectOpenHashMap<String, TinyFieldMapping> fields = new Object2ObjectOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
-    public TinyClassMapping(Namespaced... names) {
-        for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
+    private final Object2ObjectOpenHashMap<String, String> names;
+    public TinyClassMapping(String unmappedName) { // Methods and fields
+        super(unmappedName);
+        this.names = null;
     }
-    public TinyClassMapping(Namespaced name1) { // Methods
-        this.names.put(name1.getNamespace(), name1.getName());
+    public TinyClassMapping(Namespaced... names) {
+        super();
+        this.names = new Object2ObjectOpenHashMap<>();
+        for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
     }
 
     @Override
@@ -82,32 +85,38 @@ public class TinyClassMapping extends ClassMapping implements cn.maxpixel.mcdeco
 
     @Override
     public String getName(String namespace) {
+        if(onlyUnmappedName) throw new IllegalStateException();
         return names.get(namespace);
     }
 
     @Override
     public void setName(Namespaced name) {
+        if(onlyUnmappedName) throw new IllegalStateException();
         names.put(name.getNamespace(), name.getName());
     }
 
     @Override
     public String getUnmappedName() {
+        if(onlyUnmappedName) return super.getUnmappedName();
         return getName(Namespaced.OFFICIAL);
     }
 
     @Override
     public String getMappedName() {
+        if(onlyUnmappedName) throw new IllegalStateException();
         String s = getName(Namespaced.YARN);
         return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
     @Override
     public void setUnmappedName(String unmappedName) {
-        setName(new Namespaced(Namespaced.OFFICIAL, unmappedName));
+        if(onlyUnmappedName) super.setUnmappedName(unmappedName);
+        else setName(new Namespaced(Namespaced.OFFICIAL, unmappedName));
     }
 
     @Override
     public void setMappedName(String mappedName) {
+        if(onlyUnmappedName) throw new IllegalStateException();
         String s = getName(Namespaced.YARN);
         if(s == null) setName(new Namespaced(Namespaced.INTERMEDIARY, mappedName));
         else setName(new Namespaced(Namespaced.YARN, mappedName));

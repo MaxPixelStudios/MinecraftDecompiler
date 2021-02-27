@@ -19,12 +19,18 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.tiny.Namespaced;
+import cn.maxpixel.mcdecompiler.mapping.tiny.TinyFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.tiny.TinyMethodMapping;
+import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TinyMappingReader extends AbstractMappingReader {
@@ -40,8 +46,8 @@ public class TinyMappingReader extends AbstractMappingReader {
     public TinyMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
-    private static final V1TinyMappingProcessor V1_PROCESSOR = new V1TinyMappingProcessor();
-    private static final V2TinyMappingProcessor V2_PROCESSOR = new V2TinyMappingProcessor();
+    private final V1TinyMappingProcessor V1_PROCESSOR = new V1TinyMappingProcessor();
+    private final V2TinyMappingProcessor V2_PROCESSOR = new V2TinyMappingProcessor();
     @Override
     protected AbstractNonPackageMappingProcessor getProcessor() {
         try {
@@ -56,22 +62,53 @@ public class TinyMappingReader extends AbstractMappingReader {
         return V2_PROCESSOR;
     }
 
-    public static class V1TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
+    private static class V1TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
+        private String[] namespaces;
         @Override
-        public ObjectList<ClassMapping> process(Stream<String> lines) {
+        ObjectList<TinyClassMapping> process(Stream<String> lines) {
+            ObjectArrayList<String> lns = lines.collect(Collectors.toCollection(ObjectArrayList::new));
+            Object2ObjectOpenHashMap<String, TinyClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
+            namespaces = lns.remove(0).substring(3).split("\t");
+            lns.forEach(s -> {
+                if(s.startsWith("CLASS")) {
+                    TinyClassMapping classMapping = processClass(s);
+                    mappings.merge(classMapping.getUnmappedName(), classMapping, (o, n) -> {
+                        n.addField(o.getFieldMap().values());
+                        n.addMethod(o.getMethods());
+                        return n;
+                    });
+                } else if(s.startsWith("FIELD")) {
+                    TinyFieldMapping fieldMapping = processField(s);
+                    TinyClassMapping cm = mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(), TinyClassMapping::new);
+                    cm.addField(fieldMapping.setOwner(cm));
+                } else if(s.startsWith("METHOD")) {
+                    TinyMethodMapping methodMapping = processMethod(s);
+                    TinyClassMapping cm = mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), TinyClassMapping::new);
+                    cm.addMethod(methodMapping.setOwner(cm));
+                } else throw new IllegalArgumentException("Is this a Tiny v1 mapping file?");
+            });
             return null;
         }
         @Override
-        protected ClassMapping processClass(String line) {
-            return null;
+        protected TinyClassMapping processClass(String line) {
+            String[] split = line.substring(6).split("\t");
+            return new TinyClassMapping(Utils.mapArray(split, (i, s) -> new Namespaced(namespaces[i], s)));
         }
         @Override
-        protected BaseMethodMapping processMethod(String line) {
-            return null;
+        protected TinyMethodMapping processMethod(String line) {
+            String[] split = line.split("\t");
+            String[] names = new String[namespaces.length];
+            System.arraycopy(split, 3, names, 0, namespaces.length);
+            return new TinyMethodMapping(split[2], Utils.mapArray(names, (i, s) -> new Namespaced(namespaces[i], s)))
+                    .setOwner(new TinyClassMapping(split[1]));
         }
         @Override
-        protected BaseFieldMapping processField(String line) {
-            return null;
+        protected TinyFieldMapping processField(String line) {
+            String[] split = line.split("\t");
+            String[] names = new String[namespaces.length];
+            System.arraycopy(split, 3, names, 0, namespaces.length);
+            return new TinyFieldMapping(split[2], Utils.mapArray(names, (i, s) -> new Namespaced(namespaces[i], s)))
+                    .setOwner(new TinyClassMapping(split[1]));
         }
     }
     public static class V2TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
@@ -80,15 +117,15 @@ public class TinyMappingReader extends AbstractMappingReader {
             return null;
         }
         @Override
-        protected ClassMapping processClass(String line) {
+        protected TinyClassMapping processClass(String line) {
             return null;
         }
         @Override
-        protected BaseMethodMapping processMethod(String line) {
+        protected TinyMethodMapping processMethod(String line) {
             return null;
         }
         @Override
-        protected BaseFieldMapping processField(String line) {
+        protected TinyFieldMapping processField(String line) {
             return null;
         }
     }

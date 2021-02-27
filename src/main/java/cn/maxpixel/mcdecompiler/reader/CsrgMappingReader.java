@@ -47,16 +47,17 @@ public class CsrgMappingReader extends AbstractMappingReader {
     public CsrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
-    private static final CsrgMappingProcessor PROCESSOR = new CsrgMappingProcessor();
+    private final CsrgMappingProcessor PROCESSOR = new CsrgMappingProcessor();
     @Override
     protected CsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
     private static class CsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
+        private ObjectList<ClassMapping> mappingsCache;
         @Override
-        public ObjectList<ClassMapping> process(Stream<String> lines) {
-            packages.clear();
+        ObjectList<ClassMapping> process(Stream<String> lines) {
+            if(mappingsCache != null && !mappingsCache.isEmpty()) return mappingsCache;
             Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             lines.map(String::trim).forEach(s -> {
                 String[] sa = s.split(" ");
@@ -65,7 +66,11 @@ public class CsrgMappingReader extends AbstractMappingReader {
                         if(sa[0].endsWith("/")) packages.add(processPackage(s));
                         else {
                             ClassMapping classMapping = processClass(s);
-                            mappings.putIfAbsent(classMapping.getUnmappedName(), classMapping);
+                            mappings.merge(classMapping.getUnmappedName(), classMapping, (o, n) -> {
+                                n.addField(o.getFieldMap().values());
+                                n.addMethod(o.getMethods());
+                                return n;
+                            });
                         }
                         break;
                     case 3: // Field
@@ -81,7 +86,8 @@ public class CsrgMappingReader extends AbstractMappingReader {
                     default: throw new IllegalArgumentException("Is this a CSRG mapping file?");
                 }
             });
-            return mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            mappingsCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            return mappingsCache;
         }
         @Override
         protected ClassMapping processClass(String line) {

@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 
 public abstract class AbstractMappingReader implements AutoCloseable {
     protected volatile BufferedReader reader;
-    private final List<ClassMapping> mappings;
+    private final List<? extends ClassMapping> mappings;
     private final List<PackageMapping> packages;
 
     protected AbstractMappingReader(BufferedReader reader) {
@@ -65,17 +65,17 @@ public abstract class AbstractMappingReader implements AutoCloseable {
     }
 
     protected abstract AbstractNonPackageMappingProcessor getProcessor();
-    public final List<ClassMapping> getMappings() {
+    public final List<? extends ClassMapping> getMappings() {
         return mappings;
     }
     public final List<PackageMapping> getPackages() {
         return packages;
     }
-    public final Object2ObjectOpenHashMap<String, ClassMapping> getMappingsByUnmappedNameMap() {
+    public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByUnmappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
-    public final Object2ObjectOpenHashMap<String, ClassMapping> getMappingsByMappedNameMap() {
+    public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByMappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
@@ -90,11 +90,11 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         }
     }
     protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
-        public abstract ObjectList<PackageMapping> getPackages();
+        abstract ObjectList<PackageMapping> getPackages();
         protected abstract PackageMapping processPackage(String line);
     }
     protected abstract static class AbstractNonPackageMappingProcessor {
-        public abstract ObjectList<ClassMapping> process(Stream<String> lines);
+        abstract ObjectList<? extends ClassMapping> process(Stream<String> lines);
         protected abstract ClassMapping processClass(String line);
         protected abstract BaseMethodMapping processMethod(String line);
         protected abstract BaseFieldMapping processField(String line);
