@@ -18,12 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.reader.CsrgMappingReader;
-import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
-import cn.maxpixel.mcdecompiler.reader.SrgMappingReader;
-import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
+import cn.maxpixel.mcdecompiler.reader.*;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -43,7 +41,7 @@ public class MappingReadSpeedTest {
                 .measurementIterations(10)
                 .warmupIterations(5)
                 .build();
-//        new Runner(options).run();
+        new Runner(options).run();
     }
 
     @Benchmark
@@ -73,6 +71,20 @@ public class MappingReadSpeedTest {
     @Benchmark
     public void readProguard(Blackhole bh) {
         try(ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.txt"))) {
+            bh.consume(mappingReader.getMappings());
+        }
+    }
+
+    @Benchmark
+    public void readTinyV1(Blackhole bh) {
+        try(TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-yarn-v1.tiny"))) {
+            bh.consume(mappingReader.getMappings());
+        }
+    }
+
+    @Benchmark
+    public void readTinyV2(Blackhole bh) {
+        try(TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-merged-v2.tiny"))) {
             bh.consume(mappingReader.getMappings());
         }
     }

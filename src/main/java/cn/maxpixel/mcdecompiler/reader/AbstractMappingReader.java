@@ -37,11 +37,23 @@ import java.util.stream.Stream;
 
 public abstract class AbstractMappingReader implements AutoCloseable {
     protected volatile BufferedReader reader;
-    private final List<? extends ClassMapping> mappings;
-    private final List<PackageMapping> packages;
+    private List<? extends ClassMapping> mappings;
+    private List<PackageMapping> packages;
 
     protected AbstractMappingReader(BufferedReader reader) {
         this.reader = reader;
+    }
+    protected AbstractMappingReader(Reader rd) {
+        this(new BufferedReader(Objects.requireNonNull(rd)));
+    }
+    protected AbstractMappingReader(InputStream is) {
+        this(new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8));
+    }
+    protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
+        this(new FileReader(Objects.requireNonNull(path)));
+    }
+
+    private void read() {
         AbstractNonPackageMappingProcessor processor = getProcessor();
         mappings = processor.process(reader.lines().map(s -> {
             if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
@@ -54,21 +66,14 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         }).filter(Objects::nonNull));
         packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
     }
-    protected AbstractMappingReader(Reader rd) {
-        this(new BufferedReader(Objects.requireNonNull(rd)));
-    }
-    protected AbstractMappingReader(InputStream is) {
-        this(new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8));
-    }
-    protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
-        this(new FileReader(Objects.requireNonNull(path)));
-    }
 
     protected abstract AbstractNonPackageMappingProcessor getProcessor();
     public final List<? extends ClassMapping> getMappings() {
+        if(mappings == null) read();
         return mappings;
     }
     public final List<PackageMapping> getPackages() {
+        if(packages == null) read();
         return packages;
     }
     public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByUnmappedNameMap() {

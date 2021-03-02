@@ -18,14 +18,16 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import java.lang.reflect.Array;
+
 public class Utils {
     public interface MapFunction<T, U> {
         U map(int index, T t);
     }
-    public static <T, U> U[] mapArray(T[] t, MapFunction<T, U> func) {
-        Object[] u = new Object[t.length];
+    public static <T, U> U[] mapArray(T[] t, MapFunction<T, U> func, Class<U> cls) {
+        U[] u = (U[]) Array.newInstance(cls, t.length);
         for(int i = 0; i < t.length; i++) u[i] = func.map(i, t[i]);
-        return (U[]) u;
+        return u;
     }
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
