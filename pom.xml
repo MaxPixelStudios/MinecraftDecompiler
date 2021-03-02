@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.maxpixel</groupId>
     <artifactId>minecraft-decompiler</artifactId>
-    <version>2.1</version>
+    <version>2.1.1-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <encoding>UTF-8</encoding>
@@ -35,7 +35,7 @@
         <depend.cfr.ver>0.151</depend.cfr.ver>
         <depend.fernflower.ver>403</depend.fernflower.ver>
         <depend.classloaderutils.ver>1.0.0</depend.classloaderutils.ver>
-        <depend.jmh.ver>1.27</depend.jmh.ver>
+        <depend.jmh.ver>1.28</depend.jmh.ver>
     </properties>
     <build>
         <plugins>
@@ -103,6 +103,18 @@
                         </filter>
                         <filter>
                             <artifact>org.apache.logging.log4j:log4j-api</artifact>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                        </filter>
+                        <filter>
+                            <artifact>org.benf:cfr</artifact>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                        </filter>
+                        <filter>
+                            <artifact>net.minecraftforge:fernflower</artifact>
                             <includes>
                                 <include>**</include>
                             </includes>
