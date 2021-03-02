@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler.test.benchmark;
 import cn.maxpixel.mcdecompiler.reader.*;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
-import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -41,7 +40,7 @@ public class MappingReadSpeedTest {
                 .measurementIterations(10)
                 .warmupIterations(5)
                 .build();
-        new Runner(options).run();
+//        new Runner(options).run();
     }
 
     @Benchmark
