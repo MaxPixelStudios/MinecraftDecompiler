@@ -21,12 +21,15 @@ package cn.maxpixel.mcdecompiler.mapping.tiny;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.Documented;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements cn.maxpixel.mcdecompiler.mapping.components.Namespaced {
+public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements cn.maxpixel.mcdecompiler.mapping.components.Namespaced, Documented {
     private final Int2ObjectOpenHashMap<String> lvt = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectOpenHashMap<String> lvtDoc = new Int2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
+    private String document;
     public TinyMethodMapping(String unmappedDescriptor, Namespaced... names) {
         for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
         setUnmappedDescriptor(unmappedDescriptor);
@@ -82,7 +85,21 @@ public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements 
         lvt.put(index, name);
     }
 
+    public void addLocalVariableDocument(int index, String document) {
+        lvtDoc.put(index, document);
+    }
+
     public String getLocalVariable(int index) {
         return lvt.get(index);
+    }
+
+    @Override
+    public void setDocument(String document) {
+        this.document = document;
+    }
+
+    @Override
+    public String getDocument() {
+        return document;
     }
 }

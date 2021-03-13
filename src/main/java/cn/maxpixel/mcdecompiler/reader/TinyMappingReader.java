@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.Documented;
 import cn.maxpixel.mcdecompiler.mapping.tiny.Namespaced;
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyMethodMapping;
@@ -31,6 +31,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -128,25 +129,31 @@ public class TinyMappingReader extends AbstractMappingReader {
         @Override
         ObjectList<TinyClassMapping> process(Stream<String> lines) {
             if(!mappings.isEmpty()) return mappings;
-            ObjectArrayList<String> lns = lines.filter(s -> !(s.startsWith("\t\t\tc") || s.startsWith("\t\tc") || s.startsWith("\tc"))) // Skip javadoc
-                    .collect(Collectors.toCollection(ObjectArrayList::new));
+            ObjectArrayList<String> lns = lines.collect(Collectors.toCollection(ObjectArrayList::new));
             AtomicReference<TinyClassMapping> currClass = new AtomicReference<>();
-            AtomicReference<TinyMethodMapping> currMethod = new AtomicReference<>();
+            AtomicReference<Object> currSub = new AtomicReference<>();
+            AtomicInteger currParam = new AtomicInteger();
             namespaces = lns.remove(0).substring(9).split("\t");
             lns.forEach(s -> {
                 if(!s.startsWith("\t")) {
                     if(currClass.get() != null) mappings.add(currClass.getAndSet(processClass(s)));
                     else currClass.set(processClass(s));
                 } else {
-                    ClassMapping curr = currClass.get();
-                    if(s.startsWith("\tm")) {
-                        currMethod.set(processMethod(s).setOwner(curr));
-                        curr.addMethod(currMethod.get());
-                    } else if(s.startsWith("\tf")) curr.addField(processField(s).setOwner(curr));
-                    else if(s.startsWith("\t\tp")) {
+                    TinyClassMapping curr = currClass.get();
+                    if(s.startsWith("\tc")) curr.setDocument(s.substring(3));
+                    else if(s.startsWith("\tm")) {
+                        currSub.set(processMethod(s).setOwner(curr));
+                        curr.addMethod((TinyMethodMapping) currSub.get());
+                    } else if(s.startsWith("\tf")) {
+                        currSub.set(processField(s).setOwner(curr));
+                        curr.addField((TinyFieldMapping) currSub.get());
+                    } else if(s.startsWith("\t\tp")) {
                         String[] split = s.substring(4).split("\t\t");
-                        currMethod.get().addLocalVariable(Integer.parseInt(split[0]), split[1]);
-                    } else throw new IllegalArgumentException("Is this a Tiny v2 mapping file?" + s);
+                        currParam.set(Integer.parseInt(split[0]));
+                        ((TinyMethodMapping) currSub.get()).addLocalVariable(currParam.get(), split[1]);
+                    } else if(s.startsWith("\t\tc")) ((Documented) currSub.get()).setDocument(s.substring(4));
+                    else if(s.startsWith("\t\t\tc")) ((TinyMethodMapping) currSub.get()).addLocalVariableDocument(currParam.get(), s.substring(5));
+                    else throw new IllegalArgumentException("Is this a Tiny v2 mapping file?" + s);
                 }
             });
             if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
