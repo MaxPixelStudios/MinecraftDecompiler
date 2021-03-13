@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
-// Do not extents AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
+// Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make FernFlowerDecompiler read all libraries successfully
 public class FernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
         implements IDecompiler {

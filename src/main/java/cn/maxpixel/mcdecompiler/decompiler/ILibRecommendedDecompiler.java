@@ -21,6 +21,17 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * The decompiler implements this interface is lib-recommend.<br>
+ * The decompiler uses {@link ILibRecommendedDecompiler#downloadLib(Path, String)} to download all Minecraft libraries.<br>
+ * If you don't want to implement this method but still want libs, you can extend {@link AbstractLibRecommendedDecompiler}
+ */
 public interface ILibRecommendedDecompiler extends IDecompiler {
+    /**
+     * Download all libraries
+     * @param libDir Where the libs download to
+     * @param version Minecraft version uses to deobfuscate
+     * @throws IOException When IO error occurs
+     */
     void downloadLib(Path libDir, String version) throws IOException;
 }

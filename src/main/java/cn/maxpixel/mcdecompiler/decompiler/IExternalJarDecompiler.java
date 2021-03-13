@@ -21,6 +21,9 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Internal use ONLY
+ */
 public interface IExternalJarDecompiler extends IDecompiler {
     void extractDecompilerTo(Path decompilerJarPath) throws IOException;
 }

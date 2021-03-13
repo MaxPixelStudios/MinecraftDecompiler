@@ -45,7 +45,7 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
         options.put("outputpath", target.toString());
         options.put("removebadgenerics", "false");
         options.put("removedeadconditionals", "false");
-        options.put("jarfilter", "^([net.minecraft]|[com.mojang]){1}.*");
+        options.put("jarfilter", "^net\\.minecraft|com\\.mojang\\.(blaze3d|math|realmsclient)\\.*");
         CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
         cfr.analyse(ObjectLists.singleton(source.toString()));
     }

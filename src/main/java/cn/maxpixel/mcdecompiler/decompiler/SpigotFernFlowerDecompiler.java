@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
 
-// Do not extents AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
+// Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make SpigotFernFlowerDecompiler read all libraries successfully
 public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
         implements IExternalJarDecompiler {
