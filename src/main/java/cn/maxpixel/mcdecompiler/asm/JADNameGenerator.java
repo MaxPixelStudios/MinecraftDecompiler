@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.util.IntLocal;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -26,7 +25,7 @@ import org.objectweb.asm.*;
 
 import java.util.Collections;
 import java.util.Locale;
-import java.util.UUID;
+import java.util.function.ToIntFunction;
 
 public class JADNameGenerator extends ClassVisitor {
     private static final Object2ObjectOpenHashMap<String, Holder> PREDEF = new Object2ObjectOpenHashMap<>();
@@ -58,7 +57,7 @@ public class JADNameGenerator extends ClassVisitor {
     }
     public static class LVTRenamer extends MethodVisitor {
         private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
-        private final Object2ObjectOpenHashMap<Holder, UUID> uuids = new Object2ObjectOpenHashMap<>();
+        private final Object2IntOpenHashMap<Holder> ids = new Object2IntOpenHashMap<>();
         private final int access;
         public LVTRenamer(int access, MethodVisitor methodVisitor) {
             super(Opcodes.ASM9, methodVisitor);
@@ -81,17 +80,17 @@ public class JADNameGenerator extends ClassVisitor {
                     vars.put(varBaseName, count + 1);
                     return varBaseName + (count == 0 && holder.skip_zero ? "" : count);
                 } else {
-                    UUID identifier = uuids.computeIfAbsent(holder, h -> h.tempId.requestNew());
+                    ids.computeIfAbsent(holder, (ToIntFunction<? super Holder>) h -> h.id);
                     for(;;) {
                         for(int i = 0; i < holder.names.size(); ++i) {
                             varBaseName = holder.names.get(i);
                             if(!vars.containsKey(varBaseName)) {
-                                int j = holder.tempId.get(identifier);
+                                int j = ids.getInt(holder);
                                 vars.put(varBaseName, j);
                                 return varBaseName + (j == 0 && holder.skip_zero ? "" : j);
                             }
                         }
-                        holder.tempId.increment(identifier);
+                        ids.addTo(holder, 1);
                         for(int i = 0; i < holder.names.size(); ++i) vars.removeInt(holder.names.get(i));
                     }
                 }
@@ -107,20 +106,14 @@ public class JADNameGenerator extends ClassVisitor {
                 super.visitLocalVariable(name, descriptor, signature, start, end, index);
             else super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
         }
-        @Override
-        public void visitEnd() {
-            uuids.forEach((holder, uuid) -> holder.tempId.delete(uuid));
-        }
     }
     private static class Holder {
         public final int id;
-        public final IntLocal tempId;
         public final boolean skip_zero;
         public final ObjectArrayList<String> names = new ObjectArrayList<>();
 
         public Holder(int t1, boolean skip_zero, String... names) {
             this.id = t1;
-            this.tempId = new IntLocal(this.id);
             this.skip_zero = skip_zero;
             Collections.addAll(this.names, names);
         }
