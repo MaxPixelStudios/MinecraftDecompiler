@@ -131,7 +131,7 @@ public class TinyMappingReader extends AbstractMappingReader {
             if(!mappings.isEmpty()) return mappings;
             ObjectArrayList<String> lns = lines.collect(Collectors.toCollection(ObjectArrayList::new));
             AtomicReference<TinyClassMapping> currClass = new AtomicReference<>();
-            AtomicReference<Object> currSub = new AtomicReference<>();
+            AtomicReference<Documented> currSub = new AtomicReference<>();
             AtomicInteger currParam = new AtomicInteger();
             namespaces = lns.remove(0).substring(9).split("\t");
             lns.forEach(s -> {
@@ -151,7 +151,7 @@ public class TinyMappingReader extends AbstractMappingReader {
                         String[] split = s.substring(4).split("\t\t");
                         currParam.set(Integer.parseInt(split[0]));
                         ((TinyMethodMapping) currSub.get()).addLocalVariable(currParam.get(), split[1]);
-                    } else if(s.startsWith("\t\tc")) ((Documented) currSub.get()).setDocument(s.substring(4));
+                    } else if(s.startsWith("\t\tc")) currSub.get().setDocument(s.substring(4));
                     else if(s.startsWith("\t\t\tc")) ((TinyMethodMapping) currSub.get()).addLocalVariableDocument(currParam.get(), s.substring(5));
                     else throw new IllegalArgumentException("Is this a Tiny v2 mapping file?" + s);
                 }

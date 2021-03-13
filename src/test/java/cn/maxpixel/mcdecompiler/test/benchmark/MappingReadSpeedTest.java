@@ -37,8 +37,8 @@ public class MappingReadSpeedTest {
                 .include(".*" + MappingReadSpeedTest.class.getSimpleName() + ".*")
                 .shouldDoGC(true)
                 .timeUnit(TimeUnit.MILLISECONDS)
-                .measurementIterations(10)
-                .warmupIterations(5)
+                .measurementIterations(15)
+                .warmupIterations(10)
                 .build();
 //        new Runner(options).run();
     }
