@@ -58,26 +58,38 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
         names.put(name.getNamespace(), name.getName());
     }
 
+    /** Recommend to use {@link TinyFieldMapping#getName(String)} */
     @Override
     public String getUnmappedName() {
         String s = getName(Namespaced.OFFICIAL);
         return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
+    /** Recommend to use {@link TinyFieldMapping#getName(String)} */
     @Override
     public String getMappedName() {
         String s = getName(Namespaced.YARN);
         return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
+    /**
+     * @deprecated Use {@link TinyFieldMapping#setName(Namespaced)} instead.
+     * @throws UnsupportedOperationException When calling this method
+     */
     @Override
+    @Deprecated
     public void setUnmappedName(String unmappedName) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @deprecated Use {@link TinyFieldMapping#setName(Namespaced)} instead.
+     * @throws UnsupportedOperationException When calling this method
+     */
     @Override
+    @Deprecated
     public void setMappedName(String mappedName) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException();
     }
 
     @Override

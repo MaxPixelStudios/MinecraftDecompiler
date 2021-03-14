@@ -23,8 +23,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface IDecompiler {
+    /**
+     * @return The type of the input.
+     */
     SourceType getSourceType();
     /**
+     * Decompile Minecraft.
      * @param source Path for input. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      * @param targetDir Path for output. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      */

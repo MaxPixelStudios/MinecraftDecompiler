@@ -97,6 +97,7 @@ public class TinyClassMapping extends ClassMapping implements cn.maxpixel.mcdeco
         names.put(name.getNamespace(), name.getName());
     }
 
+    /** Recommend to use {@link TinyClassMapping#getName(String)} */
     @Override
     public String getUnmappedName() {
         if(onlyUnmappedName) return super.getUnmappedName();
@@ -104,19 +105,30 @@ public class TinyClassMapping extends ClassMapping implements cn.maxpixel.mcdeco
         return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
+    /** Recommend to use {@link TinyClassMapping#getName(String)} */
     @Override
     public String getMappedName() {
-        if(onlyUnmappedName) throw new UnsupportedOperationException();
+        if(onlyUnmappedName) return super.getMappedName();
         String s = getName(Namespaced.YARN);
         return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
+    /**
+     * @deprecated Use {@link TinyClassMapping#setName(Namespaced)} instead.
+     * @throws UnsupportedOperationException When calling this method
+     */
     @Override
+    @Deprecated
     public void setUnmappedName(String unmappedName) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * @deprecated Use {@link TinyClassMapping#setName(Namespaced)} instead.
+     * @throws UnsupportedOperationException When calling this method
+     */
     @Override
+    @Deprecated
     public void setMappedName(String mappedName) {
         throw new UnsupportedOperationException();
     }

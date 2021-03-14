@@ -55,6 +55,11 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
             }
         });
     }
+
+    /**
+     * Get all Minecraft libraries
+     * @return All Minecraft libs. If version isn't provided, return a empty list
+     */
     protected List<String> listLibs() {
         return libs;
     }
