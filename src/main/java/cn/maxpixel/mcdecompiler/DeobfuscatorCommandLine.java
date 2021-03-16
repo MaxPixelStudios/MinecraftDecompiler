@@ -45,14 +45,14 @@ public class DeobfuscatorCommandLine {
             Proxy.NO_PROXY;
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(asList("v", "ver", "version"),
-                "Version to deobfuscate/decompile. Only works on Proguard mappings. With this option, you must specify --side option " +
-                "and mustn't specify --input or --mappingPath option.").withRequiredArg();
-        OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
-                "names which are 'snowman' using JAD style");
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(asList("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". Only works on Proguard mappings. With this option, you must specify --version " +
-                "option and mustn't specify --input or --mappingPath option.").requiredIf(versionO).withRequiredArg().ofType(Info.SideType.class);
+                "option and mustn't specify --input or --mappingPath option.").withRequiredArg().ofType(Info.SideType.class);
+        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(asList("v", "ver", "version"),
+                "Version to deobfuscate/decompile. Only works on Proguard mappings. With this option, you must specify --side option " +
+                "and mustn't specify --input or --mappingPath option.").requiredIf(sideTypeO).withRequiredArg();
+        OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
+                "names which are 'snowman' using JAD style");
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
                 "specify --mappingPath option and musn't specify --version or --side option.").requiredUnless(versionO, sideTypeO).withRequiredArg()
                 .withValuesConvertedBy(new PathConverter());
@@ -91,6 +91,16 @@ public class DeobfuscatorCommandLine {
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
         AbstractOptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "For help").forHelp();
 
+        if(args == null || args.length == 0) {
+            try {
+                System.out.println("Minecraft Decompiler version " + DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
+                parser.printHelpOn(System.out);
+            } catch (IOException e) {
+                throw Utils.wrapInRuntime(e);
+            }
+            return;
+        }
+
         OptionSet options = parser.parse(args);
         if(options.has(help)) {
             try {
@@ -104,7 +114,7 @@ public class DeobfuscatorCommandLine {
         if(options.has(customDecompilerO) && options.hasArgument(decompileO)) {
             throw new IllegalArgumentException("Do NOT pass args to \"decompile\" option when you use --customDecompiler option");
         }
-        if((options.has(versionO) || options.has(sideTypeO)) && (options.has(mappingPathO) || options.has(inputO))) {
+        if(options.has(sideTypeO) && (options.has(mappingPathO) || options.has(inputO))) {
             throw new IllegalArgumentException("Do NOT specify --mappingPath or --input option when --version and --side are specified");
         }
         if(options.has(customDecompilerJarsO))
@@ -113,7 +123,7 @@ public class DeobfuscatorCommandLine {
         if(options.has(regenVarNameO)) Properties.put(Properties.Key.REGEN_VAR_NAME, true);
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.put(Properties.Key.TEMP_DIR, p));
-        if(!(options.has(versionO) || options.has(sideTypeO))) {
+        if(!options.has(sideTypeO)) {
             Properties.put(Properties.Key.INPUT_JAR, options.valueOfOptional(inputO).orElseThrow(() -> new IllegalArgumentException(
                     "--input is required when you doesn't specify --version and --side options")));
             Properties.put(Properties.Key.MAPPING_PATH, options.valueOfOptional(mappingPathO).orElseThrow(() -> new IllegalArgumentException(
