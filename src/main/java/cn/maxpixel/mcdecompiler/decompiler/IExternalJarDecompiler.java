@@ -22,8 +22,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Internal use ONLY
+ * If your custom decompiler uses extra executables to work, implements this interface.
  */
 public interface IExternalJarDecompiler extends IDecompiler {
+    /**
+     * Extract your extra executables.
+     * @param decompilerJarPath the path you need to extract your extra executables to
+     * @throws IOException When IO error occurs
+     */
     void extractDecompilerTo(Path decompilerJarPath) throws IOException;
 }
