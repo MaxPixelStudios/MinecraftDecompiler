@@ -135,7 +135,7 @@ public class DeobfuscatorCommandLine {
 
         Deobfuscator deobfuscator;
         if(options.has(versionO) || options.has(sideTypeO)) deobfuscator = new Deobfuscator(options.valueOf(versionO), options.valueOf(sideTypeO));
-        else deobfuscator = new Deobfuscator(Properties.get(Properties.Key.MAPPING_PATH));
+        else deobfuscator = new Deobfuscator(options.valueOf(versionO), Properties.get(Properties.Key.MAPPING_PATH));
         deobfuscator.deobfuscate();
 
         if(options.has(decompileO)) {

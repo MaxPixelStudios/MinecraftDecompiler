@@ -58,7 +58,8 @@ public class Deobfuscator {
         this.type = Objects.requireNonNull(type, "type cannot be null!");
         this.deobfuscator = new ProguardDeobfuscator(version, type);
     }
-    public Deobfuscator(String mappingPath) {
+    public Deobfuscator(String version, String mappingPath) {
+        this.version = version;
         switch(getMappingType(Objects.requireNonNull(mappingPath, "mappingPath cannot be null!"))) {
             case PROGUARD:
                 this.deobfuscator = new ProguardDeobfuscator(mappingPath);
