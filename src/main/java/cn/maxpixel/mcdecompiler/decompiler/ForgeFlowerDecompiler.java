@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
-public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalJarDecompiler {
+public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
     private Path decompilerJarPath;
     ForgeFlowerDecompiler() {}
     @Override
@@ -35,10 +35,10 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
         return SourceType.DIRECTORY;
     }
     @Override
-    public void extractDecompilerTo(Path decompilerJarPath) throws IOException {
-        if(Files.notExists(decompilerJarPath))
+    public void extractTo(Path extractPath) throws IOException {
+        this.decompilerJarPath = extractPath.resolve("decompiler.jar");
+        if(Files.notExists(extractPath))
             Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("forgeflower-1.5.478.19.jar")), decompilerJarPath);
-        this.decompilerJarPath = decompilerJarPath;
     }
     @Override
     public void decompile(Path source, Path target) throws IOException {

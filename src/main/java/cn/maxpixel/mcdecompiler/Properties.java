@@ -75,9 +75,6 @@ public class Properties {
     public static Path getTempDecompileClassesPath() {
         return get(Key.TEMP_DIR).resolve("decompileClasses");
     }
-    public static Path getTempDecompilerPath() {
-        return get(Key.TEMP_DIR).resolve("decompiler.jar");
-    }
 
     // Methods have to do with Key.DOWNLOAD_DIR
     public static Path getDownloadedLibPath() {

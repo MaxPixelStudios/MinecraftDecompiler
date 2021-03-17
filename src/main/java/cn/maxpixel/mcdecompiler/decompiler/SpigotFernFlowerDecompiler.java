@@ -30,7 +30,7 @@ import java.util.Objects;
 // Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make SpigotFernFlowerDecompiler read all libraries successfully
 public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
-        implements IExternalJarDecompiler {
+        implements IExternalResourcesDecompiler {
     private Path decompilerJarPath;
     SpigotFernFlowerDecompiler() {}
     @Override
@@ -50,9 +50,9 @@ public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompil
         ProcessUtil.waitForProcess(process);
     }
     @Override
-    public void extractDecompilerTo(Path decompilerJarPath) throws IOException {
-        if(Files.notExists(decompilerJarPath))
+    public void extractTo(Path extractPath) throws IOException {
+        this.decompilerJarPath = extractPath.resolve("decompiler.jar");
+        if(Files.notExists(extractPath))
             Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("fernflower.jar")), decompilerJarPath);
-        this.decompilerJarPath = decompilerJarPath;
     }
 }

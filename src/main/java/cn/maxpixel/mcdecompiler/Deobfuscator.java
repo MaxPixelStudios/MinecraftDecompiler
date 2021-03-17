@@ -123,8 +123,8 @@ public class Deobfuscator {
             IDecompiler decompiler = Decompilers.get(decompilerType);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
-            if(decompiler instanceof IExternalJarDecompiler)
-                ((IExternalJarDecompiler) decompiler).extractDecompilerTo(Properties.getTempDecompilerPath().toAbsolutePath().normalize());
+            if(decompiler instanceof IExternalResourcesDecompiler)
+                ((IExternalResourcesDecompiler) decompiler).extractTo(Properties.get(Properties.Key.TEMP_DIR).toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler && version != null)
                 ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
             LOGGER.info("Decompiling using \"{}\"", decompilerType);
@@ -162,8 +162,8 @@ public class Deobfuscator {
             ICustomizedDecompiler decompiler = Decompilers.getCustomized(customizedDecompilerName);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
-            if(decompiler instanceof IExternalJarDecompiler)
-                ((IExternalJarDecompiler) decompiler).extractDecompilerTo(Properties.getTempDecompilerPath().toAbsolutePath().normalize());
+            if(decompiler instanceof IExternalResourcesDecompiler)
+                ((IExternalResourcesDecompiler) decompiler).extractTo(Properties.get(Properties.Key.TEMP_DIR).toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler && version != null)
                 ((ILibRecommendedDecompiler) decompiler).downloadLib(libDownloadPath, version);
             LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
