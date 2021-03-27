@@ -19,8 +19,14 @@ jobs:
       with:
         java-version: 8
         architecture: x64
+        server-id: github
+        settings-path: ${{ github.workspace }}
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+    - name: Deploy to GitHub Packages with Maven
+      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
     - name: Upload target
       if: success()
       uses: actions/upload-artifact@v2

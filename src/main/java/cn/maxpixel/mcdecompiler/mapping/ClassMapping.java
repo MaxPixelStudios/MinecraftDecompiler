@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
@@ -38,12 +39,14 @@ public class ClassMapping extends BaseMapping {
         this.methods = null;
         this.fields = null;
     }
+
     public ClassMapping(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);
         this.onlyUnmappedName = false;
         this.methods = new ObjectArrayList<>();
         this.fields = new Object2ObjectOpenHashMap<>();
     }
+
     public ClassMapping(String targetName) { // CSRG / Tiny
         super(targetName, targetName);
         this.onlyUnmappedName = true;
@@ -55,37 +58,46 @@ public class ClassMapping extends BaseMapping {
         for (BaseFieldMapping field : fields) addField(field);
         return this;
     }
+
     public ClassMapping addField(Collection<? extends BaseFieldMapping> fields) {
         fields.forEach(this::addField);
         return this;
     }
+
     public ClassMapping addMethod(BaseMethodMapping... methods) {
         for (BaseMethodMapping method : methods) addMethod(method);
         return this;
     }
+
     public ClassMapping addMethod(Collection<? extends BaseMethodMapping> methods) {
         methods.forEach(this::addMethod);
         return this;
     }
+
     public ClassMapping addField(BaseFieldMapping field) {
         if(field.getOwner() != this) field.setOwner(this);
         this.fields.put(field.getUnmappedName(), field);
         return this;
     }
+
     public ClassMapping addMethod(BaseMethodMapping method) {
         if(method.getOwner() != this) method.setOwner(this);
         this.methods.add(method);
         return this;
     }
+
     public List<? extends BaseMethodMapping> getMethods() {
         return methods;
     }
+
     public List<? extends BaseFieldMapping> getFields() {
         return new ObjectArrayList<>(fields.values());
     }
+
     public Map<String, ? extends BaseFieldMapping> getFieldMap() {
         return fields;
     }
+
     public BaseFieldMapping getField(String unmappedName) {
         return fields.get(unmappedName);
     }
@@ -103,12 +115,27 @@ public class ClassMapping extends BaseMapping {
     }
 
     @Override
+    @Deprecated
+    public void reverse() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reverse(MappingRemapper remapper) {
+        super.reverse();
+        methods.forEach(m -> m.reverse(remapper));
+        fields.values().forEach(f -> {
+            if(f.isProguard()) f.asProguard().reverse(remapper);
+            else f.reverse();
+        });
+    }
+
+    @Override
     public String toString() {
         return "ClassMapping{" +
                 "unmapped name=" + getUnmappedName() +
                 ", mapped name=" + getMappedName() +
-                ", methods=" + Arrays.toString(methods.toArray()) +
-                ", fields=" + Arrays.toString(fields.values().toArray()) +
+                ", methods=" + (methods == null ? "{}" : Arrays.toString(methods.toArray())) +
+                ", fields=" + (fields == null ? "{}" : Arrays.toString(fields.values().toArray())) +
                 '}';
     }
 }

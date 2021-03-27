@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.util.ProcessUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
@@ -43,12 +43,12 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
-        ObjectArrayList<String> args = new ObjectArrayList<>(new String[] {"java", "-jar", decompilerJarPath.toString(), "-rsy=1", "-dgs=1", "-asc=1", "-bsm=1", "-iec=1", "-jvn=1", "-log=TRACE"});
+        ObjectArrayList<String> args = new ObjectArrayList<>(new String[] {"java", "-jar", decompilerJarPath.toString(), "-rsy=1", "-dgs=1", "-ren=0", "-asc=1", "-bsm=1", "-iec=1", "-jvn=1", "-log=TRACE"});
         List<String> libs = listLibs();
         for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
         args.add(source.toString());
         args.add(target.toString());
         Process process = Runtime.getRuntime().exec(args.toArray(new String[0]));
-        ProcessUtil.waitForProcess(process);
+        Utils.waitForProcess(process);
     }
 }

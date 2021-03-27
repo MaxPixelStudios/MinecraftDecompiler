@@ -27,9 +27,9 @@ public class TsrgDeobfuscator extends AbstractDeobfuscator {
         super(mappingPath);
     }
     @Override
-    public TsrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers) {
+    public TsrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) {
         try(TsrgMappingReader mappingReader = new TsrgMappingReader(mappingPath)) {
-            sharedDeobfuscate(source, target, mappingReader, includeOthers);
+            sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse);
         } catch (Exception e) {
             LOGGER.catching(e);
         }

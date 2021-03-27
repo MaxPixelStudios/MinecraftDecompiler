@@ -25,6 +25,7 @@ import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
@@ -41,11 +42,19 @@ public class MappingRemapper extends Remapper {
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappingByMap;
     private final SuperClassMapping superClassMapping;
     private static final Logger LOGGER = LogManager.getLogger("Remapper");
+
+    public MappingRemapper(AbstractMappingReader mappingReader) {
+        this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
+        this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
+        this.superClassMapping = null;
+    }
+
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {
         this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
         this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
         this.superClassMapping = superClassMapping;
     }
+
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping, String fromNamespace, String toNamespace) {
         this.mappingByUnm = ((List<TinyClassMapping>) mappingReader.getMappings()).stream()
                 .collect(Collectors.toMap(cm -> cm.getName(fromNamespace), Function.identity(), (cm1, cm2) -> {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
@@ -53,45 +62,82 @@ public class MappingRemapper extends Remapper {
                 .collect(Collectors.toMap(cm -> cm.getName(toNamespace), Function.identity(), (cm1, cm2) -> {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
         this.superClassMapping = superClassMapping;
     }
+
     @Override
     public String map(String internalName) {
-        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName0(internalName));
+        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(internalName));
         if(classMapping != null) return NamingUtil.asNativeName(classMapping.getMappedName());
         else return internalName;
     }
 
-    private String mapType(final Type type) {
-        switch (type.getSort()) {
+    private String mapToUnmapped(final Type mappedType) {
+        switch (mappedType.getSort()) {
             case Type.ARRAY:
                 StringBuilder remappedDescriptor = new StringBuilder();
-                for (int i = 0; i < type.getDimensions(); ++i) {
+                for (int i = 0; i < mappedType.getDimensions(); ++i) {
                     remappedDescriptor.append('[');
                 }
-                remappedDescriptor.append(mapType(type.getElementType()));
+                remappedDescriptor.append(mapToUnmapped(mappedType.getElementType()));
                 return remappedDescriptor.toString();
             case Type.OBJECT:
-                ClassMapping cm = mappingByMap.get(type.getClassName());
-                return cm != null ? NamingUtil.asDescriptor(cm.getUnmappedName()) : type.getDescriptor();
+                ClassMapping cm = mappingByMap.get(mappedType.getClassName());
+                return cm != null ? NamingUtil.asDescriptor(cm.getUnmappedName()) : mappedType.getDescriptor();
             default:
-                return type.getDescriptor();
+                return mappedType.getDescriptor();
         }
     }
-    private String getUnmappedDescByMappedDesc(String originalDescriptor) {
-        if ("()V".equals(originalDescriptor)) {
-            return originalDescriptor;
+
+    public String getUnmappedDescByMappedDesc(String mappedDescriptor) {
+        if ("()V".equals(mappedDescriptor)) {
+            return mappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
-        for (Type argumentType : Type.getArgumentTypes(originalDescriptor)) {
-            stringBuilder.append(mapType(argumentType));
+        for (Type argumentType : Type.getArgumentTypes(mappedDescriptor)) {
+            stringBuilder.append(mapToUnmapped(argumentType));
         }
-        Type returnType = Type.getReturnType(originalDescriptor);
+        Type returnType = Type.getReturnType(mappedDescriptor);
         if (returnType == Type.VOID_TYPE) {
             stringBuilder.append(")V");
         } else {
-            stringBuilder.append(')').append(mapType(returnType));
+            stringBuilder.append(')').append(mapToUnmapped(returnType));
         }
         return stringBuilder.toString();
     }
+
+    private String mapToMapped(final Type unmappedType) {
+        switch (unmappedType.getSort()) {
+            case Type.ARRAY:
+                StringBuilder remappedDescriptor = new StringBuilder();
+                for (int i = 0; i < unmappedType.getDimensions(); ++i) {
+                    remappedDescriptor.append('[');
+                }
+                remappedDescriptor.append(mapToUnmapped(unmappedType.getElementType()));
+                return remappedDescriptor.toString();
+            case Type.OBJECT:
+                ClassMapping cm = mappingByUnm.get(unmappedType.getClassName());
+                return cm != null ? NamingUtil.asDescriptor(cm.getMappedName()) : unmappedType.getDescriptor();
+            default:
+                return unmappedType.getDescriptor();
+        }
+    }
+
+    public String getMappedDescByUnmappedDesc(String unmappedDescriptor) {
+        if ("()V".equals(unmappedDescriptor)) {
+            return unmappedDescriptor;
+        }
+        StringBuilder stringBuilder = new StringBuilder("(");
+        for (Type argumentType : Type.getArgumentTypes(unmappedDescriptor)) {
+            stringBuilder.append(mapToMapped(argumentType));
+        }
+        Type returnType = Type.getReturnType(unmappedDescriptor);
+        if (returnType == Type.VOID_TYPE) {
+            stringBuilder.append(")V");
+        } else {
+            stringBuilder.append(')').append(mapToMapped(returnType));
+        }
+        return stringBuilder.toString();
+    }
+
     private String getUnmappedDesc(BaseMethodMapping mapping) {
         if(mapping.isDescriptor()) return mapping.asDescriptor().getUnmappedDescriptor();
         else if(mapping.isMappedDescriptor()) return getUnmappedDescByMappedDesc(mapping.asMappedDescriptor().getMappedDescriptor());
@@ -101,7 +147,7 @@ public class MappingRemapper extends Remapper {
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
-            ClassMapping cm = mappingByUnm.get(NamingUtil.asJavaName(owner));
+            ClassMapping cm = mappingByUnm.get(NamingUtil.asJavaName0(owner));
             if(cm != null) {
                 AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
                 cm.getMethods().parallelStream().filter(m -> m.getUnmappedName().equals(name)).forEach(mapping -> {
@@ -118,7 +164,9 @@ public class MappingRemapper extends Remapper {
         return name;
     }
     private BaseMethodMapping processSuperMethod(String owner, String name, String descriptor) {
-        List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
+        if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
+                "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
+        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName0(owner));
         if(superNames != null) {
             AtomicReference<BaseMethodMapping> methodMapping = new AtomicReference<>();
             superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).flatMap(cm -> cm.getMethods().stream()).filter(m -> {
@@ -138,7 +186,7 @@ public class MappingRemapper extends Remapper {
     }
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
-        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(owner));
+        ClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName0(owner));
         if(classMapping != null) {
             BaseFieldMapping fieldMapping = classMapping.getField(name);
             if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
@@ -147,7 +195,9 @@ public class MappingRemapper extends Remapper {
         return name;
     }
     private BaseFieldMapping processSuperField(String owner, String name) {
-        List<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
+        if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
+                "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
+        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName0(owner));
         if(superNames != null) {
             AtomicReference<BaseFieldMapping> fieldMapping = new AtomicReference<>();
             superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).map(cm -> cm.getField(name)).filter(Objects::nonNull)

@@ -18,18 +18,60 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 
 public class Utils {
     public interface MapFunction<T, U> {
         U map(int index, T t);
     }
+
     public static <T, U> U[] mapArray(T[] t, MapFunction<T, U> func, Class<U> cls) {
         U[] u = (U[]) Array.newInstance(cls, t.length);
         for(int i = 0; i < t.length; i++) u[i] = func.map(i, t[i]);
         return u;
     }
+
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
+    }
+
+    public static void waitForProcess(Process pro) {
+        Logger LOGGER = LogManager.getLogger("Process " + pro);
+        try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
+            BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
+            Thread inT = new Thread(() -> {
+                try {
+                    String ins;
+                    while ((ins = in.readLine()) != null) {
+                        LOGGER.debug(ins);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.catching(e);
+                }
+            });
+            Thread errT = new Thread(() -> {
+                try {
+                    String ins;
+                    while ((ins = err.readLine()) != null) {
+                        LOGGER.error(ins);
+                    }
+                } catch (Throwable e) {
+                    LOGGER.catching(e);
+                }
+            });
+            inT.setDaemon(true);
+            errT.setDaemon(true);
+            inT.start();
+            errT.start();
+            pro.waitFor();
+        } catch (IOException | InterruptedException e) {
+            LOGGER.catching(e);
+        }
     }
 }

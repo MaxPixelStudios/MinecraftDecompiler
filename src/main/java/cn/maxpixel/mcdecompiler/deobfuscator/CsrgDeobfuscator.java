@@ -27,9 +27,9 @@ public class CsrgDeobfuscator extends AbstractDeobfuscator {
         super(mappingPath);
     }
     @Override
-    public CsrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers) {
+    public CsrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) {
         try(CsrgMappingReader mappingReader = new CsrgMappingReader(mappingPath)) {
-            sharedDeobfuscate(source, target, mappingReader, includeOthers);
+            sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse);
         } catch (Exception e) {
             LOGGER.catching(e);
         }

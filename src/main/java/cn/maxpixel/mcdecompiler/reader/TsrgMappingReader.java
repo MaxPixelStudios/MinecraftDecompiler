@@ -37,20 +37,25 @@ public class TsrgMappingReader extends AbstractMappingReader {
     public TsrgMappingReader(BufferedReader reader) {
         super(reader);
     }
+
     public TsrgMappingReader(Reader rd) {
         super(rd);
     }
+
     public TsrgMappingReader(InputStream is) {
         super(is);
     }
+
     public TsrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
+
     private final TsrgMappingProcessor PROCESSOR = new TsrgMappingProcessor();
     @Override
     protected TsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
+
     private static class TsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         private final ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
@@ -73,25 +78,30 @@ public class TsrgMappingReader extends AbstractMappingReader {
             if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
             return mappings;
         }
+
         @Override
         protected ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName0(strings[0]), NamingUtil.asJavaName0(strings[1]));
+            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
         }
+
         @Override
         protected DescriptoredBaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
             return new DescriptoredBaseMethodMapping(strings[0], strings[2], strings[1]);
         }
+
         @Override
         protected BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
             return new BaseFieldMapping(strings[0], strings[1]);
         }
+
         @Override
         public ObjectList<PackageMapping> getPackages() {
             return packages;
         }
+
         @Override
         protected PackageMapping processPackage(String line) {
             String[] strings = line.split(" ");

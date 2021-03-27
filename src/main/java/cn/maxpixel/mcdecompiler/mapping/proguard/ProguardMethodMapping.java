@@ -22,7 +22,8 @@ import cn.maxpixel.mcdecompiler.mapping.base.MappedDescriptoredBaseMethodMapping
 import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
 
 public class ProguardMethodMapping extends MappedDescriptoredBaseMethodMapping implements LineNumber {
-    private int[] lineNums = new int[2];
+    private final int[] lineNums = new int[2];
+
     public ProguardMethodMapping(String unmappedName, String mappedName,
                                  String mappedDescriptor, int lineNumberS, int lineNumberE) {
         super(unmappedName, mappedName, mappedDescriptor);
@@ -30,22 +31,27 @@ public class ProguardMethodMapping extends MappedDescriptoredBaseMethodMapping i
         this.lineNums[1] = lineNumberE;
     }
     public ProguardMethodMapping() {}
+
     @Override
     public int getLineNumberS() {
         return lineNums[0];
     }
+
     @Override
     public int getLineNumberE() {
         return lineNums[1];
     }
+
     @Override
     public void setLineNumberS(int ns) {
         this.lineNums[0] = ns;
     }
+
     @Override
     public void setLineNumberE(int ne) {
         this.lineNums[1] = ne;
     }
+
     @Override
     public String toString() {
         return "ProguardMethodMapping{" +

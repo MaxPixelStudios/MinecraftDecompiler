@@ -22,19 +22,23 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
 public class MappedDescriptoredBaseMethodMapping extends BaseMethodMapping implements Descriptor.Mapped {
     private String mappedDescriptor;
+
     public MappedDescriptoredBaseMethodMapping(String unmappedName, String mappedName, String mappedDescriptor) {
         super(unmappedName, mappedName);
         this.mappedDescriptor = mappedDescriptor;
     }
     public MappedDescriptoredBaseMethodMapping() {}
+
     @Override
     public String getMappedDescriptor() {
         return mappedDescriptor;
     }
+
     @Override
     public void setMappedDescriptor(String mappedDescriptor) {
         this.mappedDescriptor = mappedDescriptor;
     }
+
     @Override
     public boolean equals(Object obj) {
         if(this == obj) return true;
@@ -44,6 +48,7 @@ public class MappedDescriptoredBaseMethodMapping extends BaseMethodMapping imple
         }
         return false;
     }
+
     @Override
     public String toString() {
         return "MappedDescriptoredBaseMethodMapping{" +

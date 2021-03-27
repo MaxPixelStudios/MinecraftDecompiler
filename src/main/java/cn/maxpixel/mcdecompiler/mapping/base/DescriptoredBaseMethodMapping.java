@@ -23,24 +23,29 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
 public class DescriptoredBaseMethodMapping extends BaseMethodMapping implements Descriptor {
     private String unmappedDescriptor;
+
     public DescriptoredBaseMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor) {
         super(unmappedName, mappedName);
         this.unmappedDescriptor = unmappedDescriptor;
     }
     public DescriptoredBaseMethodMapping() {}
+
     @Override
     public String getUnmappedDescriptor() {
         return unmappedDescriptor;
     }
+
     @Override
     public void setUnmappedDescriptor(String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
     }
+
     @Override
     public DescriptoredBaseMethodMapping setOwner(ClassMapping owner) {
         super.setOwner(owner);
         return this;
     }
+
     @Override
     public boolean equals(Object obj) {
         if(this == obj) return true;
@@ -50,6 +55,7 @@ public class DescriptoredBaseMethodMapping extends BaseMethodMapping implements 
         }
         return false;
     }
+
     @Override
     public String toString() {
         return "DescriptoredBaseMethodMapping{" +

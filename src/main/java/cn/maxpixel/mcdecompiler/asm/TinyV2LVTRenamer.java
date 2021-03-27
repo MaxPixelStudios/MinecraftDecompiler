@@ -27,6 +27,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Optional;
+
 public class TinyV2LVTRenamer extends ClassVisitor {
     private final Object2ObjectOpenHashMap<String, TinyClassMapping> mappings;
     private TinyClassMapping mapping;
@@ -43,19 +45,18 @@ public class TinyV2LVTRenamer extends ClassVisitor {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        if(!disabled) mapping = mappings.get(NamingUtil.asJavaName0(name));
+        if(!disabled) mapping = mappings.get(NamingUtil.asJavaName(name));
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         if(!disabled) {
-            TinyMethodMapping methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny().get();
+            Optional<TinyMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
             return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
                 @Override
                 public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                    String mapped = methodMapping.getLocalVariable(index);
-                    super.visitLocalVariable(mapped == null ? name : mapped, descriptor, signature, start, end, index);
+                    super.visitLocalVariable(methodMapping.map(mm -> mm.getLocalVariableName(index)).orElse(name), descriptor, signature, start, end, index);
                 }
             };
         } else return super.visitMethod(access, name, descriptor, signature, exceptions);

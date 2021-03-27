@@ -25,6 +25,7 @@ public class LambdaUtil {
     public interface ConsumerWithThrows<T, E extends Throwable> {
         void accept(T t) throws E;
     }
+
     @SuppressWarnings("unchecked")
     public static <T, E extends Throwable> Consumer<T> handleThrowable(ConsumerWithThrows<T, E> consumerWithThrows, Consumer<E> exceptionHandler) {
         return t -> {
@@ -35,17 +36,21 @@ public class LambdaUtil {
             }
         };
     }
+
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
         throw new RuntimeException(throwable);
     }
+
     public static <T, E extends Throwable> Consumer<T> handleThrowable(ConsumerWithThrows<T, E> consumerWithThrows) {
         return handleThrowable(consumerWithThrows, e -> {}); // Do nothing
     }
+
     public static <T extends AutoCloseable> void handleAutoCloseable(T resource, Consumer<T> consumer) throws Exception {
         try(T autoCloseable = resource) {
             consumer.accept(autoCloseable);
         }
     }
+
     public static <T extends AutoCloseable> void handleAutoCloseable(T resource, Consumer<T> consumer, Consumer<Exception> exceptionHandler) {
         try(T autoCloseable = resource) {
             consumer.accept(autoCloseable);

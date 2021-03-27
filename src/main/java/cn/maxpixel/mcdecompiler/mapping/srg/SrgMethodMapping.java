@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.srg;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
@@ -25,33 +26,40 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 public class SrgMethodMapping extends BaseMethodMapping implements Descriptor, Descriptor.Mapped {
     private String unmappedDescriptor;
     private String mappedDescriptor;
+
     public SrgMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor, String mappedDescriptor) {
         super(unmappedName, mappedName);
         this.unmappedDescriptor = unmappedDescriptor;
         this.mappedDescriptor = mappedDescriptor;
     }
     public SrgMethodMapping() {}
+
     @Override
     public String getUnmappedDescriptor() {
         return unmappedDescriptor;
     }
+
     @Override
     public void setUnmappedDescriptor(String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
     }
+
     @Override
     public String getMappedDescriptor() {
         return mappedDescriptor;
     }
+
     @Override
     public void setMappedDescriptor(String mappedDescriptor) {
         this.mappedDescriptor = mappedDescriptor;
     }
+
     @Override
     public SrgMethodMapping setOwner(ClassMapping owner) {
         super.setOwner(owner);
         return this;
     }
+
     @Override
     public boolean equals(Object obj) {
         if(this == obj) return true;
@@ -62,6 +70,30 @@ public class SrgMethodMapping extends BaseMethodMapping implements Descriptor, D
         }
         return false;
     }
+
+    @Override
+    public void reverse() {
+        String temp = getUnmappedName();
+        setUnmappedName(getMappedName());
+        setMappedName(temp);
+
+        temp = unmappedDescriptor;
+        unmappedDescriptor = mappedDescriptor;
+        mappedDescriptor = temp;
+    }
+
+    @Override
+    @Deprecated
+    public void reverse(MappingRemapper remapper) {
+        reverse();
+    }
+
+    @Override
+    @Deprecated
+    public void reverse0(MappingRemapper remapper) {
+        reverse();
+    }
+
     @Override
     public String toString() {
         return "SrgMethodMapping{" +

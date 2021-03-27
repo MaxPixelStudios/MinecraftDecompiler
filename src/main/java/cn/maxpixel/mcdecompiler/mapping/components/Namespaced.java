@@ -20,5 +20,5 @@ package cn.maxpixel.mcdecompiler.mapping.components;
 
 public interface Namespaced {
     String getName(String namespace);
-    void setName(cn.maxpixel.mcdecompiler.mapping.tiny.Namespaced name);
+    void setName(String namespace, String name);
 }

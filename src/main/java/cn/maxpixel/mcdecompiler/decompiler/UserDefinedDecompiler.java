@@ -20,7 +20,7 @@ package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
-import cn.maxpixel.mcdecompiler.util.ProcessUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
@@ -61,7 +61,7 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         arrayList.add("-jar");
         arrayList.add(decompilerPath.toString());
         arrayList.addAll(resolveArgs(source, target, options));
-        ProcessUtil.waitForProcess(Runtime.getRuntime().exec(arrayList.toArray(new String[0])));
+        Utils.waitForProcess(Runtime.getRuntime().exec(arrayList.toArray(new String[0])));
     }
     private ObjectArrayList<String> resolveArgs(Path source, Path target, ObjectArrayList<String> options) {
         ObjectArrayList<String> resolvedOptions = new ObjectArrayList<>();

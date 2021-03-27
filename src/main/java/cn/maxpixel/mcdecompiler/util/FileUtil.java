@@ -27,10 +27,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtil {
     private static final Logger LOGGER = LogManager.getLogger();
+
     public static void copy(Path source, Path target, CopyOption... copyOptions) {
         if(Files.isDirectory(source)) copyDirectory(source, target, copyOptions);
         else copyFile(source, target, copyOptions);
     }
+
     public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
         if(Files.notExists(source)) {
             LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
@@ -57,6 +59,7 @@ public class FileUtil {
             LOGGER.error("Error when coping directory", e);
         }
     }
+
     public static void copyFile(Path source, Path target, CopyOption... copyOptions) {
         if(Files.isDirectory(target)) target = target.resolve(source.getFileName());
         if(Files.notExists(source)) {
@@ -74,6 +77,7 @@ public class FileUtil {
             e.printStackTrace();
         }
     }
+
     /** Delete if exists */
     public static void delete(Path path) {
         if(Files.notExists(path)) {
@@ -89,6 +93,7 @@ public class FileUtil {
             }
         }
     }
+
     public static void deleteDirectory(Path directory) {
         if(Files.notExists(directory)) {
             LOGGER.debug("\"{}\" does not exist, skipping this operation...", directory);
@@ -122,9 +127,11 @@ public class FileUtil {
             LOGGER.error("Error when deleting directory \"{}\"", directory, e);
         }
     }
+
     public static void requireExist(Path p) {
         if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
     }
+
     public static void ensureFileExist(Path p) {
         if(Files.notExists(p)) {
             try {
@@ -135,6 +142,7 @@ public class FileUtil {
             }
         }
     }
+
     public static void ensureDirectoryExist(Path p) {
         if(Files.notExists(p)) {
             try {

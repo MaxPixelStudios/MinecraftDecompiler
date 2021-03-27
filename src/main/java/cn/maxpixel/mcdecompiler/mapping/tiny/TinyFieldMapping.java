@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.tiny;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
@@ -25,10 +26,13 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Documented;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
+import java.nio.file.Path;
+
 public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn.maxpixel.mcdecompiler.mapping.components.Namespaced, Documented {
     private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
     private String unmappedDescriptor;
     private String document;
+
     public TinyFieldMapping(String unmappedDescriptor, Namespaced... names) {
         for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
         this.unmappedDescriptor = unmappedDescriptor;
@@ -38,11 +42,13 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
     public TinyClassMapping getOwner() {
         return (TinyClassMapping) super.getOwner();
     }
+
     @Override
     public TinyFieldMapping setOwner(ClassMapping owner) {
         if(!(owner instanceof TinyClassMapping)) throw new IllegalArgumentException("TinyFieldMapping's owner must be TinyClassMapping");
         return this.setOwner((TinyClassMapping) owner);
     }
+
     public TinyFieldMapping setOwner(TinyClassMapping owner) {
         super.setOwner(owner);
         return this;
@@ -54,18 +60,18 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
     }
 
     @Override
-    public void setName(Namespaced name) {
-        names.put(name.getNamespace(), name.getName());
+    public void setName(String namespace, String name) {
+        names.put(namespace, name);
     }
 
-    /** Recommend to use {@link TinyFieldMapping#getName(String)} */
+    /** Recommend to use {@link #getName(String)} */
     @Override
     public String getUnmappedName() {
         String s = getName(Namespaced.OFFICIAL);
         return s == null ? getName(Namespaced.INTERMEDIARY) : s;
     }
 
-    /** Recommend to use {@link TinyFieldMapping#getName(String)} */
+    /** Recommend to use {@link #getName(String)} */
     @Override
     public String getMappedName() {
         String s = getName(Namespaced.YARN);
@@ -73,7 +79,7 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
     }
 
     /**
-     * @deprecated Use {@link TinyFieldMapping#setName(Namespaced)} instead.
+     * @deprecated Use {@link #setName(String, String)} instead.
      * @throws UnsupportedOperationException When calling this method
      */
     @Override
@@ -83,12 +89,29 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
     }
 
     /**
-     * @deprecated Use {@link TinyFieldMapping#setName(Namespaced)} instead.
+     * @deprecated Use {@link #setName(String, String)} instead.
      * @throws UnsupportedOperationException When calling this method
      */
     @Override
     @Deprecated
     public void setMappedName(String mappedName) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @deprecated Use {@link cn.maxpixel.mcdecompiler.deobfuscator.TinyDeobfuscator#deobfuscate(Path, Path, boolean, String, String)}
+     * @throws UnsupportedOperationException When calling this method
+     */
+    @Override
+    @Deprecated
+    public void reverse() {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @deprecated See {@link #reverse()} for more info */
+    @Override
+    @Deprecated
+    public void reverse0(MappingRemapper remapper) {
         throw new UnsupportedOperationException();
     }
 

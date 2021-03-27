@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.base;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
 
@@ -27,13 +28,31 @@ public abstract class BaseMethodMapping extends BaseFieldMethodShared {
     }
     public BaseMethodMapping() {}
 
+    public boolean isLineNumber() {
+        return this instanceof LineNumber;
+    }
+
     public LineNumber asLineNumber() {
         return (LineNumber) this;
     }
+
     @Override
     public BaseMethodMapping setOwner(ClassMapping owner) {
         super.setOwner(owner);
         return this;
+    }
+
+    @Override
+    @Deprecated
+    public void reverse() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reverse(MappingRemapper remapper) {
+        super.reverse();
+        if(isDescriptor()) asDescriptor().reverse0(remapper);
+        else if(isMappedDescriptor()) asMappedDescriptor().reverse0(remapper);
+        else throw new IllegalArgumentException("Impls of MethodMapping must implement at least one of Descriptor or Descriptor.Mapped");
     }
 
     @Override
@@ -46,6 +65,7 @@ public abstract class BaseMethodMapping extends BaseFieldMethodShared {
         }
         return false;
     }
+
     @Override
     public String toString() {
         return "BaseMethodMapping{" +

@@ -27,9 +27,11 @@ import java.util.Objects;
 public class Properties {
     public static class Key<V> {
         private final String name;
+
         private Key(String name) {
             this.name = Objects.requireNonNull(name);
         }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -37,6 +39,7 @@ public class Properties {
             @SuppressWarnings("rawtypes") Key key = (Key) o;
             return name.equals(key.name);
         }
+
         @Override
         public int hashCode() {
             return Objects.hash(name);
@@ -51,16 +54,22 @@ public class Properties {
         public static final Key<Path> OUTPUT_DIR = new Key<>("outputDir");
         public static final Key<String> OUTPUT_DEOBFUSCATED_NAME = new Key<>("outputDeobfuscatedName");
         public static final Key<String> OUTPUT_DECOMPILED_NAME = new Key<>("outputDecompiledName");
+
+        public static final Key<Boolean> REVERSE = new Key<>("reverse");
     }
+
     private static final Object2ObjectOpenHashMap<Key<?>, Object> PROPERTIES_MAP = new Object2ObjectOpenHashMap<>();
+
     @SuppressWarnings("unchecked")
     public static <V> V put(Key<V> key, V value) {
         return (V) PROPERTIES_MAP.put(key, value);
     }
+
     @SuppressWarnings("unchecked")
     public static <V> V get(Key<V> key) {
         return (V) PROPERTIES_MAP.get(key);
     }
+
     static {
         // Default values
         put(Key.TEMP_DIR, Paths.get("temp"));
@@ -69,6 +78,7 @@ public class Properties {
         put(Key.OUTPUT_DIR, Paths.get("output"));
         put(Key.OUTPUT_DEOBFUSCATED_NAME, "deobfuscated");
         put(Key.OUTPUT_DECOMPILED_NAME, "decompiled");
+        put(Key.REVERSE, false);
     }
 
     // Methods have to do with Key.TEMP_DIR

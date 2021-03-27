@@ -47,11 +47,13 @@ public class CsrgMappingReader extends AbstractMappingReader {
     public CsrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
+
     private final CsrgMappingProcessor PROCESSOR = new CsrgMappingProcessor();
     @Override
     protected CsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
+
     private static class CsrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         private ObjectList<ClassMapping> mappingsCache;
@@ -89,27 +91,32 @@ public class CsrgMappingReader extends AbstractMappingReader {
             mappingsCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
             return mappingsCache;
         }
+
         @Override
-        protected ClassMapping processClass(String line) {
+        ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName0(strings[0]), NamingUtil.asJavaName0(strings[1]));
+            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
         }
+
         @Override
-        protected DescriptoredBaseMethodMapping processMethod(String line) {
+        DescriptoredBaseMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName0(strings[0])));
+            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
         }
+
         @Override
-        protected BaseFieldMapping processField(String line) {
+        BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName0(strings[0])));
+            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
         }
+
         @Override
-        public ObjectList<PackageMapping> getPackages() {
+        ObjectList<PackageMapping> getPackages() {
             return packages;
         }
+
         @Override
-        protected PackageMapping processPackage(String line) {
+        PackageMapping processPackage(String line) {
             String[] strings = line.split(" ");
             return new PackageMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
         }

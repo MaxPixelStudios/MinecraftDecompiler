@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.util.ProcessUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompil
         args.add(source.toString());
         args.add(target.toString());
         Process process = Runtime.getRuntime().exec(args.toArray(new String[0]));
-        ProcessUtil.waitForProcess(process);
+        Utils.waitForProcess(process);
     }
     @Override
     public void extractTo(Path extractPath) throws IOException {

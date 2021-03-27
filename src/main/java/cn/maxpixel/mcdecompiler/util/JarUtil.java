@@ -30,13 +30,16 @@ import java.nio.file.spi.FileSystemProvider;
 public class JarUtil {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final FileSystemProvider JAR_FSP;
+
     public static FileSystemProvider getJarFileSystemProvider() {
         return JAR_FSP;
     }
+
     public static FileSystem createZipFs(Path zipPath) throws IOException {
         LOGGER.debug("Creating JarFileSystem for \"{}\"", zipPath);
         return JAR_FSP.newFileSystem(zipPath, Object2ObjectMaps.singleton("create", "true"));
     }
+
     static {
         FileSystemProvider provider = null;
         for (FileSystemProvider p: FileSystemProvider.installedProviders()) {

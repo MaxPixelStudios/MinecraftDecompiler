@@ -18,22 +18,37 @@
 
 package cn.maxpixel.mcdecompiler.mapping.proguard;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
 public class ProguardFieldMapping extends BaseFieldMapping implements Descriptor.Mapped {
     private String mappedDescriptor;
+
     public ProguardFieldMapping(String unmappedName, String mappedName, String mappedDescriptor) {
         super(unmappedName, mappedName);
         this.mappedDescriptor = mappedDescriptor;
     }
     public ProguardFieldMapping() {}
+
     @Override
     public String getMappedDescriptor() {
         return mappedDescriptor;
     }
+
     @Override
     public void setMappedDescriptor(String mappedDescriptor) {
         this.mappedDescriptor = mappedDescriptor;
+    }
+
+    @Override
+    @Deprecated
+    public void reverse() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void reverse(MappingRemapper remapper) {
+        super.reverse();
+        reverse0(remapper);
     }
 }

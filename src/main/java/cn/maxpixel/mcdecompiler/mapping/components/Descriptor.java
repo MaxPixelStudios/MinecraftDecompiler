@@ -18,11 +18,19 @@
 
 package cn.maxpixel.mcdecompiler.mapping.components;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+
 public interface Descriptor {
     String getUnmappedDescriptor();
     void setUnmappedDescriptor(String unmappedDescriptor);
+    default void reverse0(MappingRemapper remapper) {
+        setUnmappedDescriptor(remapper.getMappedDescByUnmappedDesc(getUnmappedDescriptor()));
+    }
     interface Mapped {
         String getMappedDescriptor();
         void setMappedDescriptor(String mappedDescriptor);
+        default void reverse0(MappingRemapper remapper) {
+            setMappedDescriptor(remapper.getUnmappedDescByMappedDesc(getMappedDescriptor()));
+        }
     }
 }

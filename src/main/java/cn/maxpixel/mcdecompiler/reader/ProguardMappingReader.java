@@ -36,12 +36,15 @@ public class ProguardMappingReader extends AbstractMappingReader {
     public ProguardMappingReader(BufferedReader reader) {
         super(reader);
     }
+
     public ProguardMappingReader(Reader rd) {
         super(rd);
     }
+
     public ProguardMappingReader(InputStream is) {
         super(is);
     }
+
     public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
@@ -73,13 +76,13 @@ public class ProguardMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected ClassMapping processClass(String line) {
+        ClassMapping processClass(String line) {
             String[] split = line.split("( -> )|:");
             return new ClassMapping(split[1], split[0]);
         }
 
         @Override
-        protected ProguardMethodMapping processMethod(String line) {
+        ProguardMethodMapping processMethod(String line) {
             ProguardMethodMapping methodMapping = new ProguardMethodMapping();
 
             String[] linenums = line.split(":");
@@ -104,7 +107,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected ProguardFieldMapping processField(String line) {
+        ProguardFieldMapping processField(String line) {
             String[] strings = line.split("( -> )| ");
             return new ProguardFieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
         }

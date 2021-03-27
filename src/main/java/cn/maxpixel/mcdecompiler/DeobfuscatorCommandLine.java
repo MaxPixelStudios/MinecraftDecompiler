@@ -41,7 +41,7 @@ public class DeobfuscatorCommandLine {
     private static final Logger LOGGER;
     public static final Proxy INTERNAL_PROXY = System.console() == null &&
             Boolean.parseBoolean(System.getProperty("mcd.internalProxy", "false")) ?
-            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : //Just for internal testing.
+            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
             Proxy.NO_PROXY;
     public static void main(String[] args) {
         OptionParser parser = new OptionParser();
@@ -53,6 +53,8 @@ public class DeobfuscatorCommandLine {
                 "and mustn't specify --input or --mappingPath option.").requiredIf(sideTypeO).withRequiredArg();
         OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
                 "names which are 'snowman' using JAD style");
+        OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping to " +
+                "deobfuscate. Doesn't support Tiny mappings. This option is ignored if you are using Tiny mappings.");
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
                 "specify --mappingPath option and musn't specify --version or --side option.").requiredUnless(versionO, sideTypeO).withRequiredArg()
                 .withValuesConvertedBy(new PathConverter());
@@ -121,6 +123,11 @@ public class DeobfuscatorCommandLine {
             options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(ClassLoaderUtils::appendToClassPath,
                                                             LambdaUtil::rethrowAsRuntime));
         if(options.has(regenVarNameO)) Properties.put(Properties.Key.REGEN_VAR_NAME, true);
+        if(options.has(reverseO) && options.has(sideTypeO)) {
+            throw new IllegalArgumentException("Specify --input and --mappingPath options if you want to use --reverse option. " +
+                    "Use --version and --side with --reverse is meaningless.");
+        }
+        if(options.has(reverseO)) Properties.put(Properties.Key.REVERSE, true);
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.put(Properties.Key.TEMP_DIR, p));
         if(!options.has(sideTypeO)) {

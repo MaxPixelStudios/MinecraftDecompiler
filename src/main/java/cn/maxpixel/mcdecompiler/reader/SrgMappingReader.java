@@ -38,20 +38,25 @@ public class SrgMappingReader extends AbstractMappingReader {
     public SrgMappingReader(BufferedReader reader) {
         super(reader);
     }
+
     public SrgMappingReader(Reader rd) {
         super(rd);
     }
+
     public SrgMappingReader(InputStream is) {
         super(is);
     }
+
     public SrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
         super(path);
     }
+
     private final SrgMappingProcessor PROCESSOR = new SrgMappingProcessor();
     @Override
     protected SrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
+
     private static class SrgMappingProcessor extends AbstractMappingProcessor {
         private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
         private ObjectArrayList<ClassMapping> mappingCache;
@@ -86,35 +91,42 @@ public class SrgMappingReader extends AbstractMappingReader {
             mappingCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
             return mappingCache;
         }
+
         @Override
-        protected ClassMapping processClass(String line) {
+        ClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName0(strings[1]), NamingUtil.asJavaName0(strings[2]));
+            return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
         }
+
         private String getClassName(String s) {
-            return NamingUtil.asJavaName0(s.substring(0, s.lastIndexOf('/')));
+            return NamingUtil.asJavaName(s.substring(0, s.lastIndexOf('/')));
         }
+
         private String getName(String s) {
             return s.substring(s.lastIndexOf('/') + 1);
         }
+
         @Override
-        protected SrgMethodMapping processMethod(String line) {
+        SrgMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
             return new SrgMethodMapping(getName(strings[1]), getName(strings[3]), strings[2], strings[4])
                     .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[3])));
         }
+
         @Override
-        protected BaseFieldMapping processField(String line) {
+        BaseFieldMapping processField(String line) {
             String[] strings = line.split(" ");
             return new BaseFieldMapping(getName(strings[1]), getName(strings[2]))
                     .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[2])));
         }
+
         @Override
-        public ObjectList<PackageMapping> getPackages() {
+        ObjectList<PackageMapping> getPackages() {
             return packages;
         }
+
         @Override
-        protected PackageMapping processPackage(String line) {
+        PackageMapping processPackage(String line) {
             String[] strings = line.split(" ");
             return new PackageMapping(strings[1], strings[2]);
         }

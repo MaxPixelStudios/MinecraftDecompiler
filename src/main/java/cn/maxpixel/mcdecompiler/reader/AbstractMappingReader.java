@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
 import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractMappingReader implements AutoCloseable {
-    protected volatile BufferedReader reader;
+    protected BufferedReader reader;
     private List<? extends ClassMapping> mappings;
     private List<PackageMapping> packages;
 
@@ -53,6 +54,8 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         this(new FileReader(Objects.requireNonNull(path)));
     }
 
+    protected abstract AbstractNonPackageMappingProcessor getProcessor();
+
     private void read() {
         AbstractNonPackageMappingProcessor processor = getProcessor();
         mappings = processor.process(reader.lines().map(s -> {
@@ -67,23 +70,35 @@ public abstract class AbstractMappingReader implements AutoCloseable {
         packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
     }
 
-    protected abstract AbstractNonPackageMappingProcessor getProcessor();
     public final List<? extends ClassMapping> getMappings() {
         if(mappings == null) read();
         return mappings;
     }
+
     public final List<PackageMapping> getPackages() {
         if(packages == null) read();
         return packages;
     }
+
+    public final AbstractMappingReader reverse() {
+        if(mappings == null || packages == null) read();
+        if(this instanceof TinyMappingReader) throw new UnsupportedOperationException();
+        MappingRemapper remapper = new MappingRemapper(this);
+        mappings.forEach(cm -> cm.reverse(remapper));
+        packages.forEach(PackageMapping::reverse);
+        return this;
+    }
+
     public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByUnmappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
+
     public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByMappedNameMap() {
         return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(), (cm1, cm2) ->
         {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
     }
+
     @Override
     public final void close() {
         try {
@@ -94,14 +109,16 @@ public abstract class AbstractMappingReader implements AutoCloseable {
             reader = null;
         }
     }
-    protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
-        abstract ObjectList<PackageMapping> getPackages();
-        protected abstract PackageMapping processPackage(String line);
-    }
+
     protected abstract static class AbstractNonPackageMappingProcessor {
         abstract ObjectList<? extends ClassMapping> process(Stream<String> lines);
-        protected abstract ClassMapping processClass(String line);
-        protected abstract BaseMethodMapping processMethod(String line);
-        protected abstract BaseFieldMapping processField(String line);
+        abstract ClassMapping processClass(String line);
+        abstract BaseMethodMapping processMethod(String line);
+        abstract BaseFieldMapping processField(String line);
+    }
+
+    protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
+        abstract ObjectList<PackageMapping> getPackages();
+        abstract PackageMapping processPackage(String line);
     }
 }

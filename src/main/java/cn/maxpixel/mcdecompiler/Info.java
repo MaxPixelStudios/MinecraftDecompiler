@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler;
 
 public interface Info {
     String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
+
     enum SideType {
         CLIENT,
         SERVER;
@@ -28,6 +29,7 @@ public interface Info {
             return name().toLowerCase();
         }
     }
+
     enum MappingType {
         PROGUARD,
         SRG,
@@ -35,6 +37,7 @@ public interface Info {
         CSRG,
         TINY
     }
+
     enum DecompilerType {
         FERNFLOWER,
         OFFICIAL_FERNFLOWER,

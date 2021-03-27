@@ -49,23 +49,34 @@ import java.util.stream.Stream;
 public abstract class AbstractDeobfuscator {
     protected static final Logger LOGGER = LogManager.getLogger();
     protected String mappingPath;
+
     AbstractDeobfuscator() {}
     protected AbstractDeobfuscator(String mappingPath) {
         this.mappingPath = Objects.requireNonNull(mappingPath, "Provided mappingPath cannot be null");
     }
+
     public AbstractDeobfuscator deobfuscate(Path source, Path target) {
         return deobfuscate(source, target, true);
     }
-    public abstract AbstractDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers);
-    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers) throws Exception {
+
+    public AbstractDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers) {
+        return deobfuscate(source, target, includeOthers, Properties.get(Properties.Key.REVERSE));
+    }
+
+    public abstract AbstractDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse);
+
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse) throws Exception {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
+        if(reverse) mappingReader.reverse();
         Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
         SuperClassMapping superClassMapping = new SuperClassMapping();
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             Stream<Path> classes = Files.walk(fs.getPath("/")).filter(p -> Files.isRegularFile(p) &&
-                    mappings.containsKey(NamingUtil.asJavaName(p.toString().substring(1)))).parallel()) {
+                    mappings.containsKey(NamingUtil.asJavaName0(p.toString().substring(1)))).parallel();
+            FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
+            Stream<Path> paths = Files.walk(fs.getPath("/")).skip(1L).filter(Files::isRegularFile).parallel()) {
             classes.forEach(path -> {
                 try {
                     new ClassReader(Files.readAllBytes(path)).accept(superClassMapping,
@@ -76,41 +87,38 @@ public abstract class AbstractDeobfuscator {
             });
             MappingRemapper mappingRemapper = new MappingRemapper(mappingReader, superClassMapping);
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
-            try(FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
-                Stream<Path> paths = Files.walk(fs.getPath("/")).skip(1L).filter(Files::isRegularFile).parallel()) {
-                paths.forEach(path -> {
-                    try(InputStream inputStream = Files.newInputStream(path)) {
-                        String classKeyName = NamingUtil.asJavaName(path.toString().substring(1));
-                        if(mappings.containsKey(classKeyName)) {
-                            ClassReader reader = new ClassReader(inputStream);
-                            ClassWriter writer = new ClassWriter(reader, 0);
-                            reader.accept(new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper), 0);
-                            Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
-                            FileUtil.ensureDirectoryExist(output.getParent());
-                            Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-                        } else if(includeOthers) {
-                            String outputPath = path.toString();
-                            if(outputPath.endsWith(".SF") || outputPath.endsWith(".RSA")) return;
-                            Path output = targetFs.getPath(outputPath);
-                            FileUtil.ensureDirectoryExist(output.getParent());
-                            try(OutputStream os = Files.newOutputStream(output, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                                if(path.endsWith("META-INF/MANIFEST.MF")) {
-                                    Manifest man = new Manifest(inputStream);
-                                    man.getEntries().clear();
-                                    man.write(os);
-                                } else {
-                                    byte[] buf = new byte[8192];
-                                    for(int len = inputStream.read(buf); len > 0; len = inputStream.read(buf)) {
-                                        os.write(buf, 0, len);
-                                    }
+            paths.forEach(path -> {
+                try(InputStream inputStream = Files.newInputStream(path)) {
+                    String classKeyName = NamingUtil.asJavaName0(path.toString().substring(1));
+                    if(mappings.containsKey(classKeyName)) {
+                        ClassReader reader = new ClassReader(inputStream);
+                        ClassWriter writer = new ClassWriter(reader, 0);
+                        reader.accept(new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper), 0);
+                        Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
+                        FileUtil.ensureDirectoryExist(output.getParent());
+                        Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    } else if(includeOthers) {
+                        String outputPath = path.toString();
+                        if(outputPath.endsWith(".SF") || outputPath.endsWith(".RSA")) return;
+                        Path output = targetFs.getPath(outputPath);
+                        FileUtil.ensureDirectoryExist(output.getParent());
+                        try(OutputStream os = Files.newOutputStream(output, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                            if(path.endsWith("META-INF/MANIFEST.MF")) {
+                                Manifest man = new Manifest(inputStream);
+                                man.getEntries().clear();
+                                man.write(os);
+                            } else {
+                                byte[] buf = new byte[8192];
+                                for(int len = inputStream.read(buf); len > 0; len = inputStream.read(buf)) {
+                                    os.write(buf, 0, len);
                                 }
                             }
                         }
-                    } catch(Exception e) {
-                        LOGGER.error("Error when remapping classes or coping files", e);
                     }
-                });
-            }
+                } catch(Exception e) {
+                    LOGGER.error("Error when remapping classes or coping files", e);
+                }
+            });
         } catch (IOException e) {
             LOGGER.error("Error when deobfuscating", e);
         }
