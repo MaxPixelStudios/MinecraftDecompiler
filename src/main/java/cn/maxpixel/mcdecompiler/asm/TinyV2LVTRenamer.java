@@ -32,33 +32,24 @@ import java.util.Optional;
 public class TinyV2LVTRenamer extends ClassVisitor {
     private final Object2ObjectOpenHashMap<String, TinyClassMapping> mappings;
     private TinyClassMapping mapping;
-    private boolean disabled;
     public TinyV2LVTRenamer(ClassVisitor classVisitor, Object2ObjectOpenHashMap<String, TinyClassMapping> mappings) {
         super(Opcodes.ASM9, classVisitor);
         this.mappings = mappings;
     }
-    public TinyV2LVTRenamer(ClassVisitor classVisitor) {
-        super(Opcodes.ASM9, classVisitor);
-        this.mappings = null;
-        this.disabled = true;
-    }
-
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        if(!disabled) mapping = mappings.get(NamingUtil.asJavaName(name));
+        mapping = mappings.get(NamingUtil.asJavaName(name));
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        if(!disabled) {
-            Optional<TinyMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
-            return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-                @Override
-                public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                    super.visitLocalVariable(methodMapping.map(mm -> mm.getLocalVariableName(index)).orElse(name), descriptor, signature, start, end, index);
-                }
-            };
-        } else return super.visitMethod(access, name, descriptor, signature, exceptions);
+        Optional<TinyMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
+        return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+            @Override
+            public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+                super.visitLocalVariable(methodMapping.map(mm -> mm.getLocalVariableName(index)).orElse(name), descriptor, signature, start, end, index);
+            }
+        };
     }
 }

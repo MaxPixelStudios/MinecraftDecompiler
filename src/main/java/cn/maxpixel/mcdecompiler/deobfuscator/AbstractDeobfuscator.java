@@ -32,6 +32,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
@@ -66,26 +67,24 @@ public abstract class AbstractDeobfuscator {
     public abstract AbstractDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse);
 
     protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse) throws Exception {
+        sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse, RemapperConstructor::shared);
+    }
+
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse, RemapperConstructor remapperConstructor) throws Exception {
+        sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse, remapperConstructor, MappingRemapper::new);
+    }
+
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse, RemapperConstructor remapperConstructor, MappingRemapperConstructor mappingRemapperConstructor) throws Exception {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
         if(reverse) mappingReader.reverse();
         Object2ObjectOpenHashMap<String, ? extends ClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
-        SuperClassMapping superClassMapping = new SuperClassMapping();
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
-            Stream<Path> classes = Files.walk(fs.getPath("/")).filter(p -> Files.isRegularFile(p) &&
-                    mappings.containsKey(NamingUtil.asJavaName0(p.toString().substring(1)))).parallel();
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).skip(1L).filter(Files::isRegularFile).parallel()) {
-            classes.forEach(path -> {
-                try {
-                    new ClassReader(Files.readAllBytes(path)).accept(superClassMapping,
-                            ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-                } catch(IOException e) {
-                    LOGGER.error("Error when creating super class mapping", e);
-                }
-            });
-            MappingRemapper mappingRemapper = new MappingRemapper(mappingReader, superClassMapping);
+            MappingRemapper mappingRemapper = mappingRemapperConstructor.construct(mappingReader, new SuperClassMapping(Files.walk(fs.getPath("/"))
+                    .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asJavaName0(p.toString().substring(1)))).parallel()));
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
             paths.forEach(path -> {
                 try(InputStream inputStream = Files.newInputStream(path)) {
@@ -93,7 +92,7 @@ public abstract class AbstractDeobfuscator {
                     if(mappings.containsKey(classKeyName)) {
                         ClassReader reader = new ClassReader(inputStream);
                         ClassWriter writer = new ClassWriter(reader, 0);
-                        reader.accept(new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper), 0);
+                        reader.accept(remapperConstructor.construct(rvn, writer, mappingRemapper), 0);
                         Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
                         FileUtil.ensureDirectoryExist(output.getParent());
                         Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -122,5 +121,19 @@ public abstract class AbstractDeobfuscator {
         } catch (IOException e) {
             LOGGER.error("Error when deobfuscating", e);
         }
+    }
+
+    @FunctionalInterface
+    public interface RemapperConstructor {
+        ClassVisitor construct(boolean rvn, ClassWriter writer, MappingRemapper mappingRemapper);
+
+        static ClassVisitor shared(boolean rvn, ClassWriter writer, MappingRemapper mappingRemapper) {
+            return new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper);
+        }
+    }
+
+    @FunctionalInterface
+    public interface MappingRemapperConstructor {
+        MappingRemapper construct(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping);
     }
 }

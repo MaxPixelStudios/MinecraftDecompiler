@@ -102,9 +102,8 @@ public class JADNameGenerator extends ClassVisitor {
         }
         @Override
         public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-            if(name.equals("this") && index == 0 && (access & Opcodes.ACC_STATIC) == 0)
-                super.visitLocalVariable(name, descriptor, signature, start, end, index);
-            else super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
+            if(name.equals("\u2603")) super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
+            else super.visitLocalVariable(name, descriptor, signature, start, end, index);
         }
     }
     private static class Holder {
