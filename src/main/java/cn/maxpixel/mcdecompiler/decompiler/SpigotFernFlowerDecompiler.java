@@ -52,7 +52,7 @@ public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompil
     @Override
     public void extractTo(Path extractPath) throws IOException {
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");
-        if(Files.notExists(extractPath))
+        if(Files.notExists(decompilerJarPath))
             Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("fernflower.jar")), decompilerJarPath);
     }
 }
