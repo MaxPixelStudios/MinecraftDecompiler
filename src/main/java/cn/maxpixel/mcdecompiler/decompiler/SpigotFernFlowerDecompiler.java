@@ -29,14 +29,15 @@ import java.util.Objects;
 
 // Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make SpigotFernFlowerDecompiler read all libraries successfully
-public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
-        implements IExternalResourcesDecompiler {
+public class SpigotFernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */implements IExternalResourcesDecompiler {
     private Path decompilerJarPath;
     SpigotFernFlowerDecompiler() {}
+
     @Override
     public SourceType getSourceType() {
         return SourceType.DIRECTORY;
     }
+
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
@@ -49,6 +50,7 @@ public class SpigotFernFlowerDecompiler// extends AbstractLibRecommendedDecompil
         Process process = Runtime.getRuntime().exec(args.toArray(new String[0]));
         Utils.waitForProcess(process);
     }
+
     @Override
     public void extractTo(Path extractPath) throws IOException {
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");

@@ -18,14 +18,18 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 public class JADNameGenerator extends ClassVisitor {
     private static final Object2ObjectOpenHashMap<String, Holder> PREDEF = new Object2ObjectOpenHashMap<>();
@@ -48,22 +52,52 @@ public class JADNameGenerator extends ClassVisitor {
         PREDEF.put("Enum",    new Holder(0, true,  "oenum"   ));
         PREDEF.put("Void",    new Holder(0, true,  "ovoid"   ));
     }
+
+    private static final ObjectList<String> generatedAbstractParameterNames = ObjectLists.synchronize(new ObjectArrayList<>());
+    private static boolean recordStarted;
+    private String className;
+    public static void startRecord() {
+        if(recordStarted) throw new IllegalStateException("Record already started");
+        generatedAbstractParameterNames.clear();
+        recordStarted = true;
+    }
+    public static void endRecord(Path writeTo) throws IOException {
+        if(!recordStarted) throw new IllegalStateException("Record not started yet");
+        Files.write(writeTo, generatedAbstractParameterNames, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        recordStarted = false;
+    }
+
     public JADNameGenerator(ClassVisitor classVisitor) {
         super(Opcodes.ASM9, classVisitor);
     }
+
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        if(recordStarted) className = name;
+        super.visit(version, access, name, signature, superName, interfaces);
+    }
+
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        return new LVTRenamer(access, super.visitMethod(access, name, descriptor, signature, exceptions));
+        Renamer renamer = new Renamer();
+        if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.contains("()")) {
+            generatedAbstractParameterNames.add(String.join(" ", className, name, descriptor,
+                    Arrays.stream(Type.getArgumentTypes(descriptor)).map(renamer::getVarName).collect(Collectors.joining(" "))));
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
+        return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+            @Override
+            public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+                if(name.equals("\u2603")) super.visitLocalVariable(renamer.getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
+                else super.visitLocalVariable(name, descriptor, signature, start, end, index);
+            }
+        };
     }
-    public static class LVTRenamer extends MethodVisitor {
+
+    public static class Renamer {
         private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
         private final Object2IntOpenHashMap<Holder> ids = new Object2IntOpenHashMap<>();
-        private final int access;
-        public LVTRenamer(int access, MethodVisitor methodVisitor) {
-            super(Opcodes.ASM9, methodVisitor);
-            this.access = access;
-        }
-        private String getVarName(Type type) {
+        public String getVarName(Type type) {
             boolean isArray = false;
             if(type.getSort() == Type.ARRAY) {
                 type = type.getElementType();
@@ -100,12 +134,8 @@ public class JADNameGenerator extends ClassVisitor {
                 return varBaseName + (count > 0 ? count : "");
             }
         }
-        @Override
-        public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-            if(name.equals("\u2603")) super.visitLocalVariable(getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
-            else super.visitLocalVariable(name, descriptor, signature, start, end, index);
-        }
     }
+
     private static class Holder {
         public final int id;
         public final boolean skip_zero;

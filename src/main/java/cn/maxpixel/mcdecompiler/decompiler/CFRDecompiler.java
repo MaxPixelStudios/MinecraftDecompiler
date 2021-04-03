@@ -28,10 +28,12 @@ import java.util.Map;
 
 public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
     CFRDecompiler() {}
+
     @Override
     public SourceType getSourceType() {
         return SourceType.FILE;
     }
+
     @Override
     public void decompile(Path source, Path target) {
         checkArgs(source, target);

@@ -44,6 +44,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
@@ -67,14 +69,14 @@ public abstract class AbstractDeobfuscator {
     public abstract AbstractDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse);
 
     protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse) throws Exception {
-        sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse, RemapperConstructor::shared);
+        sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse, UnaryOperator.identity());
     }
 
-    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse, RemapperConstructor remapperConstructor) throws Exception {
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse, UnaryOperator<ClassVisitor> remapperConstructor) throws Exception {
         sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse, remapperConstructor, MappingRemapper::new);
     }
 
-    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse, RemapperConstructor remapperConstructor, MappingRemapperConstructor mappingRemapperConstructor) throws Exception {
+    protected final void sharedDeobfuscate(Path source, Path target, AbstractMappingReader mappingReader, boolean includeOthers, boolean reverse, UnaryOperator<ClassVisitor> remapperConstructor, BiFunction<AbstractMappingReader, SuperClassMapping, MappingRemapper> mappingRemapperConstructor) throws Exception {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
@@ -83,16 +85,17 @@ public abstract class AbstractDeobfuscator {
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).skip(1L).filter(Files::isRegularFile).parallel()) {
-            MappingRemapper mappingRemapper = mappingRemapperConstructor.construct(mappingReader, new SuperClassMapping(Files.walk(fs.getPath("/"))
-                    .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asJavaName0(p.toString().substring(1)))).parallel()));
+            MappingRemapper mappingRemapper = mappingRemapperConstructor.apply(mappingReader, new SuperClassMapping(Files.walk(fs.getPath("/"))
+                    .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asJavaName0(p.toString().substring(1)))).parallel(), true));
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
+            if(rvn) JADNameGenerator.startRecord();
             paths.forEach(path -> {
                 try(InputStream inputStream = Files.newInputStream(path)) {
                     String classKeyName = NamingUtil.asJavaName0(path.toString().substring(1));
                     if(mappings.containsKey(classKeyName)) {
                         ClassReader reader = new ClassReader(inputStream);
                         ClassWriter writer = new ClassWriter(reader, 0);
-                        reader.accept(remapperConstructor.construct(rvn, writer, mappingRemapper), 0);
+                        reader.accept(remapperConstructor.apply(new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper)), 0);
                         Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
                         FileUtil.ensureDirectoryExist(output.getParent());
                         Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -118,22 +121,9 @@ public abstract class AbstractDeobfuscator {
                     LOGGER.error("Error when remapping classes or coping files", e);
                 }
             });
+            if(rvn) JADNameGenerator.endRecord(Properties.get(Properties.Key.TEMP_DIR).resolve("fernflower_abstract_parameter_names.txt"));
         } catch (IOException e) {
             LOGGER.error("Error when deobfuscating", e);
         }
-    }
-
-    @FunctionalInterface
-    public interface RemapperConstructor {
-        ClassVisitor construct(boolean rvn, ClassWriter writer, MappingRemapper mappingRemapper);
-
-        static ClassVisitor shared(boolean rvn, ClassWriter writer, MappingRemapper mappingRemapper) {
-            return new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper);
-        }
-    }
-
-    @FunctionalInterface
-    public interface MappingRemapperConstructor {
-        MappingRemapper construct(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping);
     }
 }

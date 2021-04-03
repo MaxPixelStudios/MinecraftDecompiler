@@ -30,13 +30,14 @@ import java.util.Map;
 
 // Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make FernFlowerDecompiler read all libraries successfully
-public class FernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
-        implements IDecompiler {
+public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */implements IDecompiler {
     FernFlowerDecompiler() {}
+
     @Override
     public SourceType getSourceType() {
         return SourceType.DIRECTORY;
     }
+
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
@@ -53,6 +54,7 @@ public class FernFlowerDecompiler// extends AbstractLibRecommendedDecompiler
 //		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
         decompiler.decompileContext();
     }
+
     private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {
         public AccessibleConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
             super(destination, options, logger);

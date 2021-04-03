@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.EnumMap;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 public class Decompilers {
@@ -39,6 +36,7 @@ public class Decompilers {
         init();
         initCustomized();
     }
+
     private static void init() {
         decompilers.put(Info.DecompilerType.FERNFLOWER, new SpigotFernFlowerDecompiler());
         decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
@@ -46,6 +44,7 @@ public class Decompilers {
         decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
         decompilers.put(Info.DecompilerType.USER_DEFINED, lookForUDDecompiler());
     }
+
     private static UserDefinedDecompiler lookForUDDecompiler() {
         try {
             Path path = Paths.get("decompiler", "decompiler.properties");
@@ -55,7 +54,7 @@ public class Decompilers {
                 String decompilerPath = Objects.requireNonNull(decompilerProperties.getProperty("decompiler-file"),
                         "decompiler-file is a required property");
                 String sourceType = Objects.requireNonNull(decompilerProperties.getProperty("source-type"),
-                        "source-type is a required property");
+                        "source-type is a required property").toUpperCase(Locale.ROOT);
                 String libRecommended = decompilerProperties.getProperty("lib-recommended", "false");
                 String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required property")
                         .split(" ");
@@ -67,13 +66,16 @@ public class Decompilers {
         }
         return UserDefinedDecompiler.NONE;
     }
+
     private static void initCustomized() {
         StreamSupport.stream(ServiceLoader.load(ICustomizedDecompiler.class).spliterator(), true)
                 .forEach(icd -> customizedDecompilers.put(icd.name(), icd));
     }
+
     public static IDecompiler get(Info.DecompilerType type) {
-        return decompilers.getOrDefault(type, decompilers.get(Info.DecompilerType.FERNFLOWER));
+        return decompilers.getOrDefault(type, decompilers.get(Info.DecompilerType.FORGEFLOWER));
     }
+
     public static ICustomizedDecompiler getCustomized(String name) {
         return customizedDecompilers.get(name);
     }

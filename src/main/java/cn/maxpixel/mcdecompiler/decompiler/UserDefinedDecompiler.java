@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Objects;
 
 public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
-    private UserDefinedDecompiler() {}
     public static final UserDefinedDecompiler NONE = new UserDefinedDecompiler() {
         @Override
         public void decompile(Path source, Path target) {
@@ -42,6 +41,8 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
     private Path decompilerPath;
     private ObjectArrayList<String> options;
     private boolean libRecommended;
+
+    private UserDefinedDecompiler() {}
     UserDefinedDecompiler(SourceType sourceType, Path decompilerPath, ObjectArrayList<String> options, boolean libRecommended) {
         this.sourceType = Objects.requireNonNull(sourceType);
         this.decompilerPath = Objects.requireNonNull(decompilerPath);
@@ -49,10 +50,12 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         this.options = Objects.requireNonNull(options);
         this.libRecommended = libRecommended;
     }
+
     @Override
     public SourceType getSourceType() {
         return sourceType;
     }
+
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
@@ -63,6 +66,7 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         arrayList.addAll(resolveArgs(source, target, options));
         Utils.waitForProcess(Runtime.getRuntime().exec(arrayList.toArray(new String[0])));
     }
+
     private ObjectArrayList<String> resolveArgs(Path source, Path target, ObjectArrayList<String> options) {
         ObjectArrayList<String> resolvedOptions = new ObjectArrayList<>();
         List<String> libs = listLibs();
@@ -85,6 +89,7 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         }
         return resolvedOptions;
     }
+
     @Override
     public void downloadLib(Path libDir, String version) throws IOException {
         if(libRecommended) super.downloadLib(libDir, version);

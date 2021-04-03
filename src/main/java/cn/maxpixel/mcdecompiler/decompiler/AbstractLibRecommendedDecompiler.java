@@ -33,6 +33,7 @@ import java.util.stream.StreamSupport;
 public abstract class AbstractLibRecommendedDecompiler implements ILibRecommendedDecompiler {
     private static final Logger LOGGER = LogManager.getLogger("Lib downloader");
     private final List<String> libs = new ObjectArrayList<>();
+
     @Override
     public void downloadLib(Path libDir, String version) throws IOException {
         if(version == null || version.isEmpty()) {

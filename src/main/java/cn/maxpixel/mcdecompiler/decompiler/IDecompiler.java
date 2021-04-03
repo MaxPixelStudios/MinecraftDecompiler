@@ -27,17 +27,20 @@ public interface IDecompiler {
      * @return The type of the input.
      */
     SourceType getSourceType();
+
     /**
      * Decompile Minecraft.
      * @param source Path for input. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      * @param targetDir Path for output. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      */
     void decompile(Path source, Path targetDir) throws IOException;
+
     default void checkArgs(Path source, Path target) {
         if(!Files.isDirectory(target)) throw new IllegalArgumentException("target must be directory");
         if(getSourceType() == SourceType.FILE && Files.isDirectory(source)) throw new IllegalArgumentException("source must be file");
         if(getSourceType() == SourceType.DIRECTORY && !Files.isDirectory(source)) throw new IllegalArgumentException("source must be directory!");
     }
+
     enum SourceType {
         FILE,
         DIRECTORY
