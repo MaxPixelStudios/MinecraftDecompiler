@@ -22,12 +22,13 @@ import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.StringJoiner;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
@@ -63,7 +64,8 @@ public class JADNameGenerator extends ClassVisitor {
     }
     public static void endRecord(Path writeTo) throws IOException {
         if(!recordStarted) throw new IllegalStateException("Record not started yet");
-        Files.write(writeTo, generatedAbstractParameterNames, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.write(writeTo, generatedAbstractParameterNames.stream().collect(Collectors.joining("\n")).getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         recordStarted = false;
     }
 
@@ -81,8 +83,10 @@ public class JADNameGenerator extends ClassVisitor {
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         Renamer renamer = new Renamer();
         if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.contains("()")) {
-            generatedAbstractParameterNames.add(String.join(" ", className, name, descriptor,
-                    Arrays.stream(Type.getArgumentTypes(descriptor)).map(renamer::getVarName).collect(Collectors.joining(" "))));
+            StringJoiner joiner = new StringJoiner(" ");
+            joiner.add(className).add(name).add(descriptor);
+            for(Type type : Type.getArgumentTypes(descriptor)) joiner.add(renamer.getVarName(type));
+            generatedAbstractParameterNames.add(joiner.toString());
             return super.visitMethod(access, name, descriptor, signature, exceptions);
         }
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
