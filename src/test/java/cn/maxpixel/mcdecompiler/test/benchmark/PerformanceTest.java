@@ -19,12 +19,10 @@
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
@@ -36,20 +34,20 @@ public class PerformanceTest {
         Options options = new OptionsBuilder()
                 .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
                 .shouldDoGC(true)
-                .timeUnit(TimeUnit.MILLISECONDS)
-                .measurementIterations(10)
-                .warmupIterations(5)
+                .timeUnit(TimeUnit.MICROSECONDS)
+                .measurementIterations(50)
+                .warmupIterations(6)
                 .build();
 //        new Runner(options).run();
     }
 
-    @Benchmark
-    public void javaNio(Blackhole bh) throws IOException {
+//    @Benchmark
+//    public void javaNio(Blackhole bh) throws IOException {
 //        bh.consume(Files.readAllBytes(p));
-    }
+//    }
 
-    @Benchmark
-    public void javaBAO(Blackhole bh) throws IOException {
+//    @Benchmark
+//    public void javaBAO(Blackhole bh) throws IOException {
 //        try (InputStream inputStream = Files.newInputStream(p);
 //             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 //            byte[] data = new byte[4096];
@@ -60,5 +58,5 @@ public class PerformanceTest {
 //            outputStream.flush();
 //            bh.consume(outputStream.toByteArray());
 //        }
-    }
+//    }
 }

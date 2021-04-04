@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 public class JADNameGenerator extends ClassVisitor {
     private static final Object2ObjectOpenHashMap<String, Holder> PREDEF = new Object2ObjectOpenHashMap<>();
@@ -64,7 +63,7 @@ public class JADNameGenerator extends ClassVisitor {
     }
     public static void endRecord(Path writeTo) throws IOException {
         if(!recordStarted) throw new IllegalStateException("Record not started yet");
-        Files.write(writeTo, generatedAbstractParameterNames.stream().collect(Collectors.joining("\n")).getBytes(StandardCharsets.UTF_8),
+        Files.write(writeTo, String.join("\n", generatedAbstractParameterNames).getBytes(StandardCharsets.UTF_8),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         recordStarted = false;
     }
@@ -79,9 +78,12 @@ public class JADNameGenerator extends ClassVisitor {
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
+    private final Object2ObjectOpenHashMap<String, Renamer> sharedRenamers = new Object2ObjectOpenHashMap<>();
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        Renamer renamer = new Renamer();
+        Renamer renamer = (access & Opcodes.ACC_SYNTHETIC) != 0 ? // Filter some methods because only lambda methods need to share renamer with the caller(save the time)
+                sharedRenamers.getOrDefault(String.join(".", className, name, descriptor), new Renamer())
+                : new Renamer();
         if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.contains("()")) {
             StringJoiner joiner = new StringJoiner(" ");
             joiner.add(className).add(name).add(descriptor);
@@ -91,9 +93,18 @@ public class JADNameGenerator extends ClassVisitor {
         }
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
             @Override
+            public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+                Handle lambdaHandle = (Handle) bootstrapMethodArguments[1];
+                if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().contains("lambda$"))
+                    sharedRenamers.merge(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()),
+                            renamer, (v1, v2) -> {throw new IllegalStateException("Why key duplicated???");});
+                super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+            }
+
+            @Override
             public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                if(name.equals("\u2603")) super.visitLocalVariable(renamer.getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
-                else super.visitLocalVariable(name, descriptor, signature, start, end, index);
+                if(index == 0 && (access & Opcodes.ACC_STATIC) == 0) super.visitLocalVariable("this", descriptor, signature, start, end, index);
+                else super.visitLocalVariable(renamer.getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
             }
         };
     }
