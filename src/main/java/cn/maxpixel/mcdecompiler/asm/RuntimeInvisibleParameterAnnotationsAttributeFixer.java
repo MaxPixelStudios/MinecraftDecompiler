@@ -28,6 +28,10 @@ import java.util.List;
 
 // Similar to MCInjector's ParameterAnnotationFixer(https://github.com/ModCoderPack/MCInjector/blob/master/src/main/java/de/oceanlabs/mcp/mcinjector/adaptors/ParameterAnnotationFixer.java)
 public class RuntimeInvisibleParameterAnnotationsAttributeFixer extends ClassNode {
+    public RuntimeInvisibleParameterAnnotationsAttributeFixer() {
+        super(Opcodes.ASM9);
+    }
+
     @Override
     public void visitEnd() {
         String toProcess = innerClasses.stream().filter(icn -> icn.name.equals(name)).findFirst()
