@@ -36,7 +36,7 @@ public class RuntimeInvisibleParameterAnnotationsAttributeFixer extends ClassNod
     public void visitEnd() {
         String toProcess = innerClasses.stream().filter(icn -> icn.name.equals(name)).findFirst()
                 .filter(icn -> (icn.access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && icn.innerName != null)
-                .map(icn -> '(' + Type.getObjectType(outerClass).getDescriptor())
+                .map(icn -> '(' + Type.getObjectType(icn.outerName).getDescriptor())
                 .orElse((access & Opcodes.ACC_ENUM) != 0 ? "(Ljava/lang/String;I" : null);
         if(toProcess != null) {
             methods.stream().filter(mn -> mn.name.equals("<init>") && mn.desc.startsWith(toProcess)).forEach(mn -> {
