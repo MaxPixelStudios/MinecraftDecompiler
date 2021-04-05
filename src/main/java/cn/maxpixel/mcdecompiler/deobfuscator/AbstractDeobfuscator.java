@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.deobfuscator;
 import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.asm.JADNameGenerator;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.RuntimeInvisibleParameterAnnotationsAttributeFixer;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
@@ -95,7 +96,9 @@ public abstract class AbstractDeobfuscator {
                     if(mappings.containsKey(classKeyName)) {
                         ClassReader reader = new ClassReader(inputStream);
                         ClassWriter writer = new ClassWriter(reader, 0);
-                        reader.accept(remapperConstructor.apply(new ClassRemapper(rvn ? new JADNameGenerator(writer) : writer, mappingRemapper)), 0);
+                        RuntimeInvisibleParameterAnnotationsAttributeFixer fixer = new RuntimeInvisibleParameterAnnotationsAttributeFixer();
+                        reader.accept(remapperConstructor.apply(new ClassRemapper(rvn ? new JADNameGenerator(fixer) : fixer, mappingRemapper)), 0);
+                        fixer.accept(writer);
                         Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
                         FileUtil.ensureDirectoryExist(output.getParent());
                         Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
