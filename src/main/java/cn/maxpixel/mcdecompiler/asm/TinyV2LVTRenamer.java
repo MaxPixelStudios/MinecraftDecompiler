@@ -32,10 +32,12 @@ import java.util.Optional;
 public class TinyV2LVTRenamer extends ClassVisitor {
     private final Object2ObjectOpenHashMap<String, TinyClassMapping> mappings;
     private TinyClassMapping mapping;
+
     public TinyV2LVTRenamer(ClassVisitor classVisitor, Object2ObjectOpenHashMap<String, TinyClassMapping> mappings) {
         super(Opcodes.ASM9, classVisitor);
         this.mappings = mappings;
     }
+
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         mapping = mappings.get(NamingUtil.asJavaName(name));

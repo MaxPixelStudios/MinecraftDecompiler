@@ -29,7 +29,7 @@ public interface IDecompiler {
     SourceType getSourceType();
 
     /**
-     * Decompile Minecraft.
+     * Decompile.
      * @param source Path for input. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      * @param targetDir Path for output. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
      */

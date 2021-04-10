@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import cn.maxpixel.mcdecompiler.Info;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.benf.cfr.reader.api.CfrDriver;
+import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -38,16 +39,15 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
     public void decompile(Path source, Path target) {
         checkArgs(source, target);
         Map<String, String> options = new HashMap<>();
-        options.put("aexagg", "true");
-        options.put("forceclassfilever", "52.0");
-        options.put("caseinsensitivefs", "false");
-        options.put("clobber", "true");
-        options.put("eclipse", "false");
-        options.put("extraclasspath", String.join(Info.PATH_SEPARATOR, listLibs()));
-        options.put("outputpath", target.toString());
-        options.put("removebadgenerics", "false");
-        options.put("removedeadconditionals", "false");
-        options.put("jarfilter", "^(net\\.minecraft|com\\.mojang\\.(blaze3d|math|realmsclient))\\.*");
+        options.put(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG.getName(), "true");
+        options.put(OptionsImpl.FORCE_CLASSFILEVER.getName(), "52.0");
+        options.put(OptionsImpl.CLOBBER_FILES.getName(), "true");
+        options.put(OptionsImpl.ECLIPSE.getName(), "false");
+        options.put(OptionsImpl.EXTRA_CLASS_PATH.getName(), String.join(Info.PATH_SEPARATOR, listLibs()));
+        options.put(OptionsImpl.OUTPUT_PATH.getName(), target.toString());
+        options.put(OptionsImpl.REMOVE_BAD_GENERICS.getName(), "false");
+        options.put(OptionsImpl.REMOVE_DEAD_CONDITIONALS.getName(), "false");
+        options.put(OptionsImpl.JAR_FILTER.getName(), "^(net\\.minecraft|com\\.mojang\\.(blaze3d|math|realmsclient))\\.*");
         CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
         cfr.analyse(ObjectLists.singleton(source.toString()));
     }

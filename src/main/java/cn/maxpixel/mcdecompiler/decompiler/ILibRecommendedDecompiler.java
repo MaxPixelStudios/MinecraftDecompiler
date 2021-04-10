@@ -22,16 +22,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * The decompiler implements this interface is lib-recommend.<br>
- * The decompiler uses {@link ILibRecommendedDecompiler#downloadLib(Path, String)} to download all Minecraft libraries.<br>
- * If you don't want to implement this method but still want libs, you can extend {@link AbstractLibRecommendedDecompiler}
+ * A decompiler implements this interface is lib-recommended.<br>
+ *
+ * The decompiler implementation uses {@link ILibRecommendedDecompiler#downloadLib(Path, String)} to download all Minecraft libraries.
+ * But you need to download it yourself by implementing this method.<br>
+ *
+ * If you don't want to implement the download method yourself but still lib-recommended,
+ * you can extend {@link AbstractLibRecommendedDecompiler} instead of implementing this interface.
+ * @see AbstractLibRecommendedDecompiler
  */
 public interface ILibRecommendedDecompiler extends IDecompiler {
     /**
-     * Download all libraries
-     * @param libDir Where the libs download to
-     * @param version Minecraft version uses to deobfuscate
-     * @throws IOException When IO error occurs
+     * Download all libraries.
+     * @param libDir Where the libs download to.
+     * @param version Minecraft version uses to deobfuscate.
+     * @throws IOException When IO error occurs.
+     * @see AbstractLibRecommendedDecompiler#listLibs()
      */
     void downloadLib(Path libDir, String version) throws IOException;
 }

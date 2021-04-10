@@ -159,7 +159,7 @@ public class Deobfuscator {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
             FileUtil.deleteDirectory(outputDir);
             Files.createDirectories(outputDir);
-            ICustomizedDecompiler decompiler = Decompilers.getCustomized(customizedDecompilerName);
+            ICustomDecompiler decompiler = Decompilers.getCustom(customizedDecompilerName);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
             if(decompiler instanceof IExternalResourcesDecompiler)

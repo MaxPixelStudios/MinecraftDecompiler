@@ -22,7 +22,9 @@ import cn.maxpixel.mcdecompiler.Info;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,10 +33,10 @@ import java.util.stream.StreamSupport;
 
 public class Decompilers {
     private static final EnumMap<Info.DecompilerType, IDecompiler> decompilers = new EnumMap<>(Info.DecompilerType.class);
-    private static final Object2ObjectOpenHashMap<String, ICustomizedDecompiler> customizedDecompilers = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectOpenHashMap<String, ICustomDecompiler> customDecompilers = new Object2ObjectOpenHashMap<>();
     static {
         init();
-        initCustomized();
+        initCustom();
     }
 
     private static void init() {
@@ -42,15 +44,15 @@ public class Decompilers {
         decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
         decompilers.put(Info.DecompilerType.OFFICIAL_FERNFLOWER, new FernFlowerDecompiler());
         decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
-        decompilers.put(Info.DecompilerType.USER_DEFINED, lookForUDDecompiler());
+        decompilers.put(Info.DecompilerType.USER_DEFINED, findUserDefined());
     }
 
-    private static UserDefinedDecompiler lookForUDDecompiler() {
-        try {
-            Path path = Paths.get("decompiler", "decompiler.properties");
-            if(Files.exists(path)) {
+    private static UserDefinedDecompiler findUserDefined() {
+        Path path = Paths.get("decompiler", "decompiler.properties");
+        if(Files.exists(path)) {
+            try(BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
                 Properties decompilerProperties = new Properties();
-                decompilerProperties.load(Files.newBufferedReader(path));
+                decompilerProperties.load(reader);
                 String decompilerPath = Objects.requireNonNull(decompilerProperties.getProperty("decompiler-file"),
                         "decompiler-file is a required property");
                 String sourceType = Objects.requireNonNull(decompilerProperties.getProperty("source-type"),
@@ -60,23 +62,23 @@ public class Decompilers {
                         .split(" ");
                 return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Paths.get("decompiler", decompilerPath).
                         toAbsolutePath().normalize(), ObjectArrayList.wrap(args), Boolean.parseBoolean(libRecommended));
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return UserDefinedDecompiler.NONE;
     }
 
-    private static void initCustomized() {
-        StreamSupport.stream(ServiceLoader.load(ICustomizedDecompiler.class).spliterator(), true)
-                .forEach(icd -> customizedDecompilers.put(icd.name(), icd));
+    private static void initCustom() {
+        StreamSupport.stream(ServiceLoader.load(ICustomDecompiler.class).spliterator(), true)
+                .forEach(icd -> customDecompilers.put(icd.name(), icd));
     }
 
     public static IDecompiler get(Info.DecompilerType type) {
         return decompilers.getOrDefault(type, decompilers.get(Info.DecompilerType.FORGEFLOWER));
     }
 
-    public static ICustomizedDecompiler getCustomized(String name) {
-        return customizedDecompilers.get(name);
+    public static ICustomDecompiler getCustom(String name) {
+        return customDecompilers.get(name);
     }
 }

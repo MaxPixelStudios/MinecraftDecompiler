@@ -35,7 +35,8 @@ import java.util.stream.Stream;
 
 public class SuperClassMapping implements Consumer<Path> {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Object2ObjectMap<String, ObjectArrayList<String>> superClassMap = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
+    private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<String, ObjectArrayList<String>> unmodifiable = Object2ObjectMaps.unmodifiable(superClassMap);
 
     public SuperClassMapping() {}
 
@@ -59,13 +60,15 @@ public class SuperClassMapping implements Consumer<Path> {
             String superName = reader.getSuperName();
             if(!superName.equals("java/lang/Object")) list.add(NamingUtil.asJavaName(superName));
             for(String i : reader.getInterfaces()) list.add(NamingUtil.asJavaName(i));
-            if(!list.isEmpty()) superClassMap.put(NamingUtil.asJavaName(reader.getClassName()), list);
+            if(!list.isEmpty()) synchronized(superClassMap) {
+                superClassMap.put(NamingUtil.asJavaName(reader.getClassName()), list);
+            }
         } catch(IOException e) {
             LOGGER.error("Error when creating super class mapping", e);
         }
     }
 
-    public Object2ObjectMap<String, ObjectArrayList<String>> getMap() {
-        return Object2ObjectMaps.unmodifiable(superClassMap);
+    public final Object2ObjectMap<String, ObjectArrayList<String>> getMap() {
+        return unmodifiable;
     }
 }

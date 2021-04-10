@@ -18,45 +18,96 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import org.objectweb.asm.Opcodes;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 @Fork(1)
-@Threads(8)
+@Threads(1)
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
+@Measurement(iterations = 100)
+@Warmup(iterations = 50)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 public class PerformanceTest {
-    private static final int i = 318226432;
-    private static final String s = new String("(Ljava/lang/String;I");
+    private static final int size = 53;
+    private static final ObjectArrayList<String> libs = new ObjectArrayList<>(size);
+    private static final ObjectArrayList<String> args = new ObjectArrayList<>(size + 9);
 
-//    public void regen() {
-//        i = new Random().nextInt(2) == 0 ? 318226432 : new Random().nextInt(10000);
-//        s = new Random().nextInt(2) == 0 ? "(Ljava/lang/String;I" : UUID.randomUUID().toString();
-//    }
+    @Setup
+    public void setup() throws Throwable {
+        Stream.generate(() -> UUID.randomUUID().toString()).limit(size).forEach(libs::add);
+        args.addElements(0, new String[] { "java", "-jar", "awawawawawawa", "-rsy=1", "-dgs=1", "-asc=1", "-bsm=1", "-iec=1", "-log=TRACE" });
+    }
 
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
-                .timeUnit(TimeUnit.MICROSECONDS)
-                .measurementIterations(2000)
-                .warmupIterations(10000)
                 .build();
 //        new Runner(options).run();
     }
 
     @Benchmark
-    public void calculate(Blackhole bh) {
-        bh.consume((i & Opcodes.ACC_ENUM) != 0);
+    public void language(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
+        bh.consume(args);
     }
 
     @Benchmark
-    public void equal(Blackhole bh) {
-        bh.consume(s.equals("(Ljava/lang/String;I"));
+    public void languageConcat(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        for(int i = 0; i < libs.size(); i++) args.add("-e=".concat(libs.get(i)));
+        bh.consume(args);
+    }
+
+    @Benchmark
+    public void languageEnhanced(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        for (String lib : libs) args.add("-e=" + lib);
+        bh.consume(args);
+    }
+
+
+    @Benchmark
+    public void languageEnhancedConcat(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        for (String lib : libs) args.add("-e=".concat(lib));
+        bh.consume(args);
+    }
+
+    @Benchmark
+    public void method(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        libs.forEach(lib -> args.add("-e=" + lib));
+        bh.consume(args);
+    }
+
+    @Benchmark
+    public void methodConcat(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        libs.forEach(lib -> args.add("-e=".concat(lib)));
+        bh.consume(args);
+    }
+
+    @Benchmark
+    public void stream(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        libs.stream().map(lib -> "-e=" + lib).forEach(args::add);
+        bh.consume(args);
+    }
+
+    @Benchmark
+    public void streamConcat(Blackhole bh) {
+        ObjectArrayList<String> args = PerformanceTest.args.clone();
+        libs.stream().map("-e="::concat).forEach(args::add);
+        bh.consume(args);
     }
 }
