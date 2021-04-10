@@ -18,7 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
+import org.objectweb.asm.Opcodes;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -30,33 +32,31 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
 public class PerformanceTest {
+    private static final int i = 318226432;
+    private static final String s = new String("(Ljava/lang/String;I");
+
+//    public void regen() {
+//        i = new Random().nextInt(2) == 0 ? 318226432 : new Random().nextInt(10000);
+//        s = new Random().nextInt(2) == 0 ? "(Ljava/lang/String;I" : UUID.randomUUID().toString();
+//    }
+
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
-                .shouldDoGC(true)
                 .timeUnit(TimeUnit.MICROSECONDS)
-                .measurementIterations(50)
-                .warmupIterations(6)
+                .measurementIterations(2000)
+                .warmupIterations(10000)
                 .build();
 //        new Runner(options).run();
     }
 
-//    @Benchmark
-//    public void javaNio(Blackhole bh) throws IOException {
-//        bh.consume(Files.readAllBytes(p));
-//    }
+    @Benchmark
+    public void calculate(Blackhole bh) {
+        bh.consume((i & Opcodes.ACC_ENUM) != 0);
+    }
 
-//    @Benchmark
-//    public void javaBAO(Blackhole bh) throws IOException {
-//        try (InputStream inputStream = Files.newInputStream(p);
-//             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-//            byte[] data = new byte[4096];
-//            int bytesRead;
-//            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
-//                outputStream.write(data, 0, bytesRead);
-//            }
-//            outputStream.flush();
-//            bh.consume(outputStream.toByteArray());
-//        }
-//    }
+    @Benchmark
+    public void equal(Blackhole bh) {
+        bh.consume(s.equals("(Ljava/lang/String;I"));
+    }
 }

@@ -41,7 +41,7 @@ public class RuntimeInvisibleParameterAnnotationsAttributeFixer extends ClassNod
         if(toProcess != null) {
             methods.stream().filter(mn -> mn.name.equals("<init>") && mn.desc.startsWith(toProcess)).forEach(mn -> {
                 int params = Type.getArgumentTypes(mn.desc).length;
-                int synthetics = toProcess.equals("(Ljava/lang/String;I") ? 2 : 1;
+                int synthetics = (access & Opcodes.ACC_ENUM) != 0 ? 2 : 1;
                 mn.visibleParameterAnnotations = process(params, synthetics, mn.visibleParameterAnnotations);
                 mn.invisibleParameterAnnotations = process(params, synthetics, mn.invisibleParameterAnnotations);
                 if(mn.visibleParameterAnnotations != null) mn.visibleAnnotableParameterCount = mn.visibleParameterAnnotations.length;
