@@ -23,7 +23,7 @@ package cn.maxpixel.mcdecompiler.decompiler;
  *
  * To make the program can find your custom decompiler,
  * you need to create a file named cn.maxpixel.mcdecompiler.decompiler.ICustomizedDecompiler in META-INF/services.
- * Then write the full java name of your custom decompiler class which implements this interface in it.
+ * Then write the FQCN of your custom decompiler class that implements this interface in it.
  */
 public interface ICustomDecompiler extends IDecompiler {
     /**

@@ -34,23 +34,25 @@ import java.util.function.ToIntFunction;
 public class JADNameGenerator extends ClassVisitor {
     private static final Object2ObjectOpenHashMap<String, Holder> PREDEF = new Object2ObjectOpenHashMap<>();
     static {
-        PREDEF.put("int",     new Holder(0, true,  "i", "j", "k", "l"));
-        PREDEF.put("byte",    new Holder(0, false, "b"       ));
-        PREDEF.put("char",    new Holder(0, false, "c"       ));
-        PREDEF.put("short",   new Holder(1, false, "short"   ));
-        PREDEF.put("boolean", new Holder(0, true,  "flag"    ));
-        PREDEF.put("double",  new Holder(0, false, "d"       ));
-        PREDEF.put("float",   new Holder(0, true,  "f"       ));
-        PREDEF.put("File",    new Holder(1, true,  "file"    ));
-        PREDEF.put("String",  new Holder(0, true,  "s"       ));
-        PREDEF.put("Class",   new Holder(0, true,  "oclass"  ));
-        PREDEF.put("Long",    new Holder(0, true,  "olong"   ));
-        PREDEF.put("Byte",    new Holder(0, true,  "obyte"   ));
-        PREDEF.put("Short",   new Holder(0, true,  "oshort"  ));
-        PREDEF.put("Boolean", new Holder(0, true,  "obool"   ));
-        PREDEF.put("Package", new Holder(0, true,  "opackage"));
-        PREDEF.put("Enum",    new Holder(0, true,  "oenum"   ));
-        PREDEF.put("Void",    new Holder(0, true,  "ovoid"   ));
+        PREDEF.put("int",       new Holder(0, true,  "i", "j", "k", "l"));
+        PREDEF.put("byte",      new Holder(0, false, "b"       ));
+        PREDEF.put("char",      new Holder(0, false, "c"       ));
+        PREDEF.put("short",     new Holder(1, false, "short"   ));
+        PREDEF.put("boolean",   new Holder(0, true,  "flag"    ));
+        PREDEF.put("double",    new Holder(0, false, "d"       ));
+        PREDEF.put("float",     new Holder(0, true,  "f"       ));
+        PREDEF.put("File",      new Holder(1, true,  "file"    ));
+        PREDEF.put("String",    new Holder(0, true,  "s"       ));
+        PREDEF.put("Class",     new Holder(0, true,  "oclass"  ));
+        PREDEF.put("Long",      new Holder(0, true,  "olong"   ));
+        PREDEF.put("Byte",      new Holder(0, true,  "obyte"   ));
+        PREDEF.put("Short",     new Holder(0, true,  "oshort"  ));
+        PREDEF.put("Float",     new Holder(0, true,  "ofloat"  ));
+        PREDEF.put("Double",    new Holder(0, true,  "odouble"  ));
+        PREDEF.put("Boolean",   new Holder(0, true,  "obool"   ));
+        PREDEF.put("Package",   new Holder(0, true,  "opackage"));
+        PREDEF.put("Enum",      new Holder(0, true,  "oenum"   ));
+        PREDEF.put("Void",      new Holder(0, true,  "ovoid"   ));
     }
 
     private static final ObjectList<String> generatedAbstractParameterNames = ObjectLists.synchronize(new ObjectArrayList<>());

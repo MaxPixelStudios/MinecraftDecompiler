@@ -57,12 +57,16 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
                     libs.add(file.toAbsolutePath().normalize().toString());
                     try(FileChannel channel = FileChannel.open(file, CREATE, READ, WRITE)) {
                         if(channel.size() > 0L && channel.size() == artifact.get("size").getAsInt()) {
-                            // Intend every file is < 2GB because I don't know how to hash a file ≥ 2GB
-                            ByteBuffer bb = ByteBuffer.allocate((int) channel.size());
-                            channel.read(bb);
+                            MessageDigest md = MessageDigest.getInstance("SHA-1");
+                            ByteBuffer bb = ByteBuffer.allocate(65536);
+                            while(channel.read(bb) != -1) {
+                                bb.flip();
+                                md.update(bb);
+                                bb.clear();
+                            }
                             StringBuilder out = new StringBuilder();
-                            for(byte b : MessageDigest.getInstance("SHA-1").digest(bb.array())) {
-                                String hex = Integer.toHexString(b);
+                            for(byte b : md.digest()) {
+                                String hex = Integer.toHexString(b & 0xff);
                                 if (hex.length() < 2) out.append('0');
                                 out.append(hex);
                             }

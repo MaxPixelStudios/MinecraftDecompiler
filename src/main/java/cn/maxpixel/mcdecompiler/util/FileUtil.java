@@ -22,36 +22,42 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.stream.Stream;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class FileUtil {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void copy(Path source, Path target, CopyOption... copyOptions) {
-        if(Files.isDirectory(source)) copyDirectory(source, target, copyOptions);
-        else copyFile(source, target, copyOptions);
+    public static void copy(Path source, Path target) {
+        if(Files.isDirectory(source)) copyDirectory(source, target);
+        else copyFile(source, target);
     }
 
-    public static void copyDirectory(Path source, Path target, CopyOption... copyOptions) {
+    public static void copyDirectory(Path source, Path target) {
         if(Files.notExists(source)) {
             LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
             return;
         }
         if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
         if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
-        try {
+        try(Stream<Path> sourceStream = Files.walk(source).parallel().filter(Files::isRegularFile)) {
             LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
             FileUtil.ensureDirectoryExist(target);
-            try {
-                Files.copy(source, target, copyOptions);
-            } catch(FileAlreadyExistsException ignored) {}
-            Files.walk(source).skip(1L).parallel().filter(Files::isRegularFile).forEach(path -> {
-                try {
-                    Path p = target.resolve(path.toString().substring(1));
-                    FileUtil.ensureDirectoryExist(p.getParent());
-                    Files.copy(path, p, copyOptions);
-                } catch(FileAlreadyExistsException ignored) {} catch (IOException e) {
+            sourceStream.forEach(path -> {
+                Path p = target.resolve(path.toString().substring(1));
+                FileUtil.ensureDirectoryExist(p.getParent());
+                try(InputStream in = Files.newInputStream(path);
+                    OutputStream out = Files.newOutputStream(p, CREATE, TRUNCATE_EXISTING)) {
+                    byte[] buf = new byte[8192];
+                    for(int len = in.read(buf); len != -1; len = in.read(buf)) out.write(buf, 0, len);
+                } catch (IOException e) {
                     LOGGER.error("Error when coping file \"{}\"", path, e);
                 }
             });
@@ -60,18 +66,17 @@ public class FileUtil {
         }
     }
 
-    public static void copyFile(Path source, Path target, CopyOption... copyOptions) {
-        if(Files.isDirectory(target)) target = target.resolve(source.getFileName());
+    public static void copyFile(Path source, Path target) {
         if(Files.notExists(source)) {
             LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
             return;
         }
         if(Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a file");
-        if(Files.exists(target) && Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a file");
+        if(Files.exists(target) && Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
         LOGGER.debug("Coping file {} to {} ...", source, target);
         try {
             Files.createDirectories(target.getParent());
-            Files.copy(source, target, copyOptions);
+            Files.copy(source, target, REPLACE_EXISTING);
         } catch(FileAlreadyExistsException ignored) {
         } catch (IOException e) {
             e.printStackTrace();
