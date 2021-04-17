@@ -83,7 +83,8 @@ public class JADNameGenerator extends ClassVisitor {
     private final Object2ObjectOpenHashMap<String, Renamer> sharedRenamers = new Object2ObjectOpenHashMap<>();
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        Renamer renamer = (access & Opcodes.ACC_SYNTHETIC) != 0 ? // Filter some methods because only lambda methods need to share renamer with the caller(save the time)
+        // Filter some methods because only lambda methods need to share renamer with the caller(save the time)
+        Renamer renamer = (access & Opcodes.ACC_SYNTHETIC) != 0 && name.startsWith("lambda$") ?
                 sharedRenamers.getOrDefault(String.join(".", className, name, descriptor), new Renamer())
                 : new Renamer();
         if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.contains("()")) {
@@ -97,9 +98,8 @@ public class JADNameGenerator extends ClassVisitor {
             @Override
             public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
                 Handle lambdaHandle = (Handle) bootstrapMethodArguments[1];
-                if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().contains("lambda$"))
-                    sharedRenamers.merge(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()),
-                            renamer, (v1, v2) -> {throw new IllegalStateException("Why key duplicated???");});
+                if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().startsWith("lambda$"))
+                    sharedRenamers.putIfAbsent(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()), renamer);
                 super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
             }
 
