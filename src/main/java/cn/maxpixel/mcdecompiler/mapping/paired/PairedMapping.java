@@ -16,21 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.base;
+package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.components.Owner;
+import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
 
-public abstract class BaseMapping {
+import java.util.Objects;
+
+public class PairedMapping {
     private String unmappedName;
     private String mappedName;
 
-    protected BaseMapping(String unmappedName, String mappedName) {
+    public PairedMapping(String unmappedName, String mappedName) {
         this.unmappedName = unmappedName;
         this.mappedName = mappedName;
     }
-    protected BaseMapping() {}
+    public PairedMapping() {}
 
     public String getUnmappedName() {
         return unmappedName;
@@ -49,41 +49,33 @@ public abstract class BaseMapping {
     }
 
     public void reverse() {
-        String temp = getUnmappedName();
-        setUnmappedName(getMappedName());
-        setMappedName(temp);
-    }
-}
-abstract class BaseFieldMethodShared extends BaseMapping implements Owner<BaseFieldMethodShared, ClassMapping> {
-    private ClassMapping owner;
-
-    protected BaseFieldMethodShared(String unmappedName, String mappedName) {
-        super(unmappedName, mappedName);
-    }
-    protected BaseFieldMethodShared() {}
-
-    public boolean isDescriptor() {
-        return this instanceof Descriptor;
-    }
-    public boolean isMappedDescriptor() {
-        return this instanceof Descriptor.Mapped;
+        String temp = unmappedName;
+        unmappedName = mappedName;
+        mappedName = temp;
     }
 
-    public Descriptor asDescriptor() {
-        return (Descriptor) this;
-    }
-    public Descriptor.Mapped asMappedDescriptor() {
-        return (Descriptor.Mapped) this;
+    public void reverse(MappingRemapper remapper) {
+        reverse();
     }
 
     @Override
-    public ClassMapping getOwner() {
-        return owner;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PairedMapping)) return false;
+        PairedMapping that = (PairedMapping) o;
+        return unmappedName.equals(that.unmappedName) && mappedName.equals(that.mappedName);
     }
 
     @Override
-    public BaseFieldMethodShared setOwner(ClassMapping owner) {
-        this.owner = owner;
-        return this;
+    public int hashCode() {
+        return Objects.hash(unmappedName, mappedName);
+    }
+
+    @Override
+    public String toString() {
+        return "PairedMapping{" +
+                "unmappedName='" + unmappedName + '\'' +
+                ", mappedName='" + mappedName + '\'' +
+                '}';
     }
 }

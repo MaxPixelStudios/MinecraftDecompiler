@@ -16,23 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.srg;
+package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
-public class SrgMethodMapping extends BaseMethodMapping implements Descriptor, Descriptor.Mapped {
+import java.util.Objects;
+
+public class DescriptoredPairedMethodMapping extends PairedMethodMapping implements Descriptor, Descriptor.Mapped {
     private String unmappedDescriptor;
     private String mappedDescriptor;
 
-    public SrgMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor, String mappedDescriptor) {
+    public DescriptoredPairedMethodMapping(String unmappedName, String mappedName, String unmappedDescriptor, String mappedDescriptor) {
         super(unmappedName, mappedName);
         this.unmappedDescriptor = unmappedDescriptor;
         this.mappedDescriptor = mappedDescriptor;
     }
-    public SrgMethodMapping() {}
+    public DescriptoredPairedMethodMapping() {}
 
     @Override
     public String getUnmappedDescriptor() {
@@ -55,52 +54,39 @@ public class SrgMethodMapping extends BaseMethodMapping implements Descriptor, D
     }
 
     @Override
-    public SrgMethodMapping setOwner(ClassMapping owner) {
+    public DescriptoredPairedMethodMapping setOwner(PairedClassMapping owner) {
         super.setOwner(owner);
         return this;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if(this == obj) return true;
-        if(obj instanceof SrgMethodMapping) {
-            SrgMethodMapping obj1 = (SrgMethodMapping) obj;
-            return super.equals(obj) && getUnmappedDescriptor().equals(obj1.getUnmappedDescriptor()) &&
-                    getMappedDescriptor().equals(obj1.getMappedDescriptor());
-        }
-        return false;
-    }
-
-    @Override
     public void reverse() {
-        String temp = getUnmappedName();
-        setUnmappedName(getMappedName());
-        setMappedName(temp);
+        super.reverse();
 
-        temp = unmappedDescriptor;
+        String temp = unmappedDescriptor;
         unmappedDescriptor = mappedDescriptor;
         mappedDescriptor = temp;
     }
 
     @Override
-    @Deprecated
-    public void reverse(MappingRemapper remapper) {
-        reverse();
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DescriptoredPairedMethodMapping)) return false;
+        if (!super.equals(o)) return false;
+        DescriptoredPairedMethodMapping that = (DescriptoredPairedMethodMapping) o;
+        return unmappedDescriptor.equals(that.unmappedDescriptor) && mappedDescriptor.equals(that.mappedDescriptor);
     }
 
     @Override
-    @Deprecated
-    public void reverse0(MappingRemapper remapper) {
-        reverse();
+    public int hashCode() {
+        return 31 * super.hashCode() + Objects.hash(unmappedDescriptor, mappedDescriptor);
     }
 
     @Override
     public String toString() {
-        return "SrgMethodMapping{" +
-                "UnmappedName=" + getUnmappedName() +
-                ", MappedName=" + getMappedName() +
-                ", UnmappedDescriptor" + getUnmappedDescriptor() +
-                ", MappedDescriptor" + getMappedDescriptor() +
-                '}';
+        return "DescriptoredPairedMethodMapping{" +
+                "unmappedDescriptor='" + unmappedDescriptor + '\'' +
+                ", mappedDescriptor='" + mappedDescriptor + '\'' +
+                "} " + super.toString();
     }
 }

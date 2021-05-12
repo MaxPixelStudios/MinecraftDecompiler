@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.tiny.TinyMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.objectweb.asm.ClassVisitor;
@@ -29,11 +29,11 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Optional;
 
-public class TinyV2LVTRenamer extends ClassVisitor {
-    private final Object2ObjectOpenHashMap<String, TinyClassMapping> mappings;
-    private TinyClassMapping mapping;
+public class LVTRenamer extends ClassVisitor {
+    private final Object2ObjectOpenHashMap<String, NamespacedClassMapping> mappings;
+    private NamespacedClassMapping mapping;
 
-    public TinyV2LVTRenamer(ClassVisitor classVisitor, Object2ObjectOpenHashMap<String, TinyClassMapping> mappings) {
+    public LVTRenamer(ClassVisitor classVisitor, Object2ObjectOpenHashMap<String, NamespacedClassMapping> mappings) {
         super(Opcodes.ASM9, classVisitor);
         this.mappings = mappings;
     }
@@ -46,7 +46,7 @@ public class TinyV2LVTRenamer extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        Optional<TinyMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
+        Optional<NamespacedMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
             @Override
             public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {

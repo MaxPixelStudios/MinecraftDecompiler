@@ -19,6 +19,8 @@
 package cn.maxpixel.mcdecompiler.asm;
 
 import it.unimi.dsi.fastutil.objects.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -32,6 +34,7 @@ import java.util.StringJoiner;
 import java.util.function.ToIntFunction;
 
 public class JADNameGenerator extends ClassVisitor {
+    private static final Logger LOGGER = LogManager.getLogger("JAD Renamer");
     private static final Object2ObjectOpenHashMap<String, Holder> PREDEF = new Object2ObjectOpenHashMap<>();
     static {
         PREDEF.put("int",       new Holder(0, true,  "i", "j", "k", "l"));
@@ -56,18 +59,22 @@ public class JADNameGenerator extends ClassVisitor {
     }
 
     private static final ObjectList<String> generatedAbstractParameterNames = ObjectLists.synchronize(new ObjectArrayList<>());
-    private static boolean recordStarted;
+    private static volatile boolean recordStarted;
     private String className;
     public static void startRecord() {
         if(recordStarted) throw new IllegalStateException("Record already started");
         generatedAbstractParameterNames.clear();
+        LOGGER.trace("Cleared previously generated abstract parameter names(if any)");
         recordStarted = true;
+        LOGGER.debug("Started to record the generated abstract method parameter names");
     }
     public static void endRecord(Path writeTo) throws IOException {
         if(!recordStarted) throw new IllegalStateException("Record not started yet");
         Files.write(writeTo, String.join("\n", generatedAbstractParameterNames).getBytes(StandardCharsets.UTF_8),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        LOGGER.debug("Saved record to {}", writeTo);
         recordStarted = false;
+        LOGGER.debug("Ended record");
     }
 
     public JADNameGenerator(ClassVisitor classVisitor) {
@@ -76,7 +83,8 @@ public class JADNameGenerator extends ClassVisitor {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        if(recordStarted) className = name;
+        className = name;
+        LOGGER.trace("Generating JAD-style names for class \"{}\"", name);
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
@@ -90,17 +98,26 @@ public class JADNameGenerator extends ClassVisitor {
         if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.contains("()")) {
             StringJoiner joiner = new StringJoiner(" ");
             joiner.add(className).add(name).add(descriptor);
-            for(Type type : Type.getArgumentTypes(descriptor)) joiner.add(renamer.getVarName(type));
+            LOGGER.trace("Generation of abstract parameter names started for method {}{} in class {}", name, descriptor, className);
+            for(Type type : Type.getArgumentTypes(descriptor)) {
+                joiner.add(renamer.getVarName(type));
+                LOGGER.trace("Generated an abstract parameter name from descriptor \"{}\" for method {}{} in class {}",
+                        type::getDescriptor, () -> name, () -> descriptor, () -> className);
+            }
             generatedAbstractParameterNames.add(joiner.toString());
+            LOGGER.trace("Generation of abstract parameter names completed for method {}{} in class {}", name, descriptor, className);
             return super.visitMethod(access, name, descriptor, signature, exceptions);
         }
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
             @Override
-            public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+            public void visitInvokeDynamicInsn(String indyName, String indyDescriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
                 Handle lambdaHandle = (Handle) bootstrapMethodArguments[1];
-                if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().startsWith("lambda$"))
-                    sharedRenamers.putIfAbsent(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()), renamer);
-                super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+                if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().startsWith("lambda$") &&
+                        sharedRenamers.putIfAbsent(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()),
+                                renamer) == null)
+                    LOGGER.trace("Method {}{} is going to share renamer with {}{} in class {}",
+                            () -> name, () -> descriptor, lambdaHandle::getName, lambdaHandle::getDesc, () -> className);
+                super.visitInvokeDynamicInsn(indyName, indyDescriptor, bootstrapMethodHandle, bootstrapMethodArguments);
             }
 
             @Override

@@ -18,127 +18,48 @@
 
 package cn.maxpixel.mcdecompiler.mapping.tiny;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Documented;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.nio.file.Path;
+import java.util.Map;
 
-public class TinyMethodMapping extends DescriptoredBaseMethodMapping implements cn.maxpixel.mcdecompiler.mapping.components.Namespaced, Documented {
-    private final Int2ObjectOpenHashMap<String> lvt = new Int2ObjectOpenHashMap<>();
+public class TinyMethodMapping extends NamespacedMethodMapping implements Documented, Documented.LocalVariable {
     private final Int2ObjectOpenHashMap<String> lvtDoc = new Int2ObjectOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
-    private String document;
+    private String doc;
 
-    public TinyMethodMapping(String unmappedDescriptor, Namespaced... names) {
-        for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
-        setUnmappedDescriptor(unmappedDescriptor);
+    public TinyMethodMapping(Map<String, String> names, String unmappedDescriptor) {
+        super(names, unmappedDescriptor);
+    }
+
+    public TinyMethodMapping(String unmappedDescriptor) {
+        super(unmappedDescriptor);
     }
 
     @Override
-    public String getName(String namespace) {
-        return names.get(namespace);
-    }
-
-    @Override
-    public void setName(String namespace, String name) {
-        names.put(namespace, name);
-    }
-
-    @Override
-    public TinyClassMapping getOwner() {
-        return (TinyClassMapping) super.getOwner();
-    }
-
-    @Override
-    public TinyMethodMapping setOwner(ClassMapping owner) {
-        if(!(owner instanceof TinyClassMapping)) throw new IllegalArgumentException("TinyMethodMapping's owner must be TinyClassMapping");
-        return this.setOwner((TinyClassMapping) owner);
-    }
-
-    public TinyMethodMapping setOwner(TinyClassMapping owner) {
+    public TinyMethodMapping setOwner(NamespacedClassMapping owner) {
         super.setOwner(owner);
         return this;
     }
 
-    /** Recommend to use {@link #getName(String)} */
     @Override
-    public String getUnmappedName() {
-        String s = getName(Namespaced.OFFICIAL);
-        return s == null ? getName(Namespaced.INTERMEDIARY) : s;
+    public void setDoc(String doc) {
+        this.doc = doc;
     }
 
-    /** Recommend to use {@link #getName(String)} */
     @Override
-    public String getMappedName() {
-        String s = getName(Namespaced.YARN);
-        return s == null ? getName(Namespaced.INTERMEDIARY) : s;
+    public String getDoc() {
+        return doc;
     }
 
-    /**
-     * @deprecated Use {@link #setName(String, String)} instead.
-     * @throws UnsupportedOperationException When calling this method
-     */
     @Override
-    @Deprecated
-    public void setUnmappedName(String unmappedName) {
-        throw new UnsupportedOperationException();
+    public void setLocalVariableDoc(int index, String doc) {
+        lvtDoc.put(index, doc);
     }
 
-    /**
-     * @deprecated Use {@link #setName(String, String)} instead.
-     * @throws UnsupportedOperationException When calling this method
-     */
     @Override
-    @Deprecated
-    public void setMappedName(String mappedName) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void setLocalVariableName(int index, String name) {
-        lvt.put(index, name);
-    }
-
-    public void setLocalVariableDocument(int index, String document) {
-        lvtDoc.put(index, document);
-    }
-
-    public String getLocalVariableDocument(int index) {
+    public String getLocalVariableDoc(int index) {
         return lvtDoc.get(index);
-    }
-
-    public String getLocalVariableName(int index) {
-        return lvt.get(index);
-    }
-
-    /**
-     * @deprecated Use {@link cn.maxpixel.mcdecompiler.deobfuscator.TinyDeobfuscator#deobfuscate(Path, Path, boolean, String, String)}
-     * @throws UnsupportedOperationException When calling this method
-     */
-    @Override
-    @Deprecated
-    public void reverse(MappingRemapper remapper) {
-        throw new UnsupportedOperationException();
-    }
-
-    /** @deprecated See {@link #reverse()} for more info */
-    @Override
-    @Deprecated
-    public void reverse0(MappingRemapper remapper) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setDocument(String document) {
-        this.document = document;
-    }
-
-    @Override
-    public String getDocument() {
-        return document;
     }
 }

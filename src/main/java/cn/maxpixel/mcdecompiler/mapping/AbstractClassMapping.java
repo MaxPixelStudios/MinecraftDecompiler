@@ -16,11 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.components;
+package cn.maxpixel.mcdecompiler.mapping;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 
-public interface Owner<THIS, T extends ClassMapping> {
-    T getOwner();
-    THIS setOwner(T owner);
+public interface AbstractClassMapping {
+    default boolean isPaired() {
+        return this instanceof PairedClassMapping;
+    }
+    default boolean isNamespaced() {
+        return this instanceof NamespacedClassMapping;
+    }
+
+    default PairedClassMapping asPaired() {
+        return (PairedClassMapping) this;
+    }
+    default NamespacedClassMapping asNamespaced() {
+        return (NamespacedClassMapping) this;
+    }
 }

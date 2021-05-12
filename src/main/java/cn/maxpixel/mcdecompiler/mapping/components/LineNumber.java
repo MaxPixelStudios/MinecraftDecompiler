@@ -19,9 +19,8 @@
 package cn.maxpixel.mcdecompiler.mapping.components;
 
 public interface LineNumber {
-    /* S: Start    E: End */
-    int getLineNumberS();
-    int getLineNumberE();
-    void setLineNumberS(int ns);
-    void setLineNumberE(int ne);
+    int getStartLineNumber();
+    int getEndLineNumber();
+    void setStartLineNumber(int ns);
+    void setEndLineNumber(int ne);
 }

@@ -18,26 +18,32 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Documented;
-import cn.maxpixel.mcdecompiler.mapping.tiny.Namespaced;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.tiny.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.apache.logging.log4j.LogManager;
+import it.unimi.dsi.fastutil.objects.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TinyMappingReader extends AbstractMappingReader {
-    private int version;
+    public final int version;
+
+    {
+        String s = lines.get(0);
+        version = s.startsWith("tiny\t2\t0\t") ? 2 : s.startsWith("v1\t") ? 1 : -1;
+    }
 
     public TinyMappingReader(BufferedReader reader) {
         super(reader);
@@ -58,141 +64,148 @@ public class TinyMappingReader extends AbstractMappingReader {
     private final V1TinyMappingProcessor V1_PROCESSOR = new V1TinyMappingProcessor();
     private final V2TinyMappingProcessor V2_PROCESSOR = new V2TinyMappingProcessor();
     @Override
-    protected AbstractNonPackageMappingProcessor getProcessor() {
-        try {
-            reader.mark(50);
-            String s = reader.readLine();
-            reader.reset();
-            if(s.startsWith("tiny\t2\t0\t")) {
-                version = 2;
-                return V2_PROCESSOR;
-            } else if(s.startsWith("v1\t")) {
-                version = 1;
-                return V1_PROCESSOR;
-            }
-        } catch(IOException e) {
-            LogManager.getLogger().catching(e);
-        }
-        return V2_PROCESSOR;
+    protected NamespacedMappingProcessor getProcessor() {
+        if(version == 2) return V2_PROCESSOR;
+        else if(version == 1) return V1_PROCESSOR;
+        else throw new IllegalArgumentException("Unknown tiny mapping version");
     }
 
     public int getVersion() {
         return version;
     }
 
-    private static class V1TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
+    private class V1TinyMappingProcessor extends NamespacedMappingProcessor {
         private String[] namespaces;
-        private ObjectList<TinyClassMapping> mappingsCache;
+        private ObjectList<NamespacedClassMapping> mappingsCache;
         @Override
-        ObjectList<TinyClassMapping> process(Stream<String> lines) {
+        public ObjectList<NamespacedClassMapping> process() {
             if(mappingsCache != null && !mappingsCache.isEmpty()) return mappingsCache;
-            ObjectArrayList<String> lns = lines.collect(Collectors.toCollection(ObjectArrayList::new));
-            Object2ObjectOpenHashMap<String, TinyClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
-            namespaces = lns.remove(0).substring(3).split("\t");
-            lns.forEach(s -> {
+            Object2ObjectOpenHashMap<String, NamespacedClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: the first namespace, usually unmapped name
+            namespaces = lines.remove(0).substring(3).split("\t");
+            String k = namespaces[0];
+            lines.parallelStream().forEach(s -> {
                 if(s.startsWith("CLASS")) {
-                    TinyClassMapping classMapping = processClass(s);
-                    mappings.merge(classMapping.getUnmappedName(), classMapping, (o, n) -> {
-                        n.addField(o.getFieldMap().values());
-                        n.addMethod(o.getMethods());
-                        return n;
-                    });
+                    NamespacedClassMapping classMapping = processClass(s);
+                    synchronized(mappings) {
+                        mappings.merge(classMapping.getName(k), classMapping, (o, n) -> {
+                            n.addField(o.getFields());
+                            n.addMethod(o.getMethods());
+                            return n;
+                        });
+                    }
                 } else if(s.startsWith("FIELD")) {
-                    TinyFieldMapping fieldMapping = processField(s);
-                    TinyClassMapping cm = mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(), TinyClassMapping::new);
-                    cm.addField(fieldMapping.setOwner(cm));
+                    NamespacedFieldMapping fieldMapping = processField(s);
+                    synchronized(mappings) {
+                        mappings.computeIfAbsent(fieldMapping.getOwner().getName(k), key -> new NamespacedClassMapping())
+                                .addField(fieldMapping);
+                    }
                 } else if(s.startsWith("METHOD")) {
-                    TinyMethodMapping methodMapping = processMethod(s);
-                    TinyClassMapping cm = mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), TinyClassMapping::new);
-                    cm.addMethod(methodMapping.setOwner(cm));
+                    NamespacedMethodMapping methodMapping = processMethod(s);
+                    synchronized(mappings) {
+                        mappings.computeIfAbsent(methodMapping.getOwner().getName(k), key -> new NamespacedClassMapping())
+                                .addMethod(methodMapping);
+                    }
                 } else throw new IllegalArgumentException("Is this a Tiny v1 mapping file?");
             });
-            mappingsCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            mappingsCache = new ObjectImmutableList<>(mappings.values());
             return mappingsCache;
         }
 
         @Override
-        TinyClassMapping processClass(String line) {
-            String[] split = line.substring(6).split("\t");
-            return new TinyClassMapping(Utils.mapArray(split, (i, s) -> new Namespaced(namespaces[i], NamingUtil.asJavaName(s)), Namespaced.class));
+        public NamespacedClassMapping processClass(String line) {
+            return new NamespacedClassMapping(new Object2ObjectArrayMap<>(namespaces,
+                    Utils.mapToStringArray(line.substring(6).split("\t"), NamingUtil::asJavaName)));
         }
 
         @Override
-        TinyMethodMapping processMethod(String line) {
+        public NamespacedMethodMapping processMethod(String line) {
             String[] split = line.split("\t");
-            String[] names = new String[namespaces.length];
-            System.arraycopy(split, 3, names, 0, namespaces.length);
-            return new TinyMethodMapping(split[2], Utils.mapArray(names, (i, s) -> new Namespaced(namespaces[i], s), Namespaced.class))
-                    .setOwner(new TinyClassMapping(split[1]));
+            return new NamespacedMethodMapping(new Object2ObjectArrayMap<>(namespaces, Arrays.copyOfRange(split, 3, Integer.MAX_VALUE)),
+                    split[2]).setOwner(new NamespacedClassMapping(Object2ObjectMaps.singleton(namespaces[0], NamingUtil.asJavaName(split[1]))));
         }
 
         @Override
-        TinyFieldMapping processField(String line) {
+        public TinyFieldMapping processField(String line) {
             String[] split = line.split("\t");
-            String[] names = new String[namespaces.length];
-            System.arraycopy(split, 3, names, 0, namespaces.length);
-            return new TinyFieldMapping(split[2], Utils.mapArray(names, (i, s) -> new Namespaced(namespaces[i], s), Namespaced.class))
-                    .setOwner(new TinyClassMapping(split[1]));
+            return new TinyFieldMapping(new Object2ObjectArrayMap<>(namespaces, Arrays.copyOfRange(split, 3, Integer.MAX_VALUE)),
+                    split[2]).setOwner(new NamespacedClassMapping(Object2ObjectMaps.singleton(namespaces[0], NamingUtil.asJavaName(split[1]))));
         }
     }
 
-    private static class V2TinyMappingProcessor extends AbstractNonPackageMappingProcessor {
+    private class V2TinyMappingProcessor extends NamespacedMappingProcessor {
         private String[] namespaces;
-        private final ObjectArrayList<TinyClassMapping> mappings = new ObjectArrayList<>(5000);
+        private final ObjectArrayList<NamespacedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        ObjectList<TinyClassMapping> process(Stream<String> lines) {
-            if(!mappings.isEmpty()) return mappings;
-            ObjectArrayList<String> lns = lines.collect(Collectors.toCollection(ObjectArrayList::new));
-            AtomicReference<TinyClassMapping> currClass = new AtomicReference<>();
-            AtomicReference<Documented> currSub = new AtomicReference<>();
-            AtomicInteger currParam = new AtomicInteger();
-            namespaces = lns.remove(0).substring(9).split("\t");
-            lns.forEach(s -> {
-                if(!s.startsWith("\t")) {
-                    if(currClass.get() != null) mappings.add(currClass.getAndSet(processClass(s)));
-                    else currClass.set(processClass(s));
-                } else {
-                    TinyClassMapping curr = currClass.get();
-                    if(s.startsWith("\tc")) curr.setDocument(s.substring(3));
-                    else if(s.startsWith("\tm")) {
-                        currSub.set(processMethod(s).setOwner(curr));
-                        curr.addMethod((TinyMethodMapping) currSub.get());
-                    } else if(s.startsWith("\tf")) {
-                        currSub.set(processField(s).setOwner(curr));
-                        curr.addField((TinyFieldMapping) currSub.get());
-                    } else if(s.startsWith("\t\tp")) {
-                        String[] split = s.substring(4).split("\t\t");
-                        currParam.set(Integer.parseInt(split[0]));
-                        ((TinyMethodMapping) currSub.get()).setLocalVariableName(currParam.get(), split[1]);
-                    } else if(s.startsWith("\t\tc")) currSub.get().setDocument(s.substring(4));
-                    else if(s.startsWith("\t\t\tc")) ((TinyMethodMapping) currSub.get()).setLocalVariableDocument(currParam.get(), s.substring(5));
-                    else throw new IllegalArgumentException("Is this a Tiny v2 mapping file?" + s);
-                }
-            });
-            if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
+        public ObjectList<NamespacedClassMapping> process() {
+            if(mappings.isEmpty()) {
+                AtomicReference<TinyClassMapping> currClass = new AtomicReference<>();
+                AtomicReference<Documented> currSub = new AtomicReference<>();
+                AtomicInteger currParam = new AtomicInteger();
+                namespaces = lines.remove(0).substring(9).split("\t");
+                lines.forEach(s -> {
+                    if(s.charAt(0) == 'c') {
+                        if(currClass.get() != null) mappings.add(currClass.getAndSet(processClass(s)));
+                        else currClass.set(processClass(s));
+                    } else if(s.charAt(0) == '\t') {
+                        TinyClassMapping curr = currClass.get();
+                        switch(s.charAt(1)) {
+                            case 'c':
+                                curr.setDoc(s.substring(3));
+                                break;
+                            case 'm':
+                                TinyMethodMapping methodMapping = processMethod(s);
+                                curr.addMethod(methodMapping);
+                                currSub.set(methodMapping);
+                                break;
+                            case 'f':
+                                TinyFieldMapping fieldMapping = processField(s);
+                                curr.addField(fieldMapping);
+                                currSub.set(fieldMapping);
+                                break;
+                            case '\t':
+                                switch(s.charAt(2)) {
+                                    case 'p':
+                                        String[] split = s.substring(4).split("\t");
+                                        currParam.set(Integer.parseInt(split[0]));
+                                        ((NamespacedMethodMapping) currSub.get()).setLocalVariableName(currParam.get(),
+                                                new Object2ObjectArrayMap<>(namespaces, Arrays.copyOfRange(split, 1, Integer.MAX_VALUE)));
+                                        break;
+                                    case 'c':
+                                        currSub.get().setDoc(s.substring(4));
+                                        break;
+                                    case '\t':
+                                        if(s.charAt(3) == 'c') {
+                                            ((TinyMethodMapping) currSub.get()).setLocalVariableDoc(currParam.get(), s.substring(5));
+                                            break;
+                                        }
+                                    default: throw new IllegalArgumentException("Is this a Tiny v2 mapping file?");
+                                }
+                                break;
+                            default: throw new IllegalArgumentException("Is this a Tiny v2 mapping file?");
+                        }
+                    } else throw new IllegalArgumentException("Is this a Tiny v2 mapping file?");
+                });
+                mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
+            }
             return mappings;
         }
 
         @Override
-        TinyClassMapping processClass(String line) {
-            String[] split = line.substring(3).split("\t");
-            return new TinyClassMapping(Utils.mapArray(split, (i, s) -> new Namespaced(namespaces[i], NamingUtil.asJavaName(s)), Namespaced.class));
+        public TinyClassMapping processClass(String line) {
+            return new TinyClassMapping(new Object2ObjectArrayMap<>(namespaces, Utils.mapToStringArray(line.substring(2).split("\t"),
+                    NamingUtil::asJavaName)));
         }
 
         @Override
-        TinyMethodMapping processMethod(String line) {
-            String[] split = line.substring(4).split("\t");
-            String[] names = new String[namespaces.length];
-            System.arraycopy(split, 1, names, 0, namespaces.length);
-            return new TinyMethodMapping(split[0], Utils.mapArray(names, (i, s) -> new Namespaced(namespaces[i], s), Namespaced.class));
+        public TinyMethodMapping processMethod(String line) {
+            String[] split = line.split("\t");
+            return new TinyMethodMapping(new Object2ObjectArrayMap<>(namespaces, Arrays.copyOfRange(split, 3, Integer.MAX_VALUE)), split[2]);
         }
 
         @Override
-        TinyFieldMapping processField(String line) {
-            String[] split = line.substring(4).split("\t");
-            String[] names = new String[namespaces.length];
-            System.arraycopy(split, 1, names, 0, namespaces.length);
-            return new TinyFieldMapping(split[0], Utils.mapArray(names, (i, s) -> new Namespaced(namespaces[i], s), Namespaced.class));
+        public TinyFieldMapping processField(String line) {
+            String[] split = line.split("\t");
+            return new TinyFieldMapping(new Object2ObjectArrayMap<>(namespaces, Arrays.copyOfRange(split, 3, Integer.MAX_VALUE)), split[2]);
         }
     }
 }

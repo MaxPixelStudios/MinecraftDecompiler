@@ -16,20 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.proguard;
+package cn.maxpixel.mcdecompiler.mapping.paired;
 
 import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 
-public class ProguardFieldMapping extends PairedFieldMapping implements Descriptor.Mapped {
+import java.util.Objects;
+
+public class MappedDescriptoredPairedMethodMapping extends PairedMethodMapping implements Descriptor.Mapped {
     private String mappedDescriptor;
 
-    public ProguardFieldMapping(String unmappedName, String mappedName, String mappedDescriptor) {
+    public MappedDescriptoredPairedMethodMapping(String unmappedName, String mappedName, String mappedDescriptor) {
         super(unmappedName, mappedName);
         this.mappedDescriptor = mappedDescriptor;
     }
-    public ProguardFieldMapping() {}
+    public MappedDescriptoredPairedMethodMapping() {}
 
     @Override
     public String getMappedDescriptor() {
@@ -47,8 +48,30 @@ public class ProguardFieldMapping extends PairedFieldMapping implements Descript
         throw new UnsupportedOperationException("Use reverse(MappingRemapper) instead");
     }
 
+    @Override
     public void reverse(MappingRemapper remapper) {
         super.reverse();
         mappedDescriptor = remapper.getUnmappedDescByMappedDesc(mappedDescriptor);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MappedDescriptoredPairedMethodMapping)) return false;
+        if (!super.equals(o)) return false;
+        MappedDescriptoredPairedMethodMapping that = (MappedDescriptoredPairedMethodMapping) o;
+        return mappedDescriptor.equals(that.mappedDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + Objects.hash(mappedDescriptor);
+    }
+
+    @Override
+    public String toString() {
+        return "MappedDescriptoredPairedMethodMapping{" +
+                "mappedDescriptor='" + mappedDescriptor + '\'' +
+                "} " + super.toString();
     }
 }

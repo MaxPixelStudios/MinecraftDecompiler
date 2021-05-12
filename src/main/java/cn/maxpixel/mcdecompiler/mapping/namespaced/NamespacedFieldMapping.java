@@ -16,25 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.tiny;
+package cn.maxpixel.mcdecompiler.mapping.namespaced;
 
-public class Namespaced {
-    public static final String OFFICIAL = "official";
-    public static final String INTERMEDIARY = "intermediary";
-    public static final String YARN = "named";
-    private final String namespace;
-    private final String name;
+import cn.maxpixel.mcdecompiler.mapping.components.Owned;
 
-    public Namespaced(String namespace, String name) {
-        this.namespace = namespace;
-        this.name = name;
+import java.util.Map;
+
+public class NamespacedFieldMapping extends NamespacedMapping implements Owned<NamespacedFieldMapping, NamespacedClassMapping> {
+    private NamespacedClassMapping owner;
+
+    public NamespacedFieldMapping(Map<String, String> names) {
+        super(names);
+    }
+    public NamespacedFieldMapping() {}
+
+    @Override
+    public NamespacedClassMapping getOwner() {
+        return owner;
     }
 
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public String getName() {
-        return name;
+    @Override
+    public NamespacedFieldMapping setOwner(NamespacedClassMapping owner) {
+        this.owner = owner;
+        return this;
     }
 }

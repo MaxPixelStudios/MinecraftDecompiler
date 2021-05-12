@@ -16,19 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping;
+package cn.maxpixel.mcdecompiler.mapping.components;
 
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMapping;
-
-public class PackageMapping extends BaseMapping {
-    public PackageMapping(String unmappedName, String mappedName) {
-        super(unmappedName, mappedName);
-    }
-    public PackageMapping() {}
-
-    @Override
-    public String toString() {
-        return "PackageMapping{unmapped name=" + getUnmappedName() +
-                ", mapped name=" + getMappedName() + '}';
-    }
+public interface Owned<THIS extends Owned<THIS, T>, T> {
+    T getOwner();
+    THIS setOwner(T owner);
 }

@@ -19,6 +19,10 @@
 package cn.maxpixel.mcdecompiler.mapping.components;
 
 public interface Documented {
-    void setDocument(String document);
-    String getDocument();
+    void setDoc(String doc);
+    String getDoc();
+    interface LocalVariable {
+        void setLocalVariableDoc(int index, String doc);
+        String getLocalVariableDoc(int index);
+    }
 }

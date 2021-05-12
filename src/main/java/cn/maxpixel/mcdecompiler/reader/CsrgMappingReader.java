@@ -18,33 +18,32 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.UnmappedDescriptoredPairedMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.*;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CsrgMappingReader extends AbstractMappingReader {
     public CsrgMappingReader(BufferedReader reader) {
         super(reader);
     }
+
     public CsrgMappingReader(Reader rd) {
         super(rd);
     }
+
     public CsrgMappingReader(InputStream is) {
         super(is);
     }
-    public CsrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
+
+    public CsrgMappingReader(String path) throws FileNotFoundException {
         super(path);
     }
 
@@ -54,71 +53,91 @@ public class CsrgMappingReader extends AbstractMappingReader {
         return PROCESSOR;
     }
 
-    private static class CsrgMappingProcessor extends AbstractMappingProcessor {
-        private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
-        private ObjectList<ClassMapping> mappingsCache;
+    private class CsrgMappingProcessor extends PairedMappingProcessor implements PackageMappingProcessor {
+        private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
+        private ObjectList<PairedClassMapping> mappingsCache;
         @Override
-        ObjectList<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<PairedClassMapping> process() {
             if(mappingsCache != null && !mappingsCache.isEmpty()) return mappingsCache;
-            Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
-            lines.map(String::trim).forEach(s -> {
+            Object2ObjectOpenHashMap<String, PairedClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
+            lines.parallelStream().map(String::trim).forEach(s -> {
                 String[] sa = s.split(" ");
                 switch(sa.length) {
                     case 2: // Class / Package
-                        if(sa[0].endsWith("/")) packages.add(processPackage(s));
-                        else {
-                            ClassMapping classMapping = processClass(s);
-                            mappings.merge(classMapping.getUnmappedName(), classMapping, (o, n) -> {
-                                n.addField(o.getFieldMap().values());
-                                n.addMethod(o.getMethods());
-                                return n;
-                            });
+                        if(sa[0].endsWith("/")) synchronized(packages) {
+                            packages.add(processPackage(sa));
+                        } else {
+                            PairedClassMapping classMapping = processClass(sa);
+                            synchronized(mappings) {
+                                mappings.merge(classMapping.getUnmappedName(), classMapping, (o, n) -> {
+                                    n.addField(o.getFieldMap().values());
+                                    n.addMethod(o.getMethods());
+                                    return n;
+                                });
+                            }
                         }
                         break;
                     case 3: // Field
-                        BaseFieldMapping fieldMapping = processField(s);
-                        ClassMapping cm = mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(), ClassMapping::new);
-                        cm.addField(fieldMapping.setOwner(cm));
+                        PairedFieldMapping fieldMapping = processField(sa);
+                        synchronized(mappings) {
+                            mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(), PairedClassMapping::new)
+                                    .addField(fieldMapping);
+                        }
                         break;
                     case 4: // Method
-                        DescriptoredBaseMethodMapping methodMapping = processMethod(s);
-                        cm = mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), ClassMapping::new);
-                        cm.addMethod(methodMapping.setOwner(cm));
+                        UnmappedDescriptoredPairedMethodMapping methodMapping = processMethod(sa);
+                        synchronized(mappings) {
+                            mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), PairedClassMapping::new)
+                                    .addMethod(methodMapping);
+                        }
                         break;
                     default: throw new IllegalArgumentException("Is this a CSRG mapping file?");
                 }
             });
-            mappingsCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            mappingsCache = new ObjectImmutableList<>(mappings.values());
             return mappingsCache;
         }
 
         @Override
-        ClassMapping processClass(String line) {
-            String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
+        public PairedClassMapping processClass(String line) {
+            return processClass(line.split(" "));
+        }
+
+        private PairedClassMapping processClass(String[] line) {
+            return new PairedClassMapping(NamingUtil.asJavaName(line[0]), NamingUtil.asJavaName(line[1]));
         }
 
         @Override
-        DescriptoredBaseMethodMapping processMethod(String line) {
-            String[] strings = line.split(" ");
-            return new DescriptoredBaseMethodMapping(strings[1], strings[3], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
+        public UnmappedDescriptoredPairedMethodMapping processMethod(String line) {
+            return processMethod(line.split(" "));
+        }
+
+        private UnmappedDescriptoredPairedMethodMapping processMethod(String[] line) {
+            return new UnmappedDescriptoredPairedMethodMapping(line[1], line[3], line[2])
+                    .setOwner(new PairedClassMapping(NamingUtil.asJavaName(line[0])));
         }
 
         @Override
-        BaseFieldMapping processField(String line) {
-            String[] strings = line.split(" ");
-            return new BaseFieldMapping(strings[1], strings[2]).setOwner(new ClassMapping(NamingUtil.asJavaName(strings[0])));
+        public PairedFieldMapping processField(String line) {
+            return processField(line.split(" "));
+        }
+
+        private PairedFieldMapping processField(String[] line) {
+            return new PairedFieldMapping(line[1], line[2]).setOwner(new PairedClassMapping(NamingUtil.asJavaName(line[0])));
         }
 
         @Override
-        ObjectList<PackageMapping> getPackages() {
-            return packages;
+        public ObjectList<PairedMapping> getPackages() {
+            return ObjectLists.unmodifiable(packages);
         }
 
         @Override
-        PackageMapping processPackage(String line) {
-            String[] strings = line.split(" ");
-            return new PackageMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
+        public PairedMapping processPackage(String line) {
+            return processPackage(line.split(" "));
+        }
+
+        private PairedMapping processPackage(String[] line) {
+            return new PairedMapping(line[0].substring(0, line[0].length() - 1), line[1]);
         }
     }
 }

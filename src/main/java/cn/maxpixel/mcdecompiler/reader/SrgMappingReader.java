@@ -18,21 +18,17 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.srg.SrgMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.DescriptoredPairedMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.*;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SrgMappingReader extends AbstractMappingReader {
     public SrgMappingReader(BufferedReader reader) {
@@ -47,7 +43,7 @@ public class SrgMappingReader extends AbstractMappingReader {
         super(is);
     }
 
-    public SrgMappingReader(String path) throws FileNotFoundException, NullPointerException {
+    public SrgMappingReader(String path) throws FileNotFoundException {
         super(path);
     }
 
@@ -57,45 +53,47 @@ public class SrgMappingReader extends AbstractMappingReader {
         return PROCESSOR;
     }
 
-    private static class SrgMappingProcessor extends AbstractMappingProcessor {
-        private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
-        private ObjectArrayList<ClassMapping> mappingCache;
+    private class SrgMappingProcessor extends PairedMappingProcessor implements PackageMappingProcessor {
+        private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
+        private ObjectList<PairedClassMapping> mappingCache;
         @Override
-        ObjectList<ClassMapping> process(Stream<String> lines) {
+        public ObjectList<PairedClassMapping> process() {
             if(mappingCache != null && !mappingCache.isEmpty()) return mappingCache;
-            Object2ObjectOpenHashMap<String, ClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
-            lines.map(String::trim).forEach(s -> {
-                switch(s.substring(0, 3)) {
-                    case "CL:":
-                        ClassMapping classMapping = processClass(s);
+            Object2ObjectOpenHashMap<String, PairedClassMapping> mappings = new Object2ObjectOpenHashMap<>(); // k: unmapped name
+            lines.parallelStream().map(String::trim).forEach(s -> {
+                if(s.startsWith("CL:")) {
+                    PairedClassMapping classMapping = processClass(s);
+                    synchronized(mappings) {
                         mappings.putIfAbsent(classMapping.getUnmappedName(), classMapping);
-                        break;
-                    case "PK:":
+                    }
+                } else if(s.startsWith("FD:")) {
+                    PairedFieldMapping fieldMapping = processField(s);
+                    String unmClassName = fieldMapping.getOwner().getUnmappedName();
+                    synchronized(mappings) {
+                        mappings.computeIfAbsent(unmClassName, k -> new PairedClassMapping(unmClassName, fieldMapping.getOwner().getMappedName()))
+                                .addField(fieldMapping);
+                    }
+                } else if(s.startsWith("MD:")) {
+                    DescriptoredPairedMethodMapping methodMapping = processMethod(s);
+                    String unmClassName = methodMapping.getOwner().getUnmappedName();
+                    synchronized(mappings) {
+                        mappings.computeIfAbsent(unmClassName, k -> new PairedClassMapping(unmClassName, methodMapping.getOwner().getMappedName()))
+                                .addMethod(methodMapping);
+                    }
+                } else if(s.startsWith("PK:")) {
+                    synchronized(packages) {
                         packages.add(processPackage(s));
-                        break;
-                    case "FD:":
-                        BaseFieldMapping fieldMapping = processField(s);
-                        String unmClassName = fieldMapping.getOwner().getUnmappedName();
-                        ClassMapping cm = mappings.computeIfAbsent(unmClassName, k -> new ClassMapping(unmClassName, fieldMapping.getOwner().getMappedName()));
-                        cm.addField(fieldMapping.setOwner(cm));
-                        break;
-                    case "MD:":
-                        SrgMethodMapping methodMapping = processMethod(s);
-                        unmClassName = methodMapping.getOwner().getUnmappedName();
-                        cm = mappings.computeIfAbsent(unmClassName, k -> new ClassMapping(unmClassName, methodMapping.getOwner().getMappedName()));
-                        cm.addMethod(methodMapping.setOwner(cm));
-                        break;
-                    default: throw new IllegalArgumentException("Is this a SRG mapping file?");
-                }
+                    }
+                } else throw new IllegalArgumentException("Is this a SRG mapping file?");
             });
-            mappingCache = mappings.values().parallelStream().collect(Collectors.toCollection(ObjectArrayList::new));
+            mappingCache = new ObjectImmutableList<>(mappings.values());
             return mappingCache;
         }
 
         @Override
-        ClassMapping processClass(String line) {
+        public PairedClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
+            return new PairedClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
         }
 
         private String getClassName(String s) {
@@ -107,28 +105,28 @@ public class SrgMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        SrgMethodMapping processMethod(String line) {
+        public DescriptoredPairedMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new SrgMethodMapping(getName(strings[1]), getName(strings[3]), strings[2], strings[4])
-                    .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[3])));
+            return new DescriptoredPairedMethodMapping(getName(strings[1]), getName(strings[3]), strings[2], strings[4])
+                    .setOwner(new PairedClassMapping(getClassName(strings[1]), getClassName(strings[3])));
         }
 
         @Override
-        BaseFieldMapping processField(String line) {
+        public PairedFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(getName(strings[1]), getName(strings[2]))
-                    .setOwner(new ClassMapping(getClassName(strings[1]), getClassName(strings[2])));
+            return new PairedFieldMapping(getName(strings[1]), getName(strings[2]))
+                    .setOwner(new PairedClassMapping(getClassName(strings[1]), getClassName(strings[2])));
         }
 
         @Override
-        ObjectList<PackageMapping> getPackages() {
-            return packages;
+        public ObjectList<PairedMapping> getPackages() {
+            return ObjectLists.unmodifiable(packages);
         }
 
         @Override
-        PackageMapping processPackage(String line) {
+        public PairedMapping processPackage(String line) {
             String[] strings = line.split(" ");
-            return new PackageMapping(strings[1], strings[2]);
+            return new PairedMapping(strings[1], strings[2]);
         }
     }
 }

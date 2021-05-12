@@ -18,10 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.DescriptoredBaseMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.UnmappedDescriptoredPairedMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -57,18 +57,18 @@ public class TsrgMappingReader extends AbstractMappingReader {
     }
 
     private static class TsrgMappingProcessor extends AbstractMappingProcessor {
-        private final ObjectArrayList<PackageMapping> packages = new ObjectArrayList<>();
-        private final ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+        private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
+        private final ObjectArrayList<PairedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        ObjectList<ClassMapping> process(Stream<String> lines) {
+        ObjectList<PairedClassMapping> process(Stream<String> lines) {
             if(!mappings.isEmpty()) return mappings;
-            AtomicReference<ClassMapping> currClass = new AtomicReference<>();
+            AtomicReference<PairedClassMapping> currClass = new AtomicReference<>();
             lines.forEach(s -> {
                 if(!s.startsWith("\t")) {
                     if(currClass.get() != null) mappings.add(currClass.getAndSet(processClass(s)));
                     else currClass.set(processClass(s));
                 } else {
-                    ClassMapping curr = currClass.get();
+                    PairedClassMapping curr = currClass.get();
                     int len = s.split(" ").length;
                     if(len == 3) curr.addMethod(processMethod(s.trim()).setOwner(curr));
                     else if(len == 2) curr.addField(processField(s.trim()).setOwner(curr));
@@ -80,32 +80,32 @@ public class TsrgMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected ClassMapping processClass(String line) {
+        protected PairedClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new ClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
+            return new PairedClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
         }
 
         @Override
-        protected DescriptoredBaseMethodMapping processMethod(String line) {
+        protected UnmappedDescriptoredPairedMethodMapping processMethod(String line) {
             String[] strings = line.split(" ");
-            return new DescriptoredBaseMethodMapping(strings[0], strings[2], strings[1]);
+            return new UnmappedDescriptoredPairedMethodMapping(strings[0], strings[2], strings[1]);
         }
 
         @Override
-        protected BaseFieldMapping processField(String line) {
+        protected PairedFieldMapping processField(String line) {
             String[] strings = line.split(" ");
-            return new BaseFieldMapping(strings[0], strings[1]);
+            return new PairedFieldMapping(strings[0], strings[1]);
         }
 
         @Override
-        public ObjectList<PackageMapping> getPackages() {
+        public ObjectList<PairedMapping> getPackages() {
             return packages;
         }
 
         @Override
-        protected PackageMapping processPackage(String line) {
+        protected PairedMapping processPackage(String line) {
             String[] strings = line.split(" ");
-            return new PackageMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
+            return new PairedMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
         }
     }
 }

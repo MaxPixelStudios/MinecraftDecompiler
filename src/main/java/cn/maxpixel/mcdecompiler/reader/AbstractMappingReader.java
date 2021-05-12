@@ -18,107 +18,128 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.PackageMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseMethodMapping;
+import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public abstract class AbstractMappingReader implements AutoCloseable {
-    protected BufferedReader reader;
-    private List<? extends ClassMapping> mappings;
-    private List<PackageMapping> packages;
+public abstract class AbstractMappingReader {
+    protected ObjectArrayList<String> lines;
+    private ObjectList<? extends AbstractClassMapping> mappings;
+    private ObjectList<PairedMapping> packages;
 
-    protected AbstractMappingReader(BufferedReader reader) {
-        this.reader = reader;
+    public AbstractMappingReader(BufferedReader reader) {
+        try(BufferedReader ignored = reader) {
+            lines = reader.lines().map(s -> {
+                if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
+
+                int index = s.indexOf('#');
+                if(index > 0) return s.substring(0, index);
+                else if(index == 0) return null;
+
+                return s;
+            }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(e);
+        }
     }
-    protected AbstractMappingReader(Reader rd) {
+    public AbstractMappingReader(Reader rd) {
         this(new BufferedReader(Objects.requireNonNull(rd)));
     }
-    protected AbstractMappingReader(InputStream is) {
+    public AbstractMappingReader(InputStream is) {
         this(new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8));
     }
-    protected AbstractMappingReader(String path) throws FileNotFoundException, NullPointerException {
+    public AbstractMappingReader(String path) throws FileNotFoundException {
         this(new FileReader(Objects.requireNonNull(path)));
     }
 
-    protected abstract AbstractNonPackageMappingProcessor getProcessor();
+    protected abstract MappingProcessor getProcessor();
 
     private void read() {
-        AbstractNonPackageMappingProcessor processor = getProcessor();
-        mappings = processor.process(reader.lines().map(s -> {
-            if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
-
-            int index = s.indexOf('#');
-            if(index > 0) return s.substring(0, index);
-            else if(index == 0) return null;
-
-            return s;
-        }).filter(Objects::nonNull));
-        packages = processor instanceof AbstractMappingProcessor ? ((AbstractMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
+        MappingProcessor processor = getProcessor();
+        mappings = processor.isPaired() ? processor.asPaired().process() : processor.asNamespaced().process();
+        packages = processor instanceof PackageMappingProcessor ? ((PackageMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
     }
 
-    public final List<? extends ClassMapping> getMappings() {
+    public final ObjectList<? extends AbstractClassMapping> getMappings() {
         if(mappings == null) read();
         return mappings;
     }
 
-    public final List<PackageMapping> getPackages() {
+    public final ObjectList<PairedMapping> getPackages() {
         if(packages == null) read();
         return packages;
     }
 
     public final AbstractMappingReader reverse() {
-        if(mappings == null || packages == null) read();
-        if(this instanceof TinyMappingReader) throw new UnsupportedOperationException();
+        if(mappings == null) read();
+        if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
         MappingRemapper remapper = new MappingRemapper(this);
-        mappings.forEach(cm -> cm.reverse(remapper));
-        packages.forEach(PackageMapping::reverse);
+        mappings.forEach(cm -> cm.asPaired().reverse(remapper));
+        getPackages().forEach(PairedMapping::reverse);
         return this;
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByUnmappedNameMap() {
-        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getUnmappedName, Function.identity(), (cm1, cm2) ->
-        {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
+    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByUnmappedNameMap() {
+        if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
+        return getMappings().stream().map(AbstractClassMapping::asPaired).collect(Collectors.toMap(PairedClassMapping::getUnmappedName,
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends ClassMapping> getMappingsByMappedNameMap() {
-        return getMappings().stream().collect(Collectors.toMap(ClassMapping::getMappedName, Function.identity(), (cm1, cm2) ->
-        {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new));
+    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByMappedNameMap() {
+        if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
+        return getMappings().stream().map(AbstractClassMapping::asPaired).collect(Collectors.toMap(PairedClassMapping::getMappedName,
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    @Override
-    public final void close() {
-        try {
-            reader.close();
-        } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
-        } finally {
-            reader = null;
+    protected abstract static class MappingProcessor {
+        public boolean isPaired() {
+            return this instanceof PairedMappingProcessor;
+        }
+        public boolean isNamespaced() {
+            return this instanceof NamespacedMappingProcessor;
+        }
+
+        public PairedMappingProcessor asPaired() {
+            return (PairedMappingProcessor) this;
+        }
+        public NamespacedMappingProcessor asNamespaced() {
+            return (NamespacedMappingProcessor) this;
         }
     }
 
-    protected abstract static class AbstractNonPackageMappingProcessor {
-        abstract ObjectList<? extends ClassMapping> process(Stream<String> lines);
-        abstract ClassMapping processClass(String line);
-        abstract BaseMethodMapping processMethod(String line);
-        abstract BaseFieldMapping processField(String line);
+    protected abstract static class PairedMappingProcessor extends MappingProcessor {
+        public abstract ObjectList<? extends PairedClassMapping> process();
+        public abstract PairedClassMapping processClass(String line);
+        public abstract PairedMethodMapping processMethod(String line);
+        public abstract PairedFieldMapping processField(String line);
     }
 
-    protected abstract static class AbstractMappingProcessor extends AbstractNonPackageMappingProcessor {
-        abstract ObjectList<PackageMapping> getPackages();
-        abstract PackageMapping processPackage(String line);
+    protected abstract static class NamespacedMappingProcessor extends MappingProcessor {
+        public abstract ObjectList<? extends NamespacedClassMapping> process();
+        public abstract NamespacedClassMapping processClass(String line);
+        public abstract NamespacedMethodMapping processMethod(String line);
+        public abstract NamespacedFieldMapping processField(String line);
+    }
+
+    protected interface PackageMappingProcessor {
+        ObjectList<PairedMapping> getPackages();
+        PairedMapping processPackage(String line);
     }
 }

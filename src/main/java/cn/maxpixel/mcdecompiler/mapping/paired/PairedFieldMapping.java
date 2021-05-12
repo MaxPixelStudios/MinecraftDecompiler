@@ -16,16 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.base;
+package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.components.Owned;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
 
-public class BaseFieldMapping extends BaseFieldMethodShared {
-    public BaseFieldMapping(String unmappedName, String mappedName) {
+import java.util.Objects;
+
+public class PairedFieldMapping extends PairedMapping implements Owned<PairedFieldMapping, PairedClassMapping> {
+    private PairedClassMapping owner;
+
+    public PairedFieldMapping(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);
     }
-    public BaseFieldMapping() {}
+    public PairedFieldMapping() {}
 
     public boolean isProguard() {
         return this instanceof ProguardFieldMapping;
@@ -36,16 +40,34 @@ public class BaseFieldMapping extends BaseFieldMethodShared {
     }
 
     @Override
-    public BaseFieldMapping setOwner(ClassMapping owner) {
-        super.setOwner(owner);
+    public PairedFieldMapping setOwner(PairedClassMapping owner) {
+        this.owner = owner;
         return this;
     }
 
     @Override
+    public PairedClassMapping getOwner() {
+        return owner;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PairedFieldMapping)) return false;
+        if (!super.equals(o)) return false;
+        PairedFieldMapping that = (PairedFieldMapping) o;
+        return Objects.equals(owner, that.owner);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + Objects.hash(owner);
+    }
+
+    @Override
     public String toString() {
-        return "BaseFieldMapping{" +
-                "unmapped name=" + getUnmappedName() +
-                ", mapped name=" + getMappedName() +
-                '}';
+        return "PairedFieldMapping{" +
+                "owner=" + owner +
+                "} " + super.toString();
     }
 }

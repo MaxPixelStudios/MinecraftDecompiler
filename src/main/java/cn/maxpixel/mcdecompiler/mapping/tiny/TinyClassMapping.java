@@ -16,9 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.components;
+package cn.maxpixel.mcdecompiler.mapping.tiny;
 
-public interface Namespaced {
-    String getName(String namespace);
-    void setName(String namespace, String name);
+import cn.maxpixel.mcdecompiler.mapping.components.Documented;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+
+import java.util.Map;
+
+public class TinyClassMapping extends NamespacedClassMapping implements Documented {
+    private String doc;
+
+    public TinyClassMapping(Map<String, String> names) {
+        super(names);
+    }
+    public TinyClassMapping() {}
+
+    @Override
+    public void setDoc(String doc) {
+        this.doc = doc;
+    }
+
+    @Override
+    public String getDoc() {
+        return doc;
+    }
 }

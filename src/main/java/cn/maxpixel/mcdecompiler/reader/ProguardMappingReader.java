@@ -18,19 +18,19 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 public class ProguardMappingReader extends AbstractMappingReader {
     public ProguardMappingReader(BufferedReader reader) {
@@ -45,7 +45,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
         super(is);
     }
 
-    public ProguardMappingReader(String path) throws FileNotFoundException, NullPointerException {
+    public ProguardMappingReader(String path) throws FileNotFoundException {
         super(path);
     }
 
@@ -55,60 +55,63 @@ public class ProguardMappingReader extends AbstractMappingReader {
         return PROCESSOR;
     }
 
-    private static class ProguardMappingProcessor extends AbstractNonPackageMappingProcessor {
-        private final ObjectArrayList<ClassMapping> mappings = new ObjectArrayList<>(5000);
+    private class ProguardMappingProcessor extends PairedMappingProcessor {
+        private final ObjectArrayList<PairedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        ObjectList<ClassMapping> process(Stream<String> lines) {
-            if(!mappings.isEmpty()) return mappings;
-            AtomicReference<ClassMapping> currClass = new AtomicReference<>();
-            lines.forEach(s -> {
-                if(!s.startsWith("    ")) {
-                    if(currClass.get() != null) {
-                        mappings.add(currClass.getAndSet(processClass(s)));
-                    } else currClass.set(processClass(s));
-                } else {
-                    if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processMethod(s.trim()));
-                    else currClass.get().addField(processField(s.trim()));
+        public ObjectList<PairedClassMapping> process() {
+            if(mappings.isEmpty()) {
+                AtomicReference<PairedClassMapping> currClass = new AtomicReference<>();
+                lines.forEach(s -> {
+                    if(!s.startsWith("    ")) {
+                        if(currClass.get() != null) {
+                            mappings.add(currClass.getAndSet(processClass(s)));
+                        } else currClass.set(processClass(s));
+                    } else {
+                        if(s.contains("(") && s.contains(")")) currClass.get().addMethod(processMethod(s.trim()));
+                        else currClass.get().addField(processField(s.trim()));
+                    }
+                });
+                mappings.add(currClass.get()); // Add the last mapping stored in the AtomicReference
+            }
+            return ObjectLists.unmodifiable(mappings);
+        }
+
+        @Override
+        public PairedClassMapping processClass(String line) {
+            String[] split = line.split(" -> |:");
+            return new PairedClassMapping(split[1], split[0]);
+        }
+
+        @Override
+        public ProguardMethodMapping processMethod(String line) {
+            String[] method = line.split(":| |\\(|\\) -> ");
+            if(method.length == 6) {
+                StringBuilder descriptor = new StringBuilder();
+                if(method[4].isEmpty()) descriptor.append("()");
+                else {
+                    descriptor.append('(');
+                    for(String arg : method[4].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
+                    descriptor.append(')');
                 }
-            });
-            if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
-            return mappings;
+                descriptor.append(NamingUtil.asDescriptor(method[2]));
+                return new ProguardMethodMapping(method[5], method[3], descriptor.toString(),
+                        Integer.parseInt(method[0]), Integer.parseInt(method[1]));
+            } else if(method.length == 4) {
+                StringBuilder descriptor = new StringBuilder();
+                if(method[2].isEmpty()) descriptor.append("()");
+                else {
+                    descriptor.append('(');
+                    for(String arg : method[2].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
+                    descriptor.append(')');
+                }
+                descriptor.append(NamingUtil.asDescriptor(method[0]));
+                return new ProguardMethodMapping(method[3], method[1], descriptor.toString());
+            } else throw new IllegalArgumentException("Is this a Proguard mapping file?");
         }
 
         @Override
-        ClassMapping processClass(String line) {
-            String[] split = line.split("( -> )|:");
-            return new ClassMapping(split[1], split[0]);
-        }
-
-        @Override
-        ProguardMethodMapping processMethod(String line) {
-            ProguardMethodMapping methodMapping = new ProguardMethodMapping();
-
-            String[] linenums = line.split(":");
-            String[] method;
-            if(linenums.length == 3){
-                method = linenums[2].split("( -> )| ");
-                methodMapping.setLineNumberS(Integer.parseInt(linenums[0]));
-                methodMapping.setLineNumberE(Integer.parseInt(linenums[1]));
-            } else method = linenums[0].split("( -> )| ");
-            methodMapping.setUnmappedName(method[2]);
-
-            String[] original_args = method[1].split("\\("); // [0] is original name, [1] is args
-            original_args[1] = original_args[1].substring(0, original_args[1].length() -1);
-            methodMapping.setMappedName(original_args[0]);
-
-            StringBuilder descriptor = new StringBuilder().append('(');
-            for(String argTypeJN : original_args[1].split(",")) descriptor.append(NamingUtil.asDescriptor(argTypeJN)); // JN: Java Name
-            descriptor.append(')').append(NamingUtil.asDescriptor(method[0]));
-            methodMapping.setMappedDescriptor(descriptor.toString());
-
-            return methodMapping;
-        }
-
-        @Override
-        ProguardFieldMapping processField(String line) {
-            String[] strings = line.split("( -> )| ");
+        public ProguardFieldMapping processField(String line) {
+            String[] strings = line.split(" -> | ");
             return new ProguardFieldMapping(strings[2], strings[1], NamingUtil.asDescriptor(strings[0]));
         }
     }

@@ -18,101 +18,30 @@
 
 package cn.maxpixel.mcdecompiler.mapping.tiny;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.TinyClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.base.BaseFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Documented;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
 
-import java.nio.file.Path;
+import java.util.Map;
 
-public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn.maxpixel.mcdecompiler.mapping.components.Namespaced, Documented {
-    private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
+public class TinyFieldMapping extends NamespacedFieldMapping implements Descriptor, Documented {
     private String unmappedDescriptor;
-    private String document;
+    private String doc;
 
-    public TinyFieldMapping(String unmappedDescriptor, Namespaced... names) {
-        for(Namespaced namespaced : names) this.names.put(namespaced.getNamespace(), namespaced.getName());
+    public TinyFieldMapping(Map<String, String> names, String unmappedDescriptor) {
+        super(names);
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    public TinyFieldMapping(String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
     }
 
     @Override
-    public TinyClassMapping getOwner() {
-        return (TinyClassMapping) super.getOwner();
-    }
-
-    @Override
-    public TinyFieldMapping setOwner(ClassMapping owner) {
-        if(!(owner instanceof TinyClassMapping)) throw new IllegalArgumentException("TinyFieldMapping's owner must be TinyClassMapping");
-        return this.setOwner((TinyClassMapping) owner);
-    }
-
-    public TinyFieldMapping setOwner(TinyClassMapping owner) {
+    public TinyFieldMapping setOwner(NamespacedClassMapping owner) {
         super.setOwner(owner);
         return this;
-    }
-
-    @Override
-    public String getName(String namespace) {
-        return names.get(namespace);
-    }
-
-    @Override
-    public void setName(String namespace, String name) {
-        names.put(namespace, name);
-    }
-
-    /** Recommend to use {@link #getName(String)} */
-    @Override
-    public String getUnmappedName() {
-        String s = getName(Namespaced.OFFICIAL);
-        return s == null ? getName(Namespaced.INTERMEDIARY) : s;
-    }
-
-    /** Recommend to use {@link #getName(String)} */
-    @Override
-    public String getMappedName() {
-        String s = getName(Namespaced.YARN);
-        return s == null ? getName(Namespaced.INTERMEDIARY) : s;
-    }
-
-    /**
-     * @deprecated Use {@link #setName(String, String)} instead.
-     * @throws UnsupportedOperationException When calling this method
-     */
-    @Override
-    @Deprecated
-    public void setUnmappedName(String unmappedName) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @deprecated Use {@link #setName(String, String)} instead.
-     * @throws UnsupportedOperationException When calling this method
-     */
-    @Override
-    @Deprecated
-    public void setMappedName(String mappedName) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @deprecated Use {@link cn.maxpixel.mcdecompiler.deobfuscator.TinyDeobfuscator#deobfuscate(Path, Path, boolean, String, String)}
-     * @throws UnsupportedOperationException When calling this method
-     */
-    @Override
-    @Deprecated
-    public void reverse() {
-        throw new UnsupportedOperationException();
-    }
-
-    /** @deprecated See {@link #reverse()} for more info */
-    @Override
-    @Deprecated
-    public void reverse0(MappingRemapper remapper) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -126,12 +55,12 @@ public class TinyFieldMapping extends BaseFieldMapping implements Descriptor, cn
     }
 
     @Override
-    public void setDocument(String document) {
-        this.document = document;
+    public void setDoc(String doc) {
+        this.doc = doc;
     }
 
     @Override
-    public String getDocument() {
-        return document;
+    public String getDoc() {
+        return doc;
     }
 }

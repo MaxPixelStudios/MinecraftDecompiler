@@ -24,17 +24,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
+import java.util.function.Function;
 
 public class Utils {
-    public interface MapFunction<T, U> {
-        U map(int index, T t);
-    }
-
-    public static <T, U> U[] mapArray(T[] t, MapFunction<T, U> func, Class<U> cls) {
-        U[] u = (U[]) Array.newInstance(cls, t.length);
-        for(int i = 0; i < t.length; i++) u[i] = func.map(i, t[i]);
-        return u;
+    public static <T> String[] mapToStringArray(T[] t, Function<T, String> func) {
+        String[] r = new String[t.length];
+        for(int i = 0; i < t.length; i++) r[i] = func.apply(t[i]);
+        return r;
     }
 
     public static RuntimeException wrapInRuntime(Throwable e) {
@@ -73,5 +69,9 @@ public class Utils {
         } catch (IOException | InterruptedException e) {
             LOGGER.catching(e);
         }
+    }
+
+    public static <T> T onKeyDuplicate(T t, T u) {
+        throw new IllegalArgumentException("Key \"" + t + "\" and \"" + u + "\" duplicated!");
     }
 }
