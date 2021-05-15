@@ -89,9 +89,9 @@ public class NamespacedClassMapping extends NamespacedMapping implements Abstrac
 
     public PairedClassMapping getAsPaired(String fromNamespace, String toNamespace) {
         PairedClassMapping cm = new PairedClassMapping(getName(fromNamespace), getName(toNamespace));
-        getFields().parallelStream().map(f -> new PairedFieldMapping(f.getName(fromNamespace), f.getName(toNamespace)))
+        getFields().stream().map(f -> new PairedFieldMapping(f.getName(fromNamespace), f.getName(toNamespace)))
                 .forEach(cm::addField);
-        getMethods().parallelStream().map(m -> new UnmappedDescriptoredPairedMethodMapping(m.getName(fromNamespace), m.getName(toNamespace),
+        getMethods().stream().map(m -> new UnmappedDescriptoredPairedMethodMapping(m.getName(fromNamespace), m.getName(toNamespace),
                 m.getUnmappedDescriptor())).forEach(cm::addMethod);
         return cm;
     }

@@ -19,10 +19,11 @@
 package cn.maxpixel.mcdecompiler.mapping.paired;
 
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 
 import java.util.Objects;
 
-public class PairedMapping {
+public class PairedMapping implements AbstractMapping {
     private String unmappedName;
     private String mappedName;
 

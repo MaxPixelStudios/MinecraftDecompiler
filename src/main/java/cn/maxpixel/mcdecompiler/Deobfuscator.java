@@ -91,6 +91,7 @@ public class Deobfuscator {
             else if(s.startsWith("tiny\t2\t0") || s.startsWith("v1")) return Info.MappingType.TINY;
             s = list.get(0);
             if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return Info.MappingType.SRG;
+            else if(s.startsWith("tsrg2")) return Info.MappingType.TSRG;
             else return Info.MappingType.CSRG;
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);

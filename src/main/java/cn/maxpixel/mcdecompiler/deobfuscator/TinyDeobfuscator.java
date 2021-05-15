@@ -35,8 +35,8 @@ public class TinyDeobfuscator extends AbstractDeobfuscator {
             TinyMappingReader mappingReader = new TinyMappingReader(mappingPath);
             String[] namespaces = mappingReader.getProcessor().getNamespaces();
             sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> mappingReader.version == 2 ?
-                    new LVTRenamer(parent, mappingReader.getMappingsByNamespaceMap(namespaces[0]), namespaces[0],
-                            namespaces[namespaces.length - 1]) : parent);
+                    new LVTRenamer(parent, mappingReader.getMappingsByNamespaceMap(namespaces[0]), namespaces[0], namespaces[namespaces.length - 1]) : parent,
+                    (reader, superClassMapping) -> new MappingRemapper(reader, superClassMapping, namespaces[0], namespaces[namespaces.length - 1]));
         } catch (Exception e) {
             LOGGER.error("Error when deobfuscating", e);
         }

@@ -20,12 +20,12 @@ package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractMappingReader {
     protected ObjectArrayList<String> lines;
     private ObjectList<? extends AbstractClassMapping> mappings;
-    private ObjectList<PairedMapping> packages;
+    private ObjectList<? extends AbstractMapping> packages;
 
     public AbstractMappingReader(BufferedReader reader) {
         try(BufferedReader ignored = reader) {
@@ -82,7 +82,7 @@ public abstract class AbstractMappingReader {
         return mappings;
     }
 
-    public final ObjectList<PairedMapping> getPackages() {
+    public final ObjectList<? extends AbstractMapping> getPackages() {
         if(packages == null) read();
         return packages;
     }
@@ -92,7 +92,7 @@ public abstract class AbstractMappingReader {
         if(mappings == null) read();
         MappingRemapper remapper = new MappingRemapper(this);
         mappings.forEach(cm -> cm.asPaired().reverse(remapper));
-        getPackages().forEach(PairedMapping::reverse);
+        getPackages().forEach(mapping -> mapping.asPairedMapping().reverse());
         return this;
     }
 
@@ -152,7 +152,7 @@ public abstract class AbstractMappingReader {
     }
 
     public interface PackageMappingProcessor {
-        ObjectList<PairedMapping> getPackages();
-        PairedMapping processPackage(String line);
+        ObjectList<? extends AbstractMapping> getPackages();
+        AbstractMapping processPackage(String line);
     }
 }

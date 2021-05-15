@@ -64,6 +64,13 @@ public class MappingReadSpeedTest {
     }
 
     @Benchmark
+    public void readTsrgV2(Blackhole bh) {
+        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5-v2.tsrg"));
+        bh.consume(mappingReader.getMappings());
+        bh.consume(mappingReader.getPackages());
+    }
+
+    @Benchmark
     public void readProguard(Blackhole bh) {
         ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.txt"));
         bh.consume(mappingReader.getMappings());

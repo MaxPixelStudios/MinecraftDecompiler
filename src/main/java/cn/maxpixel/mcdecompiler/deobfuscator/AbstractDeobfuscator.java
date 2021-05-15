@@ -85,7 +85,9 @@ public abstract class AbstractDeobfuscator {
         Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappings = mappingReader.getProcessor().isPaired() ?
                 mappingReader.getMappingsByUnmappedNameMap() : mappingReader.getMappingsByNamespaceMap(mappingReader.getProcessor()
                 .asNamespaced().getNamespaces()[0], mappingReader.getProcessor().asNamespaced().getNamespaces()[0], mappingReader.getProcessor()
-                .asNamespaced().getNamespaces()[mappingReader.getProcessor().asNamespaced().getNamespaces().length - 1]);
+                .asNamespaced().getNamespaces()[mappingReader.getProcessor().asNamespaced().getNamespaces().length - 1].equals("id") ? mappingReader
+                .getProcessor().asNamespaced().getNamespaces()[mappingReader.getProcessor().asNamespaced().getNamespaces().length - 2] : mappingReader
+                .getProcessor().asNamespaced().getNamespaces()[mappingReader.getProcessor().asNamespaced().getNamespaces().length - 1]);
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {

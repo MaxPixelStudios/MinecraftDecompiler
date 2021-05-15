@@ -18,6 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
+import cn.maxpixel.mcdecompiler.asm.LVTRenamer;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.reader.TinyMappingReader;
 import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
 
 import java.nio.file.Path;
@@ -30,7 +33,27 @@ public class TsrgDeobfuscator extends AbstractDeobfuscator {
     public TsrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) {
         try {
             TsrgMappingReader mappingReader = new TsrgMappingReader(mappingPath);
-            sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse);
+            if(mappingReader.version == 2) {
+                String[] namespaces = mappingReader.getProcessor().asNamespaced().getNamespaces();
+                boolean flag = namespaces[namespaces.length - 1].equals("id");
+                sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> new LVTRenamer(parent,
+                        mappingReader.getMappingsByNamespaceMap(namespaces[0]), namespaces[0], flag ? namespaces[namespaces.length - 2] :
+                        namespaces[namespaces.length - 1]), (reader, superClassMapping) -> new MappingRemapper(reader, superClassMapping,
+                        namespaces[0], flag ? namespaces[namespaces.length - 2] : namespaces[namespaces.length - 1]));
+            } else sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse);
+        } catch (Exception e) {
+            LOGGER.error("Error when deobfuscating", e);
+        }
+        return this;
+    }
+
+    public TsrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, String fromNamespace, String toNamespace) {
+        try {
+            TinyMappingReader mappingReader = new TinyMappingReader(mappingPath);
+            if(mappingReader.version != 2) throw new UnsupportedOperationException();
+            sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> new LVTRenamer(parent,
+                            mappingReader.getMappingsByNamespaceMap(fromNamespace), fromNamespace, toNamespace),
+                    (reader, superClassMapping) -> new MappingRemapper(reader, superClassMapping, fromNamespace, toNamespace));
         } catch (Exception e) {
             LOGGER.error("Error when deobfuscating", e);
         }

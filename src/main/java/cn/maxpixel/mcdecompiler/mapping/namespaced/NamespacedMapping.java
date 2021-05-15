@@ -18,11 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.mapping.namespaced;
 
+import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.Map;
 
-public class NamespacedMapping {
+public class NamespacedMapping implements AbstractMapping {
     // Forge
     public static final String OBF = "obf";
     public static final String SRG = "srg";
@@ -50,7 +51,7 @@ public class NamespacedMapping {
     }
 
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart) {
-        if(nameStart < 0 || nameStart > names.length || namespaces.length != names.length - nameStart) throw new IllegalArgumentException();
+        if(nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart)) throw new IllegalArgumentException();
         for(int i = 0; i < namespaces.length; i++) {
             this.names.put(namespaces[i], names[i + nameStart]);
         }

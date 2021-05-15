@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.namespaced;
 
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Owned;
 
 import java.util.Map;
@@ -41,6 +42,14 @@ public class NamespacedFieldMapping extends NamespacedMapping implements Owned<N
         super(namespaces, names, nameStart);
     }
     public NamespacedFieldMapping() {}
+
+    public boolean isDescriptor() {
+        return this instanceof Descriptor;
+    }
+
+    public Descriptor asDescriptor() {
+        return (Descriptor) this;
+    }
 
     @Override
     public NamespacedClassMapping getOwner() {

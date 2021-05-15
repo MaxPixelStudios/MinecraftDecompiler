@@ -136,9 +136,9 @@ public class TinyMappingReader extends AbstractMappingReader {
 
     private class TinyV2MappingProcessor extends NamespacedMappingProcessor {
         private String[] namespaces;
-        private final ObjectArrayList<NamespacedClassMapping> mappings = new ObjectArrayList<>(5000);
+        private final ObjectArrayList<TinyClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        public ObjectList<NamespacedClassMapping> process() {
+        public ObjectList<TinyClassMapping> process() {
             if(mappings.isEmpty()) {
                 AtomicReference<TinyClassMapping> currClass = new AtomicReference<>();
                 AtomicReference<Documented> currSub = new AtomicReference<>();
@@ -169,8 +169,7 @@ public class TinyMappingReader extends AbstractMappingReader {
                                     case 'p':
                                         String[] split = s.substring(4).split("\t");
                                         currParam.set(Integer.parseInt(split[0]));
-                                        ((NamespacedMethodMapping) currSub.get()).setLocalVariableName(currParam.get(),
-                                                namespaces, split, 1);
+                                        ((TinyMethodMapping) currSub.get()).setLocalVariableName(currParam.get(), namespaces, split, 1);
                                         break;
                                     case 'c':
                                         currSub.get().setDoc(s.substring(4));
@@ -187,7 +186,7 @@ public class TinyMappingReader extends AbstractMappingReader {
                         }
                     } else error();
                 });
-                mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
+                mappings.add(currClass.get()); // Add the last mapping stored in the AtomicReference
             }
             return ObjectLists.unmodifiable(mappings);
         }
