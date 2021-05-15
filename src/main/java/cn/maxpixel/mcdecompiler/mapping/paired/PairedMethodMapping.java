@@ -27,10 +27,10 @@ import java.util.Objects;
 public abstract class PairedMethodMapping extends PairedMapping implements Owned<PairedMethodMapping, PairedClassMapping> {
     private PairedClassMapping owner;
 
-    public PairedMethodMapping(String unmappedName, String mappedName) {
+    PairedMethodMapping(String unmappedName, String mappedName) {
         super(unmappedName, mappedName);
     }
-    public PairedMethodMapping() {}
+    PairedMethodMapping() {}
 
     public boolean isLineNumber() {
         return this instanceof LineNumber;
@@ -76,7 +76,7 @@ public abstract class PairedMethodMapping extends PairedMapping implements Owned
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(owner);
+        return 31 * super.hashCode() + owner.hashCode();
     }
 
     @Override

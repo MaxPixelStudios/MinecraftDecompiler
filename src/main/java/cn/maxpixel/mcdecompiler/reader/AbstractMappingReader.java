@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
@@ -69,7 +69,7 @@ public abstract class AbstractMappingReader {
         this(new FileReader(Objects.requireNonNull(path)));
     }
 
-    protected abstract MappingProcessor getProcessor();
+    public abstract MappingProcessor getProcessor();
 
     private void read() {
         MappingProcessor processor = getProcessor();
@@ -88,8 +88,8 @@ public abstract class AbstractMappingReader {
     }
 
     public final AbstractMappingReader reverse() {
-        if(mappings == null) read();
         if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
+        if(mappings == null) read();
         MappingRemapper remapper = new MappingRemapper(this);
         mappings.forEach(cm -> cm.asPaired().reverse(remapper));
         getPackages().forEach(PairedMapping::reverse);
@@ -108,7 +108,19 @@ public abstract class AbstractMappingReader {
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    protected abstract static class MappingProcessor {
+    public final Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> getMappingsByNamespaceMap(String namespace) {
+        if(getProcessor().isPaired()) throw new UnsupportedOperationException();
+        return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(namespace),
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByNamespaceMap(String namespace, String fromNamespace, String toNamespace) {
+        if(getProcessor().isPaired()) throw new UnsupportedOperationException();
+        return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(namespace),
+                m -> m.getAsPaired(fromNamespace, toNamespace), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public abstract static class MappingProcessor {
         public boolean isPaired() {
             return this instanceof PairedMappingProcessor;
         }
@@ -124,21 +136,22 @@ public abstract class AbstractMappingReader {
         }
     }
 
-    protected abstract static class PairedMappingProcessor extends MappingProcessor {
+    public abstract static class PairedMappingProcessor extends MappingProcessor {
         public abstract ObjectList<? extends PairedClassMapping> process();
         public abstract PairedClassMapping processClass(String line);
         public abstract PairedMethodMapping processMethod(String line);
         public abstract PairedFieldMapping processField(String line);
     }
 
-    protected abstract static class NamespacedMappingProcessor extends MappingProcessor {
+    public abstract static class NamespacedMappingProcessor extends MappingProcessor {
         public abstract ObjectList<? extends NamespacedClassMapping> process();
+        public abstract String[] getNamespaces();
         public abstract NamespacedClassMapping processClass(String line);
         public abstract NamespacedMethodMapping processMethod(String line);
         public abstract NamespacedFieldMapping processField(String line);
     }
 
-    protected interface PackageMappingProcessor {
+    public interface PackageMappingProcessor {
         ObjectList<PairedMapping> getPackages();
         PairedMapping processPackage(String line);
     }

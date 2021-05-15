@@ -51,7 +51,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
 
     private final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
     @Override
-    protected ProguardMappingProcessor getProcessor() {
+    public ProguardMappingProcessor getProcessor() {
         return PROCESSOR;
     }
 
@@ -87,23 +87,17 @@ public class ProguardMappingReader extends AbstractMappingReader {
             String[] method = line.split(":| |\\(|\\) -> ");
             if(method.length == 6) {
                 StringBuilder descriptor = new StringBuilder();
-                if(method[4].isEmpty()) descriptor.append("()");
-                else {
-                    descriptor.append('(');
-                    for(String arg : method[4].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
-                    descriptor.append(')');
-                }
+                descriptor.append('(');
+                for(String arg : method[4].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
+                descriptor.append(')');
                 descriptor.append(NamingUtil.asDescriptor(method[2]));
                 return new ProguardMethodMapping(method[5], method[3], descriptor.toString(),
                         Integer.parseInt(method[0]), Integer.parseInt(method[1]));
             } else if(method.length == 4) {
                 StringBuilder descriptor = new StringBuilder();
-                if(method[2].isEmpty()) descriptor.append("()");
-                else {
-                    descriptor.append('(');
-                    for(String arg : method[2].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
-                    descriptor.append(')');
-                }
+                descriptor.append('(');
+                for(String arg : method[2].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
+                descriptor.append(')');
                 descriptor.append(NamingUtil.asDescriptor(method[0]));
                 return new ProguardMethodMapping(method[3], method[1], descriptor.toString());
             } else throw new IllegalArgumentException("Is this a Proguard mapping file?");

@@ -29,62 +29,55 @@ import java.util.concurrent.TimeUnit;
 
 @Fork(1)
 @Threads(8)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 15)
+@Measurement(iterations = 20)
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
 public class MappingReadSpeedTest {
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(".*" + MappingReadSpeedTest.class.getSimpleName() + ".*")
-                .shouldDoGC(true)
-                .timeUnit(TimeUnit.MILLISECONDS)
-                .measurementIterations(15)
-                .warmupIterations(10)
                 .build();
 //        new Runner(options).run();
     }
 
     @Benchmark
     public void readSrg(Blackhole bh) {
-        try(SrgMappingReader mappingReader = new SrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.srg"))) {
-            bh.consume(mappingReader.getMappings());
-            bh.consume(mappingReader.getPackages());
-        }
+        SrgMappingReader mappingReader = new SrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.srg"));
+        bh.consume(mappingReader.getMappings());
+        bh.consume(mappingReader.getPackages());
     }
 
     @Benchmark
     public void readCsrg(Blackhole bh) {
-        try(CsrgMappingReader mappingReader = new CsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.csrg"))) {
-            bh.consume(mappingReader.getMappings());
-            bh.consume(mappingReader.getPackages());
-        }
+        CsrgMappingReader mappingReader = new CsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.csrg"));
+        bh.consume(mappingReader.getMappings());
+        bh.consume(mappingReader.getPackages());
     }
 
     @Benchmark
     public void readTsrg(Blackhole bh) {
-        try(TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"))) {
-            bh.consume(mappingReader.getMappings());
-            bh.consume(mappingReader.getPackages());
-        }
+        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"));
+        bh.consume(mappingReader.getMappings());
+        bh.consume(mappingReader.getPackages());
     }
 
     @Benchmark
     public void readProguard(Blackhole bh) {
-        try(ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.txt"))) {
-            bh.consume(mappingReader.getMappings());
-        }
+        ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.txt"));
+        bh.consume(mappingReader.getMappings());
     }
 
     @Benchmark
     public void readTinyV1(Blackhole bh) {
-        try(TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-yarn-v1.tiny"))) {
-            bh.consume(mappingReader.getMappings());
-        }
+        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-yarn-v1.tiny"));
+        bh.consume(mappingReader.getMappings());
     }
 
     @Benchmark
     public void readTinyV2(Blackhole bh) {
-        try(TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-merged-v2.tiny"))) {
-            bh.consume(mappingReader.getMappings());
-        }
+        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-merged-v2.tiny"));
+        bh.consume(mappingReader.getMappings());
     }
 }

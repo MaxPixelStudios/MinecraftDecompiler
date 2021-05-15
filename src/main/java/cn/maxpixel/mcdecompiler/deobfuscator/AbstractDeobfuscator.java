@@ -20,9 +20,9 @@ package cn.maxpixel.mcdecompiler.deobfuscator;
 
 import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.asm.JADNameGenerator;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.RuntimeInvisibleParameterAnnotationsAttributeFixer;
 import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
-import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
@@ -82,7 +82,10 @@ public abstract class AbstractDeobfuscator {
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
         if(reverse) mappingReader.reverse();
-        Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappings = mappingReader.getMappingsByUnmappedNameMap();
+        Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappings = mappingReader.getProcessor().isPaired() ?
+                mappingReader.getMappingsByUnmappedNameMap() : mappingReader.getMappingsByNamespaceMap(mappingReader.getProcessor()
+                .asNamespaced().getNamespaces()[0], mappingReader.getProcessor().asNamespaced().getNamespaces()[0], mappingReader.getProcessor()
+                .asNamespaced().getNamespaces()[mappingReader.getProcessor().asNamespaced().getNamespaces().length - 1]);
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {

@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.proguard;
 
-import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 

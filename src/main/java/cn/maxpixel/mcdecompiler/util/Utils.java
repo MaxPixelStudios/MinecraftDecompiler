@@ -28,8 +28,12 @@ import java.util.function.Function;
 
 public class Utils {
     public static <T> String[] mapToStringArray(T[] t, Function<T, String> func) {
-        String[] r = new String[t.length];
-        for(int i = 0; i < t.length; i++) r[i] = func.apply(t[i]);
+        return mapToStringArray(t, func, 0);
+    }
+
+    public static <T> String[] mapToStringArray(T[] t, Function<T, String> func, int startIndex) {
+        String[] r = new String[t.length - startIndex];
+        for(int i = 0; i < r.length; i++) r[i] = func.apply(t[i + startIndex]);
         return r;
     }
 

@@ -28,6 +28,18 @@ public class NamespacedFieldMapping extends NamespacedMapping implements Owned<N
     public NamespacedFieldMapping(Map<String, String> names) {
         super(names);
     }
+
+    public NamespacedFieldMapping(String namespace, String name) {
+        super(namespace, name);
+    }
+
+    public NamespacedFieldMapping(String[] namespaces, String[] names) {
+        super(namespaces, names);
+    }
+
+    public NamespacedFieldMapping(String[] namespaces, String[] names, int nameStart) {
+        super(namespaces, names, nameStart);
+    }
     public NamespacedFieldMapping() {}
 
     @Override

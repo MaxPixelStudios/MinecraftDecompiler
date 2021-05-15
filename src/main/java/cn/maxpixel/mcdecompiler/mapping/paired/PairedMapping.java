@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 
 import java.util.Objects;
 

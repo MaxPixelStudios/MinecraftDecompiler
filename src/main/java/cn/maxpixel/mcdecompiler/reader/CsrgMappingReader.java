@@ -49,7 +49,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
 
     private final CsrgMappingProcessor PROCESSOR = new CsrgMappingProcessor();
     @Override
-    protected CsrgMappingProcessor getProcessor() {
+    public CsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
 

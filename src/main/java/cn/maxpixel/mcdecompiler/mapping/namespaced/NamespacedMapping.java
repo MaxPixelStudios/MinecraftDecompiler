@@ -37,6 +37,24 @@ public class NamespacedMapping {
     public NamespacedMapping(Map<String, String> names) {
         this.names.putAll(names);
     }
+
+    public NamespacedMapping(String namespace, String name) {
+        this.names.put(namespace, name);
+    }
+
+    public NamespacedMapping(String[] namespaces, String[] names) {
+        if(namespaces.length != names.length) throw new IllegalArgumentException();
+        for(int i = 0; i < namespaces.length; i++) {
+            this.names.put(namespaces[i], names[i]);
+        }
+    }
+
+    public NamespacedMapping(String[] namespaces, String[] names, int nameStart) {
+        if(nameStart < 0 || nameStart > names.length || namespaces.length != names.length - nameStart) throw new IllegalArgumentException();
+        for(int i = 0; i < namespaces.length; i++) {
+            this.names.put(namespaces[i], names[i + nameStart]);
+        }
+    }
     public NamespacedMapping() {}
 
     public void setName(String namespace, String name) {

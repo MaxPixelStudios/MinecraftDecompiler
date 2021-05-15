@@ -16,9 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.asm.remapper;
+package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.asm.SuperClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
@@ -35,21 +34,29 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MappingRemapper extends Remapper {
+    private static final Logger LOGGER = LogManager.getLogger("Remapper");
+    private final SuperClassMapping superClassMapping;
     private final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappingByMap;
-    private final SuperClassMapping superClassMapping;
-    private static final Logger LOGGER = LogManager.getLogger("Remapper");
 
     public MappingRemapper(AbstractMappingReader mappingReader) {
-        this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
-        this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
-        this.superClassMapping = null;
+        this(mappingReader, null);
+    }
+
+    public MappingRemapper(AbstractMappingReader mappingReader, String fromNamespace, String toNamespace) {
+        this(mappingReader, null, fromNamespace, toNamespace);
     }
 
     public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {
+        this.superClassMapping = superClassMapping;
         this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
         this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
+    }
+
+    public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping, String fromNamespace, String toNamespace) {
         this.superClassMapping = superClassMapping;
+        this.mappingByUnm = mappingReader.getMappingsByNamespaceMap(fromNamespace, fromNamespace, toNamespace);
+        this.mappingByMap = mappingReader.getMappingsByNamespaceMap(toNamespace, fromNamespace, toNamespace);
     }
 
     @Override
@@ -136,7 +143,7 @@ public class MappingRemapper extends Remapper {
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
-            PairedClassMapping cm = mappingByUnm.get(NamingUtil.asJavaName0(owner));
+            PairedClassMapping cm = mappingByUnm.get(NamingUtil.asJavaName(owner));
             if(cm != null) {
                 AtomicReference<PairedMethodMapping> methodMapping = new AtomicReference<>();
                 cm.getMethods().parallelStream().filter(m -> m.getUnmappedName().equals(name)).forEach(mapping -> {
@@ -152,10 +159,11 @@ public class MappingRemapper extends Remapper {
         }
         return name;
     }
+
     private PairedMethodMapping processSuperMethod(String owner, String name, String descriptor) {
         if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName0(owner));
+        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
         if(superNames != null) {
             AtomicReference<PairedMethodMapping> methodMapping = new AtomicReference<>();
             superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).flatMap(cm -> cm.getMethods().stream()).filter(m -> {
@@ -173,9 +181,10 @@ public class MappingRemapper extends Remapper {
         }
         return null;
     }
+
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
-        PairedClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName0(owner));
+        PairedClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(owner));
         if(classMapping != null) {
             PairedFieldMapping fieldMapping = classMapping.getField(name);
             if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
@@ -183,10 +192,11 @@ public class MappingRemapper extends Remapper {
         }
         return name;
     }
+
     private PairedFieldMapping processSuperField(String owner, String name) {
         if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName0(owner));
+        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
         if(superNames != null) {
             AtomicReference<PairedFieldMapping> fieldMapping = new AtomicReference<>();
             superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).map(cm -> cm.getField(name)).filter(Objects::nonNull)

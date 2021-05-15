@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -26,7 +26,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Collection;
-import java.util.Objects;
 
 public class PairedClassMapping extends PairedMapping implements AbstractClassMapping {
     private final ObjectArrayList<PairedMethodMapping> methods = new ObjectArrayList<>();
@@ -109,7 +108,9 @@ public class PairedClassMapping extends PairedMapping implements AbstractClassMa
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(methods, fields);
+        //return 31 * super.hashCode() + Objects.hash(methods, fields);
+        // The above will cause StackOverflowError if hashcode() is called by objects in methods or fields
+        return System.identityHashCode(this);
     }
 
     @Override

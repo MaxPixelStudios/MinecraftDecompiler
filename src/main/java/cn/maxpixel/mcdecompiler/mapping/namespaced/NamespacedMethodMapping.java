@@ -21,18 +21,35 @@ package cn.maxpixel.mcdecompiler.mapping.namespaced;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Owned;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.Map;
 import java.util.Objects;
 
 public class NamespacedMethodMapping extends NamespacedMapping implements Descriptor, Owned<NamespacedMethodMapping, NamespacedClassMapping> {
-    private final Int2ObjectOpenHashMap<Map<String, String>> lvt = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectOpenHashMap<Object2ObjectMap<String, String>> lvt = new Int2ObjectOpenHashMap<>();
     private String unmappedDescriptor;
     private NamespacedClassMapping owner;
 
     public NamespacedMethodMapping(Map<String, String> names, String unmappedDescriptor) {
         super(names);
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    public NamespacedMethodMapping(String namespace, String name, String unmappedDescriptor) {
+        super(namespace, name);
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    public NamespacedMethodMapping(String[] namespaces, String[] names, String unmappedDescriptor) {
+        super(namespaces, names);
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    public NamespacedMethodMapping(String[] namespaces, String[] names, int nameStart, String unmappedDescriptor) {
+        super(namespaces, names, nameStart);
         this.unmappedDescriptor = unmappedDescriptor;
     }
 
@@ -55,7 +72,27 @@ public class NamespacedMethodMapping extends NamespacedMapping implements Descri
     }
 
     public void setLocalVariableName(int index, Map<String, String> names) {
-        lvt.put(index, Objects.requireNonNull(names));
+        lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new).putAll(Objects.requireNonNull(names));
+    }
+
+    public void setLocalVariableName(int index, String namespace, String name) {
+        lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new).put(namespace, name);
+    }
+
+    public void setLocalVariableName(int index, String[] namespaces, String[] names) {
+        if(namespaces.length != names.length) throw new IllegalArgumentException();
+        Object2ObjectMap<String, String> map = lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new);
+        for(int i = 0; i < namespaces.length; i++) {
+            map.put(namespaces[i], names[i]);
+        }
+    }
+
+    public void setLocalVariableName(int index, String[] namespaces, String[] names, int nameStart) {
+        if(nameStart < 0 || nameStart > names.length || namespaces.length != names.length - nameStart) throw new IllegalArgumentException();
+        Object2ObjectMap<String, String> map = lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new);
+        for(int i = 0; i < namespaces.length; i++) {
+            map.put(namespaces[i], names[i + nameStart]);
+        }
     }
 
     @Override

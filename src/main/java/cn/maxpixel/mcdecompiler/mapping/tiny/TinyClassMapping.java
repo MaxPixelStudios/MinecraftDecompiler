@@ -29,6 +29,18 @@ public class TinyClassMapping extends NamespacedClassMapping implements Document
     public TinyClassMapping(Map<String, String> names) {
         super(names);
     }
+
+    public TinyClassMapping(String namespace, String name) {
+        super(namespace, name);
+    }
+
+    public TinyClassMapping(String[] namespaces, String[] names) {
+        super(namespaces, names);
+    }
+
+    public TinyClassMapping(String[] namespaces, String[] names, int nameStart) {
+        super(namespaces, names, nameStart);
+    }
     public TinyClassMapping() {}
 
     @Override

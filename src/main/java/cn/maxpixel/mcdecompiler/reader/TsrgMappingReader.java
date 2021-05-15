@@ -25,13 +25,13 @@ import cn.maxpixel.mcdecompiler.mapping.paired.UnmappedDescriptoredPairedMethodM
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 public class TsrgMappingReader extends AbstractMappingReader {
     public TsrgMappingReader(BufferedReader reader) {
@@ -52,49 +52,61 @@ public class TsrgMappingReader extends AbstractMappingReader {
 
     private final TsrgMappingProcessor PROCESSOR = new TsrgMappingProcessor();
     @Override
-    protected TsrgMappingProcessor getProcessor() {
+    public TsrgMappingProcessor getProcessor() {
         return PROCESSOR;
     }
 
-    private static class TsrgMappingProcessor extends AbstractMappingProcessor {
+    private class TsrgMappingProcessor extends PairedMappingProcessor implements PackageMappingProcessor {
         private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
         private final ObjectArrayList<PairedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
-        ObjectList<PairedClassMapping> process(Stream<String> lines) {
-            if(!mappings.isEmpty()) return mappings;
-            AtomicReference<PairedClassMapping> currClass = new AtomicReference<>();
-            lines.forEach(s -> {
-                if(!s.startsWith("\t")) {
-                    if(currClass.get() != null) mappings.add(currClass.getAndSet(processClass(s)));
-                    else currClass.set(processClass(s));
-                } else {
-                    PairedClassMapping curr = currClass.get();
-                    int len = s.split(" ").length;
-                    if(len == 3) curr.addMethod(processMethod(s.trim()).setOwner(curr));
-                    else if(len == 2) curr.addField(processField(s.trim()).setOwner(curr));
-                    else throw new IllegalArgumentException("Is this a TSRG mapping file?");
-                }
-            });
-            if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
-            return mappings;
+        public ObjectList<PairedClassMapping> process() {
+            if(mappings.isEmpty()) {
+                AtomicReference<PairedClassMapping> currClass = new AtomicReference<>();
+                lines.forEach(s -> {
+                    if(s.charAt(0) != '\t') {
+                        if(currClass.get() != null) mappings.add(currClass.getAndSet(processClass(s)));
+                        else currClass.set(processClass(s));
+                    } else {
+                        String[] sa = s.substring(1).split(" ");
+                        switch(sa.length) {
+                            case 2:
+                                currClass.get().addField(processField(sa));
+                                break;
+                            case 3:
+                                currClass.get().addMethod(processMethod(sa));
+                                break;
+                            default: throw new IllegalArgumentException("Is this a TSRG mapping file?");
+                        }
+                    }
+                });
+                if(currClass.get() != null) mappings.add(currClass.get()); // Add last mapping stored in the AtomicReference
+            }
+            return ObjectLists.unmodifiable(mappings);
         }
 
         @Override
-        protected PairedClassMapping processClass(String line) {
+        public PairedClassMapping processClass(String line) {
             String[] strings = line.split(" ");
             return new PairedClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
         }
 
-        @Override
-        protected UnmappedDescriptoredPairedMethodMapping processMethod(String line) {
-            String[] strings = line.split(" ");
-            return new UnmappedDescriptoredPairedMethodMapping(strings[0], strings[2], strings[1]);
+        private UnmappedDescriptoredPairedMethodMapping processMethod(String[] line) {
+            return new UnmappedDescriptoredPairedMethodMapping(line[0], line[2], line[1]);
         }
 
         @Override
-        protected PairedFieldMapping processField(String line) {
-            String[] strings = line.split(" ");
-            return new PairedFieldMapping(strings[0], strings[1]);
+        public UnmappedDescriptoredPairedMethodMapping processMethod(String line) {
+            return processMethod(line.trim().split(" "));
+        }
+
+        private PairedFieldMapping processField(String[] line) {
+            return new PairedFieldMapping(line[0], line[1]);
+        }
+
+        @Override
+        public PairedFieldMapping processField(String line) {
+            return processField(line.trim().split(" "));
         }
 
         @Override
@@ -103,7 +115,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         }
 
         @Override
-        protected PairedMapping processPackage(String line) {
+        public PairedMapping processPackage(String line) {
             String[] strings = line.split(" ");
             return new PairedMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
         }

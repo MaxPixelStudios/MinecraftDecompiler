@@ -33,6 +33,18 @@ public class TinyMethodMapping extends NamespacedMethodMapping implements Docume
         super(names, unmappedDescriptor);
     }
 
+    public TinyMethodMapping(String namespace, String name, String unmappedDescriptor) {
+        super(namespace, name, unmappedDescriptor);
+    }
+
+    public TinyMethodMapping(String[] namespaces, String[] names, String unmappedDescriptor) {
+        super(namespaces, names, unmappedDescriptor);
+    }
+
+    public TinyMethodMapping(String[] namespaces, String[] names, int nameStart, String unmappedDescriptor) {
+        super(namespaces, names, nameStart, unmappedDescriptor);
+    }
+
     public TinyMethodMapping(String unmappedDescriptor) {
         super(unmappedDescriptor);
     }

@@ -30,12 +30,16 @@ import org.objectweb.asm.Opcodes;
 import java.util.Optional;
 
 public class LVTRenamer extends ClassVisitor {
-    private final Object2ObjectOpenHashMap<String, NamespacedClassMapping> mappings;
+    private final Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> mappings;
     private NamespacedClassMapping mapping;
+    private final String fromNamespace;
+    private final String toNamespace;
 
-    public LVTRenamer(ClassVisitor classVisitor, Object2ObjectOpenHashMap<String, NamespacedClassMapping> mappings) {
+    public LVTRenamer(ClassVisitor classVisitor, Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> mappings, String fromNamespace, String toNamespace) {
         super(Opcodes.ASM9, classVisitor);
         this.mappings = mappings;
+        this.fromNamespace = fromNamespace;
+        this.toNamespace = toNamespace;
     }
 
     @Override
@@ -46,11 +50,12 @@ public class LVTRenamer extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        Optional<NamespacedMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getUnmappedName().equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
+        Optional<NamespacedMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getName(fromNamespace).equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
             @Override
             public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                super.visitLocalVariable(methodMapping.map(mm -> mm.getLocalVariableName(index)).orElse(name), descriptor, signature, start, end, index);
+                super.visitLocalVariable(methodMapping.map(mm -> mm.getLocalVariableName(index, toNamespace)).filter(lvn -> !lvn.isEmpty() &&
+                                !lvn.equals("o"/* tsrg2 empty lvn placeholder */)).orElse(name), descriptor, signature, start, end, index);
             }
         };
     }

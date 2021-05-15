@@ -19,15 +19,10 @@
 package cn.maxpixel.mcdecompiler.deobfuscator;
 
 import cn.maxpixel.mcdecompiler.asm.LVTRenamer;
-import cn.maxpixel.mcdecompiler.asm.remapper.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.reader.TinyMappingReader;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.nio.file.Path;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class TinyDeobfuscator extends AbstractDeobfuscator {
     public TinyDeobfuscator(String mappingPath) {
@@ -36,10 +31,12 @@ public class TinyDeobfuscator extends AbstractDeobfuscator {
     @Override
     public TinyDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) {
         if(reverse) throw new UnsupportedOperationException();
-        try(TinyMappingReader mappingReader = new TinyMappingReader(mappingPath)) {
-            sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> mappingReader.getVersion() == 2 ?
-                    new LVTRenamer(parent, (Object2ObjectOpenHashMap<String, NamespacedClassMapping>) mappingReader.getMappingsByMappedNameMap())
-                    : parent);
+        try {
+            TinyMappingReader mappingReader = new TinyMappingReader(mappingPath);
+            String[] namespaces = mappingReader.getProcessor().getNamespaces();
+            sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> mappingReader.version == 2 ?
+                    new LVTRenamer(parent, mappingReader.getMappingsByNamespaceMap(namespaces[0]), namespaces[0],
+                            namespaces[namespaces.length - 1]) : parent);
         } catch (Exception e) {
             LOGGER.error("Error when deobfuscating", e);
         }
@@ -47,10 +44,10 @@ public class TinyDeobfuscator extends AbstractDeobfuscator {
     }
 
     public TinyDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, String fromNamespace, String toNamespace) {
-        try(TinyMappingReader mappingReader = new TinyMappingReader(mappingPath)) {
-            sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> mappingReader.getVersion() == 2 ?
-                    new LVTRenamer(parent, ((List<NamespacedClassMapping>) mappingReader.getMappings()).stream()
-                            .collect(Collectors.toMap(cm -> cm.getName(fromNamespace), Function.identity(), (cm1, cm2) -> {throw new IllegalArgumentException("Key \"" + cm1 + "\" and \"" + cm2 + "\" duplicated!");}, Object2ObjectOpenHashMap::new)))
+        try {
+            TinyMappingReader mappingReader = new TinyMappingReader(mappingPath);
+            sharedDeobfuscate(source, target, mappingReader, includeOthers, false, parent -> mappingReader.version == 2 ?
+                    new LVTRenamer(parent, mappingReader.getMappingsByNamespaceMap(fromNamespace), fromNamespace, toNamespace)
                     : parent, (reader, superClassMapping) -> new MappingRemapper(reader, superClassMapping, fromNamespace, toNamespace));
         } catch (Exception e) {
             LOGGER.error("Error when deobfuscating", e);

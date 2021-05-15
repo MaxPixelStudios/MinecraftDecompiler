@@ -19,6 +19,9 @@
 package cn.maxpixel.mcdecompiler.mapping.namespaced;
 
 import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.UnmappedDescriptoredPairedMethodMapping;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -31,6 +34,18 @@ public class NamespacedClassMapping extends NamespacedMapping implements Abstrac
 
     public NamespacedClassMapping(Map<String, String> names) {
         super(names);
+    }
+
+    public NamespacedClassMapping(String namespace, String name) {
+        super(namespace, name);
+    }
+
+    public NamespacedClassMapping(String[] namespaces, String[] names) {
+        super(namespaces, names);
+    }
+
+    public NamespacedClassMapping(String[] namespaces, String[] names, int nameStart) {
+        super(namespaces, names, nameStart);
     }
     public NamespacedClassMapping() {}
 
@@ -45,12 +60,12 @@ public class NamespacedClassMapping extends NamespacedMapping implements Abstrac
     }
 
     public NamespacedClassMapping addField(NamespacedFieldMapping... fields) {
-        this.fields.addElements(this.fields.size(), fields);
+        for(NamespacedFieldMapping field : fields) addField(field);
         return this;
     }
 
     public NamespacedClassMapping addMethod(NamespacedMethodMapping... methods) {
-        this.methods.addElements(this.methods.size(), methods);
+        for(NamespacedMethodMapping method : methods) addMethod(method);
         return this;
     }
 
@@ -70,5 +85,14 @@ public class NamespacedClassMapping extends NamespacedMapping implements Abstrac
 
     public ObjectList<NamespacedFieldMapping> getFields() {
         return fields;
+    }
+
+    public PairedClassMapping getAsPaired(String fromNamespace, String toNamespace) {
+        PairedClassMapping cm = new PairedClassMapping(getName(fromNamespace), getName(toNamespace));
+        getFields().parallelStream().map(f -> new PairedFieldMapping(f.getName(fromNamespace), f.getName(toNamespace)))
+                .forEach(cm::addField);
+        getMethods().parallelStream().map(m -> new UnmappedDescriptoredPairedMethodMapping(m.getName(fromNamespace), m.getName(toNamespace),
+                m.getUnmappedDescriptor())).forEach(cm::addMethod);
+        return cm;
     }
 }

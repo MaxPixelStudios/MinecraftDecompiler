@@ -38,24 +38,27 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
     private JsonObject version_json;
     private String version;
     private Info.SideType type;
+
     public ProguardDeobfuscator(String mappingPath) {
         super(mappingPath);
     }
+
     public ProguardDeobfuscator(String version, Info.SideType type) {
         this.version = Objects.requireNonNull(version);
         this.type = Objects.requireNonNull(type);
         downloadMapping(version, type);
         downloadJar(version, type);
     }
+
     private void downloadMapping(String version, Info.SideType type) {
         version_json = VersionManifest.getVersion(version);
-        if(!version_json.get("downloads").getAsJsonObject().has(type.toString() + "_mappings"))
+        if(!version_json.get("downloads").getAsJsonObject().has(type + "_mappings"))
             throw new RuntimeException("Version \"" + version + "\" doesn't have Proguard mappings. Please use 1.14.4 or above");
         Path p = Properties.getDownloadedProguardMappingPath(version, type);
         if(Files.notExists(p)) {
             FileUtil.ensureDirectoryExist(p.getParent());
             try(FileChannel channel = FileChannel.open(p, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type.toString() + "_mappings")
+                ReadableByteChannel from = NetworkUtil.newBuilder(version_json.get("downloads").getAsJsonObject().get(type + "_mappings")
                         .getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
                 LOGGER.info("Downloading mapping...");
                 channel.transferFrom(from, 0, Long.MAX_VALUE);
@@ -64,6 +67,7 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
             }
         }
     }
+
     private void downloadJar(String version, Info.SideType type) {
         Path p = Properties.getDownloadedMcJarPath(version, type);
         if(Files.notExists(p)) {
@@ -80,11 +84,12 @@ public class ProguardDeobfuscator extends AbstractDeobfuscator {
     }
     @Override
     public ProguardDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) {
-        try(ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ? Properties.getDownloadedProguardMappingPath(
-                Objects.requireNonNull(version), Objects.requireNonNull(type)).toString() : mappingPath)) {
+        try {
+            ProguardMappingReader mappingReader = new ProguardMappingReader(mappingPath == null ? Properties.getDownloadedProguardMappingPath(
+                    Objects.requireNonNull(version), Objects.requireNonNull(type)).toString() : mappingPath);
             sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse);
         } catch (Exception e) {
-            LOGGER.catching(e);
+            LOGGER.error("Error when deobfuscating", e);
         }
         return this;
     }

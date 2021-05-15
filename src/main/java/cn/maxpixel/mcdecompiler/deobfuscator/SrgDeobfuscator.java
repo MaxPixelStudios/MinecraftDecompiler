@@ -28,10 +28,11 @@ public class SrgDeobfuscator extends AbstractDeobfuscator {
     }
     @Override
     public SrgDeobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) {
-        try(SrgMappingReader mappingReader = new SrgMappingReader(mappingPath)) {
+        try {
+            SrgMappingReader mappingReader = new SrgMappingReader(mappingPath);
             sharedDeobfuscate(source, target, mappingReader, includeOthers, reverse);
         } catch (Exception e) {
-            LOGGER.catching(e);
+            LOGGER.error("Error when deobfuscating", e);
         }
         return this;
     }

@@ -18,40 +18,39 @@
 
 package cn.maxpixel.mcdecompiler.mapping.tiny;
 
-import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Documented;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.UnmappedDescriptoredNamespacedFieldMapping;
 
 import java.util.Map;
 
-public class TinyFieldMapping extends NamespacedFieldMapping implements Descriptor, Documented {
-    private String unmappedDescriptor;
+public class TinyFieldMapping extends UnmappedDescriptoredNamespacedFieldMapping implements Documented {
     private String doc;
 
     public TinyFieldMapping(Map<String, String> names, String unmappedDescriptor) {
-        super(names);
-        this.unmappedDescriptor = unmappedDescriptor;
+        super(names, unmappedDescriptor);
+    }
+
+    public TinyFieldMapping(String namespace, String name, String unmappedDescriptor) {
+        super(namespace, name, unmappedDescriptor);
+    }
+
+    public TinyFieldMapping(String[] namespaces, String[] names, String unmappedDescriptor) {
+        super(namespaces, names, unmappedDescriptor);
+    }
+
+    public TinyFieldMapping(String[] namespaces, String[] names, int nameStart, String unmappedDescriptor) {
+        super(namespaces, names, nameStart, unmappedDescriptor);
     }
 
     public TinyFieldMapping(String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
+        super(unmappedDescriptor);
     }
 
     @Override
     public TinyFieldMapping setOwner(NamespacedClassMapping owner) {
         super.setOwner(owner);
         return this;
-    }
-
-    @Override
-    public String getUnmappedDescriptor() {
-        return unmappedDescriptor;
-    }
-
-    @Override
-    public void setUnmappedDescriptor(String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
     }
 
     @Override
