@@ -111,12 +111,14 @@ public class JADNameGenerator extends ClassVisitor {
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
             @Override
             public void visitInvokeDynamicInsn(String indyName, String indyDescriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
-                Handle lambdaHandle = (Handle) bootstrapMethodArguments[1];
-                if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().startsWith("lambda$") &&
-                        sharedRenamers.putIfAbsent(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()),
-                                renamer) == null)
-                    LOGGER.trace("Method {}{} is going to share renamer with {}{} in class {}",
-                            () -> name, () -> descriptor, lambdaHandle::getName, lambdaHandle::getDesc, () -> className);
+                if(!bootstrapMethodHandle.getOwner().equals("java/lang/invoke/StringConcatFactory")) {
+                    Handle lambdaHandle = (Handle) bootstrapMethodArguments[1];
+                    if(lambdaHandle.getOwner().equals(className) && lambdaHandle.getName().startsWith("lambda$") &&
+                            sharedRenamers.putIfAbsent(String.join(".", className, lambdaHandle.getName(),
+                                    lambdaHandle.getDesc()), renamer) == null)
+                        LOGGER.trace("Method {}{} is going to share renamer with {}{} in class {}",
+                                () -> name, () -> descriptor, lambdaHandle::getName, lambdaHandle::getDesc, () -> className);
+                }
                 super.visitInvokeDynamicInsn(indyName, indyDescriptor, bootstrapMethodHandle, bootstrapMethodArguments);
             }
 
