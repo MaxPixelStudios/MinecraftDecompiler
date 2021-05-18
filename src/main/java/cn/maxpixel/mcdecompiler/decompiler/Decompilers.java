@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
@@ -48,7 +47,7 @@ public class Decompilers {
     }
 
     private static UserDefinedDecompiler findUserDefined() {
-        Path path = Paths.get("decompiler", "decompiler.properties");
+        Path path = Path.of("decompiler", "decompiler.properties");
         if(Files.exists(path)) {
             try(BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
                 Properties decompilerProperties = new Properties();
@@ -60,7 +59,7 @@ public class Decompilers {
                 String libRecommended = decompilerProperties.getProperty("lib-recommended", "false");
                 String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required property")
                         .split(" ");
-                return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Paths.get("decompiler", decompilerPath).
+                return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Path.of("decompiler", decompilerPath).
                         toAbsolutePath().normalize(), ObjectArrayList.wrap(args), Boolean.parseBoolean(libRecommended));
             } catch (IOException e) {
                 e.printStackTrace();

@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Properties {
@@ -72,10 +71,10 @@ public class Properties {
 
     static {
         // Default values
-        put(Key.TEMP_DIR, Paths.get("temp"));
-        put(Key.DOWNLOAD_DIR, Paths.get("downloads"));
+        put(Key.TEMP_DIR, Path.of("temp"));
+        put(Key.DOWNLOAD_DIR, Path.of("downloads"));
         put(Key.REGEN_VAR_NAME, false);
-        put(Key.OUTPUT_DIR, Paths.get("output"));
+        put(Key.OUTPUT_DIR, Path.of("output"));
         put(Key.OUTPUT_DEOBFUSCATED_NAME, "deobfuscated");
         put(Key.OUTPUT_DECOMPILED_NAME, "decompiled");
         put(Key.REVERSE, false);

@@ -69,12 +69,7 @@ public class MappingRemapper extends Remapper {
     private String mapToUnmapped(final Type mappedType) {
         switch (mappedType.getSort()) {
             case Type.ARRAY:
-                StringBuilder remappedDescriptor = new StringBuilder();
-                for (int i = 0; i < mappedType.getDimensions(); ++i) {
-                    remappedDescriptor.append('[');
-                }
-                remappedDescriptor.append(mapToUnmapped(mappedType.getElementType()));
-                return remappedDescriptor.toString();
+                return "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
             case Type.OBJECT:
                 PairedClassMapping cm = mappingByMap.get(mappedType.getClassName());
                 return cm != null ? NamingUtil.asDescriptor(cm.getUnmappedName()) : mappedType.getDescriptor();
@@ -103,12 +98,7 @@ public class MappingRemapper extends Remapper {
     private String mapToMapped(final Type unmappedType) {
         switch (unmappedType.getSort()) {
             case Type.ARRAY:
-                StringBuilder remappedDescriptor = new StringBuilder();
-                for (int i = 0; i < unmappedType.getDimensions(); ++i) {
-                    remappedDescriptor.append('[');
-                }
-                remappedDescriptor.append(mapToUnmapped(unmappedType.getElementType()));
-                return remappedDescriptor.toString();
+                return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToUnmapped(unmappedType.getElementType());
             case Type.OBJECT:
                 PairedClassMapping cm = mappingByUnm.get(unmappedType.getClassName());
                 return cm != null ? NamingUtil.asDescriptor(cm.getMappedName()) : unmappedType.getDescriptor();

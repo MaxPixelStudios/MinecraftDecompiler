@@ -37,6 +37,14 @@
         <depend.classloaderutils.ver>1.0.0</depend.classloaderutils.ver>
         <depend.jmh.ver>1.31</depend.jmh.ver>
     </properties>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>plugins-snapshot</id>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+            <releases><enabled>false</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </pluginRepository>
+    </pluginRepositories>
     <build>
         <plugins>
             <plugin>

@@ -46,8 +46,8 @@ public class SuperClassMapping implements Consumer<Path> {
 
     public SuperClassMapping(Stream<Path> classes, boolean close) {
         if(close) {
-            try(Stream<Path> resource = classes) {
-                resource.forEach(this);
+            try(classes) {
+                classes.forEach(this);
             }
         } else classes.forEach(this);
     }

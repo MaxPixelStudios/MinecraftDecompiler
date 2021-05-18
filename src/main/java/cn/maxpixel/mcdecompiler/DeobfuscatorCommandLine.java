@@ -32,7 +32,6 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static java.util.Arrays.asList;
@@ -77,7 +76,7 @@ public class DeobfuscatorCommandLine {
                     @Override
                     public URL convert(String value) {
                         try {
-                            return Paths.get(value).toAbsolutePath().normalize().toUri().toURL();
+                            return Path.of(value).toAbsolutePath().normalize().toUri().toURL();
                         } catch (MalformedURLException e) {
                             throw Utils.wrapInRuntime(e);
                         }

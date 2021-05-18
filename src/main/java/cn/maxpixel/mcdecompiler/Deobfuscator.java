@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -83,7 +82,7 @@ public class Deobfuscator {
         this.deobfuscator = deobfuscator;
     }
     private Info.MappingType getMappingType(String mappingPath) {
-        try(Stream<String> lines = Files.lines(Paths.get(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#")).limit(2)) {
+        try(Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#")).limit(2)) {
             List<String> list = lines.collect(Collectors.toList());
             String s = list.get(1);
             if(s.startsWith("    ")) return Info.MappingType.PROGUARD;

@@ -1,7 +1,7 @@
 ![Java CI with Maven](https://github.com/MaxPixelStudios/MinecraftDecompiler/workflows/Java%20CI%20with%20Maven/badge.svg)
 # MinecraftDecompiler
-A useful tool to deobfuscate Minecraft using Proguard(official)/SRG(Searge 1.13-)/CSRG(Bukkit,Spigot,Paper)/TSRG(Searge 1.13+)/Tiny(Intermediary, Yarn) mappings and decompile Minecraft using CFR/FernFlower/[Any Decompiler You Like](https://github.com/MaxPixelStudios/MinecraftDecompiler/wiki#tutorial-about-decompiler)
-### Note: We recommend you to use java8u251 and higher
+A useful tool to deobfuscate Minecraft using Proguard(official)/SRG(Searge 1.13-)/CSRG(Bukkit,Spigot,Paper)/TSRG(Searge 1.13+)/TSRG v2(Searge 1.16.5+)/Tiny(Intermediary, Yarn) mappings and decompile Minecraft using CFR/FernFlower/[Any Decompiler You Like](https://github.com/MaxPixelStudios/MinecraftDecompiler/wiki#tutorial-about-decompiler)
+### Note: Java16 is required since v2.3
 Progress: View [the project](https://github.com/MaxPixelStudios/MinecraftDecompiler/projects/1) and [the status report](https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions/11)  
 Join discussions [here](https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions/)  
 For usage and more information, visit [the wiki](https://github.com/MaxPixelStudios/MinecraftDecompiler/wiki)(Currently in progress)

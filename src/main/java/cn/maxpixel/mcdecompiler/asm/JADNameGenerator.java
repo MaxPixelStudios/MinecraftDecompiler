@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -70,7 +69,7 @@ public class JADNameGenerator extends ClassVisitor {
     }
     public static void endRecord(Path writeTo) throws IOException {
         if(!recordStarted) throw new IllegalStateException("Record not started yet");
-        Files.write(writeTo, String.join("\n", generatedAbstractParameterNames).getBytes(StandardCharsets.UTF_8),
+        Files.writeString(writeTo, String.join("\n", generatedAbstractParameterNames),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         LOGGER.debug("Saved record to {}", writeTo);
         recordStarted = false;
