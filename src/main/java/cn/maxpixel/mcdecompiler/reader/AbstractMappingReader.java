@@ -114,9 +114,9 @@ public abstract class AbstractMappingReader {
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByNamespaceMap(String namespace, String fromNamespace, String toNamespace) {
+    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByNamespaceMap(String keyNamespace, String fromNamespace, String toNamespace) {
         if(getProcessor().isPaired()) throw new UnsupportedOperationException();
-        return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(namespace),
+        return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(keyNamespace),
                 m -> m.getAsPaired(fromNamespace, toNamespace), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
