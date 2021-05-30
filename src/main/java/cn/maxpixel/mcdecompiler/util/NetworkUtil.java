@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
-import cn.maxpixel.mcdecompiler.DeobfuscatorCommandLine;
+import cn.maxpixel.mcdecompiler.MinecraftDecompilerCommandLine;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -138,7 +138,7 @@ public class NetworkUtil {
             private byte[] data;
             private NetBuilder(URL url) {
                 this.url = url;
-                this.proxy = DeobfuscatorCommandLine.INTERNAL_PROXY;
+                this.proxy = MinecraftDecompilerCommandLine.INTERNAL_PROXY;
                 this.method = Method.GET;
                 this.timeout = Duration.ofSeconds(10);
                 this.headers = new HashMap<>();

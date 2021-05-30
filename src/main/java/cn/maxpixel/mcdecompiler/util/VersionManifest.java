@@ -35,10 +35,11 @@ public class VersionManifest {
     private static final Map<String, String> versions;
     private static final Map<String, JsonObject> versionJsonCache = new Object2ObjectOpenHashMap<>();
 
-    public static JsonObject getVersion(String id) {
-        if(!versions.containsKey(Objects.requireNonNull(id, "id cannot be null!"))) throw new RuntimeException("Game ID \"" + id + "\" does not exists!");
-        return versionJsonCache.computeIfAbsent(id,
-                _id->JsonParser.parseReader(NetworkUtil.newBuilder(versions.get(_id)).connect().asReader()).getAsJsonObject());
+    public static JsonObject get(String versionId) {
+        if(!versions.containsKey(Objects.requireNonNull(versionId, "versionId cannot be null!")))
+            throw new RuntimeException("Game ID \"" + versionId + "\" does not exists!");
+        return versionJsonCache.computeIfAbsent(versionId, _id ->
+                JsonParser.parseReader(NetworkUtil.newBuilder(versions.get(_id)).connect().asReader()).getAsJsonObject());
     }
 
     static {

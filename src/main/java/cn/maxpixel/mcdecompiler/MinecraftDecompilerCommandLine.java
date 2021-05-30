@@ -36,13 +36,13 @@ import java.util.Arrays;
 
 import static java.util.Arrays.asList;
 
-public class DeobfuscatorCommandLine {
-    private static final Logger LOGGER;
+public class MinecraftDecompilerCommandLine {
+    private static final Logger LOGGER = LogManager.getLogger("CommandLine");
     public static final Proxy INTERNAL_PROXY = System.console() == null &&
             Boolean.parseBoolean(System.getProperty("mcd.internalProxy", "false")) ?
             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
             Proxy.NO_PROXY;
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Throwable {
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(asList("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". Only works on Proguard mappings. With this option, you must specify --version " +
@@ -94,7 +94,7 @@ public class DeobfuscatorCommandLine {
 
         if(args == null || args.length == 0) {
             try {
-                System.out.println("Minecraft Decompiler version " + DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
+                System.out.println("Minecraft Decompiler version " + MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
                 parser.printHelpOn(System.out);
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
@@ -105,7 +105,7 @@ public class DeobfuscatorCommandLine {
         OptionSet options = parser.parse(args);
         if(options.has(help)) {
             try {
-                System.out.println("Minecraft Decompiler version " + DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
+                System.out.println("Minecraft Decompiler version " + MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
                 parser.printHelpOn(System.out);
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
@@ -139,20 +139,15 @@ public class DeobfuscatorCommandLine {
         options.valueOfOptional(outDeobfNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DEOBFUSCATED_NAME, s));
         options.valueOfOptional(outDecomNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DECOMPILED_NAME, s));
 
-        Deobfuscator deobfuscator;
-        if(options.has(versionO) || options.has(sideTypeO)) deobfuscator = new Deobfuscator(options.valueOf(versionO), options.valueOf(sideTypeO));
-        else deobfuscator = new Deobfuscator(options.valueOf(versionO), Properties.get(Properties.Key.MAPPING_PATH));
+        MinecraftDecompiler deobfuscator;
+        if(options.has(versionO) || options.has(sideTypeO)) deobfuscator = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO));
+        else deobfuscator = new MinecraftDecompiler(options.valueOf(versionO), Properties.get(Properties.Key.MAPPING_PATH));
         deobfuscator.deobfuscate();
 
         if(options.has(decompileO)) {
             if(options.has(customDecompilerO)) deobfuscator.decompileCustomized(options.valueOf(customDecompilerO));
             else deobfuscator.decompile(options.valueOf(decompileO));
         }
-        LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", DeobfuscatorCommandLine.class.getPackage().getImplementationVersion());
-    }
-
-    static {
-        System.setProperty("log4j2.skipJansi", "false");
-        LOGGER = LogManager.getLogger();
+        LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
     }
 }

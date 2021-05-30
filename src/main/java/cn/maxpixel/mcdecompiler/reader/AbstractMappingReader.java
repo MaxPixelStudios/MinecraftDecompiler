@@ -32,6 +32,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMappingReader {
+    protected static final Logger LOGGER = LogManager.getLogger("Mapping Reader");
     protected ObjectArrayList<String> lines;
     private ObjectList<? extends AbstractClassMapping> mappings;
     private ObjectList<? extends AbstractMapping> packages;

@@ -137,7 +137,7 @@ public class FileUtil {
         if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
     }
 
-    public static void ensureFileExist(Path p) {
+    public static Path ensureFileExist(Path p) {
         if(Files.notExists(p)) {
             try {
                 ensureDirectoryExist(p.getParent());
@@ -146,9 +146,10 @@ public class FileUtil {
                 throw Utils.wrapInRuntime(e);
             }
         }
+        return p;
     }
 
-    public static void ensureDirectoryExist(Path p) {
+    public static Path ensureDirectoryExist(Path p) {
         if(Files.notExists(p)) {
             try {
                 Files.createDirectories(p);
@@ -156,5 +157,6 @@ public class FileUtil {
                 throw Utils.wrapInRuntime(e);
             }
         }
+        return p;
     }
 }

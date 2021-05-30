@@ -49,7 +49,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
             return;
         }
         LOGGER.info("Downloading libs of version {}", version);
-        StreamSupport.stream(VersionManifest.getVersion(version).getAsJsonArray("libraries").spliterator(), true)
+        StreamSupport.stream(VersionManifest.get(version).getAsJsonArray("libraries").spliterator(), true)
                 .map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
                 .forEach(artifact -> {
                     String url = artifact.get("url").getAsString();

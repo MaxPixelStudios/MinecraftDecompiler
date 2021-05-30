@@ -18,19 +18,26 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
+import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.util.*;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 public class ProguardMappingReader extends AbstractMappingReader {
     public ProguardMappingReader(BufferedReader reader) {
@@ -47,6 +54,34 @@ public class ProguardMappingReader extends AbstractMappingReader {
 
     public ProguardMappingReader(String path) throws FileNotFoundException {
         super(path);
+    }
+
+    public ProguardMappingReader(String version, Info.SideType type) {
+        super(downloadMapping(version, type));
+    }
+
+    private static BufferedReader downloadMapping(String version, Info.SideType type) {
+        JsonObject versionDownloads = VersionManifest.get(version).get("downloads").getAsJsonObject();
+        if(!versionDownloads.has(type + "_mappings"))
+            throw new IllegalArgumentException("Version \"" + version + "\" doesn't contain Proguard mappings. Please use 1.14.4 or above");
+        Path p = Properties.getDownloadedProguardMappingPath(version, type);
+        if(Files.notExists(p)) {
+            try(FileChannel channel = FileChannel.open(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING);
+                ReadableByteChannel from = NetworkUtil.newBuilder(versionDownloads.get(type + "_mappings")
+                        .getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
+                LOGGER.info("Downloading mapping...");
+                channel.transferFrom(from, 0, Long.MAX_VALUE);
+            } catch (IOException e) {
+                LOGGER.fatal("Error downloading Proguard mapping file");
+                throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            }
+        }
+        try {
+            return Files.newBufferedReader(p);
+        } catch (IOException e) {
+            LOGGER.fatal("Error creating BufferedReader for Proguard mapping file");
+            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        }
     }
 
     private final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
