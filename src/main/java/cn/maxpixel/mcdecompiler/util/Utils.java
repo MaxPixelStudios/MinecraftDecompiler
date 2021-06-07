@@ -42,27 +42,23 @@ public class Utils {
     }
 
     public static void waitForProcess(Process pro) {
-        Logger LOGGER = LogManager.getLogger("Process " + pro);
+        Logger logger = LogManager.getLogger("Process " + pro.pid());
         try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
             BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
             Thread inT = new Thread(() -> {
                 try {
                     String ins;
-                    while ((ins = in.readLine()) != null) {
-                        LOGGER.debug(ins);
-                    }
+                    while ((ins = in.readLine()) != null) logger.debug(ins);
                 } catch (Throwable e) {
-                    LOGGER.catching(e);
+                    logger.catching(e);
                 }
             });
             Thread errT = new Thread(() -> {
                 try {
                     String ins;
-                    while ((ins = err.readLine()) != null) {
-                        LOGGER.error(ins);
-                    }
+                    while ((ins = err.readLine()) != null) logger.error(ins);
                 } catch (Throwable e) {
-                    LOGGER.catching(e);
+                    logger.catching(e);
                 }
             });
             inT.setDaemon(true);
@@ -71,7 +67,7 @@ public class Utils {
             errT.start();
             pro.waitFor();
         } catch (IOException | InterruptedException e) {
-            LOGGER.catching(e);
+            logger.catching(e);
         }
     }
 

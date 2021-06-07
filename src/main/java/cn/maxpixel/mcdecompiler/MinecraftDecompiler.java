@@ -45,29 +45,48 @@ public class MinecraftDecompiler {
 
     {
         Path tempPath = Properties.get(Properties.Key.TEMP_DIR);
-        FileUtil.deleteDirectory(tempPath);
+        FileUtil.deleteDirectoryIfExists(tempPath);
         try {
             Files.createDirectories(tempPath);
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteDirectory(tempPath)));
     }
 
-    public MinecraftDecompiler(String version, Info.SideType type) {
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteDirectoryIfExists(Properties.get(Properties.Key.TEMP_DIR))));
+    }
+
+    public MinecraftDecompiler(String version, Info.SideType type, Deobfuscator deobfuscator) {
         this.version = Objects.requireNonNull(version, "version cannot be null!");
         this.type = Objects.requireNonNull(type, "type cannot be null!");
         downloadJar(version, type);
-        this.deobfuscator = new Deobfuscator(version, type);
+        this.deobfuscator = deobfuscator;
+    }
+
+    public MinecraftDecompiler(String version, Info.SideType type) {
+        this(version, type, new Deobfuscator(version, type));
+    }
+
+    public MinecraftDecompiler(String version, Info.SideType type, String mappingPath) throws FileNotFoundException {
+        this(version, type, new Deobfuscator(mappingPath));
+    }
+
+    public MinecraftDecompiler(String version, Deobfuscator deobfuscator) {
+        this.version = version;
+        this.deobfuscator = deobfuscator;
     }
 
     public MinecraftDecompiler(String version, String mappingPath) throws FileNotFoundException {
-        this.version = version;
-        this.deobfuscator = new Deobfuscator(mappingPath);
+        this(version, new Deobfuscator(mappingPath));
     }
 
     public MinecraftDecompiler(Deobfuscator deobfuscator) {
         this.deobfuscator = deobfuscator;
+    }
+
+    public MinecraftDecompiler(String mappingPath) throws FileNotFoundException {
+        this(new Deobfuscator(mappingPath));
     }
 
     private void downloadJar(String version, Info.SideType type) {
@@ -113,7 +132,7 @@ public class MinecraftDecompiler {
 
     public void decompile(Info.DecompilerType decompilerType, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
-            FileUtil.deleteDirectory(outputDir);
+            FileUtil.deleteDirectoryIfExists(outputDir);
             Files.createDirectories(outputDir);
             IDecompiler decompiler = Decompilers.get(decompilerType);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
@@ -153,7 +172,7 @@ public class MinecraftDecompiler {
 
     public void decompileCustomized(String customizedDecompilerName, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
-            FileUtil.deleteDirectory(outputDir);
+            FileUtil.deleteDirectoryIfExists(outputDir);
             Files.createDirectories(outputDir);
             ICustomDecompiler decompiler = Decompilers.getCustom(customizedDecompilerName);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();

@@ -83,13 +83,12 @@ public class FileUtil {
         }
     }
 
-    /** Delete if exists */
-    public static void delete(Path path) {
+    public static void deleteIfExists(Path path) {
         if(Files.notExists(path)) {
             LOGGER.debug("\"{}\" does not exist, skipping this operation...", path);
             return;
         }
-        if(Files.isDirectory(path)) deleteDirectory(path);
+        if(Files.isDirectory(path)) deleteDirectoryIfExists(path);
         else {
             try {
                 Files.delete(path);
@@ -99,7 +98,7 @@ public class FileUtil {
         }
     }
 
-    public static void deleteDirectory(Path directory) {
+    public static void deleteDirectoryIfExists(Path directory) {
         if(Files.notExists(directory)) {
             LOGGER.debug("\"{}\" does not exist, skipping this operation...", directory);
             return;

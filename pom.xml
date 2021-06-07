@@ -1,22 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
-  ~ Copyright (C) 2019-2021  MaxPixelStudios
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -26,7 +8,6 @@
     <version>2.3-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <encoding>UTF-8</encoding>
         <depend.asm.ver>9.1</depend.asm.ver>
         <depend.gson.ver>2.8.7</depend.gson.ver>
         <depend.log4j.ver>2.14.1</depend.log4j.ver>
@@ -34,7 +15,6 @@
         <depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
         <depend.cfr.ver>0.151</depend.cfr.ver>
         <depend.fernflower.ver>403</depend.fernflower.ver>
-        <depend.classloaderutils.ver>1.0.0</depend.classloaderutils.ver>
         <depend.jmh.ver>1.32</depend.jmh.ver>
     </properties>
     <pluginRepositories>
@@ -69,6 +49,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
+                    <encoding>UTF-8</encoding>
                     <source>16</source>
                     <target>16</target>
                 </configuration>
@@ -235,7 +216,7 @@
         <dependency>
             <groupId>io.github.lxgaming</groupId>
             <artifactId>classloaderutils</artifactId>
-            <version>${depend.classloaderutils.ver}</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
