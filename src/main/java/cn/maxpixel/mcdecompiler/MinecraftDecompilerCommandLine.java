@@ -119,19 +119,19 @@ public class MinecraftDecompilerCommandLine {
         options.valueOfOptional(outDeobfNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DEOBFUSCATED_NAME, s));
         options.valueOfOptional(outDecomNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DECOMPILED_NAME, s));
 
-        MinecraftDecompiler deobfuscator;
+        MinecraftDecompiler md;
         if(options.has(sideTypeO)) {
             if(options.has(mappingPathO))
-                deobfuscator = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO), Properties.get(Properties.Key.MAPPING_PATH));
-            else deobfuscator = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO));
+                md = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO), Properties.get(Properties.Key.MAPPING_PATH));
+            else md = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO));
         } else if(options.has(versionO))
-            deobfuscator = new MinecraftDecompiler(options.valueOf(versionO), Properties.get(Properties.Key.MAPPING_PATH));
-        else deobfuscator = new MinecraftDecompiler(Properties.get(Properties.Key.MAPPING_PATH));
-        deobfuscator.deobfuscate();
+            md = new MinecraftDecompiler(options.valueOf(versionO), Properties.get(Properties.Key.MAPPING_PATH));
+        else md = new MinecraftDecompiler(Properties.get(Properties.Key.MAPPING_PATH));
+        md.deobfuscate();
 
         if(options.has(decompileO)) {
-            if(options.has(customDecompilerO)) deobfuscator.decompileCustomized(options.valueOf(customDecompilerO));
-            else deobfuscator.decompile(options.valueOf(decompileO));
+            if(options.has(customDecompilerO)) md.decompileCustomized(options.valueOf(customDecompilerO));
+            else md.decompile(options.valueOf(decompileO));
         }
         LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
     }

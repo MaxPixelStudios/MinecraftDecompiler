@@ -106,21 +106,24 @@ public class FileUtil {
         if(!Files.isDirectory(directory)) throw new IllegalArgumentException("Not a directory!");
         try {
             LOGGER.debug("Deleting directory \"{}\"...", directory);
-            Files.walkFileTree(directory, new FileVisitor<Path>() {
+            Files.walkFileTree(directory, new FileVisitor<>() {
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
                     LOGGER.error("Error when deleting file \"{}\" in directory \"{}\"", file, directory, exc);
                     return FileVisitResult.CONTINUE;
                 }
+
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     return FileVisitResult.CONTINUE;
                 }
+
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
+
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                     Files.delete(dir);
@@ -137,7 +140,7 @@ public class FileUtil {
     }
 
     public static Path ensureFileExist(Path p) {
-        if(Files.notExists(p)) {
+        if(p != null && Files.notExists(p)) {
             try {
                 ensureDirectoryExist(p.getParent());
                 Files.createFile(p);
@@ -149,7 +152,7 @@ public class FileUtil {
     }
 
     public static Path ensureDirectoryExist(Path p) {
-        if(Files.notExists(p)) {
+        if(p != null && Files.notExists(p)) {
             try {
                 Files.createDirectories(p);
             } catch (IOException e) {

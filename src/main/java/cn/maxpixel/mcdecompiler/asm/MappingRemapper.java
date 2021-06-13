@@ -66,7 +66,7 @@ public class MappingRemapper extends Remapper {
         else return internalName;
     }
 
-    private String mapToUnmapped(final Type mappedType) {
+    public String mapToUnmapped(final Type mappedType) {
         switch (mappedType.getSort()) {
             case Type.ARRAY:
                 return "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
@@ -95,7 +95,7 @@ public class MappingRemapper extends Remapper {
         return stringBuilder.toString();
     }
 
-    private String mapToMapped(final Type unmappedType) {
+    public String mapToMapped(final Type unmappedType) {
         switch (unmappedType.getSort()) {
             case Type.ARRAY:
                 return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToUnmapped(unmappedType.getElementType());

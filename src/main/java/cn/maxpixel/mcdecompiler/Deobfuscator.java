@@ -150,6 +150,7 @@ public class Deobfuscator {
         if(reverse) reader.reverse();
         Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappings = reader.getProcessor().isPaired() ?
                 reader.getMappingsByUnmappedNameMap() : reader.getMappingsByNamespaceMap(fromNamespace, toNamespace, toNamespace);
+        FileUtil.ensureDirectoryExist(target.getParent());
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {

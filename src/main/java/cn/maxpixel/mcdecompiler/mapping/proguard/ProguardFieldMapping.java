@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.mapping.proguard;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import org.objectweb.asm.Type;
 
 public class ProguardFieldMapping extends PairedFieldMapping implements Descriptor.Mapped {
     private String mappedDescriptor;
@@ -49,6 +50,6 @@ public class ProguardFieldMapping extends PairedFieldMapping implements Descript
 
     public void reverse(MappingRemapper remapper) {
         super.reverse();
-        mappedDescriptor = remapper.getUnmappedDescByMappedDesc(mappedDescriptor);
+        mappedDescriptor = remapper.mapToUnmapped(Type.getType(mappedDescriptor));
     }
 }
