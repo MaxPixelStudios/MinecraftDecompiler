@@ -53,15 +53,14 @@ public class PairedFieldMapping extends PairedMapping implements Owned<PairedFie
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PairedFieldMapping)) return false;
+        if (!(o instanceof PairedFieldMapping that)) return false;
         if (!super.equals(o)) return false;
-        PairedFieldMapping that = (PairedFieldMapping) o;
         return Objects.equals(owner, that.owner);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(owner);
+        return 31 * super.hashCode() + owner.hashCode();
     }
 
     @Override

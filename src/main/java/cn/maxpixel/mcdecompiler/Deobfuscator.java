@@ -22,10 +22,7 @@ import cn.maxpixel.mcdecompiler.asm.*;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.reader.*;
-import cn.maxpixel.mcdecompiler.util.FileUtil;
-import cn.maxpixel.mcdecompiler.util.JarUtil;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
+import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
@@ -155,8 +152,8 @@ public class Deobfuscator {
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {
             SuperClassMapping superClassMapping = new SuperClassMapping(Files.walk(fs.getPath("/"))
-                    .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asJavaName0(p.toString().substring(1))))
-                    .parallel(), true);
+                    .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1))))
+                    .parallel(), true, IOUtil::readZipFileBytes);
             MappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new MappingRemapper(reader, superClassMapping) :
                     new MappingRemapper(reader, superClassMapping, fromNamespace, toNamespace);
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
@@ -165,7 +162,7 @@ public class Deobfuscator {
                     Optional.of(reader.getMappingsByNamespaceMap(fromNamespace)) : Optional.empty();
             paths.forEach(path -> {
                 try(InputStream inputStream = Files.newInputStream(path)) {
-                    String classKeyName = NamingUtil.asJavaName0(path.toString().substring(1));
+                    String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
                     if(mappings.containsKey(classKeyName)) {
                         ClassReader reader = new ClassReader(inputStream);
                         ClassWriter writer = new ClassWriter(reader, 0);
@@ -173,7 +170,7 @@ public class Deobfuscator {
                         ClassVisitor visitor = new ClassRemapper(rvn ? new JADNameGenerator(fixer) : fixer, mappingRemapper);
                         reader.accept(optional.<ClassVisitor>map(map -> new LVTRenamer(visitor, map, fromNamespace, toNamespace)).orElse(visitor), 0);
                         fixer.accept(writer);
-                        Path output = targetFs.getPath(NamingUtil.asNativeName(mappings.get(classKeyName).getMappedName()) + ".class");
+                        Path output = targetFs.getPath(mappings.get(classKeyName).getMappedName() + ".class");
                         FileUtil.ensureDirectoryExist(output.getParent());
                         Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                     } else if(includeOthers) {

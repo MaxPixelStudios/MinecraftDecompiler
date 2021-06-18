@@ -68,9 +68,8 @@ public abstract class PairedMethodMapping extends PairedMapping implements Owned
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PairedMethodMapping)) return false;
+        if (!(o instanceof PairedMethodMapping that)) return false;
         if (!super.equals(o)) return false;
-        PairedMethodMapping that = (PairedMethodMapping) o;
         return Objects.equals(owner, that.owner);
     }
 

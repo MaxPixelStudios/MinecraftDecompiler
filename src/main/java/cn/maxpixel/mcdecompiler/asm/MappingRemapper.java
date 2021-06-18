@@ -61,8 +61,8 @@ public class MappingRemapper extends Remapper {
 
     @Override
     public String map(String internalName) {
-        PairedClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(internalName));
-        if(classMapping != null) return NamingUtil.asNativeName(classMapping.getMappedName());
+        PairedClassMapping classMapping = mappingByUnm.get(internalName);
+        if(classMapping != null) return classMapping.getMappedName();
         else return internalName;
     }
 
@@ -72,7 +72,7 @@ public class MappingRemapper extends Remapper {
                 return "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
             case Type.OBJECT:
                 PairedClassMapping cm = mappingByMap.get(mappedType.getClassName());
-                return cm != null ? NamingUtil.asDescriptor(cm.getUnmappedName()) : mappedType.getDescriptor();
+                return cm != null ? NamingUtil.asDescriptor(NamingUtil.asJavaName(cm.getUnmappedName())) : mappedType.getDescriptor();
             default:
                 return mappedType.getDescriptor();
         }
@@ -101,7 +101,7 @@ public class MappingRemapper extends Remapper {
                 return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToUnmapped(unmappedType.getElementType());
             case Type.OBJECT:
                 PairedClassMapping cm = mappingByUnm.get(unmappedType.getClassName());
-                return cm != null ? NamingUtil.asDescriptor(cm.getMappedName()) : unmappedType.getDescriptor();
+                return cm != null ? NamingUtil.asDescriptor(NamingUtil.asJavaName(cm.getMappedName())) : unmappedType.getDescriptor();
             default:
                 return unmappedType.getDescriptor();
         }
@@ -133,7 +133,7 @@ public class MappingRemapper extends Remapper {
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
-            PairedClassMapping cm = mappingByUnm.get(NamingUtil.asJavaName(owner));
+            PairedClassMapping cm = mappingByUnm.get(owner);
             if(cm != null) {
                 AtomicReference<PairedMethodMapping> methodMapping = new AtomicReference<>();
                 cm.getMethods().parallelStream().filter(m -> m.getUnmappedName().equals(name)).forEach(mapping -> {
@@ -153,7 +153,7 @@ public class MappingRemapper extends Remapper {
     private PairedMethodMapping processSuperMethod(String owner, String name, String descriptor) {
         if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
+        ObjectArrayList<String> superNames = superClassMapping.MAP.get(owner);
         if(superNames != null) {
             AtomicReference<PairedMethodMapping> methodMapping = new AtomicReference<>();
             superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).flatMap(cm -> cm.getMethods().stream()).filter(m -> {
@@ -174,7 +174,7 @@ public class MappingRemapper extends Remapper {
 
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
-        PairedClassMapping classMapping = mappingByUnm.get(NamingUtil.asJavaName(owner));
+        PairedClassMapping classMapping = mappingByUnm.get(owner);
         if(classMapping != null) {
             PairedFieldMapping fieldMapping = classMapping.getField(name);
             if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
@@ -186,7 +186,7 @@ public class MappingRemapper extends Remapper {
     private PairedFieldMapping processSuperField(String owner, String name) {
         if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        ObjectArrayList<String> superNames = superClassMapping.getMap().get(NamingUtil.asJavaName(owner));
+        ObjectArrayList<String> superNames = superClassMapping.MAP.get(owner);
         if(superNames != null) {
             AtomicReference<PairedFieldMapping> fieldMapping = new AtomicReference<>();
             superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).map(cm -> cm.getField(name)).filter(Objects::nonNull)

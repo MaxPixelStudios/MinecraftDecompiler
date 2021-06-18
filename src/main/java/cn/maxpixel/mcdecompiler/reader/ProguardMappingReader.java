@@ -114,7 +114,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
         @Override
         public PairedClassMapping processClass(String line) {
             String[] split = line.split(" -> |:");
-            return new PairedClassMapping(split[1], split[0]);
+            return new PairedClassMapping(NamingUtil.asNativeName(split[1]), NamingUtil.asNativeName(split[0]));
         }
 
         @Override

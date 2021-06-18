@@ -26,8 +26,6 @@ import cn.maxpixel.mcdecompiler.mapping.namespaced.UnmappedDescriptoredNamespace
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.tiny.TinyMethodMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.*;
 
 import java.io.BufferedReader;
@@ -116,21 +114,21 @@ public class TinyMappingReader extends AbstractMappingReader {
 
         @Override
         public NamespacedClassMapping processClass(String line) {
-            return new NamespacedClassMapping(namespaces, Utils.mapToStringArray(line.split("\t"), NamingUtil::asJavaName, 1));
+            return new NamespacedClassMapping(namespaces, line.substring(7).split("\t"));
         }
 
         @Override
         public NamespacedMethodMapping processMethod(String line) {
             String[] split = line.split("\t");
             return new NamespacedMethodMapping(namespaces, split, 3, split[2])
-                    .setOwner(new NamespacedClassMapping(namespaces[0], NamingUtil.asJavaName(split[1])));
+                    .setOwner(new NamespacedClassMapping(namespaces[0], split[1]));
         }
 
         @Override
         public UnmappedDescriptoredNamespacedFieldMapping processField(String line) {
             String[] split = line.split("\t");
             return new UnmappedDescriptoredNamespacedFieldMapping(namespaces, split, 3, split[2])
-                    .setOwner(new NamespacedClassMapping(namespaces[0], NamingUtil.asJavaName(split[1])));
+                    .setOwner(new NamespacedClassMapping(namespaces[0], split[1]));
         }
     }
 
@@ -203,7 +201,7 @@ public class TinyMappingReader extends AbstractMappingReader {
 
         @Override
         public TinyClassMapping processClass(String line) {
-            return new TinyClassMapping(namespaces, Utils.mapToStringArray(line.split("\t"), NamingUtil::asJavaName, 1));
+            return new TinyClassMapping(namespaces, line.substring(2).split("\t"));
         }
 
         @Override

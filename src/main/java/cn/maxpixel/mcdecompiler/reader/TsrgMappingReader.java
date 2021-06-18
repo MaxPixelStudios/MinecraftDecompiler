@@ -27,8 +27,6 @@ import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.UnmappedDescriptoredPairedMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.tsrg.TsrgMethodMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -79,14 +77,10 @@ public class TsrgMappingReader extends AbstractMappingReader {
                         else currClass.set(processClass(s));
                     } else {
                         String[] sa = s.substring(1).split(" ");
-                        switch(sa.length) {
-                            case 2:
-                                currClass.get().addField(processField(sa));
-                                break;
-                            case 3:
-                                currClass.get().addMethod(processMethod(sa));
-                                break;
-                            default: throw new IllegalArgumentException("Is this a TSRG mapping file?");
+                        switch (sa.length) {
+                            case 2 -> currClass.get().addField(processField(sa));
+                            case 3 -> currClass.get().addMethod(processMethod(sa));
+                            default -> throw new IllegalArgumentException("Is this a TSRG mapping file?");
                         }
                     }
                 });
@@ -98,7 +92,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         @Override
         public PairedClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new PairedClassMapping(NamingUtil.asJavaName(strings[0]), NamingUtil.asJavaName(strings[1]));
+            return new PairedClassMapping(strings[0], strings[1]);
         }
 
         private UnmappedDescriptoredPairedMethodMapping processMethod(String[] line) {
@@ -186,7 +180,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
 
         @Override
         public NamespacedClassMapping processClass(String line) {
-            return new NamespacedClassMapping(namespaces, Utils.mapToStringArray(line.split(" "), NamingUtil::asJavaName));
+            return new NamespacedClassMapping(namespaces, line.split(" "));
         }
 
         @Override

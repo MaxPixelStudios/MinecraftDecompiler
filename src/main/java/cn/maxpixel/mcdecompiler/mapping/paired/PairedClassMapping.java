@@ -100,9 +100,8 @@ public class PairedClassMapping extends PairedMapping implements AbstractClassMa
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PairedClassMapping)) return false;
+        if (!(o instanceof PairedClassMapping that)) return false;
         if (!super.equals(o)) return false;
-        PairedClassMapping that = (PairedClassMapping) o;
         return methods.equals(that.methods) && fields.equals(that.fields);
     }
 

@@ -71,9 +71,8 @@ public class DescriptoredPairedMethodMapping extends PairedMethodMapping impleme
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DescriptoredPairedMethodMapping)) return false;
+        if (!(o instanceof DescriptoredPairedMethodMapping that)) return false;
         if (!super.equals(o)) return false;
-        DescriptoredPairedMethodMapping that = (DescriptoredPairedMethodMapping) o;
         return unmappedDescriptor.equals(that.unmappedDescriptor) && mappedDescriptor.equals(that.mappedDescriptor);
     }
 

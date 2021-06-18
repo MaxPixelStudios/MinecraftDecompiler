@@ -24,19 +24,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.function.Function;
 
 public class Utils {
-    public static <T> String[] mapToStringArray(T[] t, Function<T, String> func) {
-        return mapToStringArray(t, func, 0);
-    }
-
-    public static <T> String[] mapToStringArray(T[] t, Function<T, String> func, int startIndex) {
-        String[] r = new String[t.length - startIndex];
-        for(int i = 0; i < r.length; i++) r[i] = func.apply(t[i + startIndex]);
-        return r;
-    }
-
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
     }

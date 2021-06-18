@@ -52,4 +52,17 @@ public class ProguardFieldMapping extends PairedFieldMapping implements Descript
         super.reverse();
         mappedDescriptor = remapper.mapToUnmapped(Type.getType(mappedDescriptor));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ProguardFieldMapping that)) return false;
+        if (!super.equals(o)) return false;
+        return mappedDescriptor.equals(that.mappedDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + mappedDescriptor.hashCode();
+    }
 }

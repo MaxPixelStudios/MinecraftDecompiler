@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.util.Functions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -35,40 +35,42 @@ import java.util.stream.Stream;
 
 public class SuperClassMapping implements Consumer<Path> {
     private static final Logger LOGGER = LogManager.getLogger();
+    private final Functions.Function_WithThrowable<Path, byte[], IOException> readFunc;
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
-    private final Object2ObjectMap<String, ObjectArrayList<String>> unmodifiable = Object2ObjectMaps.unmodifiable(superClassMap);
+    public final Object2ObjectMap<String, ObjectArrayList<String>> MAP = Object2ObjectMaps.unmodifiable(superClassMap);
 
-    public SuperClassMapping() {}
+    public SuperClassMapping() {
+        this.readFunc = Files::readAllBytes;
+    }
 
     public SuperClassMapping(Stream<Path> classes) {
         this(classes, false);
     }
 
     public SuperClassMapping(Stream<Path> classes, boolean close) {
-        if(close) {
-            try(classes) {
-                classes.forEach(this);
-            }
+        this(classes, close, Files::readAllBytes);
+    }
+
+    public SuperClassMapping(Stream<Path> classes, boolean close, Functions.Function_WithThrowable<Path, byte[], IOException> readFunc) {
+        this.readFunc = readFunc;
+        if(close) try(classes) {
+            classes.forEach(this);
         } else classes.forEach(this);
     }
 
     @Override
     public void accept(Path classFilePath) {
         try {
-            ClassReader reader = new ClassReader(Files.readAllBytes(classFilePath));
+            ClassReader reader = new ClassReader(readFunc.apply(classFilePath));
             ObjectArrayList<String> list = new ObjectArrayList<>();
             String superName = reader.getSuperName();
-            if(!superName.equals("java/lang/Object")) list.add(NamingUtil.asJavaName(superName));
-            for(String i : reader.getInterfaces()) list.add(NamingUtil.asJavaName(i));
+            if(!superName.equals("java/lang/Object")) list.add(superName);
+            list.addElements(list.size(), reader.getInterfaces());
             if(!list.isEmpty()) synchronized(superClassMap) {
-                superClassMap.put(NamingUtil.asJavaName(reader.getClassName()), list);
+                superClassMap.put(reader.getClassName(), list);
             }
         } catch(IOException e) {
             LOGGER.error("Error when creating super class mapping", e);
         }
-    }
-
-    public final Object2ObjectMap<String, ObjectArrayList<String>> getMap() {
-        return unmodifiable;
     }
 }

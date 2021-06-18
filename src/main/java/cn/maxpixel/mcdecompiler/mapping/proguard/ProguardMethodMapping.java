@@ -60,9 +60,8 @@ public class ProguardMethodMapping extends MappedDescriptoredPairedMethodMapping
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ProguardMethodMapping)) return false;
+        if (!(o instanceof ProguardMethodMapping that)) return false;
         if (!super.equals(o)) return false;
-        ProguardMethodMapping that = (ProguardMethodMapping) o;
         return Arrays.equals(lineNums, that.lineNums);
     }
 

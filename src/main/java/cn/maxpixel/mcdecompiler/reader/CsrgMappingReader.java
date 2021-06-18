@@ -22,7 +22,6 @@ import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.UnmappedDescriptoredPairedMethodMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.*;
 
 import java.io.BufferedReader;
@@ -104,7 +103,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
         }
 
         private PairedClassMapping processClass(String[] line) {
-            return new PairedClassMapping(NamingUtil.asJavaName(line[0]), NamingUtil.asJavaName(line[1]));
+            return new PairedClassMapping(line[0], line[1]);
         }
 
         @Override
@@ -114,7 +113,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
 
         private UnmappedDescriptoredPairedMethodMapping processMethod(String[] line) {
             return new UnmappedDescriptoredPairedMethodMapping(line[1], line[3], line[2])
-                    .setOwner(new PairedClassMapping(NamingUtil.asJavaName(line[0])));
+                    .setOwner(new PairedClassMapping(line[0]));
         }
 
         @Override
@@ -123,7 +122,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
         }
 
         private PairedFieldMapping processField(String[] line) {
-            return new PairedFieldMapping(line[1], line[2]).setOwner(new PairedClassMapping(NamingUtil.asJavaName(line[0])));
+            return new PairedFieldMapping(line[1], line[2]).setOwner(new PairedClassMapping(line[0]));
         }
 
         @Override

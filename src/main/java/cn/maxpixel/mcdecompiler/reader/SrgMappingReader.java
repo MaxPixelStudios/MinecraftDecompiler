@@ -22,7 +22,6 @@ import cn.maxpixel.mcdecompiler.mapping.paired.DescriptoredPairedMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.*;
 
 import java.io.BufferedReader;
@@ -93,11 +92,11 @@ public class SrgMappingReader extends AbstractMappingReader {
         @Override
         public PairedClassMapping processClass(String line) {
             String[] strings = line.split(" ");
-            return new PairedClassMapping(NamingUtil.asJavaName(strings[1]), NamingUtil.asJavaName(strings[2]));
+            return new PairedClassMapping(strings[1], strings[2]);
         }
 
         private String getClassName(String s) {
-            return NamingUtil.asJavaName(s.substring(0, s.lastIndexOf('/')));
+            return s.substring(0, s.lastIndexOf('/'));
         }
 
         private String getName(String s) {

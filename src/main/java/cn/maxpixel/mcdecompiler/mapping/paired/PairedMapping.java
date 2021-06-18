@@ -21,8 +21,6 @@ package cn.maxpixel.mcdecompiler.mapping.paired;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 
-import java.util.Objects;
-
 public class PairedMapping implements AbstractMapping {
     private String unmappedName;
     private String mappedName;
@@ -62,14 +60,13 @@ public class PairedMapping implements AbstractMapping {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PairedMapping)) return false;
-        PairedMapping that = (PairedMapping) o;
+        if (!(o instanceof PairedMapping that)) return false;
         return unmappedName.equals(that.unmappedName) && mappedName.equals(that.mappedName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(unmappedName, mappedName);
+        return 31 * unmappedName.hashCode() + mappedName.hashCode();
     }
 
     @Override

@@ -63,9 +63,8 @@ public class UnmappedDescriptoredPairedMethodMapping extends PairedMethodMapping
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UnmappedDescriptoredPairedMethodMapping)) return false;
+        if (!(o instanceof UnmappedDescriptoredPairedMethodMapping that)) return false;
         if (!super.equals(o)) return false;
-        UnmappedDescriptoredPairedMethodMapping that = (UnmappedDescriptoredPairedMethodMapping) o;
         return unmappedDescriptor.equals(that.unmappedDescriptor);
     }
 

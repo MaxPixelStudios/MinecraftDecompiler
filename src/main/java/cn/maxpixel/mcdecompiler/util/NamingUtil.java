@@ -33,8 +33,8 @@ public class NamingUtil {
         return pureNativeName.replace('/', '.');
     }
 
-    public static String asJavaName0(String nativeName) {
-        return nativeName.replace('/', '.').replace('\\', '.').replace(".class", "");
+    public static String asJavaName0(String fileName) {
+        return fileName.replace('/', '.').replace('\\', '.').replace(".class", "");
     }
 
     public static int getDimension(String javaName) {
@@ -47,6 +47,10 @@ public class NamingUtil {
 
     public static String asNativeName(String javaName) {
         return javaName.replace('.', '/');
+    }
+
+    public static String asNativeName0(String fileName) {
+        return fileName.replace('\\', '/').replace(".class", "");
     }
 
     public static String asDescriptor(String javaName) {

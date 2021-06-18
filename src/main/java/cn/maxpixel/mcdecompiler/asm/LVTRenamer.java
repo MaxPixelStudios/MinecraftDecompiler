@@ -20,7 +20,6 @@ package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
@@ -44,13 +43,14 @@ public class LVTRenamer extends ClassVisitor {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        mapping = mappings.get(NamingUtil.asJavaName(name));
+        mapping = mappings.get(name);
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        Optional<NamespacedMethodMapping> methodMapping = mapping.getMethods().stream().filter(m -> m.getName(fromNamespace).equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
+        Optional<NamespacedMethodMapping> methodMapping = mapping.getMethods().parallelStream()
+                .filter(m -> m.getName(fromNamespace).equals(name) && m.getUnmappedDescriptor().equals(descriptor)).findAny();
         return new MethodVisitor(Opcodes.ASM9, super.visitMethod(access, name, descriptor, signature, exceptions)) {
             @Override
             public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
