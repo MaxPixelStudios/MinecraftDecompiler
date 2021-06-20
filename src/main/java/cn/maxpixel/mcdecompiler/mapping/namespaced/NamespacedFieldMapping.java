@@ -22,6 +22,7 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Owned;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class NamespacedFieldMapping extends NamespacedMapping implements Owned<NamespacedFieldMapping, NamespacedClassMapping> {
     private NamespacedClassMapping owner;
@@ -60,5 +61,18 @@ public class NamespacedFieldMapping extends NamespacedMapping implements Owned<N
     public NamespacedFieldMapping setOwner(NamespacedClassMapping owner) {
         this.owner = owner;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NamespacedFieldMapping that)) return false;
+        if (!super.equals(o)) return false;
+        return Objects.equals(owner, that.owner);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + owner.hashCode();
     }
 }

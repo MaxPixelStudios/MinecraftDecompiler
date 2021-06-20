@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.mapping.namespaced;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class UnmappedDescriptoredNamespacedFieldMapping extends NamespacedFieldMapping implements Descriptor {
     private String unmappedDescriptor;
@@ -63,5 +64,23 @@ public class UnmappedDescriptoredNamespacedFieldMapping extends NamespacedFieldM
     @Override
     public void setUnmappedDescriptor(String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    @Override
+    public void swap(String namespace, String namespace1) {
+        super.swap(namespace, namespace1);//TODO
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UnmappedDescriptoredNamespacedFieldMapping that)) return false;
+        if (!super.equals(o)) return false;
+        return Objects.equals(unmappedDescriptor, that.unmappedDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + unmappedDescriptor.hashCode();
     }
 }

@@ -22,7 +22,6 @@ import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +30,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Optional;
 
 public class MappingRemapper extends Remapper {
     private static final Logger LOGGER = LogManager.getLogger("Remapper");
@@ -63,7 +62,7 @@ public class MappingRemapper extends Remapper {
     public String map(String internalName) {
         PairedClassMapping classMapping = mappingByUnm.get(internalName);
         if(classMapping != null) return classMapping.getMappedName();
-        else return internalName;
+        return internalName;
     }
 
     public String mapToUnmapped(final Type mappedType) {
@@ -71,8 +70,8 @@ public class MappingRemapper extends Remapper {
             case Type.ARRAY:
                 return "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
             case Type.OBJECT:
-                PairedClassMapping cm = mappingByMap.get(mappedType.getClassName());
-                return cm != null ? NamingUtil.asDescriptor(NamingUtil.asJavaName(cm.getUnmappedName())) : mappedType.getDescriptor();
+                PairedClassMapping cm = mappingByMap.get(mappedType.getInternalName());
+                return cm != null ? Type.getObjectType(cm.getUnmappedName()).getDescriptor() : mappedType.getDescriptor();
             default:
                 return mappedType.getDescriptor();
         }
@@ -83,16 +82,10 @@ public class MappingRemapper extends Remapper {
             return mappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
-        for (Type argumentType : Type.getArgumentTypes(mappedDescriptor)) {
+        if(mappedDescriptor.charAt(1) != ')') for(Type argumentType : Type.getArgumentTypes(mappedDescriptor)) {
             stringBuilder.append(mapToUnmapped(argumentType));
         }
-        Type returnType = Type.getReturnType(mappedDescriptor);
-        if (returnType == Type.VOID_TYPE) {
-            stringBuilder.append(")V");
-        } else {
-            stringBuilder.append(')').append(mapToUnmapped(returnType));
-        }
-        return stringBuilder.toString();
+        return stringBuilder.append(')').append(mapToUnmapped(Type.getReturnType(mappedDescriptor))).toString();
     }
 
     public String mapToMapped(final Type unmappedType) {
@@ -100,8 +93,8 @@ public class MappingRemapper extends Remapper {
             case Type.ARRAY:
                 return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToUnmapped(unmappedType.getElementType());
             case Type.OBJECT:
-                PairedClassMapping cm = mappingByUnm.get(unmappedType.getClassName());
-                return cm != null ? NamingUtil.asDescriptor(NamingUtil.asJavaName(cm.getMappedName())) : unmappedType.getDescriptor();
+                PairedClassMapping cm = mappingByUnm.get(unmappedType.getInternalName());
+                return cm != null ? Type.getObjectType(cm.getMappedName()).getDescriptor() : unmappedType.getDescriptor();
             default:
                 return unmappedType.getDescriptor();
         }
@@ -112,16 +105,10 @@ public class MappingRemapper extends Remapper {
             return unmappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
-        for (Type argumentType : Type.getArgumentTypes(unmappedDescriptor)) {
+        if(unmappedDescriptor.charAt(1) != ')') for(Type argumentType : Type.getArgumentTypes(unmappedDescriptor)) {
             stringBuilder.append(mapToMapped(argumentType));
         }
-        Type returnType = Type.getReturnType(unmappedDescriptor);
-        if (returnType == Type.VOID_TYPE) {
-            stringBuilder.append(")V");
-        } else {
-            stringBuilder.append(')').append(mapToMapped(returnType));
-        }
-        return stringBuilder.toString();
+        return stringBuilder.append(')').append(mapToMapped(Type.getReturnType(unmappedDescriptor))).toString();
     }
 
     private String getUnmappedDesc(PairedMethodMapping mapping) {
@@ -133,19 +120,16 @@ public class MappingRemapper extends Remapper {
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
-            PairedClassMapping cm = mappingByUnm.get(owner);
-            if(cm != null) {
-                AtomicReference<PairedMethodMapping> methodMapping = new AtomicReference<>();
-                cm.getMethods().parallelStream().filter(m -> m.getUnmappedName().equals(name)).forEach(mapping -> {
-                    if(methodMapping.get() == null && getUnmappedDesc(mapping).equals(descriptor) && !methodMapping.compareAndSet(null, mapping))
-                        throw new RuntimeException("Method duplicated...This should not happen!");
-                });
-                if(methodMapping.get() != null) return methodMapping.get().getMappedName();
-                else {
-                    PairedMethodMapping result = processSuperMethod(owner, name, descriptor);
-                    if(result != null) return result.getMappedName();
-                }
-            }
+            return Optional.ofNullable(mappingByUnm.get(owner))
+                    .map(cm -> {
+                        LazyFinalValue<PairedMethodMapping> methodMapping = new LazyFinalValue<>("Method duplicated... This should not happen!");
+                        cm.getMethods().stream()
+                                .filter(m -> m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor))
+                                .forEach(methodMapping::set);
+                        return methodMapping.value;
+                    })
+                    .or(() -> Optional.ofNullable(processSuperMethod(owner, name, descriptor)))
+                    .map(PairedMethodMapping::getMappedName).orElse(name);
         }
         return name;
     }
@@ -155,32 +139,39 @@ public class MappingRemapper extends Remapper {
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
         ObjectArrayList<String> superNames = superClassMapping.MAP.get(owner);
         if(superNames != null) {
-            AtomicReference<PairedMethodMapping> methodMapping = new AtomicReference<>();
-            superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).flatMap(cm -> cm.getMethods().stream()).filter(m -> {
-                String mapped = m.getMappedName();
-                return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") && m.getUnmappedName().equals(name) &&
-                        getUnmappedDesc(m).equals(descriptor);
-            }).distinct().findAny().ifPresent(mapping -> {
-                if(!methodMapping.compareAndSet(null, mapping)) throw new RuntimeException("Method duplicated... This should not happen!");
-            });
-            if(methodMapping.get() == null) superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull)
-                    .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor)).filter(Objects::nonNull).distinct().findAny().ifPresent(result -> {
-                        if(!methodMapping.compareAndSet(null, result)) throw new RuntimeException("Method duplicated... This should not happen!");
-                    });
-            if(methodMapping.get() != null) return methodMapping.get();
+            LazyFinalValue<PairedMethodMapping> methodMapping = new LazyFinalValue<>("Method duplicated... This should not happen!");
+            superNames.stream()
+                    .unordered()
+                    .map(mappingByUnm::get)
+                    .filter(Objects::nonNull)
+                    .flatMap(cm -> cm.getMethods().stream())
+                    .filter(m -> {
+                        String mapped = m.getMappedName();
+                        return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") &&
+                                m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor);
+                    })
+                    .distinct()
+                    .forEach(methodMapping::set);
+            if(methodMapping.value == null)
+                superNames.stream()
+                        .unordered()
+                        .map(mappingByUnm::get)
+                        .filter(Objects::nonNull)
+                        .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor))
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .forEach(methodMapping::set);
+            return methodMapping.value;
         }
         return null;
     }
 
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
-        PairedClassMapping classMapping = mappingByUnm.get(owner);
-        if(classMapping != null) {
-            PairedFieldMapping fieldMapping = classMapping.getField(name);
-            if(fieldMapping == null) fieldMapping = processSuperField(owner, name);
-            if(fieldMapping != null) return fieldMapping.getMappedName();
-        }
-        return name;
+        return Optional.ofNullable(mappingByUnm.get(owner))
+                .map(classMapping -> classMapping.getField(name))
+                .or(() -> Optional.ofNullable(processSuperField(owner, name)))
+                .map(PairedFieldMapping::getMappedName).orElse(name);
     }
 
     private PairedFieldMapping processSuperField(String owner, String name) {
@@ -188,17 +179,38 @@ public class MappingRemapper extends Remapper {
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
         ObjectArrayList<String> superNames = superClassMapping.MAP.get(owner);
         if(superNames != null) {
-            AtomicReference<PairedFieldMapping> fieldMapping = new AtomicReference<>();
-            superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull).map(cm -> cm.getField(name)).filter(Objects::nonNull)
-                    .findAny().ifPresent(fm -> {
-                if(!fieldMapping.compareAndSet(null, fm)) throw new RuntimeException("Field duplicated... This should not happen!");
-            });
-            if(fieldMapping.get() == null) superNames.parallelStream().map(mappingByUnm::get).filter(Objects::nonNull)
-                    .map(cm -> processSuperField(cm.getUnmappedName(), name)).filter(Objects::nonNull).forEach(fm -> {
-                        if(!fieldMapping.compareAndSet(null, fm)) throw new RuntimeException("Field duplicated... This should not happen!");
-                    });
-            if(fieldMapping.get() != null) return fieldMapping.get();
+            LazyFinalValue<PairedFieldMapping> fieldMapping = new LazyFinalValue<>("Field duplicated... This should not happen!");
+            superNames.parallelStream()
+                    .unordered()
+                    .map(mappingByUnm::get)
+                    .filter(Objects::nonNull)
+                    .map(cm -> cm.getField(name))
+                    .filter(Objects::nonNull)
+                    .forEach(fieldMapping::set);
+            if(fieldMapping.value == null)
+                superNames.parallelStream()
+                        .unordered()
+                        .map(mappingByUnm::get)
+                        .filter(Objects::nonNull)
+                        .map(cm -> processSuperField(cm.getUnmappedName(), name))
+                        .filter(Objects::nonNull)
+                        .forEach(fieldMapping::set);
+            return fieldMapping.value;
         }
         return null;
+    }
+
+    private static class LazyFinalValue<V> {
+        private V value;
+        private final String errorMessage;
+
+        private LazyFinalValue(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+        public synchronized void set(V value) {
+            if(this.value == null) this.value = Objects.requireNonNull(value);
+            throw new IllegalStateException(errorMessage);
+        }
     }
 }

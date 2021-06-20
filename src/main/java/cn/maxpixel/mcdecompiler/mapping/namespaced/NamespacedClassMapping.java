@@ -27,6 +27,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
 public class NamespacedClassMapping extends NamespacedMapping implements AbstractClassMapping {
     private final ObjectArrayList<NamespacedMethodMapping> methods = new ObjectArrayList<>();
@@ -94,5 +95,23 @@ public class NamespacedClassMapping extends NamespacedMapping implements Abstrac
         getMethods().stream().map(m -> new UnmappedDescriptoredPairedMethodMapping(m.getName(fromNamespace), m.getName(toNamespace),
                 m.getUnmappedDescriptor())).forEach(cm::addMethod);
         return cm;
+    }
+
+    @Override
+    public void swap(String namespace, String namespace1) {
+        super.swap(namespace, namespace1);//TODO
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NamespacedClassMapping that)) return false;
+        if (!super.equals(o)) return false;
+        return methods.equals(that.methods) && fields.equals(that.fields);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), methods, fields);
     }
 }

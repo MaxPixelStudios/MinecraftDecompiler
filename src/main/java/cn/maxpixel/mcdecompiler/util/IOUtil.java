@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler.util;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
 public class IOUtil {
     private static final Class<?> ZIP_FILESYSTEM;
@@ -35,9 +34,9 @@ public class IOUtil {
     }
 
     public static byte[] readZipFileBytes(Path fileInZip) throws IOException {
-        if(fileInZip.getFileSystem().getClass() == ZIP_FILESYSTEM) // Ensure the filesystem is zipfs
+        if(ZIP_FILESYSTEM.isInstance(fileInZip.getFileSystem())) // Ensure the filesystem is zipfs
             // Zipfs implementation returns a ByteArrayInputStream, so this is the fastest way
-            return Files.newInputStream(fileInZip, StandardOpenOption.READ).readAllBytes();
+            return Files.newInputStream(fileInZip).readAllBytes();
         else throw new UnsupportedOperationException();
     }
 }

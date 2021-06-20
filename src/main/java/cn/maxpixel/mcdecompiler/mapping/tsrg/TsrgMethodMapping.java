@@ -52,4 +52,17 @@ public class TsrgMethodMapping extends NamespacedMethodMapping {
     public void setStatic(boolean staticMethod) {
         this.staticMethod = staticMethod;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TsrgMethodMapping that)) return false;
+        if (!super.equals(o)) return false;
+        return staticMethod == that.staticMethod;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + Boolean.hashCode(staticMethod);
+    }
 }

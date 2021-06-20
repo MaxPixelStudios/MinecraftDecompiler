@@ -104,4 +104,22 @@ public class NamespacedMethodMapping extends NamespacedMapping implements Descri
     public void setUnmappedDescriptor(String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
     }
+
+    @Override
+    public void swap(String namespace, String namespace1) {
+        super.swap(namespace, namespace1);//TODO
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NamespacedMethodMapping that)) return false;
+        if (!super.equals(o)) return false;
+        return lvt.equals(that.lvt) && Objects.equals(unmappedDescriptor, that.unmappedDescriptor) && Objects.equals(owner, that.owner);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + Objects.hash(lvt, unmappedDescriptor, owner);
+    }
 }

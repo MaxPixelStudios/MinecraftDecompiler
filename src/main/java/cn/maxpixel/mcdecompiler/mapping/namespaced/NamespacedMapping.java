@@ -71,4 +71,16 @@ public class NamespacedMapping implements AbstractMapping {
         names.put(namespace, names.get(namespace1));
         names.put(namespace1, temp);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NamespacedMapping that)) return false;
+        return names.equals(that.names);
+    }
+
+    @Override
+    public int hashCode() {
+        return names.hashCode();
+    }
 }
