@@ -22,6 +22,7 @@ import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
@@ -123,7 +124,7 @@ public class MappingRemapper extends Remapper {
             return Optional.ofNullable(mappingByUnm.get(owner))
                     .map(cm -> {
                         LazyFinalValue<PairedMethodMapping> methodMapping = new LazyFinalValue<>("Method duplicated... This should not happen!");
-                        cm.getMethods().stream()
+                        cm.getMethods().parallelStream()
                                 .filter(m -> m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor))
                                 .forEach(methodMapping::set);
                         return methodMapping.value;
@@ -141,7 +142,6 @@ public class MappingRemapper extends Remapper {
         if(superNames != null) {
             LazyFinalValue<PairedMethodMapping> methodMapping = new LazyFinalValue<>("Method duplicated... This should not happen!");
             superNames.stream()
-                    .unordered()
                     .map(mappingByUnm::get)
                     .filter(Objects::nonNull)
                     .flatMap(cm -> cm.getMethods().stream())
@@ -150,17 +150,20 @@ public class MappingRemapper extends Remapper {
                         return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") &&
                                 m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor);
                     })
-                    .distinct()
-                    .forEach(methodMapping::set);
+                    .reduce((left, right) -> {
+                        if(Utils.nameAndDescEquals(left, right)) return left;
+                        throw new IllegalArgumentException();
+                    }).ifPresent(methodMapping::set);
             if(methodMapping.value == null)
                 superNames.stream()
-                        .unordered()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
                         .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor))
                         .filter(Objects::nonNull)
-                        .distinct()
-                        .forEach(methodMapping::set);
+                        .reduce((left, right) -> {
+                            if(Utils.nameAndDescEquals(left, right)) return left;
+                            throw new IllegalArgumentException();
+                        }).ifPresent(methodMapping::set);
             return methodMapping.value;
         }
         return null;
@@ -181,7 +184,6 @@ public class MappingRemapper extends Remapper {
         if(superNames != null) {
             LazyFinalValue<PairedFieldMapping> fieldMapping = new LazyFinalValue<>("Field duplicated... This should not happen!");
             superNames.parallelStream()
-                    .unordered()
                     .map(mappingByUnm::get)
                     .filter(Objects::nonNull)
                     .map(cm -> cm.getField(name))
@@ -189,7 +191,6 @@ public class MappingRemapper extends Remapper {
                     .forEach(fieldMapping::set);
             if(fieldMapping.value == null)
                 superNames.parallelStream()
-                        .unordered()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
                         .map(cm -> processSuperField(cm.getUnmappedName(), name))
@@ -210,7 +211,7 @@ public class MappingRemapper extends Remapper {
 
         public synchronized void set(V value) {
             if(this.value == null) this.value = Objects.requireNonNull(value);
-            throw new IllegalStateException(errorMessage);
+            else throw new IllegalStateException(errorMessage);
         }
     }
 }

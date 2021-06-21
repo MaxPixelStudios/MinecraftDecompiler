@@ -81,7 +81,8 @@ public abstract class PairedMethodMapping extends PairedMapping implements Owned
     @Override
     public String toString() {
         return "PairedMethodMapping{" +
-                "owner=" + owner +
+                "owner={unmappedName='" + owner.getUnmappedName() +
+                "', mappedName='" + owner.getMappedName() + '\'' +
                 "} " + super.toString();
     }
 }

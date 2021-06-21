@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -62,5 +64,18 @@ public class Utils {
 
     public static <T> T onKeyDuplicate(T t, T u) {
         throw new IllegalArgumentException("Key \"" + t + "\" and \"" + u + "\" duplicated!");
+    }
+
+    public static boolean nameAndDescEquals(PairedMethodMapping left, PairedMethodMapping right) {
+        if(left.getClass() != right.getClass() || !((left instanceof Descriptor) || (left instanceof Descriptor.Mapped)))
+            throw new UnsupportedOperationException();
+        boolean b = left.getUnmappedName().equals(right.getUnmappedName()) && left.getMappedName().equals(right.getMappedName());
+        if(left.isDescriptor()) b &= left.asDescriptor().getUnmappedDescriptor().equals(right.asDescriptor().getUnmappedDescriptor());
+        if(left.isMappedDescriptor()) b &= left.asMappedDescriptor().getMappedDescriptor().equals(right.asMappedDescriptor().getMappedDescriptor());
+        return b;
+    }
+
+    public interface Function_WithThrowable<T, R, E extends Throwable> {
+        R apply(T t) throws E;
     }
 }

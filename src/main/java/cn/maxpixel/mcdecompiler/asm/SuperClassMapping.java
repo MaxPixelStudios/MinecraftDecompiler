@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.util.Functions;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 
 public class SuperClassMapping implements Consumer<Path> {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Functions.Function_WithThrowable<Path, byte[], IOException> readFunc;
+    private final Utils.Function_WithThrowable<Path, byte[], IOException> readFunc;
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     public final Object2ObjectMap<String, ObjectArrayList<String>> MAP = Object2ObjectMaps.unmodifiable(superClassMap);
 
@@ -51,7 +51,7 @@ public class SuperClassMapping implements Consumer<Path> {
         this(classes, close, Files::readAllBytes);
     }
 
-    public SuperClassMapping(Stream<Path> classes, boolean close, Functions.Function_WithThrowable<Path, byte[], IOException> readFunc) {
+    public SuperClassMapping(Stream<Path> classes, boolean close, Utils.Function_WithThrowable<Path, byte[], IOException> readFunc) {
         this.readFunc = readFunc;
         if(close) try(classes) {
             classes.forEach(this);
