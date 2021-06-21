@@ -66,7 +66,8 @@ public class PairedFieldMapping extends PairedMapping implements Owned<PairedFie
     @Override
     public String toString() {
         return "PairedFieldMapping{" +
-                "owner=" + owner +
+                "owner={unmappedName='" + owner.getUnmappedName() +
+                "', mappedName='" + owner.getMappedName() + '\'' +
                 "} " + super.toString();
     }
 }

@@ -24,7 +24,6 @@ import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
@@ -122,97 +121,79 @@ public class MappingRemapper extends Remapper {
     public String mapMethodName(String owner, String name, String descriptor) {
         if(!(name.contains("<init>") || name.contains("<clinit>"))) {
             return Optional.ofNullable(mappingByUnm.get(owner))
-                    .map(cm -> {
-                        LazyFinalValue<PairedMethodMapping> methodMapping = new LazyFinalValue<>("Method duplicated... This should not happen!");
-                        cm.getMethods().parallelStream()
-                                .filter(m -> m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor))
-                                .forEach(methodMapping::set);
-                        return methodMapping.value;
-                    })
-                    .or(() -> Optional.ofNullable(processSuperMethod(owner, name, descriptor)))
+                    .flatMap(cm -> cm.getMethods().parallelStream()
+                            .filter(m -> m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor))
+                            .map(PairedMethodMapping.class::cast)
+                            .reduce((left, right) -> {throw new IllegalArgumentException("Method duplicated... This should not happen!");})
+                    )
+                    .or(() -> processSuperMethod(owner, name, descriptor))
                     .map(PairedMethodMapping::getMappedName).orElse(name);
         }
         return name;
     }
 
-    private PairedMethodMapping processSuperMethod(String owner, String name, String descriptor) {
+    private Optional<PairedMethodMapping> processSuperMethod(String owner, String name, String descriptor) {
         if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        ObjectArrayList<String> superNames = superClassMapping.MAP.get(owner);
-        if(superNames != null) {
-            LazyFinalValue<PairedMethodMapping> methodMapping = new LazyFinalValue<>("Method duplicated... This should not happen!");
-            superNames.stream()
-                    .map(mappingByUnm::get)
-                    .filter(Objects::nonNull)
-                    .flatMap(cm -> cm.getMethods().stream())
-                    .filter(m -> {
-                        String mapped = m.getMappedName();
-                        return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") &&
-                                m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor);
-                    })
-                    .reduce((left, right) -> {
-                        if(Utils.nameAndDescEquals(left, right)) return left;
-                        throw new IllegalArgumentException();
-                    }).ifPresent(methodMapping::set);
-            if(methodMapping.value == null)
-                superNames.stream()
+        return Optional.ofNullable(superClassMapping.MAP.get(owner))
+                .flatMap(superNames -> superNames.parallelStream()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
-                        .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor))
-                        .filter(Objects::nonNull)
+                        .flatMap(cm -> cm.getMethods().stream())
+                        .filter(m -> {
+                            String mapped = m.getMappedName();
+                            return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") &&
+                                    m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor);
+                        })
                         .reduce((left, right) -> {
                             if(Utils.nameAndDescEquals(left, right)) return left;
-                            throw new IllegalArgumentException();
-                        }).ifPresent(methodMapping::set);
-            return methodMapping.value;
-        }
-        return null;
+                            throw new IllegalArgumentException("Method duplicated... This should not happen!");
+                        })
+                        .map(PairedMethodMapping.class::cast)
+                        .or(() -> superNames.parallelStream()
+                                .map(mappingByUnm::get)
+                                .filter(Objects::nonNull)
+                                .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor))
+                                .filter(Optional::isPresent)
+                                .map(Optional::get)
+                                .reduce((left, right) -> {
+                                    if(Utils.nameAndDescEquals(left, right)) return left;
+                                    throw new IllegalArgumentException("Method duplicated... This should not happen!");
+                                })
+                        )
+                );
     }
 
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
         return Optional.ofNullable(mappingByUnm.get(owner))
                 .map(classMapping -> classMapping.getField(name))
-                .or(() -> Optional.ofNullable(processSuperField(owner, name)))
+                .or(() -> processSuperField(owner, name))
                 .map(PairedFieldMapping::getMappedName).orElse(name);
     }
 
-    private PairedFieldMapping processSuperField(String owner, String name) {
+    private Optional<PairedFieldMapping> processSuperField(String owner, String name) {
         if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        ObjectArrayList<String> superNames = superClassMapping.MAP.get(owner);
-        if(superNames != null) {
-            LazyFinalValue<PairedFieldMapping> fieldMapping = new LazyFinalValue<>("Field duplicated... This should not happen!");
-            superNames.parallelStream()
-                    .map(mappingByUnm::get)
-                    .filter(Objects::nonNull)
-                    .map(cm -> cm.getField(name))
-                    .filter(Objects::nonNull)
-                    .forEach(fieldMapping::set);
-            if(fieldMapping.value == null)
-                superNames.parallelStream()
+        return Optional.ofNullable(superClassMapping.MAP.get(owner))
+                .flatMap(superNames -> superNames.parallelStream()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
-                        .map(cm -> processSuperField(cm.getUnmappedName(), name))
+                        .map(cm -> cm.getField(name))
                         .filter(Objects::nonNull)
-                        .forEach(fieldMapping::set);
-            return fieldMapping.value;
-        }
-        return null;
-    }
-
-    private static class LazyFinalValue<V> {
-        private V value;
-        private final String errorMessage;
-
-        private LazyFinalValue(String errorMessage) {
-            this.errorMessage = errorMessage;
-        }
-
-        public synchronized void set(V value) {
-            if(this.value == null) this.value = Objects.requireNonNull(value);
-            else if(value != null && ((PairedFieldMapping) value).getMappedName().equals("LOADING_SYMBOLS")) this.value = Objects.requireNonNull(value);
-            else throw new IllegalStateException(errorMessage);
-        }
+                        .reduce((left, right) -> {
+                            if(left.getMappedName().equals("LOADING_SYMBOLS")) return left;
+                            if(right.getMappedName().equals("LOADING_SYMBOLS")) return right;
+                            throw new IllegalArgumentException("Field duplicated... This should not happen!");
+                        })
+                        .or(() -> superNames.parallelStream()
+                                .map(mappingByUnm::get)
+                                .filter(Objects::nonNull)
+                                .map(cm -> processSuperField(cm.getUnmappedName(), name))
+                                .filter(Optional::isPresent)
+                                .map(Optional::get)
+                                .reduce((left, right) -> {throw new IllegalArgumentException("Field duplicated... This should not happen!");})
+                        )
+                );
     }
 }
