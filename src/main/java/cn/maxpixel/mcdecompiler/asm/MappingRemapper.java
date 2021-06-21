@@ -211,6 +211,7 @@ public class MappingRemapper extends Remapper {
 
         public synchronized void set(V value) {
             if(this.value == null) this.value = Objects.requireNonNull(value);
+            else if(value != null && ((PairedFieldMapping) value).getMappedName().equals("LOADING_SYMBOLS")) this.value = Objects.requireNonNull(value);
             else throw new IllegalStateException(errorMessage);
         }
     }
