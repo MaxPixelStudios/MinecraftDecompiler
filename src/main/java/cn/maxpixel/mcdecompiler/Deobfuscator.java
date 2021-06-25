@@ -151,11 +151,11 @@ public class Deobfuscator {
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
             Stream<Path> paths = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {
-            SuperClassMapping superClassMapping = new SuperClassMapping(Files.walk(fs.getPath("/"))
+            ExtraClassesInformation info = new ExtraClassesInformation(Files.walk(fs.getPath("/"))
                     .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1))))
                     .parallel(), true, IOUtil::readZipFileBytes);
-            MappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new MappingRemapper(reader, superClassMapping) :
-                    new MappingRemapper(reader, superClassMapping, fromNamespace, toNamespace);
+            MappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new MappingRemapper(reader, info) :
+                    new MappingRemapper(reader, info, fromNamespace, toNamespace);
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
             if(rvn) JADNameGenerator.startRecord();
             Optional<Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping>> optional = reader.getProcessor().isNamespaced() ?

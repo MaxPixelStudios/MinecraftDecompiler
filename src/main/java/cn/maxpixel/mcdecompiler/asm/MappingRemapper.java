@@ -26,6 +26,7 @@ import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
@@ -34,7 +35,7 @@ import java.util.Optional;
 
 public class MappingRemapper extends Remapper {
     private static final Logger LOGGER = LogManager.getLogger("Remapper");
-    private final SuperClassMapping superClassMapping;
+    private final ExtraClassesInformation extraClassesInformation;
     private final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappingByMap;
 
@@ -46,14 +47,14 @@ public class MappingRemapper extends Remapper {
         this(mappingReader, null, fromNamespace, toNamespace);
     }
 
-    public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping) {
-        this.superClassMapping = superClassMapping;
+    public MappingRemapper(AbstractMappingReader mappingReader, ExtraClassesInformation extraClassesInformation) {
+        this.extraClassesInformation = extraClassesInformation;
         this.mappingByUnm = mappingReader.getMappingsByUnmappedNameMap();
         this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
     }
 
-    public MappingRemapper(AbstractMappingReader mappingReader, SuperClassMapping superClassMapping, String fromNamespace, String toNamespace) {
-        this.superClassMapping = superClassMapping;
+    public MappingRemapper(AbstractMappingReader mappingReader, ExtraClassesInformation extraClassesInformation, String fromNamespace, String toNamespace) {
+        this.extraClassesInformation = extraClassesInformation;
         this.mappingByUnm = mappingReader.getMappingsByNamespaceMap(fromNamespace, fromNamespace, toNamespace);
         this.mappingByMap = mappingReader.getMappingsByNamespaceMap(toNamespace, fromNamespace, toNamespace);
     }
@@ -133,35 +134,40 @@ public class MappingRemapper extends Remapper {
     }
 
     private Optional<PairedMethodMapping> processSuperMethod(String owner, String name, String descriptor) {
-        if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
-                "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        return Optional.ofNullable(superClassMapping.MAP.get(owner))
+        if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
+                "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
+        return Optional.ofNullable(extraClassesInformation.SUPER_NAMES.get(owner))
                 .flatMap(superNames -> superNames.parallelStream()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
                         .flatMap(cm -> cm.getMethods().stream())
-                        .filter(m -> {
-                            String mapped = m.getMappedName();
-                            return !mapped.startsWith("lambda$") && !mapped.startsWith("access$") &&
-                                    m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor);
-                        })
-                        .reduce((left, right) -> {
-                            if(Utils.nameAndDescEquals(left, right)) return left;
-                            throw new IllegalArgumentException("Method duplicated... This should not happen!");
-                        })
+                        .filter(m -> m.getUnmappedName().equals(name) && getUnmappedDesc(m).equals(descriptor))
                         .map(PairedMethodMapping.class::cast)
+                        .reduce(this::reduceMethod)
                         .or(() -> superNames.parallelStream()
                                 .map(mappingByUnm::get)
                                 .filter(Objects::nonNull)
                                 .map(cm -> processSuperMethod(cm.getUnmappedName(), name, descriptor))
                                 .filter(Optional::isPresent)
                                 .map(Optional::get)
-                                .reduce((left, right) -> {
-                                    if(Utils.nameAndDescEquals(left, right)) return left;
-                                    throw new IllegalArgumentException("Method duplicated... This should not happen!");
-                                })
+                                .reduce(this::reduceMethod)
                         )
                 );
+    }
+
+    private PairedMethodMapping reduceMethod(PairedMethodMapping left, PairedMethodMapping right) {
+        if(Utils.nameAndDescEquals(left, right)) return left;
+        // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
+        int leftAcc = extraClassesInformation.ACCESS_MAP.get(left.getOwner().getUnmappedName())
+                .getOrDefault(left.getUnmappedName().concat(getUnmappedDesc(left)), Opcodes.ACC_PUBLIC) & 0b111;
+        int rightAcc = extraClassesInformation.ACCESS_MAP.get(right.getOwner().getUnmappedName())
+                .getOrDefault(right.getUnmappedName().concat(getUnmappedDesc(right)), Opcodes.ACC_PUBLIC) & 0b111;
+        // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
+        if((leftAcc & 0b101) != 0) return left;
+        else if((rightAcc & 0b101) != 0) return right;
+        else if(leftAcc == Opcodes.ACC_PRIVATE || rightAcc == Opcodes.ACC_PRIVATE)
+            throw new IllegalArgumentException("This can't happen!");
+        throw new IllegalArgumentException("Method duplicated... This should not happen!");
     }
 
     @Override
@@ -173,27 +179,37 @@ public class MappingRemapper extends Remapper {
     }
 
     private Optional<PairedFieldMapping> processSuperField(String owner, String name) {
-        if(superClassMapping == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
-                "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, SuperClassMapping)");
-        return Optional.ofNullable(superClassMapping.MAP.get(owner))
+        if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
+                "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
+        return Optional.ofNullable(extraClassesInformation.SUPER_NAMES.get(owner))
                 .flatMap(superNames -> superNames.parallelStream()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
                         .map(cm -> cm.getField(name))
                         .filter(Objects::nonNull)
-                        .reduce((left, right) -> {
-                            if(left.getMappedName().equals("LOADING_SYMBOLS")) return left;
-                            if(right.getMappedName().equals("LOADING_SYMBOLS")) return right;
-                            throw new IllegalArgumentException("Field duplicated... This should not happen!");
-                        })
+                        .reduce(this::reduceField)
                         .or(() -> superNames.parallelStream()
                                 .map(mappingByUnm::get)
                                 .filter(Objects::nonNull)
                                 .map(cm -> processSuperField(cm.getUnmappedName(), name))
                                 .filter(Optional::isPresent)
                                 .map(Optional::get)
-                                .reduce((left, right) -> {throw new IllegalArgumentException("Field duplicated... This should not happen!");})
+                                .reduce(this::reduceField)
                         )
                 );
+    }
+
+    private PairedFieldMapping reduceField(PairedFieldMapping left, PairedFieldMapping right) {
+        // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
+        int leftAcc = extraClassesInformation.ACCESS_MAP.get(left.getOwner().getUnmappedName())
+                .getOrDefault(left.getUnmappedName(), Opcodes.ACC_PUBLIC) & 0b111;
+        int rightAcc = extraClassesInformation.ACCESS_MAP.get(right.getOwner().getUnmappedName())
+                .getOrDefault(right.getUnmappedName(), Opcodes.ACC_PUBLIC) & 0b111;
+        // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
+        if((leftAcc & 0b101) != 0) return left;
+        else if((rightAcc & 0b101) != 0) return right;
+        else if(leftAcc == Opcodes.ACC_PRIVATE || rightAcc == Opcodes.ACC_PRIVATE)
+            throw new IllegalArgumentException("This can't happen!");
+        throw new IllegalArgumentException("Field duplicated... This should not happen!");
     }
 }

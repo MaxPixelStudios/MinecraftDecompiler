@@ -60,9 +60,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
                             MessageDigest md = MessageDigest.getInstance("SHA-1");
                             ByteBuffer bb = ByteBuffer.allocate(65536);
                             while(channel.read(bb) != -1) {
-//                                bb.flip(); TODO: Uncomment this
-                                bb.limit(bb.position());
-                                bb.position(0);
+                                bb.flip();
                                 md.update(bb);
                                 bb.clear();
                             }
