@@ -19,25 +19,40 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.decompiler.*;
-import cn.maxpixel.mcdecompiler.util.*;
+import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.JarUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
+import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
 
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 public class MinecraftDecompiler {
+    public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .proxy(ProxySelector.of((InetSocketAddress) MinecraftDecompilerCommandLine.INTERNAL_PROXY.address()))
+            .executor(ForkJoinPool.commonPool())
+            .connectTimeout(Duration.ofSeconds(10L))
+            .build();
+
     private static final Logger LOGGER = LogManager.getLogger();
     private final Deobfuscator deobfuscator;
     private String version;
@@ -92,12 +107,21 @@ public class MinecraftDecompiler {
     private void downloadJar(String version, Info.SideType type) {
         Path p = Properties.getDownloadedMcJarPath(version, type);
         if(Files.notExists(p)) {
-            try(FileChannel channel = FileChannel.open(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING);
-                ReadableByteChannel from = NetworkUtil.newBuilder(VersionManifest.get(version).get("downloads").getAsJsonObject()
-                        .get(type.toString()).getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder(
+                        URI.create(VersionManifest.get(version)
+                                .get("downloads")
+                                .getAsJsonObject()
+                                .get(type.toString())
+                                .getAsJsonObject()
+                                .get("url")
+                                .getAsString()
+                        ))
+                        .build();
                 LOGGER.info("Downloading jar...");
-                channel.transferFrom(from, 0, Long.MAX_VALUE);
-            } catch(IOException e) {
+                HttpClient.newHttpClient()
+                        .send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
+            } catch(IOException | InterruptedException e) {
                 LOGGER.fatal("Error downloading Minecraft jar");
                 throw Utils.wrapInRuntime(LOGGER.throwing(e));
             }

@@ -23,19 +23,24 @@ import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardMethodMapping;
-import cn.maxpixel.mcdecompiler.util.*;
+import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
+import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
@@ -66,12 +71,13 @@ public class ProguardMappingReader extends AbstractMappingReader {
             throw new IllegalArgumentException("Version \"" + version + "\" doesn't contain Proguard mappings. Please use 1.14.4 or above");
         Path p = Properties.getDownloadedProguardMappingPath(version, type);
         if(Files.notExists(p)) {
-            try(FileChannel channel = FileChannel.open(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING);
-                ReadableByteChannel from = NetworkUtil.newBuilder(versionDownloads.get(type + "_mappings")
-                        .getAsJsonObject().get("url").getAsString()).connect().asChannel()) {
+            try {
                 LOGGER.info("Downloading mapping...");
-                channel.transferFrom(from, 0, Long.MAX_VALUE);
-            } catch (IOException e) {
+                HttpRequest request = HttpRequest
+                        .newBuilder(URI.create(versionDownloads.get(type + "_mappings").getAsJsonObject().get("url").getAsString()))
+                        .build();
+                HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
+            } catch (IOException | InterruptedException e) {
                 LOGGER.fatal("Error downloading Proguard mapping file");
                 throw Utils.wrapInRuntime(LOGGER.throwing(e));
             }

@@ -38,7 +38,7 @@ import static java.util.Arrays.asList;
 public class MinecraftDecompilerCommandLine {
     private static final Logger LOGGER = LogManager.getLogger("CommandLine");
     public static final Proxy INTERNAL_PROXY = System.console() == null &&
-            Boolean.parseBoolean(System.getProperty("mcd.internalProxy", "false")) ?
+            Boolean.getBoolean("mcd.internalProxy") ?
             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
             Proxy.NO_PROXY;
     public static void main(String[] args) throws Throwable {

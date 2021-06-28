@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.util.NetworkUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -28,13 +27,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.stream.StreamSupport;
 
+import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 import static java.nio.file.StandardOpenOption.*;
 
 public abstract class AbstractLibRecommendedDecompiler implements ILibRecommendedDecompiler {
@@ -74,7 +79,14 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
                         }
                         LOGGER.debug("Downloading {}", url);
                         channel.position(0L);
-                        channel.transferFrom(NetworkUtil.newBuilder(url).connect().asChannel(), 0, Long.MAX_VALUE);
+                        try(ReadableByteChannel ch = Channels.newChannel(
+                                HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofInputStream())
+                                        .body())) {
+                            channel.transferFrom(ch, 0, Long.MAX_VALUE);
+                        } catch (InterruptedException e) {
+                            LOGGER.fatal("Network connection interrupted, why?");
+                            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                        }
                     } catch (IOException e) {
                         LOGGER.fatal("IO error occurred, throwing an exception...");
                         throw Utils.wrapInRuntime(LOGGER.throwing(e));

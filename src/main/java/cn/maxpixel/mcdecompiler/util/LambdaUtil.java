@@ -38,7 +38,7 @@ public class LambdaUtil {
     }
 
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
-        throw new RuntimeException(throwable);
+        throw Utils.wrapInRuntime(throwable);
     }
 
     public static <T, E extends Throwable> Consumer<T> handleThrowable(ConsumerWithThrows<T, E> consumerWithThrows) {

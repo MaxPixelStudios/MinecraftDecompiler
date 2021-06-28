@@ -56,53 +56,33 @@ public class NamingUtil {
     public static String asDescriptor(String javaName) {
         if(javaName == null || javaName.isEmpty()) return "";
         if(!javaName.contains("[]")) {
-            switch (javaName) {
-                case "boolean": return "Z";
-                case "byte": return "B";
-                case "char": return "C";
-                case "double": return "D";
-                case "float": return "F";
-                case "int": return "I";
-                case "long": return "J";
-                case "short": return "S";
-                case "void": return "V";
-                default: return "L" + asNativeName(javaName) + ";";
-            }
+            return switch (javaName) {
+                case "boolean" -> "Z";
+                case "byte" -> "B";
+                case "char" -> "C";
+                case "double" -> "D";
+                case "float" -> "F";
+                case "int" -> "I";
+                case "long" -> "J";
+                case "short" -> "S";
+                case "void" -> "V";
+                default -> "L" + asNativeName(javaName) + ";";
+            };
         } else {
             StringBuilder buf = new StringBuilder();
-            for(int arrDimension = getDimension(javaName); arrDimension > 0; arrDimension--) buf.append('[');
+            buf.append("[".repeat(Math.max(0, getDimension(javaName))));
             javaName = javaName.replace("[]", "");
             switch (javaName) {
-                case "boolean":
-                    buf.append('Z');
-                    break;
-                case "byte":
-                    buf.append('B');
-                    break;
-                case "char":
-                    buf.append('C');
-                    break;
-                case "double":
-                    buf.append('D');
-                    break;
-                case "float":
-                    buf.append('F');
-                    break;
-                case "int":
-                    buf.append('I');
-                    break;
-                case "long":
-                    buf.append('J');
-                    break;
-                case "short":
-                    buf.append('S');
-                    break;
-                case "void":
-                    buf.append('V');
-                    break;
-                default:
-                    buf.append('L').append(asNativeName(javaName)).append(';');
-                    break;
+                case "boolean" -> buf.append('Z');
+                case "byte" -> buf.append('B');
+                case "char" -> buf.append('C');
+                case "double" -> buf.append('D');
+                case "float" -> buf.append('F');
+                case "int" -> buf.append('I');
+                case "long" -> buf.append('J');
+                case "short" -> buf.append('S');
+                case "void" -> buf.append('V');
+                default -> buf.append('L').append(asNativeName(javaName)).append(';');
             }
             return buf.toString();
         }
