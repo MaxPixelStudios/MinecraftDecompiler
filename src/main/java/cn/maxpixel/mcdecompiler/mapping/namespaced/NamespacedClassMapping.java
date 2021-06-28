@@ -98,11 +98,6 @@ public class NamespacedClassMapping extends NamespacedMapping implements Abstrac
     }
 
     @Override
-    public void swap(String namespace, String namespace1) {
-        super.swap(namespace, namespace1);//TODO
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof NamespacedClassMapping that)) return false;

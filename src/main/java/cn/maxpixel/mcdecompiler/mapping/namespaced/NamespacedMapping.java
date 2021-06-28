@@ -66,12 +66,6 @@ public class NamespacedMapping implements AbstractMapping {
         return names.get(namespace);
     }
 
-    public void swap(String namespace, String namespace1) {
-        String temp = names.get(namespace);
-        names.put(namespace, names.get(namespace1));
-        names.put(namespace1, temp);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

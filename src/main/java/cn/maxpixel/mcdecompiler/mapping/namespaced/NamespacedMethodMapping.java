@@ -106,11 +106,6 @@ public class NamespacedMethodMapping extends NamespacedMapping implements Descri
     }
 
     @Override
-    public void swap(String namespace, String namespace1) {
-        super.swap(namespace, namespace1);//TODO
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof NamespacedMethodMapping that)) return false;
