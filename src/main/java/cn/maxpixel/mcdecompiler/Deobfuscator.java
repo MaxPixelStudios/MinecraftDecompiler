@@ -18,7 +18,9 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import cn.maxpixel.mcdecompiler.asm.*;
+import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
+import cn.maxpixel.mcdecompiler.asm.ExtraClassesInformation;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.reader.*;
@@ -28,7 +30,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 
@@ -40,7 +41,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -124,29 +124,32 @@ public class Deobfuscator {
     }
 
     public Deobfuscator deobfuscate(Path source, Path target, boolean includeOthers) throws IOException {
-        if(reader.getProcessor().isNamespaced()) deobfuscate(source, target, includeOthers, false);
         return deobfuscate(source, target, includeOthers, Properties.get(Properties.Key.REVERSE));
     }
 
     public Deobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse) throws IOException {
-        if(reader.getProcessor().isPaired()) return deobfuscate(source, target, includeOthers, reverse, null, null);
+        if(reader.getProcessor().isPaired()) return deobfuscate(source, target, includeOthers, reverse, null);
         String[] namespaces = reader.getProcessor().asNamespaced().getNamespaces();
-        return deobfuscate(source, target, includeOthers, reverse, namespaces[0], namespaces[namespaces.length - 1].equals("id") ?
+        return deobfuscate(source, target, includeOthers, reverse, namespaces[namespaces.length - 1].equals("id") ?
                 namespaces[namespaces.length - 2] : namespaces[namespaces.length - 1]);
     }
 
-    public Deobfuscator deobfuscate(Path source, Path target, boolean includeOthers, String fromNamespace, String toNamespace) throws IOException {
+    public Deobfuscator deobfuscate(Path source, Path target, boolean includeOthers, String targetNamespace) throws IOException {
         if(reader.getProcessor().isPaired()) throw new UnsupportedOperationException();
-        return deobfuscate(source, target, includeOthers, false, fromNamespace, toNamespace);
+        return deobfuscate(source, target, includeOthers, false, targetNamespace);
     }
 
-    public Deobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse, String fromNamespace, String toNamespace) throws IOException {
+    public Deobfuscator deobfuscate(Path source, Path target, boolean includeOthers, boolean reverse, String targetNamespace) throws IOException {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
-        if(reverse) reader.reverse();
+        if(reverse) {
+            if(reader.getProcessor().isNamespaced()) reader.reverse(targetNamespace);
+            else reader.reverse();
+        }
         Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappings = reader.getProcessor().isPaired() ?
-                reader.getMappingsByUnmappedNameMap() : reader.getMappingsByNamespaceMap(fromNamespace, toNamespace, toNamespace);
+                reader.getMappingsByUnmappedNameMap() :
+                reader.getMappingsByNamespaceMap(reader.getProcessor().asNamespaced().getNamespaces()[0], targetNamespace);
         FileUtil.ensureDirectoryExist(target.getParent());
         try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
             FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
@@ -155,21 +158,20 @@ public class Deobfuscator {
                     .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1))))
                     .parallel(), true, IOUtil::readZipFileBytes);
             MappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new MappingRemapper(reader, info) :
-                    new MappingRemapper(reader, info, fromNamespace, toNamespace);
+                    new MappingRemapper(reader, info, targetNamespace);
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
-            if(rvn) JADNameGenerator.startRecord();
-            Optional<Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping>> optional = reader.getProcessor().isNamespaced() ?
-                    Optional.of(reader.getMappingsByNamespaceMap(fromNamespace)) : Optional.empty();
+            if(rvn) ClassProcessor.startRecord();
+            Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> namespaced = reader.getProcessor().isNamespaced() ?
+                    reader.getMappingsByNamespaceMap(reader.getProcessor().asNamespaced().getNamespaces()[0]) : null;
             paths.forEach(path -> {
                 try(InputStream inputStream = Files.newInputStream(path)) {
                     String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
                     if(mappings.containsKey(classKeyName)) {
                         ClassReader reader = new ClassReader(inputStream);
                         ClassWriter writer = new ClassWriter(reader, 0);
-                        RuntimeInvisibleParameterAnnotationsAttributeFixer fixer = new RuntimeInvisibleParameterAnnotationsAttributeFixer();
-                        ClassVisitor visitor = new ClassRemapper(rvn ? new JADNameGenerator(fixer) : fixer, mappingRemapper);
-                        reader.accept(optional.<ClassVisitor>map(map -> new LVTRenamer(visitor, map, fromNamespace, toNamespace)).orElse(visitor), 0);
-                        fixer.accept(writer);
+                        ClassProcessor processor = new ClassProcessor(rvn, this.reader, namespaced, targetNamespace);
+                        reader.accept(new ClassRemapper(processor, mappingRemapper), 0);
+                        processor.accept(writer);
                         Path output = targetFs.getPath(mappings.get(classKeyName).getMappedName() + ".class");
                         FileUtil.ensureDirectoryExist(output.getParent());
                         Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -195,7 +197,7 @@ public class Deobfuscator {
                     LOGGER.error("Error when remapping classes or coping files", e);
                 }
             });
-            if(rvn) JADNameGenerator.endRecord(Properties.get(Properties.Key.TEMP_DIR).resolve("fernflower_abstract_parameter_names.txt"));
+            if(rvn) ClassProcessor.endRecord(Properties.get(Properties.Key.TEMP_DIR).resolve("fernflower_abstract_parameter_names.txt"));
         } catch (IOException e) {
             LOGGER.error("Error when deobfuscating", e);
         }

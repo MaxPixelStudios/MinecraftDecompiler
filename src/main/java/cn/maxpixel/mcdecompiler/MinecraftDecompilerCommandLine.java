@@ -52,7 +52,9 @@ public class MinecraftDecompilerCommandLine {
         OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
                 "names using JAD style");
         OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping to " +
-                "deobfuscate. Doesn't support Tiny mappings. This option is ignored if you are using Tiny mappings.").availableUnless(sideTypeO);
+                "deobfuscate.").availableUnless(sideTypeO);
+        ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to remap " +
+                "to if you are using namespaced mappings(Tiny, Tsrgv2)").availableUnless(sideTypeO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
                 "specify --mappingPath option and musn't specify --version or --side option.").availableUnless(sideTypeO).requiredUnless(sideTypeO)
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());

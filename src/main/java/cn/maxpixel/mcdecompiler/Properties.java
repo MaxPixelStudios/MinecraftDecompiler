@@ -34,14 +34,13 @@ public class Properties {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Key)) return false;
-            @SuppressWarnings("rawtypes") Key key = (Key) o;
+            if (!(o instanceof Key<?> key)) return false;
             return name.equals(key.name);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(name);
+            return name.hashCode();
         }
 
         public static final Key<Path> TEMP_DIR = new Key<>("tempDir");

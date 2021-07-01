@@ -23,9 +23,11 @@ import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -95,7 +97,30 @@ public abstract class AbstractMappingReader {
         if(mappings == null) read();
         MappingRemapper remapper = new MappingRemapper(this);
         mappings.forEach(cm -> cm.asPaired().reverse(remapper));
-        getPackages().forEach(mapping -> mapping.asPairedMapping().reverse());
+        packages.forEach(mapping -> mapping.asPairedMapping().reverse());
+        return this;
+    }
+
+    public final AbstractMappingReader reverse(String targetNamespace) {
+        if(getProcessor().isPaired()) throw new UnsupportedOperationException();
+        if(mappings == null) read();
+        MappingRemapper remapper = new MappingRemapper(this);
+        String unmNamespace = getProcessor().asNamespaced().getNamespaces()[0];
+
+        ObjectArrayList<PairedClassMapping> newMappings = new ObjectArrayList<>();
+        mappings.forEach(cm -> {
+            PairedClassMapping reversed = cm.asNamespaced().getAsPaired(unmNamespace, targetNamespace);
+            reversed.reverse(remapper);
+            newMappings.add(reversed);
+        });
+        this.mappings = ObjectLists.unmodifiable(newMappings);
+
+        ObjectArrayList<PairedMapping> newPackages = new ObjectArrayList<>();
+        packages.forEach(mapping -> {
+            NamespacedMapping nm = mapping.asNamespacedMapping();
+            newPackages.add(new PairedMapping(nm.getName(targetNamespace), nm.getName(unmNamespace)));
+        });
+        this.packages = ObjectLists.unmodifiable(newPackages);
         return this;
     }
 
@@ -117,10 +142,11 @@ public abstract class AbstractMappingReader {
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByNamespaceMap(String keyNamespace, String fromNamespace, String toNamespace) {
+    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByNamespaceMap(String keyNamespace, String targetNamespace) {
         if(getProcessor().isPaired()) throw new UnsupportedOperationException();
         return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(keyNamespace),
-                m -> m.getAsPaired(fromNamespace, toNamespace), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+                m -> m.getAsPaired(getProcessor().asNamespaced().getNamespaces()[0], targetNamespace),
+                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public abstract static class MappingProcessor {

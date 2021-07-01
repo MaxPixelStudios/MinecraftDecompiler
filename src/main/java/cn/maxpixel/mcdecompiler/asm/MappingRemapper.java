@@ -40,11 +40,11 @@ public class MappingRemapper extends Remapper {
     private final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> mappingByMap;
 
     public MappingRemapper(AbstractMappingReader mappingReader) {
-        this(mappingReader, null);
+        this(mappingReader, (ExtraClassesInformation) null);
     }
 
-    public MappingRemapper(AbstractMappingReader mappingReader, String fromNamespace, String toNamespace) {
-        this(mappingReader, null, fromNamespace, toNamespace);
+    public MappingRemapper(AbstractMappingReader mappingReader, String targetNamespace) {
+        this(mappingReader, null, targetNamespace);
     }
 
     public MappingRemapper(AbstractMappingReader mappingReader, ExtraClassesInformation extraClassesInformation) {
@@ -53,10 +53,10 @@ public class MappingRemapper extends Remapper {
         this.mappingByMap = mappingReader.getMappingsByMappedNameMap();
     }
 
-    public MappingRemapper(AbstractMappingReader mappingReader, ExtraClassesInformation extraClassesInformation, String fromNamespace, String toNamespace) {
+    public MappingRemapper(AbstractMappingReader mappingReader, ExtraClassesInformation extraClassesInformation, String targetNamespace) {
         this.extraClassesInformation = extraClassesInformation;
-        this.mappingByUnm = mappingReader.getMappingsByNamespaceMap(fromNamespace, fromNamespace, toNamespace);
-        this.mappingByMap = mappingReader.getMappingsByNamespaceMap(toNamespace, fromNamespace, toNamespace);
+        this.mappingByUnm = mappingReader.getMappingsByNamespaceMap(mappingReader.getProcessor().asNamespaced().getNamespaces()[0], targetNamespace);
+        this.mappingByMap = mappingReader.getMappingsByNamespaceMap(targetNamespace, targetNamespace);
     }
 
     @Override

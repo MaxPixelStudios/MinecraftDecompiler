@@ -57,6 +57,7 @@ public class MinecraftDecompiler {
     private final Deobfuscator deobfuscator;
     private String version;
     private Info.SideType type;
+    private String targetNamespace;
 
     {
         Path tempPath = Properties.get(Properties.Key.TEMP_DIR);
@@ -87,17 +88,27 @@ public class MinecraftDecompiler {
         this(version, type, new Deobfuscator(mappingPath));
     }
 
-    public MinecraftDecompiler(String version, Deobfuscator deobfuscator) {
+    public MinecraftDecompiler(String version, Deobfuscator deobfuscator, String targetNamespace) {
         this.version = version;
         this.deobfuscator = deobfuscator;
+        this.targetNamespace = targetNamespace;
+    }
+
+    public MinecraftDecompiler(String version, Deobfuscator deobfuscator) {
+        this(version, deobfuscator, null);
     }
 
     public MinecraftDecompiler(String version, String mappingPath) throws FileNotFoundException {
         this(version, new Deobfuscator(mappingPath));
     }
 
-    public MinecraftDecompiler(Deobfuscator deobfuscator) {
+    public MinecraftDecompiler(Deobfuscator deobfuscator, String targetNamespace) {
         this.deobfuscator = deobfuscator;
+        this.targetNamespace = targetNamespace;
+    }
+
+    public MinecraftDecompiler(Deobfuscator deobfuscator) {
+        this(deobfuscator, null);
     }
 
     public MinecraftDecompiler(String mappingPath) throws FileNotFoundException {
@@ -138,11 +149,13 @@ public class MinecraftDecompiler {
                     Properties.getOutputDeobfuscatedJarPath(version, type));
         }
     }
+
     public void deobfuscate(Path input, Path output) {
         try {
+            if(Properties.get(Properties.Key.REVERSE)) deobfuscator.deobfuscate(input, output, true, true, targetNamespace);
             deobfuscator.deobfuscate(input, output);
         } catch (IOException e) {
-            LOGGER.fatal("Error deobfuscating");
+            LOGGER.fatal("Error deobfuscating", e);
         }
     }
 
