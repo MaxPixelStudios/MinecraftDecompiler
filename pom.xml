@@ -8,7 +8,7 @@
     <version>2.3-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <depend.asm.ver>9.1</depend.asm.ver>
+        <depend.asm.ver>9.2</depend.asm.ver>
         <depend.gson.ver>2.8.7</depend.gson.ver>
         <depend.log4j.ver>2.14.1</depend.log4j.ver>
         <depend.fastutil.ver>8.5.4</depend.fastutil.ver>
