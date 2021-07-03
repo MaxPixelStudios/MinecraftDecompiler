@@ -36,6 +36,9 @@ import java.nio.file.Path;
 import static java.util.Arrays.asList;
 
 public class MinecraftDecompilerCommandLine {
+    static {
+        System.setProperty("org.openjdk.java.util.stream.tripwire", "true");
+    }
     private static final Logger LOGGER = LogManager.getLogger("CommandLine");
     public static final Proxy INTERNAL_PROXY = System.console() == null &&
             Boolean.getBoolean("mcd.internalProxy") ?

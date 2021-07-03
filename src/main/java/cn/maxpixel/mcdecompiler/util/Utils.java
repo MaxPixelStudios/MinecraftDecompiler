@@ -74,8 +74,4 @@ public class Utils {
         if(left.isMappedDescriptor()) b &= left.asMappedDescriptor().getMappedDescriptor().equals(right.asMappedDescriptor().getMappedDescriptor());
         return b;
     }
-
-    public interface Function_WithThrowable<T, R, E extends Throwable> {
-        R apply(T t) throws E;
-    }
 }

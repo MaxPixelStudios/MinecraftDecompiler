@@ -22,15 +22,20 @@ import java.util.function.Consumer;
 
 public class LambdaUtil {
     @FunctionalInterface
-    public interface ConsumerWithThrows<T, E extends Throwable> {
+    public interface Consumer_WithThrowable<T, E extends Throwable> {
         void accept(T t) throws E;
     }
 
+    @FunctionalInterface
+    public interface Runnable_WithThrowable<E extends Throwable> {
+        void run() throws E;
+    }
+
     @SuppressWarnings("unchecked")
-    public static <T, E extends Throwable> Consumer<T> handleThrowable(ConsumerWithThrows<T, E> consumerWithThrows, Consumer<E> exceptionHandler) {
+    public static <T, E extends Throwable> Consumer<T> handleThrowable(Consumer_WithThrowable<T, E> consumerWithThrowable, Consumer<E> exceptionHandler) {
         return t -> {
             try {
-                consumerWithThrows.accept(t);
+                consumerWithThrowable.accept(t);
             } catch(Throwable throwable) {
                 exceptionHandler.accept((E) throwable);
             }
@@ -41,21 +46,25 @@ public class LambdaUtil {
         throw Utils.wrapInRuntime(throwable);
     }
 
-    public static <T, E extends Throwable> Consumer<T> handleThrowable(ConsumerWithThrows<T, E> consumerWithThrows) {
-        return handleThrowable(consumerWithThrows, e -> {}); // Do nothing
+    public static <E extends Throwable> void handle(Runnable_WithThrowable<E> runnableWithThrowable) {
+        handle(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
     }
 
-    public static <T extends AutoCloseable> void handleAutoCloseable(T resource, Consumer<T> consumer) throws Exception {
-        try(T autoCloseable = resource) {
-            consumer.accept(autoCloseable);
+    @SuppressWarnings("unchecked")
+    public static <E extends Throwable> void handle(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
+        try {
+            runnableWithThrowable.run();
+        } catch (Throwable e) {
+            exceptionHandler.accept((E) e);
         }
     }
 
-    public static <T extends AutoCloseable> void handleAutoCloseable(T resource, Consumer<T> consumer, Consumer<Exception> exceptionHandler) {
-        try(T autoCloseable = resource) {
-            consumer.accept(autoCloseable);
-        } catch(Exception e) {
-            exceptionHandler.accept(e);
-        }
+    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
+        return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
+        return () -> handle(runnableWithThrowable, exceptionHandler);
     }
 }

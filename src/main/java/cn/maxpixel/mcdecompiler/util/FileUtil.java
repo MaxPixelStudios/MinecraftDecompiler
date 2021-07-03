@@ -26,7 +26,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Objects;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -160,5 +162,20 @@ public class FileUtil {
             }
         }
         return p;
+    }
+
+    public static Stream<Path> iterateFiles(Path path) {
+        try {
+            DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(path, "path cannot be null"));
+            return StreamSupport.stream(ds.spliterator(), true)
+                    .flatMap(p -> {
+                        if(Files.isDirectory(p)) return iterateFiles(p);
+                        else return Stream.of(p);
+                    })
+                    .onClose(LambdaUtil.unwrap(ds::close));
+        } catch (IOException e) {
+            LOGGER.fatal("Error iterating files");
+            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        }
     }
 }

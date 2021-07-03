@@ -50,7 +50,7 @@ public abstract class AbstractMappingReader {
     private ObjectList<? extends AbstractMapping> packages;
 
     public AbstractMappingReader(BufferedReader reader) {
-        try(BufferedReader ignored = reader) {
+        try(reader) {
             lines = reader.lines().map(s -> {
                 if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
 

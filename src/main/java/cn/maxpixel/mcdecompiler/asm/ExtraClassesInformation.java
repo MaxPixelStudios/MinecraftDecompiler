@@ -18,44 +18,31 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.util.Utils;
+import cn.maxpixel.mcdecompiler.util.IOUtil;
 import it.unimi.dsi.fastutil.objects.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Utils.Function_WithThrowable<Path, byte[], IOException> readFunc;
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
     public final Object2ObjectMap<String, ObjectArrayList<String>> SUPER_NAMES = Object2ObjectMaps.unmodifiable(superClassMap);
     public final Object2ObjectMap<String, Object2IntMap<String>> ACCESS_MAP = Object2ObjectMaps.unmodifiable(accessMap);
 
-    public ExtraClassesInformation() {
-        this(Files::readAllBytes);
-    }
-
-    public ExtraClassesInformation(Utils.Function_WithThrowable<Path, byte[], IOException> readFunc) {
-        this.readFunc = readFunc;
-    }
+    public ExtraClassesInformation() {}
 
     public ExtraClassesInformation(Stream<Path> classes) {
         this(classes, false);
     }
 
     public ExtraClassesInformation(Stream<Path> classes, boolean close) {
-        this(classes, close, Files::readAllBytes);
-    }
-
-    public ExtraClassesInformation(Stream<Path> classes, boolean close, Utils.Function_WithThrowable<Path, byte[], IOException> readFunc) {
-        this.readFunc = readFunc;
         if(close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -64,7 +51,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
     @Override
     public void accept(Path classFilePath) {
         try {
-            new ClassReader(readFunc.apply(classFilePath)).accept(new ClassVisitor(Opcodes.ASM9) {
+            new ClassReader(IOUtil.readAllBytes(classFilePath)).accept(new ClassVisitor(Opcodes.ASM9) {
                 private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
                 @Override
                 public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {

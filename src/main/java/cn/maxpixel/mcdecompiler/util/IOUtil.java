@@ -18,25 +18,47 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.zip.InflaterInputStream;
 
 public class IOUtil {
     private static final Class<?> ZIP_FILESYSTEM;
+    private static final Class<?> ENTRY_INPUT_STREAM;
 
     static {
         try {
             ZIP_FILESYSTEM = Class.forName("jdk.nio.zipfs.ZipFileSystem");
+            ENTRY_INPUT_STREAM = Class.forName("jdk.nio.zipfs.ZipFileSystem$EntryInputStream");
         } catch (ClassNotFoundException e) {
             throw Utils.wrapInRuntime(e);
         }
     }
 
-    public static byte[] readZipFileBytes(Path fileInZip) throws IOException {
-        if(ZIP_FILESYSTEM.isInstance(fileInZip.getFileSystem())) // Ensure the filesystem is zipfs
-            // Zipfs implementation returns a ByteArrayInputStream, so this is the fastest way
-            return Files.newInputStream(fileInZip).readAllBytes();
-        else throw new UnsupportedOperationException();
+    public static byte[] readAllBytes(Path file) throws IOException {
+        if(ZIP_FILESYSTEM == file.getFileSystem().getClass()) { // Ensure the filesystem is zipfs
+            try(InputStream is = Files.newInputStream(file)) {
+                if(is instanceof InflaterInputStream || ENTRY_INPUT_STREAM.isInstance(is)) {
+                    byte[] bytes = new byte[is.available()];
+                    if(bytes.length > 65536)
+                        for(int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
+                    else is.read(bytes);
+                    return bytes;
+                }
+                if(is instanceof ByteArrayInputStream) return is.readAllBytes();
+            }
+            throw new UnsupportedOperationException();
+        } else try(FileChannel ch = FileChannel.open(file, StandardOpenOption.READ)) {
+            MappedByteBuffer mbb = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size());
+            byte[] bytes = new byte[mbb.remaining()];
+            mbb.get(bytes);
+            return bytes;
+        }
     }
 }

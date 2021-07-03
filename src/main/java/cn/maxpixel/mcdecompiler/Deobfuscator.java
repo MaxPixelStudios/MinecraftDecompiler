@@ -25,7 +25,6 @@ import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.reader.*;
 import cn.maxpixel.mcdecompiler.util.*;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.jar.Manifest;
@@ -143,6 +141,9 @@ public class Deobfuscator {
         LOGGER.info("Deobfuscating...");
         FileUtil.requireExist(source);
         Files.deleteIfExists(target);
+        // Move here because after reversing, namespaced mappings will be converted to paired mappings
+        Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> namespaced = reader.getProcessor().isNamespaced() ?
+                reader.getMappingsByNamespaceMap(reader.getProcessor().asNamespaced().getNamespaces()[0]) : null;
         if(reverse) {
             if(reader.getProcessor().isNamespaced()) reader.reverse(targetNamespace);
             else reader.reverse();
@@ -151,46 +152,38 @@ public class Deobfuscator {
                 reader.getMappingsByUnmappedNameMap() :
                 reader.getMappingsByNamespaceMap(reader.getProcessor().asNamespaced().getNamespaces()[0], targetNamespace);
         FileUtil.ensureDirectoryExist(target.getParent());
-        try(FileSystem fs = JarUtil.getJarFileSystemProvider().newFileSystem(source, Object2ObjectMaps.emptyMap());
-            FileSystem targetFs = JarUtil.getJarFileSystemProvider().newFileSystem(target, Object2ObjectMaps.singleton("create", "true"));
-            Stream<Path> paths = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {
-            ExtraClassesInformation info = new ExtraClassesInformation(Files.walk(fs.getPath("/"))
-                    .filter(p -> Files.isRegularFile(p) && mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1))))
-                    .parallel(), true, IOUtil::readZipFileBytes);
+        try(FileSystem fs = JarUtil.createZipFs(source);
+            FileSystem targetFs = JarUtil.createZipFs(target);
+            Stream<Path> paths = FileUtil.iterateFiles(fs.getPath("/"))) {
+            ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath("/"))
+                    .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1)))), true);
             MappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new MappingRemapper(reader, info) :
                     new MappingRemapper(reader, info, targetNamespace);
             boolean rvn = Properties.get(Properties.Key.REGEN_VAR_NAME);
             if(rvn) ClassProcessor.startRecord();
-            Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> namespaced = reader.getProcessor().isNamespaced() ?
-                    reader.getMappingsByNamespaceMap(reader.getProcessor().asNamespaced().getNamespaces()[0]) : null;
             paths.forEach(path -> {
-                try(InputStream inputStream = Files.newInputStream(path)) {
+                 try {
                     String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
                     if(mappings.containsKey(classKeyName)) {
-                        ClassReader reader = new ClassReader(inputStream);
+                        ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
                         ClassWriter writer = new ClassWriter(reader, 0);
                         ClassProcessor processor = new ClassProcessor(rvn, this.reader, namespaced, targetNamespace);
                         reader.accept(new ClassRemapper(processor, mappingRemapper), 0);
                         processor.accept(writer);
-                        Path output = targetFs.getPath(mappings.get(classKeyName).getMappedName() + ".class");
-                        FileUtil.ensureDirectoryExist(output.getParent());
-                        Files.write(output, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                        try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(
+                                targetFs.getPath(mappings.get(classKeyName).getMappedName().concat(".class"))))) {
+                            os.write(writer.toByteArray());
+                        }
                     } else if(includeOthers) {
                         String outputPath = path.toString();
                         if(outputPath.endsWith(".SF") || outputPath.endsWith(".RSA")) return;
-                        Path output = targetFs.getPath(outputPath);
-                        FileUtil.ensureDirectoryExist(output.getParent());
-                        try(OutputStream os = Files.newOutputStream(output, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                        try(InputStream inputStream = Files.newInputStream(path);
+                            OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(outputPath)))) {
                             if(path.endsWith("META-INF/MANIFEST.MF")) {
                                 Manifest man = new Manifest(inputStream);
                                 man.getEntries().clear();
                                 man.write(os);
-                            } else {
-                                byte[] buf = new byte[8192];
-                                for(int len = inputStream.read(buf); len > 0; len = inputStream.read(buf)) {
-                                    os.write(buf, 0, len);
-                                }
-                            }
+                            } else inputStream.transferTo(os);
                         }
                     }
                 } catch(Exception e) {
