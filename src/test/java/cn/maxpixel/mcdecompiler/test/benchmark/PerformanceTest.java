@@ -18,21 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.util.FileUtil;
-import cn.maxpixel.mcdecompiler.util.JarUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 @Fork(1)
 @Threads(1)
@@ -47,29 +38,5 @@ public class PerformanceTest {
                 .include(".*" + PerformanceTest.class.getSimpleName() + ".*")
                 .build();
 //        new Runner(options).run();
-    }
-
-    private static final FileSystem fs;
-
-    static {
-        try {
-            fs = JarUtil.getJarFileSystemProvider().newFileSystem(Path.of("D:\\intelliJ_idea-workspace\\MinecraftDecompiler\\downloads\\1.17.1-pre3", "client.jar"), Object2ObjectMaps.emptyMap());
-        } catch (IOException e) {
-            throw new ExceptionInInitializerError();
-        }
-    }
-
-    @Benchmark
-    public void walk(Blackhole bh) throws IOException {
-        try(Stream<Path> stream = Files.walk(fs.getPath("/")).filter(Files::isRegularFile).parallel()) {
-            stream.forEach(bh::consume);
-        }
-    }
-
-    @Benchmark
-    public void iter(Blackhole bh) {
-        try(Stream<Path> stream = FileUtil.iterateFiles(fs.getPath("/"))) {
-            stream.forEach(bh::consume);
-        }
     }
 }
