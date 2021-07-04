@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
+    public static final String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
     private Path decompilerJarPath;
     ForgeFlowerDecompiler() {}
 
@@ -51,7 +52,7 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
         ObjectList<String> libs = listLibs();
         for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
         args.add(source.toString());
-        Path abstractMethodParameterNames = Properties.get(Properties.Key.TEMP_DIR).resolve("fernflower_abstract_parameter_names.txt");
+        Path abstractMethodParameterNames = Properties.get(Properties.Key.TEMP_DIR).resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES);
         if(Files.exists(abstractMethodParameterNames)) args.add(abstractMethodParameterNames.toAbsolutePath().normalize().toString());
         args.add(target.toString());
         Utils.waitForProcess(Runtime.getRuntime().exec(args.toArray(new String[0])));

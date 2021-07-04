@@ -53,17 +53,15 @@ public class ExtraClassesInformation implements Consumer<Path> {
         try {
             new ClassReader(IOUtil.readAllBytes(classFilePath)).accept(new ClassVisitor(Opcodes.ASM9) {
                 private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
+                private String name;
                 @Override
                 public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                    map.put(name, access);
+                    this.name = name;
                     ObjectArrayList<String> list = new ObjectArrayList<>();
                     if((access & Opcodes.ACC_INTERFACE) == 0 && !superName.equals("java/lang/Object")) list.add(superName);
                     list.addElements(list.size(), interfaces);
                     if(!list.isEmpty()) synchronized(superClassMap) {
                         superClassMap.put(name, list);
-                    }
-                    synchronized(accessMap) {
-                        accessMap.put(name, Object2IntMaps.unmodifiable(map));
                     }
                 }
 
@@ -77,6 +75,13 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                     if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
                     return null;
+                }
+
+                @Override
+                public void visitEnd() {
+                    if(!map.isEmpty()) synchronized(accessMap) {
+                        accessMap.put(name, Object2IntMaps.unmodifiable(map));
+                    }
                 }
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         } catch(IOException e) {

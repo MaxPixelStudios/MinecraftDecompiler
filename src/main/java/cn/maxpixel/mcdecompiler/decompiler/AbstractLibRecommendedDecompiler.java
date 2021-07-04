@@ -88,10 +88,10 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
                             throw Utils.wrapInRuntime(LOGGER.throwing(e));
                         }
                     } catch (IOException e) {
-                        LOGGER.fatal("IO error occurred, throwing an exception...");
+                        LOGGER.fatal("Error opening file");
                         throw Utils.wrapInRuntime(LOGGER.throwing(e));
                     } catch (NoSuchAlgorithmException e) {
-                        LOGGER.fatal("Hmm... You need a SHA-1 digest implementation.");
+                        LOGGER.fatal("Hmm... You need a SHA-1 digest implementation");
                         throw Utils.wrapInRuntime(LOGGER.throwing(e));
                     }
                 });

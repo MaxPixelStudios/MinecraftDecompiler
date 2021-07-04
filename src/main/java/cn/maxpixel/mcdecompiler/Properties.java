@@ -45,15 +45,10 @@ public class Properties {
 
         public static final Key<Path> TEMP_DIR = new Key<>("tempDir");
         public static final Key<Path> DOWNLOAD_DIR = new Key<>("downloadDir");
-        public static final Key<Path> INPUT_JAR = new Key<>("inputJar");
-        public static final Key<String> MAPPING_PATH = new Key<>("mappingPath");
-        public static final Key<Boolean> REGEN_VAR_NAME = new Key<>("regenerateVariableNames");
 
         public static final Key<Path> OUTPUT_DIR = new Key<>("outputDir");
         public static final Key<String> OUTPUT_DEOBFUSCATED_NAME = new Key<>("outputDeobfuscatedName");
         public static final Key<String> OUTPUT_DECOMPILED_NAME = new Key<>("outputDecompiledName");
-
-        public static final Key<Boolean> REVERSE = new Key<>("reverse");
     }
 
     private static final Object2ObjectOpenHashMap<Key<?>, Object> PROPERTIES_MAP = new Object2ObjectOpenHashMap<>();
@@ -72,11 +67,9 @@ public class Properties {
         // Default values
         put(Key.TEMP_DIR, Path.of("temp"));
         put(Key.DOWNLOAD_DIR, Path.of("downloads"));
-        put(Key.REGEN_VAR_NAME, false);
         put(Key.OUTPUT_DIR, Path.of("output"));
         put(Key.OUTPUT_DEOBFUSCATED_NAME, "deobfuscated");
         put(Key.OUTPUT_DECOMPILED_NAME, "decompiled");
-        put(Key.REVERSE, false);
     }
 
     // Methods have to do with Key.TEMP_DIR
@@ -89,28 +82,30 @@ public class Properties {
         return get(Key.DOWNLOAD_DIR).resolve("libs");
     }
 
+    public static Path getDownloadedMcJarPath(String version, Info.SideType type) {
+        return get(Key.DOWNLOAD_DIR).resolve(version).resolve(type + ".jar");
+    }
+
     // Methods have to do with Key.OUTPUT_*
     public static Path getOutputDecompiledDirectory() {
         return get(Key.OUTPUT_DIR).resolve(get(Key.OUTPUT_DECOMPILED_NAME));
     }
+
     public static Path getOutputDeobfuscatedJarPath() {
         return get(Key.OUTPUT_DIR).resolve(get(Key.OUTPUT_DEOBFUSCATED_NAME) + ".jar");
     }
-
-
 
 
     // Proguard only -- start
     public static Path getDownloadedProguardMappingPath(String version, Info.SideType type) {
         return get(Key.DOWNLOAD_DIR).resolve(version).resolve(type + "_mappings.txt");
     }
-    public static Path getDownloadedMcJarPath(String version, Info.SideType type) {
-        return get(Key.DOWNLOAD_DIR).resolve(version).resolve(type + ".jar");
-    }
+
     public static Path getOutputDecompiledDirectory(String version, Info.SideType type) {
         if(version == null || type == null || !get(Key.OUTPUT_DECOMPILED_NAME).equals("decompiled")) return getOutputDecompiledDirectory();
         return get(Key.OUTPUT_DIR).resolve(version + "_" + type + "_decompiled");
     }
+
     public static Path getOutputDeobfuscatedJarPath(String version, Info.SideType type) {
         if(version == null || type == null || !get(Key.OUTPUT_DEOBFUSCATED_NAME).equals("deobfuscated")) return getOutputDeobfuscatedJarPath();
         return get(Key.OUTPUT_DIR).resolve(version + "_" + type + "_deobfuscated.jar");

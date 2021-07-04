@@ -53,7 +53,7 @@ public class MinecraftDecompilerCommandLine {
                 "Version to deobfuscate/decompile. Only works on Proguard mappings. With this option, you must specify --side option " +
                 "and mustn't specify --input or --mappingPath option.").requiredIf(sideTypeO).withRequiredArg();
         OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
-                "names using JAD style");
+                "names using JAD style if the input mapping doesn't provide one");
         OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping to " +
                 "deobfuscate.").availableUnless(sideTypeO);
         ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to remap " +
@@ -110,28 +110,30 @@ public class MinecraftDecompilerCommandLine {
         }
         options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(
                 ClassLoaderUtils::appendToClassPath, LambdaUtil::rethrowAsRuntime));
-        if(options.has(regenVarNameO)) Properties.put(Properties.Key.REGEN_VAR_NAME, true);
-        if(options.has(reverseO)) Properties.put(Properties.Key.REVERSE, true);
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.put(Properties.Key.TEMP_DIR, p));
         if(!options.has(sideTypeO)) {
-            Properties.put(Properties.Key.INPUT_JAR, options.valueOfOptional(inputO).orElseThrow(() -> new IllegalArgumentException(
-                    "--input is required when you doesn't specify --side option")));
-            Properties.put(Properties.Key.MAPPING_PATH, options.valueOfOptional(mappingPathO).orElseThrow(() -> new IllegalArgumentException(
-                    "--mappingPath is required when you doesn't specify --side option")));
+            if(!options.has(inputO))
+                throw new IllegalArgumentException("--input is required when you doesn't specify --side option");
+            if(!options.has(mappingPathO))
+                throw new IllegalArgumentException("--mappingPath is required when you doesn't specify --side option");
         }
         options.valueOfOptional(outDirO).ifPresent(p -> Properties.put(Properties.Key.OUTPUT_DIR, p));
         options.valueOfOptional(outDeobfNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DEOBFUSCATED_NAME, s));
         options.valueOfOptional(outDecomNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DECOMPILED_NAME, s));
 
-        MinecraftDecompiler md;
+        MinecraftDecompiler.OptionBuilder builder;
         if(options.has(sideTypeO)) {
-            if(options.has(mappingPathO))
-                md = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO), Properties.get(Properties.Key.MAPPING_PATH));
-            else md = new MinecraftDecompiler(options.valueOf(versionO), options.valueOf(sideTypeO));
-        } else if(options.has(versionO))
-            md = new MinecraftDecompiler(options.valueOf(versionO), Properties.get(Properties.Key.MAPPING_PATH));
-        else md = new MinecraftDecompiler(Properties.get(Properties.Key.MAPPING_PATH));
+            builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
+            if(options.has(mappingPathO)) builder.withMapping(options.valueOf(mappingPathO));
+        } else {
+            builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO))
+                    .withMapping(options.valueOf(mappingPathO));
+            if(options.has(versionO)) builder.libsUsing(options.valueOf(versionO));
+        }
+        if(options.has(regenVarNameO)) builder.regenerateVariableNames();
+
+        MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();
 
         if(options.has(decompileO)) {

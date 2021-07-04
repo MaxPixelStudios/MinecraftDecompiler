@@ -24,14 +24,15 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class FileUtil {
@@ -49,22 +50,18 @@ public class FileUtil {
         }
         if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
         if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
-        try(Stream<Path> sourceStream = Files.walk(source).parallel().filter(Files::isRegularFile)) {
+        try(Stream<Path> sourceStream = iterateFiles(source)) {
             LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
             FileUtil.ensureDirectoryExist(target);
             sourceStream.forEach(path -> {
-                Path p = target.resolve(path.toString().substring(1));
-                FileUtil.ensureDirectoryExist(p.getParent());
                 try(InputStream in = Files.newInputStream(path);
-                    OutputStream out = Files.newOutputStream(p, CREATE, TRUNCATE_EXISTING)) {
+                    OutputStream out = Files.newOutputStream(ensureFileExist(target.resolve(path.toString().substring(1))), TRUNCATE_EXISTING)) {
                     byte[] buf = new byte[8192];
                     for(int len = in.read(buf); len != -1; len = in.read(buf)) out.write(buf, 0, len);
                 } catch (IOException e) {
                     LOGGER.error("Error when coping file \"{}\"", path, e);
                 }
             });
-        } catch (IOException e) {
-            LOGGER.error("Error when coping directory", e);
         }
     }
 
@@ -106,34 +103,26 @@ public class FileUtil {
             return;
         }
         if(!Files.isDirectory(directory)) throw new IllegalArgumentException("Not a directory!");
-        try {
+        try(DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(directory, "path cannot be null"))) {
             LOGGER.debug("Deleting directory \"{}\"...", directory);
-            Files.walkFileTree(directory, new FileVisitor<>() {
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    LOGGER.error("Error when deleting file \"{}\" in directory \"{}\"", file, directory, exc);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    Files.delete(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            StreamSupport.stream(ds.spliterator(), true)
+                    .forEach(FileUtil::deleteDirectory0);
         } catch (IOException e) {
             LOGGER.error("Error when deleting directory \"{}\"", directory, e);
+        }
+    }
+
+    private static void deleteDirectory0(Path path) {
+        try {
+            if(Files.isDirectory(Objects.requireNonNull(path, "path cannot be null"))) {
+                try(DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
+                    StreamSupport.stream(ds.spliterator(), true)
+                            .forEach(FileUtil::deleteDirectory0);
+                }
+            }
+            Files.delete(path);
+        } catch (IOException e) {
+            LOGGER.error("Error when deleting directory \"{}\"", path, e);
         }
     }
 

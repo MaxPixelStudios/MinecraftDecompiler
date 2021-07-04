@@ -19,13 +19,12 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
     CFRDecompiler() {}
@@ -38,7 +37,7 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
     @Override
     public void decompile(Path source, Path target) {
         checkArgs(source, target);
-        Map<String, String> options = new HashMap<>();
+        Object2ObjectOpenHashMap<String, String> options = new Object2ObjectOpenHashMap<>();
         options.put(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG.getName(), "true");
         options.put(OptionsImpl.FORCE_CLASSFILEVER.getName(), "52.0");
         options.put(OptionsImpl.CLOBBER_FILES.getName(), "true");

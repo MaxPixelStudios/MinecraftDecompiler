@@ -30,8 +30,8 @@ public interface IDecompiler {
 
     /**
      * Decompile.
-     * @param source Path for input. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
-     * @param targetDir Path for output. Don't need to invoke {@link Path#toAbsolutePath()} or {@link Path#normalize()}
+     * @param source Path for input. The path is absolute and normalized.
+     * @param targetDir Path for output. The path is absolute and normalized.
      */
     void decompile(Path source, Path targetDir) throws IOException;
 

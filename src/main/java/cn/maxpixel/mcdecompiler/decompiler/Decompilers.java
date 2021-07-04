@@ -70,7 +70,11 @@ public class Decompilers {
 
     private static void initCustom() {
         StreamSupport.stream(ServiceLoader.load(ICustomDecompiler.class).spliterator(), true)
-                .forEach(icd -> customDecompilers.put(icd.name(), icd));
+                .forEach(icd -> {
+                    synchronized(customDecompilers) {
+                        customDecompilers.put(icd.name(), icd);
+                    }
+                });
     }
 
     public static IDecompiler get(Info.DecompilerType type) {
