@@ -101,15 +101,16 @@ public class MinecraftDecompiler {
 
     public void deobfuscate() {
         if(options.shouldDownloadJar()) {
-            deobfuscate(Properties.getDownloadedMcJarPath(options.version(), options.type()),
-                    Properties.getOutputDeobfuscatedJarPath(options.version(), options.type()));
+            deobfuscate(Properties.getOutputDeobfuscatedJarPath(options.version(), options.type()));
         } else {
-            deobfuscate(options.inputJar(), Properties.getOutputDeobfuscatedJarPath());
+            deobfuscate(Properties.getOutputDeobfuscatedJarPath());
         }
     }
 
-    public void deobfuscate(Path input, Path output) {
+    public void deobfuscate(Path output) {
         try {
+            Path input = options.shouldDownloadJar() ? Properties.getDownloadedMcJarPath(options.version(), options.type()) :
+                    options.inputJar();
             deobfuscator.deobfuscate(input, output, options.targetNamespace(), options);
         } catch (IOException e) {
             LOGGER.fatal("Error deobfuscating", e);
