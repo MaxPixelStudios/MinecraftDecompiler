@@ -149,39 +149,49 @@ public abstract class AbstractMappingReader {
                 Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    public abstract static class MappingProcessor {
-        public boolean isPaired() {
+    public interface MappingProcessor {
+        default boolean isPaired() {
             return this instanceof PairedMappingProcessor;
         }
-        public boolean isNamespaced() {
+
+        default boolean isNamespaced() {
             return this instanceof NamespacedMappingProcessor;
         }
 
-        public PairedMappingProcessor asPaired() {
+        default PairedMappingProcessor asPaired() {
             return (PairedMappingProcessor) this;
         }
-        public NamespacedMappingProcessor asNamespaced() {
+
+        default NamespacedMappingProcessor asNamespaced() {
             return (NamespacedMappingProcessor) this;
         }
     }
 
-    public abstract static class PairedMappingProcessor extends MappingProcessor {
-        public abstract ObjectList<? extends PairedClassMapping> process();
-        public abstract PairedClassMapping processClass(String line);
-        public abstract PairedMethodMapping processMethod(String line);
-        public abstract PairedFieldMapping processField(String line);
+    public interface PairedMappingProcessor extends MappingProcessor {
+        ObjectList<? extends PairedClassMapping> process();
+
+        PairedClassMapping processClass(String line);
+
+        PairedMethodMapping processMethod(String line);
+
+        PairedFieldMapping processField(String line);
     }
 
-    public abstract static class NamespacedMappingProcessor extends MappingProcessor {
-        public abstract ObjectList<? extends NamespacedClassMapping> process();
-        public abstract String[] getNamespaces();
-        public abstract NamespacedClassMapping processClass(String line);
-        public abstract NamespacedMethodMapping processMethod(String line);
-        public abstract NamespacedFieldMapping processField(String line);
+    public interface NamespacedMappingProcessor extends MappingProcessor {
+        ObjectList<? extends NamespacedClassMapping> process();
+
+        String[] getNamespaces();
+
+        NamespacedClassMapping processClass(String line);
+
+        NamespacedMethodMapping processMethod(String line);
+
+        NamespacedFieldMapping processField(String line);
     }
 
     public interface PackageMappingProcessor {
         ObjectList<? extends AbstractMapping> getPackages();
+
         AbstractMapping processPackage(String line);
     }
 }

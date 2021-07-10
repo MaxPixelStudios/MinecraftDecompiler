@@ -64,7 +64,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         return version == 2 ? PROCESSOR_V2 : PROCESSOR;
     }
 
-    private class TsrgMappingProcessor extends PairedMappingProcessor implements PackageMappingProcessor {
+    private class TsrgMappingProcessor implements PairedMappingProcessor, PackageMappingProcessor {
         private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
         private final ObjectArrayList<PairedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
@@ -125,7 +125,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         }
     }
 
-    private class TsrgV2MappingProcessor extends NamespacedMappingProcessor implements PackageMappingProcessor {
+    private class TsrgV2MappingProcessor implements NamespacedMappingProcessor, PackageMappingProcessor {
         private String[] namespaces;
         private final ObjectArrayList<NamespacedMapping> packages = new ObjectArrayList<>();
         private final ObjectArrayList<NamespacedClassMapping> mappings = new ObjectArrayList<>(5000);

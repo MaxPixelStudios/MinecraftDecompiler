@@ -96,7 +96,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
         return PROCESSOR;
     }
 
-    private class ProguardMappingProcessor extends PairedMappingProcessor {
+    private class ProguardMappingProcessor implements PairedMappingProcessor {
         private final ObjectArrayList<PairedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
         public ObjectList<PairedClassMapping> process() {

@@ -69,7 +69,7 @@ public class TinyMappingReader extends AbstractMappingReader {
         else throw new IllegalArgumentException("Unknown tiny mapping version");
     }
 
-    private class TinyV1MappingProcessor extends NamespacedMappingProcessor {
+    private class TinyV1MappingProcessor implements NamespacedMappingProcessor {
         private String[] namespaces;
         private ObjectList<NamespacedClassMapping> mappingsCache;
         @Override
@@ -132,7 +132,7 @@ public class TinyMappingReader extends AbstractMappingReader {
         }
     }
 
-    private class TinyV2MappingProcessor extends NamespacedMappingProcessor {
+    private class TinyV2MappingProcessor implements NamespacedMappingProcessor {
         private String[] namespaces;
         private final ObjectArrayList<TinyClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override

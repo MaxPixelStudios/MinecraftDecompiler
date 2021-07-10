@@ -52,7 +52,7 @@ public class SrgMappingReader extends AbstractMappingReader {
         return PROCESSOR;
     }
 
-    private class SrgMappingProcessor extends PairedMappingProcessor implements PackageMappingProcessor {
+    private class SrgMappingProcessor implements PairedMappingProcessor, PackageMappingProcessor {
         private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
         private ObjectList<PairedClassMapping> mappingCache;
         @Override
