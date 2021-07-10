@@ -73,7 +73,7 @@ public abstract class AbstractMappingReader {
     public AbstractMappingReader(InputStream is) {
         this(new InputStreamReader(is, StandardCharsets.UTF_8));
     }
-    
+
     public AbstractMappingReader(String path) throws FileNotFoundException {
         this(new FileInputStream(path));
     }
