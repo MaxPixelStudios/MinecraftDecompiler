@@ -29,6 +29,7 @@ import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
+import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -64,14 +65,17 @@ public abstract class AbstractMappingReader {
             throw Utils.wrapInRuntime(e);
         }
     }
+
     public AbstractMappingReader(Reader rd) {
-        this(new BufferedReader(Objects.requireNonNull(rd)));
+        this(IOUtil.asBufferedReader(rd));
     }
+
     public AbstractMappingReader(InputStream is) {
-        this(new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8));
+        this(new InputStreamReader(is, StandardCharsets.UTF_8));
     }
+    
     public AbstractMappingReader(String path) throws FileNotFoundException {
-        this(new FileReader(Objects.requireNonNull(path)));
+        this(new FileInputStream(path));
     }
 
     public abstract MappingProcessor getProcessor();

@@ -18,14 +18,13 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Objects;
 import java.util.zip.InflaterInputStream;
 
 public class IOUtil {
@@ -60,5 +59,10 @@ public class IOUtil {
             mbb.get(bytes);
             return bytes;
         }
+    }
+
+    public static BufferedReader asBufferedReader(Reader reader) {
+        return Objects.requireNonNull(reader) instanceof BufferedReader ?
+                (BufferedReader) reader : new BufferedReader(reader);
     }
 }
