@@ -107,6 +107,7 @@ public class FileUtil {
             LOGGER.debug("Deleting directory \"{}\"...", directory);
             StreamSupport.stream(ds.spliterator(), true)
                     .forEach(FileUtil::deleteDirectory0);
+            Files.delete(directory);
         } catch (IOException e) {
             LOGGER.error("Error when deleting directory \"{}\"", directory, e);
         }
@@ -120,6 +121,7 @@ public class FileUtil {
                             .forEach(FileUtil::deleteDirectory0);
                 }
             }
+            LOGGER.debug("Deleting {}", path);
             Files.delete(path);
         } catch (IOException e) {
             LOGGER.error("Error when deleting directory \"{}\"", path, e);

@@ -18,49 +18,25 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
-import cn.maxpixel.mcdecompiler.util.JarUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
+import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
+import cn.maxpixel.mcdecompiler.writer.CsrgMappingWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.stream.Stream;
-
-import static java.nio.file.StandardOpenOption.*;
-
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
-    public void test() throws Throwable {
+    private TsrgMappingReader reader;
+
+    public void setUp() throws Throwable {
+        reader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"));
+        reader.getMappings();
     }
-    public static void zipFsUnzip(Path jar, Path dest) {
-        try(FileSystem jarFs = JarUtil.createZipFs(jar);
-            Stream<Path> s = Files.walk(jarFs.getPath("/")).parallel()) {
-            Path jarRoot = jarFs.getPath("/");
-            s.forEach(path -> {
-                try {
-                    // Use dest.resolve(String) because "path" and "dest" are not in the same FileSystem,
-                    // use dest.resolve(Path) will cause java.nio.file.ProviderMismatchException
-                    Path p = dest.resolve(jarRoot.relativize(path).toString());
-                    if(Files.isDirectory(path)) Files.createDirectories(p);
-                    else {
-                        Files.createDirectories(p.getParent());
-                        try(ReadableByteChannel from = JarUtil.getJarFileSystemProvider().newByteChannel(path, Collections.singleton(READ));
-                            FileChannel to = FileChannel.open(p, WRITE, CREATE, TRUNCATE_EXISTING)) {
-                            to.transferFrom(from, 0, Long.MAX_VALUE);
-                        }
-                    }
-                } catch (IOException e) {
-                    throw Utils.wrapInRuntime(e);
-                }
-            });
-        } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
-        }
+
+    public void test() throws Throwable {
+        CsrgMappingWriter writer = new CsrgMappingWriter();
+        writer.writeMappings(reader.getMappings());
+//        try(FileChannel ch = FileChannel.open(Path.of("1.16.5.csrg"), WRITE, CREATE)) {
+//            writer.writeTo(ch);
+//        }
     }
 }
