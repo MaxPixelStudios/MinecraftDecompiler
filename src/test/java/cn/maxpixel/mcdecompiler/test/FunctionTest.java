@@ -18,24 +18,24 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
-import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
+import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
 import cn.maxpixel.mcdecompiler.writer.CsrgMappingWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Collection;
+
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
-    private TsrgMappingReader reader;
-
-    public void setUp() throws Throwable {
-        reader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"));
-        reader.getMappings();
-    }
 
     public void test() throws Throwable {
-        CsrgMappingWriter writer = new CsrgMappingWriter();
-        writer.writeMappings(reader.getMappings());
-//        try(FileChannel ch = FileChannel.open(Path.of("1.16.5.csrg"), WRITE, CREATE)) {
+        ProguardMappingReader reader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.txt"));
+        CsrgMappingWriter writer = new CsrgMappingWriter(new MappingRemapper(reader));
+        writer.writePairedMappings((Collection<PairedClassMapping>) reader.getMappings());
+//        writer.writePairedMappings((Collection<NamespacedClassMapping>) reader.getMappings(), "obf", "srg");
+//        try(FileChannel ch = FileChannel.open(Path.of("1.17.1.csrg"), WRITE, CREATE, TRUNCATE_EXISTING)) {
 //            writer.writeTo(ch);
 //        }
     }

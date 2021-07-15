@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TsrgMappingReader extends AbstractMappingReader {
-    public final int version = lines.get(0).startsWith("tsrg2") ? 2 : 0;
+    public final int version = lines.get(0).startsWith("tsrg2") ? 2 : -1;
 
     public TsrgMappingReader(BufferedReader reader) {
         super(reader);
@@ -58,10 +58,10 @@ public class TsrgMappingReader extends AbstractMappingReader {
     }
 
     private final TsrgMappingProcessor PROCESSOR = new TsrgMappingProcessor();
-    private final TsrgV2MappingProcessor PROCESSOR_V2 = new TsrgV2MappingProcessor();
+    private final TsrgV2MappingProcessor V2_PROCESSOR = new TsrgV2MappingProcessor();
     @Override
     public MappingProcessor getProcessor() {
-        return version == 2 ? PROCESSOR_V2 : PROCESSOR;
+        return version == 2 ? V2_PROCESSOR : PROCESSOR;
     }
 
     private class TsrgMappingProcessor implements PairedMappingProcessor, PackageMappingProcessor {
@@ -148,18 +148,17 @@ public class TsrgMappingReader extends AbstractMappingReader {
                                 curr.addField(processField(sa));
                                 break;
                             case 1:
-                                if(sa[1].charAt(0) == '(') {
+                                if(s.charAt(1) == '\t') {
+                                    currMethod.get().setLocalVariableName(Integer.parseInt(sa[0].substring(1)), namespaces, sa, 1);
+                                } else if(sa[1].charAt(0) == '(') {
                                     TsrgMethodMapping methodMapping = processMethod(sa);
                                     curr.addMethod(methodMapping);
                                     currMethod.set(methodMapping);
                                 } else curr.addField(processField(sa));
                                 break;
                             default:
-                                if (s.charAt(1) == '\t') {
-                                    sa[0] = sa[0].substring(1);
-                                    if(sa[0].equals("static")) currMethod.get().setStatic(true);
-                                    else currMethod.get().setLocalVariableName(Integer.parseInt(sa[0]), namespaces, sa, 1);
-                                } else error();
+                                if(sa[0].equals("\tstatic")) currMethod.get().isStatic = true;
+                                else error();
                         }
                     }
                 });

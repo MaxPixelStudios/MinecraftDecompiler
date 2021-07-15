@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
+import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
 import cn.maxpixel.mcdecompiler.writer.CsrgMappingWriter;
 import org.openjdk.jmh.annotations.*;
@@ -25,6 +26,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
@@ -58,6 +60,6 @@ public class PerformanceTest {
 
     @Benchmark
     public void write() {
-        writer.writeMappings(reader.getMappings());
+        writer.writePairedMappings((Collection<PairedClassMapping>) reader.getMappings());
     }
 }

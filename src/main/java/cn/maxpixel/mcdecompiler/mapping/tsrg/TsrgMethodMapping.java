@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
 import java.util.Map;
 
 public class TsrgMethodMapping extends NamespacedMethodMapping {
-    private boolean staticMethod;
+    public boolean isStatic;
 
     public TsrgMethodMapping(Map<String, String> names, String unmappedDescriptor) {
         super(names, unmappedDescriptor);
@@ -45,24 +45,16 @@ public class TsrgMethodMapping extends NamespacedMethodMapping {
         super(unmappedDescriptor);
     }
 
-    public boolean isStatic() {
-        return staticMethod;
-    }
-
-    public void setStatic(boolean staticMethod) {
-        this.staticMethod = staticMethod;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TsrgMethodMapping that)) return false;
         if (!super.equals(o)) return false;
-        return staticMethod == that.staticMethod;
+        return isStatic == that.isStatic;
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Boolean.hashCode(staticMethod);
+        return 31 * super.hashCode() + Boolean.hashCode(isStatic);
     }
 }

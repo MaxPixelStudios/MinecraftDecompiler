@@ -18,42 +18,35 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
+import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 
 public class CsrgMappingWriter extends AbstractMappingWriter {
-    @Override
-    public void writeMappings(ObjectList<? extends AbstractClassMapping> mappings) {
-        mappings.parallelStream().map(PairedClassMapping.class::cast).forEach(pcm -> {
-            synchronized(buf) {
-                buf.add(getGenerator().generateClass(pcm));
-            }
-            pcm.getFields().parallelStream().map(getGenerator()::generateField).forEach(field -> {
-                synchronized(buf) {
-                    buf.add(field);
-                }
-            });
-            pcm.getMethods().parallelStream().map(getGenerator()::generateMethod).forEach(method -> {
-                synchronized(buf) {
-                    buf.add(method);
-                }
-            });
-        });
+    public CsrgMappingWriter() {
+        super();
     }
 
-    private static final CsrgMappingGenerator GENERATOR = new CsrgMappingGenerator();
+    public CsrgMappingWriter(MappingRemapper remapper) {
+        super(remapper);
+    }
+
+    private final CsrgMappingGenerator GENERATOR = new CsrgMappingGenerator();
     @Override
-    public CsrgMappingGenerator getGenerator() {
+    protected CsrgMappingGenerator getGenerator() {
         return GENERATOR;
     }
 
-    private static class CsrgMappingGenerator implements PairedMappingGenerator, PackageMappingGenerator {
+    @Override
+    protected boolean needLock() {
+        return false;
+    }
+
+    private class CsrgMappingGenerator implements PairedMappingGenerator, PackageMappingGenerator {
         @Override
         public String generateClass(PairedClassMapping mapping) {
             return mapping.getUnmappedName() + ' ' + mapping.getMappedName();
@@ -61,9 +54,13 @@ public class CsrgMappingWriter extends AbstractMappingWriter {
 
         @Override
         public String generateMethod(PairedMethodMapping mapping) {
-            if(!(mapping instanceof Descriptor desc) || mapping instanceof Descriptor.Mapped) throw new UnsupportedOperationException();
+            if(notDescImpl(mapping)) throw new UnsupportedOperationException();
+            String unmappedDesc;
+            if(mapping instanceof Descriptor desc) unmappedDesc = desc.getUnmappedDescriptor();
+            else if(remapper != null) unmappedDesc = remapper.getUnmappedDescByMappedDesc(mapping.asMappedDescriptor().getMappedDescriptor());
+            else throw new UnsupportedOperationException();
             return mapping.getOwner().getUnmappedName() + ' ' + mapping.getUnmappedName() + ' ' +
-                    desc.getUnmappedDescriptor() + ' ' + mapping.getMappedName();
+                    unmappedDesc + ' ' + mapping.getMappedName();
         }
 
         @Override

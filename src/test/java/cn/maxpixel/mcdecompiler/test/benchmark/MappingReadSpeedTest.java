@@ -51,7 +51,7 @@ public class MappingReadSpeedTest {
 
     @Benchmark
     public void readCsrg(Blackhole bh) {
-        CsrgMappingReader mappingReader = new CsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.csrg"));
+        CsrgMappingReader mappingReader = new CsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.csrg"));
         bh.consume(mappingReader.getMappings());
         bh.consume(mappingReader.getPackages());
     }
