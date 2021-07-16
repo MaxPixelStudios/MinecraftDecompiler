@@ -20,6 +20,8 @@ package cn.maxpixel.mcdecompiler.mapping.namespaced;
 
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.util.Map;
 
@@ -57,6 +59,10 @@ public class NamespacedMapping implements AbstractMapping {
         }
     }
     public NamespacedMapping() {}
+
+    public ObjectSet<String> getNamespaces() {
+        return ObjectSets.unmodifiable(names.keySet());
+    }
 
     public void setName(String namespace, String name) {
         names.put(namespace, name);

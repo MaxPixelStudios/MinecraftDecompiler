@@ -40,6 +40,7 @@ public class ProguardMappingWriter extends AbstractMappingWriter {
     }
 
     private final ProguardMappingGenerator GENERATOR = new ProguardMappingGenerator();
+
     @Override
     protected ProguardMappingGenerator getGenerator() {
         return GENERATOR;

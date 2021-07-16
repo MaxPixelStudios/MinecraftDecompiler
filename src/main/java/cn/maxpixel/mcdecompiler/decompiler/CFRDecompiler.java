@@ -55,6 +55,7 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
         PrintStream sysErr = System.err;
         System.setErr(new PrintStream(new OutputStream() {
             private static final Logger LOGGER = LogManager.getLogger("CFR");
+
             @Override
             public void write(int b) {
                 throw new UnsupportedOperationException();

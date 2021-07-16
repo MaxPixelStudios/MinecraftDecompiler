@@ -47,6 +47,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
     }
 
     private final CsrgMappingProcessor PROCESSOR = new CsrgMappingProcessor();
+
     @Override
     public CsrgMappingProcessor getProcessor() {
         return PROCESSOR;
@@ -136,7 +137,7 @@ public class CsrgMappingReader extends AbstractMappingReader {
         }
 
         private PairedMapping processPackage(String[] line) {
-            return new PairedMapping(line[0].substring(0, line[0].length() - 1), line[1]);
+            return new PairedMapping(line[0].substring(0, line[0].length() - 1), line[1].substring(0, line[1].length() - 1));
         }
     }
 }

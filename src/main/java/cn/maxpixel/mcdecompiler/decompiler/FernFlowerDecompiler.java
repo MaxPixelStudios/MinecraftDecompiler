@@ -18,13 +18,16 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -41,18 +44,32 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */i
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
-        Map<String, Object> options = new Object2ObjectOpenHashMap<>();
-        options.put("log", "TRACE");
-        options.put("dgs", "1");
-        options.put("hdc", "0");
-        options.put("asc", "1");
-        options.put("udv", "0");
-        options.put("rsy", "1");
+        Map<String, Object> options = Map.of(
+                "log", "TRACE",
+                "dgs", "1",
+                "asc", "1",
+                "rsy", "1"
+        );
         ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options, new PrintStreamLogger(System.out));
         decompiler.addSource(source.toFile());
-//		List<String> libs = listLibs();
+//		ObjectList<String> libs = listLibs();
 //		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
+        PrintStream sysOut = System.out;
+        System.setOut(new PrintStream(new OutputStream() {
+            private static final Logger LOGGER = LogManager.getLogger("FernFlower");
+
+            @Override
+            public void write(int b) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void write(byte[] b, int off, int len) {
+                LOGGER.debug(new String(b, off, len).stripTrailing());
+            }
+        }));
         decompiler.decompileContext();
+        System.setOut(sysOut);
     }
 
     private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {

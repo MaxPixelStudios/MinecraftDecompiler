@@ -6,6 +6,14 @@ name: Java CI with Maven
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - README.md
+      - LICENSE
+      - .gitignore
+      - CODE_OF_CONDUCT.md
+      - src/main/resources
+      - src/test/resources
+      - decompiler
 
 jobs:
   build:

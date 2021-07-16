@@ -47,6 +47,7 @@ public class SrgMappingReader extends AbstractMappingReader {
     }
 
     private final SrgMappingProcessor PROCESSOR = new SrgMappingProcessor();
+
     @Override
     public SrgMappingProcessor getProcessor() {
         return PROCESSOR;

@@ -36,6 +36,7 @@ public class CsrgMappingWriter extends AbstractMappingWriter {
     }
 
     private final CsrgMappingGenerator GENERATOR = new CsrgMappingGenerator();
+
     @Override
     protected CsrgMappingGenerator getGenerator() {
         return GENERATOR;
@@ -71,7 +72,7 @@ public class CsrgMappingWriter extends AbstractMappingWriter {
         @Override
         public String generatePackage(AbstractMapping mapping) {
             if(mapping instanceof PairedMapping paired && paired.getClass() == PairedMapping.class) {
-                return paired.getUnmappedName() + '/' + ' ' + paired.getMappedName();
+                return paired.getUnmappedName() + '/' + ' ' + paired.getMappedName() + '/';
             } else throw new UnsupportedOperationException();
         }
     }

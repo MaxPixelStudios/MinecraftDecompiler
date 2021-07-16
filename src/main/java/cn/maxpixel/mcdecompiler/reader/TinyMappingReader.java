@@ -62,11 +62,14 @@ public class TinyMappingReader extends AbstractMappingReader {
 
     private final TinyV1MappingProcessor V1_PROCESSOR = new TinyV1MappingProcessor();
     private final TinyV2MappingProcessor V2_PROCESSOR = new TinyV2MappingProcessor();
+
     @Override
     public NamespacedMappingProcessor getProcessor() {
-        if(version == 2) return V2_PROCESSOR;
-        else if(version == 1) return V1_PROCESSOR;
-        else throw new IllegalArgumentException("Unknown tiny mapping version");
+        return switch(version) {
+            case 1 -> V1_PROCESSOR;
+            case 2 -> V2_PROCESSOR;
+            default -> throw new UnsupportedOperationException("Unknown tiny mapping version");
+        };
     }
 
     private class TinyV1MappingProcessor implements NamespacedMappingProcessor {

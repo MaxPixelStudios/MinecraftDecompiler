@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TsrgMappingReader extends AbstractMappingReader {
-    public final int version = lines.get(0).startsWith("tsrg2") ? 2 : -1;
+    public final int version = lines.get(0).startsWith("tsrg2") ? 2 : 1;
 
     public TsrgMappingReader(BufferedReader reader) {
         super(reader);
@@ -57,14 +57,19 @@ public class TsrgMappingReader extends AbstractMappingReader {
         super(path);
     }
 
-    private final TsrgMappingProcessor PROCESSOR = new TsrgMappingProcessor();
+    private final TsrgV1MappingProcessor V1_PROCESSOR = new TsrgV1MappingProcessor();
     private final TsrgV2MappingProcessor V2_PROCESSOR = new TsrgV2MappingProcessor();
+
     @Override
     public MappingProcessor getProcessor() {
-        return version == 2 ? V2_PROCESSOR : PROCESSOR;
+        return switch(version) {
+            case 1 -> V1_PROCESSOR;
+            case 2 -> V2_PROCESSOR;
+            default -> throw new UnsupportedOperationException("Unknown tsrg mapping version");
+        };
     }
 
-    private class TsrgMappingProcessor implements PairedMappingProcessor, PackageMappingProcessor {
+    private class TsrgV1MappingProcessor implements PairedMappingProcessor, PackageMappingProcessor {
         private final ObjectArrayList<PairedMapping> packages = new ObjectArrayList<>();
         private final ObjectArrayList<PairedClassMapping> mappings = new ObjectArrayList<>(5000);
         @Override
@@ -121,7 +126,7 @@ public class TsrgMappingReader extends AbstractMappingReader {
         @Override
         public PairedMapping processPackage(String line) {
             String[] strings = line.split(" ");
-            return new PairedMapping(strings[0].substring(0, strings[0].length() - 1), strings[1]);
+            return new PairedMapping(strings[0].substring(0, strings[0].length() - 1), strings[1].substring(0, strings[1].length() - 1));
         }
     }
 
@@ -215,7 +220,9 @@ public class TsrgMappingReader extends AbstractMappingReader {
         @Override
         public NamespacedMapping processPackage(String line) {
             String[] split = line.split(" ");
-            split[0] = split[0].substring(0, split[0].length() - 1);
+            for(int i = 0; i < split.length; i++) {
+                split[i] = split[i].substring(0, split[i].length() - 1);
+            }
             return new NamespacedMapping(namespaces, split);
         }
     }

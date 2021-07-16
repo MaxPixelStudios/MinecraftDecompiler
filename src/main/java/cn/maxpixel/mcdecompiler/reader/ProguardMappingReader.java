@@ -91,6 +91,7 @@ public class ProguardMappingReader extends AbstractMappingReader {
     }
 
     private final ProguardMappingProcessor PROCESSOR = new ProguardMappingProcessor();
+
     @Override
     public ProguardMappingProcessor getProcessor() {
         return PROCESSOR;

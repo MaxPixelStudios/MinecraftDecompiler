@@ -124,7 +124,7 @@ public abstract class AbstractMappingWriter {
             synchronized(buf) {
                 buf.add(((PackageMappingGenerator) getGenerator()).generatePackage(pkg));
             }
-        } else throw new IllegalArgumentException("Use writePairedPackage(s)");
+        } else throw new UnsupportedOperationException("Use writePairedPackage(s)");
     }
 
     /**
@@ -182,7 +182,7 @@ public abstract class AbstractMappingWriter {
             } finally {
                 if(needLock) lock.unlock();
             }
-        } else throw new IllegalArgumentException("Use writeNamespacedMapping(s)");
+        } else throw new UnsupportedOperationException("Use writeNamespacedMapping(s)");
     }
 
     public final void writePairedMapping(NamespacedClassMapping ncm, String unmapped, String mapped) {
@@ -233,7 +233,7 @@ public abstract class AbstractMappingWriter {
             } finally {
                 if(needLock) lock.unlock();
             }
-        } else throw new IllegalArgumentException("Use writePairedMapping(s)");
+        } else throw new UnsupportedOperationException("Use writePairedMapping(s)");
     }
 
     public final void writeNamespacedMapping(PairedClassMapping pcm, String unmapped, String mapped) {
@@ -274,6 +274,8 @@ public abstract class AbstractMappingWriter {
 
     public final void writeTo(OutputStream os) throws IOException {
         synchronized(buf) {
+            String header = getHeader();
+            if(!header.isEmpty()) os.write(header.getBytes(StandardCharsets.UTF_8));
             os.write(String.join("\n", buf).getBytes(StandardCharsets.UTF_8));
             buf.clear();
         }
@@ -281,6 +283,8 @@ public abstract class AbstractMappingWriter {
 
     public final void writeTo(Writer writer) throws IOException {
         synchronized(buf) {
+            String header = getHeader();
+            if(!header.isEmpty()) writer.write(header);
             writer.write(String.join("\n", buf));
             buf.clear();
         }
@@ -288,6 +292,8 @@ public abstract class AbstractMappingWriter {
 
     public final void writeTo(WritableByteChannel os) throws IOException {
         synchronized(buf) {
+            String header = getHeader();
+            if(!header.isEmpty()) os.write(ByteBuffer.wrap(header.concat("\n").getBytes(StandardCharsets.UTF_8)));
             os.write(ByteBuffer.wrap(String.join("\n", buf).getBytes(StandardCharsets.UTF_8)));
             buf.clear();
         }
@@ -296,6 +302,10 @@ public abstract class AbstractMappingWriter {
     protected abstract MappingGenerator getGenerator();
 
     protected abstract boolean needLock();
+
+    protected String getHeader() {
+        return "";
+    }
 
     public interface MappingGenerator {
         default boolean isPaired() {

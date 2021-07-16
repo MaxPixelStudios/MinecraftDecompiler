@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping.tsrg.TsrgMethodMapping;
 import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.*;
@@ -98,7 +99,12 @@ public class ClassProcessor extends ClassNode {
                         .filter(m -> m.getName(fromNamespace).equals(methodNode.name) &&
                                 m.getUnmappedDescriptor().equals(methodNode.desc)).findAny();
                 IntArrayList regen = new IntArrayList();
-                methodNode.localVariables.forEach(lvn -> methodMapping.map(mm -> mm.getLocalVariableName(lvn.index, targetNamespace))
+                methodNode.localVariables.forEach(lvn ->
+                        methodMapping.map(mm -> {
+                            int index = lvn.index;
+                            if(mm instanceof TsrgMethodMapping tmm && !tmm.isStatic) index++;
+                            return mm.getLocalVariableName(index, targetNamespace);
+                        })
                         .filter(name -> !name.isEmpty() && !name.equals("o"/* tsrg2 empty lvn placeholder */))
                         .ifPresentOrElse(name -> lvn.name = name, () -> regen.add(lvn.index)));
                 if(rvn) regenerateVariableNames(methodNode, regen);

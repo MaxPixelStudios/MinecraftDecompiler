@@ -21,6 +21,8 @@ package cn.maxpixel.mcdecompiler.mapping.namespaced;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Owned;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -93,6 +95,14 @@ public class NamespacedMethodMapping extends NamespacedMapping implements Descri
         for(int i = 0; i < namespaces.length; i++) {
             map.put(namespaces[i], names[i + nameStart]);
         }
+    }
+
+    public IntSet getLocalVariableIndexes() {
+        return IntSets.unmodifiable(lvt.keySet());
+    }
+
+    public Object2ObjectMap<String, String> getLocalVariableNames(int index) {
+        return Object2ObjectMaps.unmodifiable(lvt.get(index));
     }
 
     @Override
