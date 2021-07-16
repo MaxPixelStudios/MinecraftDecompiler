@@ -250,7 +250,7 @@ public class Deobfuscator {
                     LOGGER.error("Error when remapping classes or coping files", e);
                 }
             });
-            if(options.rvn()) ClassProcessor.endRecord(Properties.get(Properties.Key.TEMP_DIR).resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
+            if(options.rvn()) ClassProcessor.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         } catch (IOException e) {
             LOGGER.error("Error when deobfuscating", e);
         }

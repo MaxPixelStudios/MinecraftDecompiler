@@ -33,7 +33,7 @@ public class Utils {
     }
 
     public static void waitForProcess(Process pro) {
-        Logger logger = LogManager.getLogger("Process " + pro.pid());
+        Logger logger = LogManager.getLogger("Process PID: " + pro.pid());
         try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
             BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
             Thread inT = new Thread(() -> {

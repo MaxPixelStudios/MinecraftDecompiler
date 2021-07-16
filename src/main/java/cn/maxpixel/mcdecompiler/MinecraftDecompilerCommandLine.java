@@ -56,6 +56,7 @@ public class MinecraftDecompilerCommandLine {
                 "names using JAD style if the input mapping doesn't provide one");
         OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping to " +
                 "deobfuscate.").availableUnless(sideTypeO);
+        OptionSpecBuilder dontIncludeOthersO = parser.accepts("dontIncludeOthers", "Drop the resource files in the output jar.");
         ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to remap " +
                 "to if you are using namespaced mappings(Tiny, Tsrgv2)").availableUnless(sideTypeO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
@@ -63,12 +64,10 @@ public class MinecraftDecompilerCommandLine {
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(asList("m", "map", "mappingPath"), "Mapping file use to " +
                 "deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
-        ArgumentAcceptingOptionSpec<Path> outDirO = parser.acceptsAll(asList("o", "outDir"), "The output directory of deobfuscated jar " +
-                "and decompiled dir.").withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<String> outDeobfNameO = parser.accepts("outDeobfName", "The name of deobfuscated jar in the " +
-                "outDir which specified by --outDir option. Do NOT add suffix.").withRequiredArg().defaultsTo("deobfuscated");
-        ArgumentAcceptingOptionSpec<String> outDecomNameO = parser.accepts("outDecomName", "The name of decompiled dir in the " +
-                "outDir which specified by --outDir option.").withRequiredArg().defaultsTo("decompiled");
+        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(asList("o", "output"), "The remapped file. Includes suffix.")
+                .withRequiredArg().withValuesConvertedBy(new PathConverter());
+        ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("outputDecomp", "The output decompile directory")
+                .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(asList("d", "decompile"), "Decompile the " +
                 "deobfuscated jar. Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Do NOT pass " +
                 "any arg to this option when \"customDecompilerName\" option is specified.").withOptionalArg().ofType(Info.DecompilerType.class)
@@ -111,27 +110,28 @@ public class MinecraftDecompilerCommandLine {
         options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(
                 ClassLoaderUtils::appendToClassPath, LambdaUtil::rethrowAsRuntime));
 
-        options.valueOfOptional(tempDirO).ifPresent(p -> Properties.put(Properties.Key.TEMP_DIR, p));
+        options.valueOfOptional(tempDirO).ifPresent(p -> Properties.TEMP_DIR = p);
         if(!options.has(sideTypeO)) {
             if(!options.has(inputO))
                 throw new IllegalArgumentException("--input is required when you doesn't specify --side option");
             if(!options.has(mappingPathO))
                 throw new IllegalArgumentException("--mappingPath is required when you doesn't specify --side option");
         }
-        options.valueOfOptional(outDirO).ifPresent(p -> Properties.put(Properties.Key.OUTPUT_DIR, p));
-        options.valueOfOptional(outDeobfNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DEOBFUSCATED_NAME, s));
-        options.valueOfOptional(outDecomNameO).ifPresent(s -> Properties.put(Properties.Key.OUTPUT_DECOMPILED_NAME, s));
 
         MinecraftDecompiler.OptionBuilder builder;
         if(options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
-            if(options.has(mappingPathO)) builder.withMapping(options.valueOf(mappingPathO));
+            options.valueOfOptional(mappingPathO).ifPresent(builder::withMapping);
         } else {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO))
                     .withMapping(options.valueOf(mappingPathO));
-            if(options.has(versionO)) builder.libsUsing(options.valueOf(versionO));
+            options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
         }
         if(options.has(regenVarNameO)) builder.regenerateVariableNames();
+        if(options.has(dontIncludeOthersO)) builder.doNotIncludeOthers();
+        options.valueOfOptional(targetNamespaceO).ifPresent(builder::targetNamespace);
+        options.valueOfOptional(outputO).ifPresent(builder::output);
+        options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
 
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();

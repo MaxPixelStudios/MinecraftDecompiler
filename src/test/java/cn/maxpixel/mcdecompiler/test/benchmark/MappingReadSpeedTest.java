@@ -44,7 +44,7 @@ public class MappingReadSpeedTest {
 
     @Benchmark
     public void readSrg(Blackhole bh) {
-        SrgMappingReader mappingReader = new SrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.12.2.srg"));
+        SrgMappingReader mappingReader = new SrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.srg"));
         bh.consume(mappingReader.getMappings());
         bh.consume(mappingReader.getPackages());
     }
@@ -58,33 +58,33 @@ public class MappingReadSpeedTest {
 
     @Benchmark
     public void readTsrg(Blackhole bh) {
-        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"));
+        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.tsrg"));
         bh.consume(mappingReader.getMappings());
         bh.consume(mappingReader.getPackages());
     }
 
     @Benchmark
     public void readTsrgV2(Blackhole bh) {
-        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5-v2.tsrg"));
+        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tsrg"));
         bh.consume(mappingReader.getMappings());
         bh.consume(mappingReader.getPackages());
     }
 
     @Benchmark
     public void readProguard(Blackhole bh) {
-        ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.txt"));
+        ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.txt"));
         bh.consume(mappingReader.getMappings());
     }
 
     @Benchmark
     public void readTinyV1(Blackhole bh) {
-        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-yarn-v1.tiny"));
+        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.tiny"));
         bh.consume(mappingReader.getMappings());
     }
 
     @Benchmark
     public void readTinyV2(Blackhole bh) {
-        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("mappings-merged-v2.tiny"));
+        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tiny"));
         bh.consume(mappingReader.getMappings());
     }
 }

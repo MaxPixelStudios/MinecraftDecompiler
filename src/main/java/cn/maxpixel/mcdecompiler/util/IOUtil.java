@@ -62,7 +62,11 @@ public class IOUtil {
     }
 
     public static BufferedReader asBufferedReader(Reader reader) {
-        return Objects.requireNonNull(reader) instanceof BufferedReader ?
+        return asBufferedReader(reader, "reader");
+    }
+
+    public static BufferedReader asBufferedReader(Reader reader, String readerName) {
+        return Objects.requireNonNull(reader, () -> readerName + " cannot be null") instanceof BufferedReader ?
                 (BufferedReader) reader : new BufferedReader(reader);
     }
 }

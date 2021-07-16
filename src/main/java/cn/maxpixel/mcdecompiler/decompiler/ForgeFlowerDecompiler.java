@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,10 +48,9 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
         ObjectArrayList<String> args = new ObjectArrayList<>(new String[] {"java", "-jar", decompilerJarPath.toString(), "-rsy=1", "-dgs=1", "-asc=1", "-bsm=1", "-iec=1", "-log=TRACE"});
-        ObjectList<String> libs = listLibs();
-        for(int i = 0; i < libs.size(); i++) args.add("-e=" + libs.get(i));
+        listLibs().forEach(lib -> args.add("-e=" + lib));
         args.add(source.toString());
-        Path abstractMethodParameterNames = Properties.get(Properties.Key.TEMP_DIR).resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES);
+        Path abstractMethodParameterNames = Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES);
         if(Files.exists(abstractMethodParameterNames)) args.add(abstractMethodParameterNames.toAbsolutePath().normalize().toString());
         args.add(target.toString());
         Utils.waitForProcess(Runtime.getRuntime().exec(args.toArray(new String[0])));

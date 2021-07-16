@@ -21,7 +21,7 @@ package cn.maxpixel.mcdecompiler.test;
 import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
 import cn.maxpixel.mcdecompiler.reader.ProguardMappingReader;
-import cn.maxpixel.mcdecompiler.writer.CsrgMappingWriter;
+import cn.maxpixel.mcdecompiler.writer.TinyMappingWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,10 +32,10 @@ public class FunctionTest {
 
     public void test() throws Throwable {
         ProguardMappingReader reader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.txt"));
-        CsrgMappingWriter writer = new CsrgMappingWriter(new MappingRemapper(reader));
-        writer.writePairedMappings((Collection<PairedClassMapping>) reader.getMappings());
+        TinyMappingWriter writer = new TinyMappingWriter(new MappingRemapper(reader), 2, "official", "mojang");
+        writer.writeNamespacedMappings((Collection<PairedClassMapping>) reader.getMappings(), "official", "mojang");
 //        writer.writePairedMappings((Collection<NamespacedClassMapping>) reader.getMappings(), "obf", "srg");
-//        try(FileChannel ch = FileChannel.open(Path.of("1.17.1.csrg"), WRITE, CREATE, TRUNCATE_EXISTING)) {
+//        try(FileChannel ch = FileChannel.open(Path.of("1.17.1-v1.tiny"), WRITE, CREATE, TRUNCATE_EXISTING)) {
 //            writer.writeTo(ch);
 //        }
     }

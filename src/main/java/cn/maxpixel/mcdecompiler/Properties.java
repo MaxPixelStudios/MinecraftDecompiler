@@ -18,97 +18,25 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-
 import java.nio.file.Path;
-import java.util.Objects;
 
 public class Properties {
-    public static class Key<V> {
-        private final String name;
+    public static Path TEMP_DIR = Path.of("temp");
+    public static Path DOWNLOAD_DIR = Path.of("downloads");
 
-        private Key(String name) {
-            this.name = Objects.requireNonNull(name);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Key<?> key)) return false;
-            return name.equals(key.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
-
-        public static final Key<Path> TEMP_DIR = new Key<>("tempDir");
-        public static final Key<Path> DOWNLOAD_DIR = new Key<>("downloadDir");
-
-        public static final Key<Path> OUTPUT_DIR = new Key<>("outputDir");
-        public static final Key<String> OUTPUT_DEOBFUSCATED_NAME = new Key<>("outputDeobfuscatedName");
-        public static final Key<String> OUTPUT_DECOMPILED_NAME = new Key<>("outputDecompiledName");
-    }
-
-    private static final Object2ObjectOpenHashMap<Key<?>, Object> PROPERTIES_MAP = new Object2ObjectOpenHashMap<>();
-
-    @SuppressWarnings("unchecked")
-    public static <V> V put(Key<V> key, V value) {
-        return (V) PROPERTIES_MAP.put(key, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <V> V get(Key<V> key) {
-        return (V) PROPERTIES_MAP.get(key);
-    }
-
-    static {
-        // Default values
-        put(Key.TEMP_DIR, Path.of("temp"));
-        put(Key.DOWNLOAD_DIR, Path.of("downloads"));
-        put(Key.OUTPUT_DIR, Path.of("output"));
-        put(Key.OUTPUT_DEOBFUSCATED_NAME, "deobfuscated");
-        put(Key.OUTPUT_DECOMPILED_NAME, "decompiled");
-    }
-
-    // Methods have to do with Key.TEMP_DIR
     public static Path getTempDecompileClassesPath() {
-        return get(Key.TEMP_DIR).resolve("decompileClasses");
+        return TEMP_DIR.resolve("decompileClasses");
     }
 
-    // Methods have to do with Key.DOWNLOAD_DIR
     public static Path getDownloadedLibPath() {
-        return get(Key.DOWNLOAD_DIR).resolve("libs");
+        return DOWNLOAD_DIR.resolve("libs");
     }
 
     public static Path getDownloadedMcJarPath(String version, Info.SideType type) {
-        return get(Key.DOWNLOAD_DIR).resolve(version).resolve(type + ".jar");
+        return DOWNLOAD_DIR.resolve(version).resolve(type + ".jar");
     }
 
-    // Methods have to do with Key.OUTPUT_*
-    public static Path getOutputDecompiledDirectory() {
-        return get(Key.OUTPUT_DIR).resolve(get(Key.OUTPUT_DECOMPILED_NAME));
-    }
-
-    public static Path getOutputDeobfuscatedJarPath() {
-        return get(Key.OUTPUT_DIR).resolve(get(Key.OUTPUT_DEOBFUSCATED_NAME) + ".jar");
-    }
-
-
-    // Proguard only -- start
     public static Path getDownloadedProguardMappingPath(String version, Info.SideType type) {
-        return get(Key.DOWNLOAD_DIR).resolve(version).resolve(type + "_mappings.txt");
+        return DOWNLOAD_DIR.resolve(version).resolve(type + "_mappings.txt");
     }
-
-    public static Path getOutputDecompiledDirectory(String version, Info.SideType type) {
-        if(version == null || type == null || !get(Key.OUTPUT_DECOMPILED_NAME).equals("decompiled")) return getOutputDecompiledDirectory();
-        return get(Key.OUTPUT_DIR).resolve(version + "_" + type + "_decompiled");
-    }
-
-    public static Path getOutputDeobfuscatedJarPath(String version, Info.SideType type) {
-        if(version == null || type == null || !get(Key.OUTPUT_DEOBFUSCATED_NAME).equals("deobfuscated")) return getOutputDeobfuscatedJarPath();
-        return get(Key.OUTPUT_DIR).resolve(version + "_" + type + "_deobfuscated.jar");
-    }
-    // Proguard only -- end
 }

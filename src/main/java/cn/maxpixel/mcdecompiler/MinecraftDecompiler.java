@@ -22,10 +22,7 @@ import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
 import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
-import cn.maxpixel.mcdecompiler.util.FileUtil;
-import cn.maxpixel.mcdecompiler.util.JarUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
-import cn.maxpixel.mcdecompiler.util.VersionManifest;
+import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,14 +57,13 @@ public class MinecraftDecompiler {
     private final Deobfuscator deobfuscator;
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteDirectoryIfExists(Properties.get(Properties.Key.TEMP_DIR))));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteIfExists(Properties.TEMP_DIR)));
     }
 
     public MinecraftDecompiler(Options options) {
-        Path tempPath = Properties.get(Properties.Key.TEMP_DIR);
-        FileUtil.deleteDirectoryIfExists(tempPath);
+        FileUtil.deleteIfExists(Properties.TEMP_DIR);
         try {
-            Files.createDirectories(tempPath);
+            Files.createDirectories(Properties.TEMP_DIR);
         } catch (IOException e) {
             LOGGER.fatal("Error creating temp directory");
             throw Utils.wrapInRuntime(LOGGER.throwing(e));
@@ -100,57 +96,37 @@ public class MinecraftDecompiler {
     }
 
     public void deobfuscate() {
-        if(options.shouldDownloadJar()) {
-            deobfuscate(Properties.getOutputDeobfuscatedJarPath(options.version(), options.type()));
-        } else {
-            deobfuscate(Properties.getOutputDeobfuscatedJarPath());
-        }
-    }
-
-    public void deobfuscate(Path output) {
         try {
             Path input = options.shouldDownloadJar() ? Properties.getDownloadedMcJarPath(options.version(), options.type()) :
                     options.inputJar();
-            deobfuscator.deobfuscate(input, output, options.targetNamespace(), options);
+            deobfuscator.deobfuscate(input, options.outputJar(), options.targetNamespace(), options);
         } catch (IOException e) {
             LOGGER.fatal("Error deobfuscating", e);
         }
     }
 
     public void decompile(Info.DecompilerType decompilerType) {
-        Path decompileDir = Properties.getOutputDecompiledDirectory(options.version(), options.type()).toAbsolutePath().normalize();
-        Path outputDeobfuscatedJarPath = Properties.getOutputDeobfuscatedJarPath(options.version(), options.type()).toAbsolutePath().normalize();
-        if(Files.notExists(outputDeobfuscatedJarPath))
-            throw new IllegalArgumentException("Please deobfuscate first or run decompile(DecompilerType, Path, Path) method");
-        decompile(decompilerType, outputDeobfuscatedJarPath, decompileDir);
-    }
-
-    public void decompile(Info.DecompilerType decompilerType, Path inputJar, Path outputDir) {
+        if(Files.notExists(options.outputJar())) deobfuscate();
         LOGGER.info("Decompiling using \"{}\"", decompilerType);
-        decompile0(Decompilers.get(decompilerType), inputJar, outputDir);
+        decompile0(Decompilers.get(decompilerType), options.outputJar().toAbsolutePath().normalize(),
+                options.outputDecompDir().toAbsolutePath().normalize());
     }
 
     public void decompileCustomized(String customizedDecompilerName) {
-        Path decompileDir = Properties.getOutputDecompiledDirectory(options.version(), options.type()).toAbsolutePath().normalize();
-        Path outputDeobfuscatedJarPath = Properties.getOutputDeobfuscatedJarPath(options.version(), options.type()).toAbsolutePath().normalize();
-        if(Files.notExists(outputDeobfuscatedJarPath))
-            throw new IllegalArgumentException("Please deobfuscate first or run decompile(DecompilerType, Path, Path) method");
-        decompileCustomized(customizedDecompilerName, outputDeobfuscatedJarPath, decompileDir);
-    }
-
-    public void decompileCustomized(String customizedDecompilerName, Path inputJar, Path outputDir) {
+        if(Files.notExists(options.outputJar())) deobfuscate();
         LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
-        decompile0(Decompilers.getCustom(customizedDecompilerName), inputJar, outputDir);
+        decompile0(Decompilers.getCustom(customizedDecompilerName), options.outputJar().toAbsolutePath().normalize(),
+                options.outputDecompDir().toAbsolutePath().normalize());
     }
 
     private void decompile0(IDecompiler decompiler, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
-            FileUtil.deleteDirectoryIfExists(outputDir);
+            FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
             Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
             if(decompiler instanceof IExternalResourcesDecompiler erd)
-                erd.extractTo(Properties.get(Properties.Key.TEMP_DIR).toAbsolutePath().normalize());
+                erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler lrd && options.version() != null)
                 lrd.downloadLib(libDownloadPath, options.version());
             switch (decompiler.getSourceType()) {
@@ -178,6 +154,8 @@ public class MinecraftDecompiler {
         private boolean includeOthers = true;
         private boolean rvn;
         private BufferedReader inputMappings;
+        private Path outputJar;
+        private Path outputDecompDir;
 
         private Path inputJar;
         private boolean reverse;
@@ -187,6 +165,8 @@ public class MinecraftDecompiler {
         public OptionBuilder(String version, Info.SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
             this.type = Objects.requireNonNull(type, "type cannot be null!");
+            this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar");
+            this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled");
         }
 
         public OptionBuilder(Path inputJar) {
@@ -196,6 +176,8 @@ public class MinecraftDecompiler {
         public OptionBuilder(Path inputJar, boolean reverse) {
             this.inputJar = inputJar;
             this.reverse = reverse;
+            this.outputJar = Path.of("output", "deobfuscated.jar");
+            this.outputDecompDir = Path.of("output", "decompiled");
         }
 
         public OptionBuilder libsUsing(String version) {
@@ -218,16 +200,26 @@ public class MinecraftDecompiler {
         }
 
         public OptionBuilder withMapping(Reader inputMappings) {
-            return withMapping(inputMappings instanceof BufferedReader buf ? buf : new BufferedReader(inputMappings));
+            return withMapping(IOUtil.asBufferedReader(inputMappings, "inputMappings"));
         }
 
         public OptionBuilder withMapping(BufferedReader inputMappings) {
-            this.inputMappings = inputMappings;
+            this.inputMappings = Objects.requireNonNull(inputMappings, "inputMappings cannot be null");
+            return this;
+        }
+
+        public OptionBuilder output(Path outputJar) {
+            this.outputJar = Objects.requireNonNull(outputJar, "outputJar cannot be null");
+            return this;
+        }
+
+        public OptionBuilder outputDecomp(Path outputDecompDir) {
+            this.outputDecompDir = Objects.requireNonNull(outputDecompDir, "outputDecompDir cannot be null");
             return this;
         }
 
         public OptionBuilder targetNamespace(String targetNamespace) {
-            this.targetNamespace = targetNamespace;
+            this.targetNamespace = Objects.requireNonNull(targetNamespace, "targetNamespace cannot be null");
             return this;
         }
 
@@ -274,6 +266,16 @@ public class MinecraftDecompiler {
                 }
 
                 @Override
+                public Path outputJar() {
+                    return outputJar;
+                }
+
+                @Override
+                public Path outputDecompDir() {
+                    return outputDecompDir;
+                }
+
+                @Override
                 public boolean reverse() {
                     return reverse;
                 }
@@ -308,6 +310,10 @@ public class MinecraftDecompiler {
         BufferedReader inputMappings();
 
         Path inputJar();
+
+        Path outputJar();
+
+        Path outputDecompDir();
 
         @Override
         boolean reverse();
