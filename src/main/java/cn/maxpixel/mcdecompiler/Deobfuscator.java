@@ -257,7 +257,7 @@ public class Deobfuscator {
         return this;
     }
 
-    public interface DeobfuscateOptions {
+    interface DeobfuscateOptions {
         boolean includeOthers();
 
         boolean rvn();
