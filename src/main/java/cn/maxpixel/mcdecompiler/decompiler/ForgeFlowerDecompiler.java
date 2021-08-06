@@ -41,7 +41,7 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
     public void extractTo(Path extractPath) throws IOException {
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");
         if(Files.notExists(decompilerJarPath))
-            Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("forgeflower-1.5.498.6.jar")), decompilerJarPath);
+            Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("forgeflower-1.5.498.12.jar")), decompilerJarPath);
     }
 
     @Override
