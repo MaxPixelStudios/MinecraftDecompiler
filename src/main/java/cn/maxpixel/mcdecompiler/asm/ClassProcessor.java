@@ -163,7 +163,7 @@ public class ClassProcessor extends ClassNode {
             }
         }
         if(node.localVariables != null) node.localVariables.forEach(lvn -> {
-            if(needToRegenerate == null || needToRegenerate.contains(lvn.index)) {
+            if(lvn.index > 0 && (needToRegenerate == null || needToRegenerate.contains(lvn.index))) {
                 lvn.name = renamer.getVarName(Type.getType(lvn.desc));
             }
         });
