@@ -160,10 +160,6 @@
     </build>
     <repositories>
         <repository>
-            <id>lx-gaming</id>
-            <url>https://dl.bintray.com/lxgaming/maven</url>
-        </repository>
-        <repository>
             <id>forge-maven</id>
             <url>https://maven.minecraftforge.net/</url>
         </repository>
@@ -218,11 +214,6 @@
             <groupId>net.minecraftforge</groupId>
             <artifactId>fernflower</artifactId>
             <version>${depend.fernflower.ver}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.lxgaming</groupId>
-            <artifactId>classloaderutils</artifactId>
-            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>

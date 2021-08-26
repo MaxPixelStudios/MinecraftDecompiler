@@ -22,10 +22,16 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.misc.Unsafe;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class Utils {
     public static RuntimeException wrapInRuntime(Throwable e) {
@@ -73,5 +79,44 @@ public class Utils {
         if(left.isDescriptor()) b &= left.asDescriptor().getUnmappedDescriptor().equals(right.asDescriptor().getUnmappedDescriptor());
         if(left.isMappedDescriptor()) b &= left.asMappedDescriptor().getMappedDescriptor().equals(right.asMappedDescriptor().getMappedDescriptor());
         return b;
+    }
+
+    // https://github.com/LXGaming/ClassLoaderUtils/blob/master/src/main/java/io/github/lxgaming/classloader/ClassLoaderUtils.java
+    public static void appendToClassPath(ClassLoader classLoader, List<URL> urlList) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Class<?> classLoaderClass = Class.forName("jdk.internal.loader.BuiltinClassLoader");
+        Class<?> classPathClass = Class.forName("jdk.internal.loader.URLClassPath");
+        if (classLoaderClass.isInstance(classLoader)) {
+            Unsafe unsafe = getUnsafe();
+
+            // jdk.internal.loader.BuiltinClassLoader.ucp
+            Field ucpField = classLoaderClass.getDeclaredField("ucp");
+            long ucpFieldOffset = unsafe.objectFieldOffset(ucpField);
+            Object ucpObject = unsafe.getObject(classLoader, ucpFieldOffset);
+
+            // jdk.internal.loader.URLClassPath.path
+            Field pathField = classPathClass.getDeclaredField("path");
+            long pathFieldOffset = unsafe.objectFieldOffset(pathField);
+            ArrayList<URL> path = (ArrayList<URL>) unsafe.getObject(ucpObject, pathFieldOffset);
+
+            // Java 11 - jdk.internal.loader.URLClassPath.unopenedUrls
+            Field urlsField = classPathClass.getDeclaredField("unopenedUrls");
+            long urlsFieldOffset = unsafe.objectFieldOffset(urlsField);
+            Collection<URL> urls = (Collection<URL>) unsafe.getObject(ucpObject, urlsFieldOffset);
+
+            // noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (urls) {
+                if (!path.containsAll(urlList)) {
+                    urls.addAll(urlList);
+                    path.addAll(urlList);
+                }
+            }
+
+        }
+    }
+
+    private static Unsafe getUnsafe() throws NoSuchFieldException, IllegalAccessException {
+        Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        return (Unsafe) theUnsafeField.get(null);
     }
 }

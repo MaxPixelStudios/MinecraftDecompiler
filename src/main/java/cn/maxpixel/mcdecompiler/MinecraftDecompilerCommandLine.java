@@ -18,9 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
-import io.github.lxgaming.classloader.ClassLoaderUtils;
 import joptsimple.*;
 import joptsimple.util.PathConverter;
 import org.apache.logging.log4j.LogManager;
@@ -107,8 +105,7 @@ public class MinecraftDecompilerCommandLine {
         if(options.has(customDecompilerO) && options.hasArgument(decompileO)) {
             throw new IllegalArgumentException("Do NOT pass args to \"decompile\" option when you use --customDecompiler option");
         }
-        options.valuesOf(customDecompilerJarsO).forEach(LambdaUtil.handleThrowable(
-                ClassLoaderUtils::appendToClassPath, LambdaUtil::rethrowAsRuntime));
+        Utils.appendToClassPath(MinecraftDecompilerCommandLine.class.getClassLoader(), options.valuesOf(customDecompilerJarsO));
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.TEMP_DIR = p);
         if(!options.has(sideTypeO)) {
