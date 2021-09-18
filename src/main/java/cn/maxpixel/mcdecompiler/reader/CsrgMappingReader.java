@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.function.Function;
 
 public class CsrgMappingReader extends AbstractMappingReader {
     public CsrgMappingReader(BufferedReader reader) {
@@ -80,15 +81,15 @@ public class CsrgMappingReader extends AbstractMappingReader {
                     case 3: // Field
                         PairedFieldMapping fieldMapping = processField(sa);
                         synchronized(mappings) {
-                            mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(), PairedClassMapping::new)
-                                    .addField(fieldMapping);
+                            mappings.computeIfAbsent(fieldMapping.getOwner().getUnmappedName(),
+                                    (Function<String, PairedClassMapping>) PairedClassMapping::new).addField(fieldMapping);
                         }
                         break;
                     case 4: // Method
                         UnmappedDescriptoredPairedMethodMapping methodMapping = processMethod(sa);
                         synchronized(mappings) {
-                            mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(), PairedClassMapping::new)
-                                    .addMethod(methodMapping);
+                            mappings.computeIfAbsent(methodMapping.getOwner().getUnmappedName(),
+                                    (Function<String, PairedClassMapping>) PairedClassMapping::new).addMethod(methodMapping);
                         }
                         break;
                     default: throw new IllegalArgumentException("Is this a CSRG mapping file?");
