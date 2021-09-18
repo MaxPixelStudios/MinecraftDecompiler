@@ -82,6 +82,7 @@ public class Utils {
     }
 
     // https://github.com/LXGaming/ClassLoaderUtils/blob/master/src/main/java/io/github/lxgaming/classloader/ClassLoaderUtils.java
+    @SuppressWarnings("unchecked")
     public static void appendToClassPath(ClassLoader classLoader, List<URL> urlList) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
         Class<?> classLoaderClass = Class.forName("jdk.internal.loader.BuiltinClassLoader");
         Class<?> classPathClass = Class.forName("jdk.internal.loader.URLClassPath");
