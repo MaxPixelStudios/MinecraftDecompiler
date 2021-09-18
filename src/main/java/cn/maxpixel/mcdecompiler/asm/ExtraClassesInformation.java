@@ -31,10 +31,8 @@ import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, ObjectImmutableList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
-    public final Object2ObjectMap<String, ObjectArrayList<String>> SUPER_NAMES = Object2ObjectMaps.unmodifiable(superClassMap);
-    public final Object2ObjectMap<String, Object2IntMap<String>> ACCESS_MAP = Object2ObjectMaps.unmodifiable(accessMap);
 
     public ExtraClassesInformation() {}
 
@@ -57,11 +55,15 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 @Override
                 public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                     this.name = name;
-                    ObjectArrayList<String> list = new ObjectArrayList<>();
-                    if((access & Opcodes.ACC_INTERFACE) == 0 && !superName.equals("java/lang/Object")) list.add(superName);
-                    list.addElements(list.size(), interfaces);
-                    if(!list.isEmpty()) synchronized(superClassMap) {
-                        superClassMap.put(name, list);
+                    if((access & Opcodes.ACC_INTERFACE) == 0 && !superName.equals("java/lang/Object")) {
+                        String[] arr = new String[interfaces.length + 1];
+                        System.arraycopy(interfaces, 0, arr, 0, interfaces.length);
+                        arr[arr.length - 1] = superName;
+                        synchronized(superClassMap) {
+                            superClassMap.put(name, new ObjectImmutableList<>(arr));
+                        }
+                    } else if(interfaces.length > 0) synchronized(superClassMap) {
+                        superClassMap.put(name, new ObjectImmutableList<>(interfaces));
                     }
                 }
 
@@ -80,12 +82,24 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 @Override
                 public void visitEnd() {
                     if(!map.isEmpty()) synchronized(accessMap) {
-                        accessMap.put(name, Object2IntMaps.unmodifiable(map));
+                        accessMap.put(name, map);
                     }
                 }
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         } catch(IOException e) {
             LOGGER.error("Error when creating super class mapping", e);
         }
+    }
+
+    public ObjectList<String> getSuperNames(String name) {
+        return superClassMap.get(name);
+    }
+
+    public int getAccessFlags(String className, String composedMemberName) {
+        return accessMap.get(className).getInt(composedMemberName);
+    }
+
+    public int getAccessFlags(String className, String composedMemberName, int defaultValue) {
+        return accessMap.get(className).getOrDefault(composedMemberName, defaultValue);
     }
 }

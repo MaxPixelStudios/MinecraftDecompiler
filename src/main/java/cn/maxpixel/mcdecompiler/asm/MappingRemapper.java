@@ -136,7 +136,7 @@ public class MappingRemapper extends Remapper {
     private Optional<PairedMethodMapping> processSuperMethod(String owner, String name, String descriptor) {
         if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
-        return Optional.ofNullable(extraClassesInformation.SUPER_NAMES.get(owner))
+        return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
                 .flatMap(superNames -> superNames.parallelStream()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
@@ -158,10 +158,10 @@ public class MappingRemapper extends Remapper {
     private PairedMethodMapping reduceMethod(PairedMethodMapping left, PairedMethodMapping right) {
         if(Utils.nameAndDescEquals(left, right)) return left;
         // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
-        int leftAcc = extraClassesInformation.ACCESS_MAP.get(left.getOwner().getUnmappedName())
-                .getOrDefault(left.getUnmappedName().concat(getUnmappedDesc(left)), Opcodes.ACC_PUBLIC) & 0b111;
-        int rightAcc = extraClassesInformation.ACCESS_MAP.get(right.getOwner().getUnmappedName())
-                .getOrDefault(right.getUnmappedName().concat(getUnmappedDesc(right)), Opcodes.ACC_PUBLIC) & 0b111;
+        int leftAcc = extraClassesInformation.getAccessFlags(left.getOwner().getUnmappedName(),
+                left.getUnmappedName().concat(getUnmappedDesc(left)), Opcodes.ACC_PUBLIC) & 0b111;
+        int rightAcc = extraClassesInformation.getAccessFlags(right.getOwner().getUnmappedName(),
+                right.getUnmappedName().concat(getUnmappedDesc(right)), Opcodes.ACC_PUBLIC) & 0b111;
         // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
         if((leftAcc & 0b101) != 0) return left;
         else if((rightAcc & 0b101) != 0) return right;
@@ -181,7 +181,7 @@ public class MappingRemapper extends Remapper {
     private Optional<PairedFieldMapping> processSuperField(String owner, String name) {
         if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor MappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use MappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
-        return Optional.ofNullable(extraClassesInformation.SUPER_NAMES.get(owner))
+        return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
                 .flatMap(superNames -> superNames.parallelStream()
                         .map(mappingByUnm::get)
                         .filter(Objects::nonNull)
@@ -201,10 +201,10 @@ public class MappingRemapper extends Remapper {
 
     private PairedFieldMapping reduceField(PairedFieldMapping left, PairedFieldMapping right) {
         // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
-        int leftAcc = extraClassesInformation.ACCESS_MAP.get(left.getOwner().getUnmappedName())
-                .getOrDefault(left.getUnmappedName(), Opcodes.ACC_PUBLIC) & 0b111;
-        int rightAcc = extraClassesInformation.ACCESS_MAP.get(right.getOwner().getUnmappedName())
-                .getOrDefault(right.getUnmappedName(), Opcodes.ACC_PUBLIC) & 0b111;
+        int leftAcc = extraClassesInformation.getAccessFlags(left.getOwner().getUnmappedName(),
+                left.getUnmappedName(), Opcodes.ACC_PUBLIC) & 0b111;
+        int rightAcc = extraClassesInformation.getAccessFlags(right.getOwner().getUnmappedName(),
+                right.getUnmappedName(), Opcodes.ACC_PUBLIC) & 0b111;
         // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
         if((leftAcc & 0b101) != 0) return left;
         else if((rightAcc & 0b101) != 0) return right;
