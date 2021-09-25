@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class LambdaUtil {
     @FunctionalInterface
@@ -63,8 +64,12 @@ public class LambdaUtil {
         return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
     }
 
-    @SuppressWarnings("unchecked")
     public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
         return () -> handle(runnableWithThrowable, exceptionHandler);
+    }
+
+    public static <T, I> T safeCall(I input, Function<I, T> func) {
+        if(input == null) return null;
+        return func.apply(input);
     }
 }
