@@ -18,31 +18,33 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
+import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class NamingUtil {
-    public static String getClassName(String name) {
-        String fullClassName = name.replace("/", ".");
-        return fullClassName.substring(fullClassName.lastIndexOf("."));
+    private static final Pattern ARR_DIM = Pattern.compile("\\[]");
+
+    public static int getDimension(String javaName) {
+        Matcher m = ARR_DIM.matcher(javaName);
+        int arrDimension = 0;
+        while(m.find()) arrDimension++;
+        return arrDimension;
     }
 
-    public static String getPackageName(String name) {
-        String fullClassName = name.replace("/", ".");
-        return fullClassName.substring(0, fullClassName.lastIndexOf("."));
+    public static String findSourceNamespace(ClassifiedMappingReader<NamespacedMapping> mappingReader) {
+        return mappingReader.mappings.parallelStream()
+                .flatMap(cm -> cm.getMethods().parallelStream())
+                .map(Descriptor.Namespaced.class::cast)
+                .map(Descriptor.Namespaced::getDescriptorNamespace)
+                .findAny().orElseThrow(IllegalArgumentException::new);
     }
 
     public static String asJavaName(String pureNativeName) {
         return pureNativeName.replace('/', '.');
-    }
-
-    public static String asJavaName0(String fileName) {
-        return fileName.replace('/', '.').replace('\\', '.').replace(".class", "");
-    }
-
-    public static int getDimension(String javaName) {
-        int arrDimension = 0;
-        for(int index = 0;index < javaName.length();index+=2) {
-            if((index = javaName.indexOf("[]", index)) != -1) arrDimension++;
-        }
-        return arrDimension;
     }
 
     public static String asNativeName(String javaName) {
@@ -56,7 +58,7 @@ public class NamingUtil {
     public static String asDescriptor(String javaName) {
         if(javaName == null || javaName.isEmpty()) return "";
         if(!javaName.contains("[]")) {
-            return switch (javaName) {
+            return switch(javaName) {
                 case "boolean" -> "Z";
                 case "byte" -> "B";
                 case "char" -> "C";
@@ -66,25 +68,23 @@ public class NamingUtil {
                 case "long" -> "J";
                 case "short" -> "S";
                 case "void" -> "V";
-                default -> "L" + asNativeName(javaName) + ";";
+                default -> 'L' + asNativeName(javaName) + ';';
             };
         } else {
-            StringBuilder buf = new StringBuilder();
-            buf.append("[".repeat(Math.max(0, getDimension(javaName))));
+            String dim = "[".repeat(getDimension(javaName));
             javaName = javaName.replace("[]", "");
-            switch (javaName) {
-                case "boolean" -> buf.append('Z');
-                case "byte" -> buf.append('B');
-                case "char" -> buf.append('C');
-                case "double" -> buf.append('D');
-                case "float" -> buf.append('F');
-                case "int" -> buf.append('I');
-                case "long" -> buf.append('J');
-                case "short" -> buf.append('S');
-                case "void" -> buf.append('V');
-                default -> buf.append('L').append(asNativeName(javaName)).append(';');
-            }
-            return buf.toString();
+            return switch(javaName) {
+                case "boolean" -> dim + 'Z';
+                case "byte" -> dim + 'B';
+                case "char" -> dim + 'C';
+                case "double" -> dim + 'D';
+                case "float" -> dim + 'F';
+                case "int" -> dim + 'I';
+                case "long" -> dim + 'J';
+                case "short" -> dim + 'S';
+                case "void" -> dim + 'V';
+                default -> dim + 'L' + asNativeName(javaName) + ';';
+            };
         }
     }
 }

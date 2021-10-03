@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger("Class Info Collector");
     private final Object2ObjectOpenHashMap<String, ObjectImmutableList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
 

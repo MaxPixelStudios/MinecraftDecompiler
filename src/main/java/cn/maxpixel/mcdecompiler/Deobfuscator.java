@@ -19,11 +19,13 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.asm.ExtraClassesInformation;
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
-import cn.maxpixel.mcdecompiler.reader.*;
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +49,7 @@ import static cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler.FERNFLOW
 
 public class Deobfuscator {
     private static final Logger LOGGER = LogManager.getLogger("Deobfuscator");
-    private final AbstractMappingReader reader;
+    private final ClassifiedMappingReader<?> reader;
 
     private static Info.MappingType getMappingType0(Stream<String> lines) {
         List<String> list = lines.limit(2).collect(Collectors.toList());
@@ -85,13 +87,13 @@ public class Deobfuscator {
     }
 
     public Deobfuscator(String mappingPath) throws FileNotFoundException {
-        this.reader = switch(getMappingType(Objects.requireNonNull(mappingPath, "mappingPath cannot be null"))) {
-            case PROGUARD -> new ProguardMappingReader(mappingPath);
-            case SRG -> new SrgMappingReader(mappingPath);
+        this.reader = new ClassifiedMappingReader<Mapping>(switch(getMappingType(Objects.requireNonNull(mappingPath, "mappingPath cannot be null"))) {
+            case PROGUARD -> MappingProcessors.PROGUARD;
+            case SRG -> MappingProcessors.SRG;
             case TSRG -> new TsrgMappingReader(mappingPath);
-            case CSRG -> new CsrgMappingReader(mappingPath);
+            case CSRG -> MappingProcessors.CSRG;
             case TINY -> new TinyMappingReader(mappingPath);
-        };
+        }, mappingPath);
     }
 
     public Deobfuscator(String mappingPath, Info.MappingType type) throws FileNotFoundException {
@@ -218,8 +220,8 @@ public class Deobfuscator {
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath("/"))) {
             ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath("/"))
                     .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1)))), true);
-            MappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new MappingRemapper(reader, info) :
-                    new MappingRemapper(reader, info, targetNamespace);
+            ClassifiedMappingRemapper mappingRemapper = reader.getProcessor().isPaired() ? new ClassifiedMappingRemapper(reader, info) :
+                    new ClassifiedMappingRemapper(reader, info, targetNamespace);
             if(options.rvn()) ClassProcessor.startRecord();
             paths.forEach(path -> {
                  try {
@@ -235,7 +237,7 @@ public class Deobfuscator {
                             os.write(writer.toByteArray());
                         }
                     } else if(options.includeOthers()) {
-                        String outputPath = path.toString();
+                        String outputPath = path.toString().toUpperCase();
                         if(outputPath.endsWith(".SF") || outputPath.endsWith(".RSA")) return;
                         try(InputStream inputStream = Files.newInputStream(path);
                             OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(outputPath)))) {

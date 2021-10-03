@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.*;
@@ -42,7 +42,7 @@ public abstract class AbstractMappingWriter {
     protected static final Logger LOGGER = LogManager.getLogger("Mapping Writer");
 
     protected final ObjectArrayList<String> buf = new ObjectArrayList<>();
-    protected final MappingRemapper remapper;
+    protected final ClassifiedMappingRemapper remapper;
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -50,7 +50,7 @@ public abstract class AbstractMappingWriter {
         this(null);
     }
 
-    public AbstractMappingWriter(MappingRemapper remapper) {
+    public AbstractMappingWriter(ClassifiedMappingRemapper remapper) {
         this.remapper = remapper;
     }
 

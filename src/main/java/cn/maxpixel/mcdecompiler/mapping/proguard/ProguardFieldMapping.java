@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.proguard;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
 import org.objectweb.asm.Type;
@@ -45,10 +45,10 @@ public class ProguardFieldMapping extends PairedFieldMapping implements Descript
     @Override
     @Deprecated
     public void reverse() {
-        throw new UnsupportedOperationException("Use reverse(MappingRemapper) instead");
+        throw new UnsupportedOperationException("Use reverse(ClassifiedMappingRemapper) instead");
     }
 
-    public void reverse(MappingRemapper remapper) {
+    public void reverse(ClassifiedMappingRemapper remapper) {
         super.reverse();
         mappedDescriptor = remapper.mapToUnmapped(Type.getType(mappedDescriptor));
     }

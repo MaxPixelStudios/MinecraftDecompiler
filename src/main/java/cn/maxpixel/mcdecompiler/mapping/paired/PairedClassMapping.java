@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -88,10 +88,10 @@ public class PairedClassMapping extends PairedMapping implements AbstractClassMa
     @Override
     @Deprecated
     public void reverse() {
-        throw new UnsupportedOperationException("Use reverse(MappingRemapper) instead");
+        throw new UnsupportedOperationException("Use reverse(ClassifiedMappingRemapper) instead");
     }
 
-    public void reverse(MappingRemapper remapper) {
+    public void reverse(ClassifiedMappingRemapper remapper) {
         super.reverse();
         methods.forEach(m -> m.reverse(remapper));
         fields.values().forEach(f -> f.reverse(remapper));

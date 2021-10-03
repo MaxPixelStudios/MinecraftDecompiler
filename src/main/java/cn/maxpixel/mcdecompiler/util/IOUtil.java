@@ -28,17 +28,8 @@ import java.util.Objects;
 import java.util.zip.InflaterInputStream;
 
 public class IOUtil {
-    private static final Class<?> ZIP_FILESYSTEM;
-    private static final Class<?> ENTRY_INPUT_STREAM;
-
-    static {
-        try {
-            ZIP_FILESYSTEM = Class.forName("jdk.nio.zipfs.ZipFileSystem");
-            ENTRY_INPUT_STREAM = Class.forName("jdk.nio.zipfs.ZipFileSystem$EntryInputStream");
-        } catch (ClassNotFoundException e) {
-            throw Utils.wrapInRuntime(e);
-        }
-    }
+    private static final Class<?> ZIP_FILESYSTEM = LambdaUtil.trySupply(() -> Class.forName("jdk.nio.zipfs.ZipFileSystem"));
+    private static final Class<?> ENTRY_INPUT_STREAM = LambdaUtil.trySupply(() -> Class.forName("jdk.nio.zipfs.ZipFileSystem$EntryInputStream"));
 
     public static byte[] readAllBytes(Path file) throws IOException {
         if(ZIP_FILESYSTEM == file.getFileSystem().getClass()) { // Ensure the filesystem is zipfs
@@ -66,7 +57,7 @@ public class IOUtil {
     }
 
     public static BufferedReader asBufferedReader(Reader reader, String readerName) {
-        return Objects.requireNonNull(reader, () -> readerName + " cannot be null") instanceof BufferedReader ?
-                (BufferedReader) reader : new BufferedReader(reader);
+        return Objects.requireNonNull(reader, () -> readerName + " cannot be null") instanceof BufferedReader br ?
+                br : new BufferedReader(reader);
     }
 }

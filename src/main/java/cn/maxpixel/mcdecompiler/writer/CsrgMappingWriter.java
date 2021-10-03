@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
@@ -31,7 +31,7 @@ public class CsrgMappingWriter extends AbstractMappingWriter {
         super();
     }
 
-    public CsrgMappingWriter(MappingRemapper remapper) {
+    public CsrgMappingWriter(ClassifiedMappingRemapper remapper) {
         super(remapper);
     }
 

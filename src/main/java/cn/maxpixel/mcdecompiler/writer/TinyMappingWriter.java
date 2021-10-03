@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.Documented;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
@@ -41,7 +41,7 @@ public class TinyMappingWriter extends AbstractMappingWriter {
         this.namespaces = new ObjectImmutableList<>(namespaces);
     }
 
-    public TinyMappingWriter(MappingRemapper remapper, int version, String... namespaces) {
+    public TinyMappingWriter(ClassifiedMappingRemapper remapper, int version, String... namespaces) {
         super(remapper);
         this.version = version;
         this.namespaces = new ObjectImmutableList<>(namespaces);

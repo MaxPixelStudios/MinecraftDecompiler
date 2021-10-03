@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
@@ -51,12 +51,12 @@ public class TsrgMappingWriter extends AbstractMappingWriter {
         this.namespaces = new ObjectImmutableList<>(namespaces);
     }
 
-    public TsrgMappingWriter(MappingRemapper remapper) {
+    public TsrgMappingWriter(ClassifiedMappingRemapper remapper) {
         super(remapper);
         this.version = 1;
     }
 
-    public TsrgMappingWriter(MappingRemapper remapper, String... namespaces) {
+    public TsrgMappingWriter(ClassifiedMappingRemapper remapper, String... namespaces) {
         super(remapper);
         this.version = 2;
         this.namespaces = new ObjectImmutableList<>(namespaces);

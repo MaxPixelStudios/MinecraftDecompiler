@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping1.component;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 
 /**
  * Descriptor component for paired mappings
@@ -28,7 +28,7 @@ public interface Descriptor extends Component {
 
     void setUnmappedDescriptor(String unmappedDescriptor);
 
-    default void reverseUnmapped(MappingRemapper remapper) {
+    default void reverseUnmapped(ClassifiedMappingRemapper remapper) {
         setUnmappedDescriptor(remapper.getMappedDescByUnmappedDesc(getUnmappedDescriptor()));
     }
 
@@ -40,7 +40,7 @@ public interface Descriptor extends Component {
 
         void setMappedDescriptor(String mappedDescriptor);
 
-        default void reverseMapped(MappingRemapper remapper) {
+        default void reverseMapped(ClassifiedMappingRemapper remapper) {
             setMappedDescriptor(remapper.getUnmappedDescByMappedDesc(getMappedDescriptor()));
         }
     }

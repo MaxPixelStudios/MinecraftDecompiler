@@ -18,9 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping1;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping1.component.Component;
-import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
 
 import java.util.Objects;
 
@@ -84,30 +82,6 @@ public class PairedMapping extends Mapping {
         unmappedName = mappedName;
         mappedName = temp;
         return this;
-    }
-
-    /**
-     * Reverse the given class mapping
-     * @param mapping Mapping to reverse
-     * @param remapper Remapper to remap descriptors
-     * @return The given class mapping
-     */
-    public static ClassMapping<PairedMapping> reverseClassMapping(ClassMapping<PairedMapping> mapping, MappingRemapper remapper) {
-        mapping.mapping.reverse();
-        mapping.getMethods().forEach(m -> reverse(m, remapper));
-        mapping.getFields().forEach(m -> reverse(m, remapper));
-        return mapping;
-    }
-
-    private static void reverse(PairedMapping m, MappingRemapper remapper) {
-        boolean supportDesc = m.isSupported(Descriptor.class);
-        boolean supportDescMapped = m.isSupported(Descriptor.Mapped.class);
-        if(supportDesc && supportDescMapped) {
-            String unmapped = ((Descriptor) m).getUnmappedDescriptor();
-            ((Descriptor) m).setUnmappedDescriptor(((Descriptor.Mapped) m).getMappedDescriptor());
-            ((Descriptor.Mapped) m).setMappedDescriptor(unmapped);
-        } else if(supportDesc) ((Descriptor) m).reverseUnmapped(remapper);
-        else if(supportDescMapped) ((Descriptor.Mapped) m).reverseMapped(remapper);
     }
 
     /* Auto-generated equals, hashCode and toString methods */

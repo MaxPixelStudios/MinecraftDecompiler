@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.components.LineNumber;
 import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
@@ -35,7 +35,7 @@ public class ProguardMappingWriter extends AbstractMappingWriter {
         super();
     }
 
-    public ProguardMappingWriter(MappingRemapper remapper) {
+    public ProguardMappingWriter(ClassifiedMappingRemapper remapper) {
         super(remapper);
     }
 

@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
 
 public class PairedMapping implements AbstractMapping {
@@ -53,7 +53,7 @@ public class PairedMapping implements AbstractMapping {
         mappedName = temp;
     }
 
-    public void reverse(MappingRemapper remapper) {
+    public void reverse(ClassifiedMappingRemapper remapper) {
         reverse();
     }
 

@@ -23,8 +23,8 @@ import java.util.function.Function;
 
 public class LambdaUtil {
     @FunctionalInterface
-    public interface Consumer_WithThrowable<T, E extends Throwable> {
-        void accept(T t) throws E;
+    public interface Supplier_WithThrowable<T, E extends Throwable> {
+        T get() throws E;
     }
 
     @FunctionalInterface
@@ -32,31 +32,20 @@ public class LambdaUtil {
         void run() throws E;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T, E extends Throwable> Consumer<T> handleThrowable(Consumer_WithThrowable<T, E> consumerWithThrowable, Consumer<E> exceptionHandler) {
-        return t -> {
-            try {
-                consumerWithThrowable.accept(t);
-            } catch(Throwable throwable) {
-                exceptionHandler.accept((E) throwable);
-            }
-        };
+    @FunctionalInterface
+    public interface Function_WithThrowable<T, R, E extends Throwable> {
+        R apply(T t) throws E;
     }
 
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
         throw Utils.wrapInRuntime(throwable);
     }
 
-    public static <E extends Throwable> void handle(Runnable_WithThrowable<E> runnableWithThrowable) {
-        handle(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <E extends Throwable> void handle(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
+    public static <T, E extends Throwable> T trySupply(Supplier_WithThrowable<T, E> supplierWithThrowable) {
         try {
-            runnableWithThrowable.run();
-        } catch (Throwable e) {
-            exceptionHandler.accept((E) e);
+            return supplierWithThrowable.get();
+        } catch(Throwable e) {
+            throw Utils.wrapInRuntime(e);
         }
     }
 
@@ -64,8 +53,15 @@ public class LambdaUtil {
         return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
     }
 
+    @SuppressWarnings("unchecked")
     public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
-        return () -> handle(runnableWithThrowable, exceptionHandler);
+        return () -> {
+            try {
+                runnableWithThrowable.run();
+            } catch(Throwable e) {
+                exceptionHandler.accept((E) e);
+            }
+        };
     }
 
     public static <T, I> T safeCall(I input, Function<I, T> func) {

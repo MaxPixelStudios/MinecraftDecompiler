@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.paired;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 
 import java.util.Objects;
@@ -45,11 +45,11 @@ public class MappedDescriptoredPairedMethodMapping extends PairedMethodMapping i
     @Override
     @Deprecated
     public void reverse() {
-        throw new UnsupportedOperationException("Use reverse(MappingRemapper) instead");
+        throw new UnsupportedOperationException("Use reverse(ClassifiedMappingRemapper) instead");
     }
 
     @Override
-    public void reverse(MappingRemapper remapper) {
+    public void reverse(ClassifiedMappingRemapper remapper) {
         super.reverse();
         mappedDescriptor = remapper.getUnmappedDescByMappedDesc(mappedDescriptor);
     }

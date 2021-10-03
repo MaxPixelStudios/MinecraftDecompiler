@@ -38,5 +38,9 @@ public interface LocalVariableTable {
         void setLocalVariableName(int index, String[] namespaces, String[] names, int nameStart);
 
         IntSet getLocalVariableIndexes();
+
+        void swapAll(String fromNamespace, String toNamespace);
+
+        void swap(int index, String fromNamespace, String toNamespace);
     }
 }

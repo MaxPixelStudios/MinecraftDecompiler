@@ -18,13 +18,20 @@
 
 package cn.maxpixel.mcdecompiler.mapping1;
 
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
+import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
+import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A mapping could contain members. Represents a class and its members' mappings
@@ -116,7 +123,7 @@ public final class ClassMapping<T extends Mapping> {
 
     /**
      * Gets the methods this class mapping currently has<br>
-     * <b>NOTE: Adding fields through this list is unsafe</b>
+     * <b>NOTE: Adding methods through this list is unsafe</b>
      * @return The methods
      */
     public ObjectList<T> getMethods() {
@@ -132,6 +139,87 @@ public final class ClassMapping<T extends Mapping> {
         return fields;
     }
 
+    /**
+     * Reverse the given class mapping<br>
+     * <b>WARNING: INTERNAL METHOD. DO NOT CALL. USE {@link cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader#reverse(ClassifiedMappingReader)}</b>
+     * @param mapping Mapping to reverse
+     * @param remapper Remapper to remap descriptors
+     * @return The given class mapping
+     */
+    public static ClassMapping<PairedMapping> reverse(ClassMapping<PairedMapping> mapping, ClassifiedMappingRemapper remapper) {
+        mapping.mapping.reverse();
+        mapping.getMethods().forEach(m -> reverse(m, remapper));
+        mapping.getFields().forEach(m -> reverse(m, remapper));
+        return mapping;
+    }
+
+    private static void reverse(PairedMapping m, ClassifiedMappingRemapper remapper) {
+        m.reverse();
+        boolean supportDesc = m.isSupported(Descriptor.class);
+        boolean supportDescMapped = m.isSupported(Descriptor.Mapped.class);
+        if(supportDesc && supportDescMapped) {
+            String unmapped = ((Descriptor) m).getUnmappedDescriptor();
+            ((Descriptor) m).setUnmappedDescriptor(((Descriptor.Mapped) m).getMappedDescriptor());
+            ((Descriptor.Mapped) m).setMappedDescriptor(unmapped);
+        } else if(supportDesc) ((Descriptor) m).reverseUnmapped(remapper);
+        else if(supportDescMapped) ((Descriptor.Mapped) m).reverseMapped(remapper);
+    }
+
+    /**
+     * Swap the given class mapping<br>
+     * <b>WARNING: INTERNAL METHOD. DO NOT CALL. USE {@link cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader#swap(ClassifiedMappingReader, String)}}</b>
+     * @param mapping Mapping to swap
+     * @param remapper Remapper to remap descriptors
+     * @param fromNamespace Namespace to swap from
+     * @param toNamespace Namespace to swap to
+     * @return The given class mapping
+     */
+    public static ClassMapping<NamespacedMapping> swap(ClassMapping<NamespacedMapping> mapping, ClassifiedMappingRemapper remapper,
+                                                       String fromNamespace, String toNamespace) {
+        mapping.mapping.swap(fromNamespace, toNamespace);
+        mapping.getMethods().forEach(m -> swap(m, remapper, fromNamespace, toNamespace));
+        mapping.getFields().forEach(m -> swap(m, remapper, fromNamespace, toNamespace));
+        return mapping;
+    }
+
+    private static void swap(NamespacedMapping m, ClassifiedMappingRemapper remapper, String fromNamespace, String toNamespace) {
+        m.swap(fromNamespace, toNamespace);
+        if(m.isSupported(Descriptor.Namespaced.class)) {
+            Descriptor.Namespaced n = ((Descriptor.Namespaced) m);
+            if(!n.getDescriptorNamespace().equals(fromNamespace)) throw new IllegalArgumentException();
+            n.reverseUnmapped(remapper);
+        }
+        if(m.isSupported(LocalVariableTable.Namespaced.class)) ((LocalVariableTable.Namespaced) m).swapAll(fromNamespace, toNamespace);
+    }
+
+    public static Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> genFieldsByUnmappedNameMap(
+            ObjectList<ClassMapping<PairedMapping>> mapping) {
+        return mapping.parallelStream().collect(Collectors.toMap(
+                cm -> cm.mapping.unmappedName,
+                cm -> cm.getFields().parallelStream().collect(Collectors.toMap(m -> m.unmappedName, Function.identity(),
+                        Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new)),
+                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByUnmappedNameMap(
+            ObjectList<ClassMapping<PairedMapping>> mapping) {
+        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName,
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByMappedNameMap(
+            ObjectList<ClassMapping<PairedMapping>> mapping) {
+        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName,
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> genMappingsByNamespaceMap(
+            ObjectList<ClassMapping<NamespacedMapping>> mapping, String namespace) {
+        return mapping.parallelStream().collect(Collectors.toMap(m -> m.mapping.getName(namespace),
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

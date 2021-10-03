@@ -18,8 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
-import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sun.misc.Unsafe;
@@ -36,6 +34,13 @@ import java.util.List;
 public class Utils {
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
+    }
+
+    public static <I, O, E extends Throwable> O[] mapArray(I[] input, O[] output, LambdaUtil.Function_WithThrowable<I, O, E> func) throws E {
+        for(int i = 0; i < input.length; i++) {
+            output[i] = func.apply(input[i]);
+        }
+        return output;
     }
 
     public static void waitForProcess(Process pro) {
@@ -70,15 +75,6 @@ public class Utils {
 
     public static <T> T onKeyDuplicate(T t, T u) {
         throw new IllegalArgumentException("Key \"" + t + "\" and \"" + u + "\" duplicated!");
-    }
-
-    public static boolean nameAndDescEquals(PairedMethodMapping left, PairedMethodMapping right) {
-        if(left.getClass() != right.getClass() || !((left instanceof Descriptor) || (left instanceof Descriptor.Mapped)))
-            throw new UnsupportedOperationException();
-        boolean b = left.getUnmappedName().equals(right.getUnmappedName()) && left.getMappedName().equals(right.getMappedName());
-        if(left.isDescriptor()) b &= left.asDescriptor().getUnmappedDescriptor().equals(right.asDescriptor().getUnmappedDescriptor());
-        if(left.isMappedDescriptor()) b &= left.asMappedDescriptor().getMappedDescriptor().equals(right.asMappedDescriptor().getMappedDescriptor());
-        return b;
     }
 
     // https://github.com/LXGaming/ClassLoaderUtils/blob/master/src/main/java/io/github/lxgaming/classloader/ClassLoaderUtils.java

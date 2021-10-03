@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping1;
 
+import cn.maxpixel.mcdecompiler.mapping1.component.Component;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
@@ -81,6 +82,65 @@ public class NamespacedMapping extends Mapping {
      * @param nameStart To put the names start from the index
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart) {
+        if(nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart)) throw new IllegalArgumentException();
+        for(int i = 0; i < namespaces.length; i++) {
+            this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
+        }
+    }
+
+    /**
+     * Constructor
+     * @param names A map keyed with namespace and valued with name
+     * @param components Components supported by this mapping
+     */
+    protected NamespacedMapping(Map<String, String> names, Class<? extends Component>... components) {
+        super(components);
+        if(names.containsKey(null)) throw new IllegalArgumentException();
+        this.names.putAll(names);
+    }
+
+    /**
+     * Constructor
+     * @param namespace The namespace
+     * @param name The name
+     * @param components Components supported by this mapping
+     */
+    protected NamespacedMapping(String namespace, String name, Class<? extends Component>... components) {
+        super(components);
+        this.names.put(Objects.requireNonNull(namespace), name);
+    }
+
+    /**
+     * Constructor
+     * @param namespaces The namespaces
+     * @param names The names
+     * @param components Components supported by this mapping
+     */
+    protected NamespacedMapping(String[] namespaces, String[] names, Class<? extends Component>... components) {
+        super(components);
+        if(namespaces.length != names.length) throw new IllegalArgumentException();
+        for(int i = 0; i < namespaces.length; i++) {
+            this.names.put(Objects.requireNonNull(namespaces[i]), names[i]);
+        }
+    }
+
+    /**
+     * Constructor
+     * @param components Components supported by this mapping
+     */
+    protected NamespacedMapping(Class<? extends Component>... components) {
+        super(components);
+    }
+
+    /**
+     * Helper constructor. Internally used by mapping readers
+     * @param namespaces The namespaces
+     * @param names The names
+     * @param nameStart To put the names start from the index
+     * @param components Components supported by this mapping
+     */
+    protected NamespacedMapping(String[] namespaces, String[] names, int nameStart, Class<? extends Component>... components) {
+        super(components);
         if(nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart)) throw new IllegalArgumentException();
         for(int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);

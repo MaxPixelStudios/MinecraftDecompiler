@@ -23,7 +23,7 @@ public interface Documented extends Component {
 
     String getDoc();
 
-    interface LocalVariable extends Component {
+    interface LocalVariable extends Documented {
         void setLocalVariableDoc(int index, String doc);
 
         String getLocalVariableDoc(int index);

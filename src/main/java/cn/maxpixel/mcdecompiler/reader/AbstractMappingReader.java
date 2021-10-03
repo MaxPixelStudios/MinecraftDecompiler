@@ -18,20 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.asm.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.AbstractClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.AbstractMapping;
-import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.namespaced.NamespacedMethodMapping;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedFieldMapping;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedMethodMapping;
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -41,18 +31,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class AbstractMappingReader {
+public abstract class AbstractMappingReader<M extends Mapping, R, P extends MappingProcessor<M, R>> {
     protected static final Logger LOGGER = LogManager.getLogger("Mapping Reader");
-    protected ObjectArrayList<String> lines;
-    private ObjectList<? extends AbstractClassMapping> mappings;
-    private ObjectList<? extends AbstractMapping> packages;
+    public final R mappings;
+    public final ObjectList<M> packages;
 
-    public AbstractMappingReader(BufferedReader reader) {
+    public AbstractMappingReader(P processor, BufferedReader reader) {
         try(reader) {
-            lines = reader.lines().map(s -> {
+            LOGGER.debug("Reading file");
+            ObjectArrayList<String> lines = reader.lines().map(s -> {
                 if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
 
                 int index = s.indexOf('#');
@@ -61,141 +50,63 @@ public abstract class AbstractMappingReader {
 
                 return s;
             }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
+            LOGGER.trace("Read file");
+            LOGGER.debug("Processing content");
+            Pair<R, ObjectList<M>> result = processor.process(lines);
+            LOGGER.trace("Processed content");
+            mappings = result.left();
+            packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
     }
 
-    public AbstractMappingReader(Reader rd) {
-        this(IOUtil.asBufferedReader(rd));
+    public AbstractMappingReader(P processor, Reader rd) {
+        this(processor, IOUtil.asBufferedReader(rd));
     }
 
-    public AbstractMappingReader(InputStream is) {
-        this(new InputStreamReader(is, StandardCharsets.UTF_8));
+    public AbstractMappingReader(P processor, InputStream is) {
+        this(processor, new InputStreamReader(is, StandardCharsets.UTF_8));
     }
 
-    public AbstractMappingReader(String path) throws FileNotFoundException {
-        this(new FileInputStream(path));
+    public AbstractMappingReader(P processor, String path) throws FileNotFoundException {
+        this(processor, new FileInputStream(path));
     }
 
-    public abstract MappingProcessor getProcessor();
+    public AbstractMappingReader(P processor, BufferedReader... readers) {
+        LOGGER.debug("Reading files");
+        ObjectArrayList<String>[] contents = Utils.mapArray(readers, new ObjectArrayList[readers.length], reader -> {
+            try(reader) {
+                return reader.lines().map(s -> {
+                    if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
 
-    private void read() {
-        MappingProcessor processor = getProcessor();
-        mappings = processor.isPaired() ? processor.asPaired().process() : processor.asNamespaced().process();
-        packages = processor instanceof PackageMappingProcessor ? ((PackageMappingProcessor) processor).getPackages() : ObjectLists.emptyList();
-    }
+                    int index = s.indexOf('#');
+                    if(index > 0) return s.substring(0, index);
+                    else if(index == 0) return null;
 
-    public final ObjectList<? extends AbstractClassMapping> getMappings() {
-        if(mappings == null) read();
-        return mappings;
-    }
-
-    public final ObjectList<? extends AbstractMapping> getPackages() {
-        if(packages == null) read();
-        return packages;
-    }
-
-    public final AbstractMappingReader reverse() {
-        if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
-        if(mappings == null) read();
-        MappingRemapper remapper = new MappingRemapper(this);
-        mappings.forEach(cm -> cm.asPaired().reverse(remapper));
-        packages.forEach(mapping -> mapping.asPairedMapping().reverse());
-        return this;
-    }
-
-    public final AbstractMappingReader reverse(String targetNamespace) {
-        if(getProcessor().isPaired()) throw new UnsupportedOperationException();
-        if(mappings == null) read();
-        MappingRemapper remapper = new MappingRemapper(this);
-        String unmNamespace = getProcessor().asNamespaced().getNamespaces()[0];
-
-        ObjectArrayList<PairedClassMapping> newMappings = new ObjectArrayList<>();
-        mappings.forEach(cm -> {
-            PairedClassMapping reversed = cm.asNamespaced().getAsPaired(unmNamespace, targetNamespace);
-            reversed.reverse(remapper);
-            newMappings.add(reversed);
+                    return s;
+                }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
+            } catch (IOException e) {
+                throw Utils.wrapInRuntime(e);
+            }
         });
-        this.mappings = ObjectLists.unmodifiable(newMappings);
-
-        ObjectArrayList<PairedMapping> newPackages = new ObjectArrayList<>();
-        packages.forEach(mapping -> {
-            NamespacedMapping nm = mapping.asNamespacedMapping();
-            newPackages.add(new PairedMapping(nm.getName(targetNamespace), nm.getName(unmNamespace)));
-        });
-        this.packages = ObjectLists.unmodifiable(newPackages);
-        return this;
+        LOGGER.trace("Read files");
+        LOGGER.debug("Processing contents");
+        Pair<R, ObjectList<M>> result = processor.process(contents);
+        LOGGER.trace("Processed contents");
+        mappings = result.left();
+        packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByUnmappedNameMap() {
-        if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
-        return getMappings().stream().map(AbstractClassMapping::asPaired).collect(Collectors.toMap(PairedClassMapping::getUnmappedName,
-                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    public AbstractMappingReader(P processor, Reader... rd) {
+        this(processor, Utils.mapArray(rd, new BufferedReader[rd.length], IOUtil::asBufferedReader));
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByMappedNameMap() {
-        if(getProcessor().isNamespaced()) throw new UnsupportedOperationException();
-        return getMappings().stream().map(AbstractClassMapping::asPaired).collect(Collectors.toMap(PairedClassMapping::getMappedName,
-                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    public AbstractMappingReader(P processor, InputStream... is) {
+        this(processor, Utils.mapArray(is, new InputStreamReader[is.length], i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
     }
 
-    public final Object2ObjectOpenHashMap<String, ? extends NamespacedClassMapping> getMappingsByNamespaceMap(String namespace) {
-        if(getProcessor().isPaired()) throw new UnsupportedOperationException();
-        return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(namespace),
-                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-    }
-
-    public final Object2ObjectOpenHashMap<String, ? extends PairedClassMapping> getMappingsByNamespaceMap(String keyNamespace, String targetNamespace) {
-        if(getProcessor().isPaired()) throw new UnsupportedOperationException();
-        return getMappings().stream().map(AbstractClassMapping::asNamespaced).collect(Collectors.toMap(m -> m.getName(keyNamespace),
-                m -> m.getAsPaired(getProcessor().asNamespaced().getNamespaces()[0], targetNamespace),
-                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-    }
-
-    public interface MappingProcessor {
-        default boolean isPaired() {
-            return this instanceof PairedMappingProcessor;
-        }
-
-        default boolean isNamespaced() {
-            return this instanceof NamespacedMappingProcessor;
-        }
-
-        default PairedMappingProcessor asPaired() {
-            return (PairedMappingProcessor) this;
-        }
-
-        default NamespacedMappingProcessor asNamespaced() {
-            return (NamespacedMappingProcessor) this;
-        }
-    }
-
-    public interface PairedMappingProcessor extends MappingProcessor {
-        ObjectList<? extends PairedClassMapping> process();
-
-        PairedClassMapping processClass(String line);
-
-        PairedMethodMapping processMethod(String line);
-
-        PairedFieldMapping processField(String line);
-    }
-
-    public interface NamespacedMappingProcessor extends MappingProcessor {
-        ObjectList<? extends NamespacedClassMapping> process();
-
-        String[] getNamespaces();
-
-        NamespacedClassMapping processClass(String line);
-
-        NamespacedMethodMapping processMethod(String line);
-
-        NamespacedFieldMapping processField(String line);
-    }
-
-    public interface PackageMappingProcessor {
-        ObjectList<? extends AbstractMapping> getPackages();
-
-        AbstractMapping processPackage(String line);
+    public AbstractMappingReader(P processor, String... path) throws FileNotFoundException {
+        this(processor, Utils.mapArray(path, new FileInputStream[path.length], FileInputStream::new));
     }
 }

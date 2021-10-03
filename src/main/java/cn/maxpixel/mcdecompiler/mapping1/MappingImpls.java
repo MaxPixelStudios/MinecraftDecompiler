@@ -44,10 +44,12 @@ class PairedImpl extends PairedMapping implements Descriptor, Descriptor.Mapped,
     private ClassMapping<PairedMapping> owner;
     private final boolean sO = isSupported(Owned.class);
 
+    @SafeVarargs
     PairedImpl(String unmappedName, String mappedName, Class<? extends Component>... components) {
         super(unmappedName, mappedName, components);
     }
 
+    @SafeVarargs
     PairedImpl(Class<? extends Component>... components) {
         super(components);
     }
@@ -168,7 +170,7 @@ class PairedImpl extends PairedMapping implements Descriptor, Descriptor.Mapped,
     }
 }
 
-class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced, LocalVariableTable.Namespaced, Documented, Documented.LocalVariable, Owned<NamespacedMapping> {
+class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced, LocalVariableTable.Namespaced, Documented, Documented.LocalVariable, Owned<NamespacedMapping>, StaticIdentifiable {
     private String unmappedDescriptor;
     private String descriptorNamespace;
     private final boolean sU = isSupported(Descriptor.Namespaced.class); // support unmapped descriptor, etc.
@@ -184,6 +186,34 @@ class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced,
 
     private ClassMapping<NamespacedMapping> owner;
     private final boolean sO = isSupported(Owned.class);
+
+    private boolean isStatic;
+    private final boolean sS = isSupported(StaticIdentifiable.class);
+
+    @SafeVarargs
+    NamespacedImpl(Map<String, String> names, Class<? extends Component>... components) {
+        super(names, components);
+    }
+
+    @SafeVarargs
+    NamespacedImpl(String namespace, String name, Class<? extends Component>... components) {
+        super(namespace, name, components);
+    }
+
+    @SafeVarargs
+    NamespacedImpl(String[] namespaces, String[] names, Class<? extends Component>... components) {
+        super(namespaces, names, components);
+    }
+
+    @SafeVarargs
+    NamespacedImpl(Class<? extends Component>... components) {
+        super(components);
+    }
+
+    @SafeVarargs
+    NamespacedImpl(String[] namespaces, String[] names, int nameStart, Class<? extends Component>... components) {
+        super(namespaces, names, nameStart, components);
+    }
 
     @Override
     public String getUnmappedDescriptor() {
@@ -286,6 +316,27 @@ class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced,
     }
 
     @Override
+    public void swapAll(String fromNamespace, String toNamespace) {
+        if(!sL) throw new UnsupportedOperationException();
+        Objects.requireNonNull(fromNamespace);
+        Objects.requireNonNull(toNamespace);
+        lvt.keySet().forEach(index -> {
+            Object2ObjectMap<String, String> map = lvt.get(index);
+            map.put(toNamespace, map.put(fromNamespace, map.get(toNamespace)));
+        });
+    }
+
+    @Override
+    public void swap(int index, String fromNamespace, String toNamespace) {
+        if(!sL) throw new UnsupportedOperationException();
+        if(index < 0) throw new IndexOutOfBoundsException();
+        Objects.requireNonNull(fromNamespace);
+        Objects.requireNonNull(toNamespace);
+        Object2ObjectMap<String, String> map = lvt.get(index);
+        map.put(toNamespace, map.put(fromNamespace, map.get(toNamespace)));
+    }
+
+    @Override
     public ClassMapping<NamespacedMapping> getOwner() {
         if(!sO) throw new UnsupportedOperationException();
         return owner;
@@ -295,6 +346,18 @@ class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced,
     public void setOwner(ClassMapping<NamespacedMapping> owner) {
         if(!sO) throw new UnsupportedOperationException();
         this.owner = owner;
+    }
+
+    @Override
+    public boolean isStatic() {
+        if(!sS) throw new UnsupportedOperationException();
+        return isStatic;
+    }
+
+    @Override
+    public void setStatic(boolean isStatic) {
+        if(!sS) throw new UnsupportedOperationException();
+        this.isStatic = isStatic;
     }
 
     @Override
@@ -327,6 +390,7 @@ class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced,
             }
             if(sO) result &= Objects.equals(LambdaUtil.safeCall(owner, owner -> owner.mapping),
                     LambdaUtil.safeCall(((Owned<NamespacedMapping>) that).getOwner(), owner -> owner.mapping));
+            if(sS) result &= isStatic == ((StaticIdentifiable) that).isStatic();
             return result;
         } catch(ClassCastException cce) {
             return false;
@@ -344,6 +408,7 @@ class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced,
         if(sDL) result = 31 * result + lvtDoc.hashCode();
         if(sL) result = 31 * result + lvt.hashCode();
         if(sO) result = 31 * result + (owner == null ? 0 : Objects.hashCode(owner.mapping));
+        if(sS) result = 31 * result + Boolean.hashCode(isStatic);
         return result;
     }
 
@@ -361,6 +426,8 @@ class NamespacedImpl extends NamespacedMapping implements Descriptor.Namespaced,
                 ", sL=" + sL +
                 ", owner=" + LambdaUtil.safeCall(owner, owner -> owner.mapping) +
                 ", sO=" + sO +
+                ", isStatic=" + isStatic +
+                ", sS=" + sS +
                 "} " + super.toString();
     }
 }
