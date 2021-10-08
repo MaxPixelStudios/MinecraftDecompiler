@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping1;
 
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.*;
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;

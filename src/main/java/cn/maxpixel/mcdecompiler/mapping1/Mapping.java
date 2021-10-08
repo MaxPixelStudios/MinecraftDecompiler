@@ -39,10 +39,8 @@ public abstract class Mapping {
     @SafeVarargs
     protected Mapping(Class<? extends Component>... components) {
         supportedComponents.addElements(0, components);
-        for(Class<?> itf : getClass().getInterfaces()) {
-            if(!supportedComponents.contains(itf))
-                throw new UnsupportedOperationException();
-        }
+        if(!Arrays.asList(getClass().getInterfaces()).containsAll(supportedComponents))
+            throw new UnsupportedOperationException();
     }
 
     /**

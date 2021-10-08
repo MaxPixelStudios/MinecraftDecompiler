@@ -18,10 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping1.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.MappingCreator;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping1.component.StaticIdentifiable;
@@ -152,7 +152,7 @@ public final class MappingProcessors {
                         mappings.right().add(new PairedMapping(sa[0], sa[1]));
                     else {
                         ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(sa[0], sa[1]));
-                        i = processTree(i, content, classMapping);
+                        i = processTree(i, len, content, classMapping);
                         mappings.left().add(classMapping);
                     }
                 } else error();
@@ -160,7 +160,8 @@ public final class MappingProcessors {
             return mappings;
         }
 
-        private static int processTree(int index, ObjectList<String> content, ClassMapping<PairedMapping> classMapping) {
+        private static int processTree(int index, int size, ObjectList<String> content, ClassMapping<PairedMapping> classMapping) {
+            if(index + 1 >= size) return index;
             String s = content.get(index + 1);
             if(s.charAt(0) == '\t') {
                 String[] sa = s.substring(1).split(" ");
@@ -169,7 +170,7 @@ public final class MappingProcessors {
                     case 3 -> classMapping.addMethod(MappingCreator.Paired.newDescriptorOwned(sa[0], sa[2], sa[1]));
                     default -> error();
                 }
-                return processTree(index + 1, content, classMapping);
+                return processTree(index + 1, size, content, classMapping);
             }
             return index;
         }
@@ -270,15 +271,16 @@ public final class MappingProcessors {
                     String[] sa = split(s, classMatcher, 2, true);
                     ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(
                             NamingUtil.asNativeName(sa[0]), NamingUtil.asNativeName(sa[1])));
-                    i = processTree(i, content, classMapping, fieldMatcher, methodMatcher);
+                    i = processTree(i, len, content, classMapping, fieldMatcher, methodMatcher);
                     mappings.left().add(classMapping);
                 } else error();
             }
             return mappings;
         }
 
-        private static int processTree(int index, ObjectList<String> content, ClassMapping<PairedMapping> classMapping,
+        private static int processTree(int index, int size, ObjectList<String> content, ClassMapping<PairedMapping> classMapping,
                                        Matcher fieldMatcher, Matcher methodMatcher) {
+            if(index + 1 >= size) return index;
             String s = content.get(index + 1);
             if(s.startsWith("    ")) {
                 if(s.contains("(") && s.contains(")")) {
@@ -299,7 +301,7 @@ public final class MappingProcessors {
                     String[] sa = split(s.substring(4), fieldMatcher, 3, true);
                     classMapping.addField(MappingCreator.Paired.newMappedDescriptorOwned(sa[2], sa[1], NamingUtil.asDescriptor(sa[0])));
                 }
-                return processTree(index + 1, content, classMapping, fieldMatcher, methodMatcher);
+                return processTree(index + 1, size, content, classMapping, fieldMatcher, methodMatcher);
             }
             return index;
         }
@@ -310,10 +312,16 @@ public final class MappingProcessors {
             int index = 0;
             for(int i = 0; i < count; i++) {
                 if(!matcher.find()) {
-                    if(force) error();
-                    String[] ret = new String[i];
-                    System.arraycopy(sa, 0, ret, 0, i);
-                    return ret;
+                    if(index < s.length()) {
+                        sa[i] = s.substring(index);
+                        if(i < count - 1) {
+                            if(force) error();
+                            String[] ret = new String[i + 1];
+                            System.arraycopy(sa, 0, ret, 0, ret.length);
+                            return ret;
+                        }
+                        break;
+                    } else error();
                 }
                 sa[i] = s.substring(index, matcher.start());
                 index = matcher.end();
@@ -377,15 +385,16 @@ public final class MappingProcessors {
                 if(sa[0].length() == 1 && sa[0].charAt(0) == 'c') {
                     ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingCreator.Namespaced
                             .newDocumented(namespaces, sa, 1));
-                    i = processTree(i, namespaces, content, classMapping);
+                    i = processTree(i, len, namespaces, content, classMapping);
                     mappings.left().add(classMapping);
                 } else error();
             }
             return mappings;
         }
 
-        private static int processTree(int index, String[] namespaces, ObjectList<String> content,
+        private static int processTree(int index, int size, String[] namespaces, ObjectList<String> content,
                                        ClassMapping<NamespacedMapping> classMapping) {
+            if(index + 1 >= size) return index;
             String s = content.get(index + 1);
             if(s.charAt(0) == '\t') {
                 String[] sa = s.substring(1).split("\t");
@@ -394,43 +403,46 @@ public final class MappingProcessors {
                     case 'f' -> {
                         NamespacedMapping fieldMapping = MappingCreator.Namespaced.newDocumentedDescriptorOwned(namespaces, sa,
                                 2, namespaces[0], sa[1]);
-                        index = processTree1(index + 1, namespaces, content, fieldMapping);
+                        index = processTree1(index + 1, size, namespaces, content, fieldMapping);
                         classMapping.addField(fieldMapping);
                     }
                     case 'm' -> {
                         NamespacedMapping methodMapping = MappingCreator.Namespaced.newDocumentedLvtDescriptorOwned(
                                 namespaces, sa, 2, namespaces[0], sa[1]);
-                        index = processTree1(index + 1, namespaces, content, methodMapping);
+                        index = processTree1(index + 1, size, namespaces, content, methodMapping);
                         classMapping.addMethod(methodMapping);
                     }
                     default -> error();
                 }
-                return processTree(index + 1, namespaces, content, classMapping);
+                return processTree(index + 1, size, namespaces, content, classMapping);
             }
             return index;
         }
 
-        private static int processTree1(int index, String[] namespaces, ObjectList<String> content, NamespacedMapping fieldOrMethod) {
+        private static int processTree1(int index, int size, String[] namespaces, ObjectList<String> content,
+                                        NamespacedMapping fieldOrMethod) {
+            if(index + 1 >= size) return index;
             String s = content.get(index + 1);
-            if(s.charAt(1) == '\t') {
+            if(s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                 switch(s.charAt(2)) {
                     case 'c' -> ((Documented) fieldOrMethod).setDoc(s.substring(4));
                     case 'p' -> {
-                        String[] sa = s.substring(4).split(" ");
+                        String[] sa = s.substring(4).split("\t");
                         int i = Integer.parseInt(sa[0]);
                         ((LocalVariableTable.Namespaced) fieldOrMethod).setLocalVariableName(i, namespaces, sa, 1);
-                        index = processTree2(index + 1, i, content, fieldOrMethod);
+                        index = processTree2(index + 1, size, i, content, fieldOrMethod);
                     }
                     default -> error();
                 }
-                return processTree1(index + 1, namespaces, content, fieldOrMethod);
+                return processTree1(index + 1, size, namespaces, content, fieldOrMethod);
             }
             return index;
         }
 
-        private static int processTree2(int index, int i, ObjectList<String> content, NamespacedMapping methodMapping) {
+        private static int processTree2(int index, int size, int i, ObjectList<String> content, NamespacedMapping methodMapping) {
+            if(index + 1 >= size) return index;
             String s = content.get(index + 1);
-            if(s.charAt(2) == '\t') {
+            if(s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                 if(s.charAt(3) == 'c') ((Documented.LocalVariable) methodMapping).setLocalVariableDoc(i, s.substring(5));
                 else error();
                 if(content.get(index + 2).charAt(2) == '\t') error();

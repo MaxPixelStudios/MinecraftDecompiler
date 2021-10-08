@@ -18,9 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.reader.*;
+import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
@@ -30,8 +32,8 @@ import java.util.concurrent.TimeUnit;
 @Fork(1)
 @Threads(8)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Warmup(iterations = 15)
-@Measurement(iterations = 20)
+@Warmup(iterations = 1)
+@Measurement(iterations = 1)
 @BenchmarkMode(Mode.SingleShotTime)
 @State(Scope.Benchmark)
 public class MappingReadSpeedTest {
@@ -39,52 +41,43 @@ public class MappingReadSpeedTest {
         Options options = new OptionsBuilder()
                 .include(".*" + MappingReadSpeedTest.class.getSimpleName() + ".*")
                 .build();
-//        new Runner(options).run();
+        new Runner(options).run();
     }
 
-    @Benchmark
+//    @Benchmark
     public void readSrg(Blackhole bh) {
-        SrgMappingReader mappingReader = new SrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.srg"));
-        bh.consume(mappingReader.getMappings());
-        bh.consume(mappingReader.getPackages());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.SRG, getClass().getClassLoader().getResourceAsStream("1.17.1.srg")));
+
     }
 
-    @Benchmark
+//    @Benchmark
     public void readCsrg(Blackhole bh) {
-        CsrgMappingReader mappingReader = new CsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.csrg"));
-        bh.consume(mappingReader.getMappings());
-        bh.consume(mappingReader.getPackages());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.CSRG, getClass().getClassLoader().getResourceAsStream("1.17.1.csrg")));
     }
 
-    @Benchmark
+//    @Benchmark
     public void readTsrg(Blackhole bh) {
-        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.tsrg"));
-        bh.consume(mappingReader.getMappings());
-        bh.consume(mappingReader.getPackages());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.TSRG_V1, getClass().getClassLoader().getResourceAsStream("1.17.1.tsrg")));
     }
 
     @Benchmark
     public void readTsrgV2(Blackhole bh) {
-        TsrgMappingReader mappingReader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tsrg"));
-        bh.consume(mappingReader.getMappings());
-        bh.consume(mappingReader.getPackages());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.TSRG_V2, getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tsrg")));
     }
 
-    @Benchmark
+//    @Benchmark
     public void readProguard(Blackhole bh) {
-        ProguardMappingReader mappingReader = new ProguardMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.txt"));
-        bh.consume(mappingReader.getMappings());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.PROGUARD, getClass().getClassLoader().getResourceAsStream("1.17.1.txt")));
     }
 
-    @Benchmark
+//    @Benchmark
     public void readTinyV1(Blackhole bh) {
-        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1.tiny"));
-        bh.consume(mappingReader.getMappings());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.TINY_V1, getClass().getClassLoader().getResourceAsStream("1.17.1.tiny")));
     }
 
-    @Benchmark
+//    @Benchmark
     public void readTinyV2(Blackhole bh) {
-        TinyMappingReader mappingReader = new TinyMappingReader(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tiny"));
-        bh.consume(mappingReader.getMappings());
+        bh.consume(new ClassifiedMappingReader<>(MappingProcessors.TINY_V2, getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tiny")));
+
     }
 }

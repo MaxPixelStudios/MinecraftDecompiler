@@ -18,10 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.mapping1.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.MappingCreator;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;

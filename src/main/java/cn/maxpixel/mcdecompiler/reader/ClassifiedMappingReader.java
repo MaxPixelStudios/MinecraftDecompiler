@@ -19,10 +19,10 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping1.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -72,7 +72,10 @@ public class ClassifiedMappingReader<M extends Mapping> extends AbstractMappingR
     }
 
     public static ClassifiedMappingReader<NamespacedMapping> swap(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace) {
-        String sourceNamespace = NamingUtil.findSourceNamespace(reader);
+        return swap(reader, NamingUtil.findSourceNamespace(reader), targetNamespace);
+    }
+
+    public static ClassifiedMappingReader<NamespacedMapping> swap(ClassifiedMappingReader<NamespacedMapping> reader, String sourceNamespace, String targetNamespace) {
         ClassifiedMappingRemapper remapper = new ClassifiedMappingRemapper(reader, sourceNamespace, targetNamespace);
         reader.mappings.forEach(cm -> ClassMapping.swap(cm, remapper, sourceNamespace, targetNamespace));
         reader.packages.forEach(m -> m.swap(sourceNamespace, targetNamespace));

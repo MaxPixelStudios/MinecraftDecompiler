@@ -19,7 +19,7 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.UniqueMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.UniqueMapping;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

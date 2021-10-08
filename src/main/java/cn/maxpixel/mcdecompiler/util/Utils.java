@@ -18,6 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingTypes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sun.misc.Unsafe;
@@ -27,18 +30,29 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Utils {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
     }
 
     public static <I, O, E extends Throwable> O[] mapArray(I[] input, O[] output, LambdaUtil.Function_WithThrowable<I, O, E> func) throws E {
+        Objects.requireNonNull(input);
+        Objects.requireNonNull(output);
+        Objects.requireNonNull(func);
         for(int i = 0; i < input.length; i++) {
-            output[i] = func.apply(input[i]);
+            output[i] = Objects.requireNonNull(func.apply(Objects.requireNonNull(input[i])));
         }
         return output;
     }
@@ -115,5 +129,36 @@ public class Utils {
         Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
         theUnsafeField.setAccessible(true);
         return (Unsafe) theUnsafeField.get(null);
+    }
+
+    public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(String mappingPath) {
+        try(Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#"))) {
+            return tryIdentifyingMappingType(lines);
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        }
+    }
+
+    public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(BufferedReader reader) {
+        try {
+            reader.mark(512);
+            MappingType<? extends Mapping, ?> result = tryIdentifyingMappingType(reader.lines().filter(s -> !s.startsWith("#")));
+            reader.reset();
+            return result;
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        }
+    }
+
+    public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(Stream<String> lines) {
+        List<String> list = lines.limit(2).collect(Collectors.toList());
+        String s = list.get(1);
+        if(s.startsWith("    ")) return MappingTypes.PROGUARD;
+        else if(s.startsWith("\t")) return MappingTypes.TSRG_V1;
+        s = list.get(0);
+        if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingTypes.SRG;
+        else if(s.startsWith("tiny\t2\t0") || s.startsWith("v1")) return MappingTypes.TINY_V1;
+        else if(s.startsWith("tsrg2")) return MappingTypes.TSRG_V1;
+        else return MappingTypes.CSRG;
     }
 }

@@ -16,9 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping1;
+package cn.maxpixel.mcdecompiler.mapping1.collection;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping1.component.Owned;

@@ -39,6 +39,8 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
     public final ObjectList<M> packages;
 
     public AbstractMappingReader(P processor, BufferedReader reader) {
+        Objects.requireNonNull(processor);
+        Objects.requireNonNull(reader);
         try(reader) {
             LOGGER.debug("Reading file");
             ObjectArrayList<String> lines = reader.lines().map(s -> {

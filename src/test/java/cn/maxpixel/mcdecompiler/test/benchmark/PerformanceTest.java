@@ -18,15 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.mapping.paired.PairedClassMapping;
-import cn.maxpixel.mcdecompiler.reader.TsrgMappingReader;
-import cn.maxpixel.mcdecompiler.writer.CsrgMappingWriter;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 @Fork(1)
@@ -37,29 +33,10 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 20)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class PerformanceTest {
-    private TsrgMappingReader reader;
-    private CsrgMappingWriter writer;
-
-    @Setup
-    public void init() throws Throwable {
-        reader = new TsrgMappingReader(getClass().getClassLoader().getResourceAsStream("1.16.5.tsrg"));
-        reader.getMappings();
-    }
-
-    @Setup(Level.Invocation)
-    public void reset() {
-        writer = new CsrgMappingWriter();
-    }
-
     public void test() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(PerformanceTest.class.getName())
                 .build();
 //        new Runner(options).run();
-    }
-
-    @Benchmark
-    public void write() {
-        writer.writePairedMappings((Collection<PairedClassMapping>) reader.getMappings());
     }
 }

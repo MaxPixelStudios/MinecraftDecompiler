@@ -22,6 +22,11 @@ import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
 import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
+import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import org.apache.logging.log4j.LogManager;
@@ -54,7 +59,7 @@ public class MinecraftDecompiler {
             .build();
 
     private final Options options;
-    private final Deobfuscator deobfuscator;
+    private final ClassifiedDeobfuscator deobfuscator;
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteIfExists(Properties.TEMP_DIR)));
@@ -99,7 +104,7 @@ public class MinecraftDecompiler {
         try {
             Path input = options.shouldDownloadJar() ? Properties.getDownloadedMcJarPath(options.version(), options.type()) :
                     options.inputJar();
-            deobfuscator.deobfuscate(input, options.outputJar(), options.targetNamespace(), options);
+            deobfuscator.deobfuscate(input, options.outputJar(), options);
         } catch (IOException e) {
             LOGGER.fatal("Error deobfuscating", e);
         }
@@ -288,13 +293,22 @@ public class MinecraftDecompiler {
         }
     }
 
-    private interface Options extends Deobfuscator.DeobfuscateOptions {
+    private interface Options extends ClassifiedDeobfuscator.DeobfuscateOptions {
         String version();
 
         Info.SideType type();
 
-        private Deobfuscator buildDeobfuscator() {
-            return inputMappings() != null ? new Deobfuscator(inputMappings()) : new Deobfuscator(version(), type());
+        private ClassifiedDeobfuscator buildDeobfuscator() {
+            if(inputMappings() != null) {
+                MappingType<? extends Mapping, ?> type = Utils.tryIdentifyingMappingType(inputMappings());
+                if(type instanceof MappingType.Classified mtc) {
+                    if(type.isNamespaced()) {
+                        return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc.getProcessor(), inputMappings()),
+                                targetNamespace());
+                    } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc.getProcessor(), inputMappings()));
+                } else throw new UnsupportedOperationException("Unsupported yet");//TODO
+            }
+            return new ClassifiedDeobfuscator(version(), type());
         }
 
         private boolean shouldDownloadJar() {

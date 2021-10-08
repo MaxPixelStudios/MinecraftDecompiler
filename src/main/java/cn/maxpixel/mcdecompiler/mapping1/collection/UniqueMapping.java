@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping1;
+package cn.maxpixel.mcdecompiler.mapping1.collection;
 
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Objects;

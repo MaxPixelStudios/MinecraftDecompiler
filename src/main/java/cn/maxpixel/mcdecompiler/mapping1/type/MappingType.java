@@ -16,32 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.mapping1.type;
 
-import org.objectweb.asm.Opcodes;
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.reader.MappingProcessor;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-public interface Info {
-    int ASM_VERSION = Opcodes.ASM9;
-    String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
+public interface MappingType<M extends Mapping, S> {
+    boolean isNamespaced();
 
-    enum SideType {
-        CLIENT,
-        SERVER;
+    MappingProcessor<M, S> getProcessor();
+
+    interface Classified<M extends Mapping> extends MappingType<M, ObjectList<ClassMapping<M>>> {
         @Override
-        public String toString() {
-            return name().toLowerCase();
-        }
-    }
-
-    enum DecompilerType {
-        FERNFLOWER,
-        OFFICIAL_FERNFLOWER,
-        FORGEFLOWER,
-        CFR,
-        USER_DEFINED;
-        @Override
-        public String toString() {
-            return name().toLowerCase();
-        }
+        MappingProcessor.Classified<M> getProcessor();
     }
 }
