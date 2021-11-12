@@ -44,7 +44,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
         try(reader) {
             LOGGER.debug("Reading file");
             ObjectArrayList<String> lines = reader.lines().map(s -> {
-                if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
+                if(s.startsWith("#") || s.isEmpty() || s.isBlank()) return null;
 
                 int index = s.indexOf('#');
                 if(index > 0) return s.substring(0, index);
