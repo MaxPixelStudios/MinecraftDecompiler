@@ -58,7 +58,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
             LOGGER.trace("Processed content");
             mappings = result.left();
             packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
-        } catch (IOException e) {
+        } catch(IOException e) {
             throw Utils.wrapInRuntime(e);
         }
     }

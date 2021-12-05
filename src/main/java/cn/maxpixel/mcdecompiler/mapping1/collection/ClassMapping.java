@@ -103,8 +103,8 @@ public final class ClassMapping<T extends Mapping> {
      */
     @SuppressWarnings("unchecked")
     public ClassMapping<T> addField(T field) {
-        if(!field.isSupported(Owned.class)) throw new UnsupportedOperationException();
-        ((Owned<T>) field).setOwner(this);
+        if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
+        field.getComponent(Owned.class).setOwner(this);
         fields.add(field);
         return this;
     }
@@ -116,10 +116,10 @@ public final class ClassMapping<T extends Mapping> {
      */
     @SuppressWarnings("unchecked")
     public ClassMapping<T> addMethod(T method) {
-        if(!method.isSupported(Owned.class)) throw new UnsupportedOperationException();
-        if(!method.isSupported(Descriptor.class) && !method.isSupported(Descriptor.Mapped.class) &&
-                !method.isSupported(Descriptor.Namespaced.class)) throw new UnsupportedOperationException();
-        ((Owned<T>) method).setOwner(this);
+        if(!method.hasComponent(Owned.class)) throw new UnsupportedOperationException();
+        if(!method.hasComponent(Descriptor.class) && !method.hasComponent(Descriptor.Mapped.class) &&
+                !method.hasComponent(Descriptor.Namespaced.class)) throw new UnsupportedOperationException();
+        method.getComponent(Owned.class).setOwner(this);
         methods.add(method);
         return this;
     }
@@ -144,7 +144,7 @@ public final class ClassMapping<T extends Mapping> {
 
     /**
      * Reverse the given class mapping<br>
-     * <b>WARNING: INTERNAL METHOD. DO NOT CALL. USE {@link cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader#reverse(ClassifiedMappingReader)}</b>
+     * <b>INTERNAL METHOD. DO NOT CALL. USE {@link cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader#reverse(ClassifiedMappingReader)}</b>
      * @param mapping Mapping to reverse
      * @param remapper Remapper to remap descriptors
      * @return The given class mapping
@@ -158,19 +158,19 @@ public final class ClassMapping<T extends Mapping> {
 
     private static void reverse(PairedMapping m, ClassifiedMappingRemapper remapper) {
         m.reverse();
-        boolean supportDesc = m.isSupported(Descriptor.class);
-        boolean supportDescMapped = m.isSupported(Descriptor.Mapped.class);
+        boolean supportDesc = m.hasComponent(Descriptor.class);
+        boolean supportDescMapped = m.hasComponent(Descriptor.Mapped.class);
         if(supportDesc && supportDescMapped) {
-            String unmapped = ((Descriptor) m).getUnmappedDescriptor();
-            ((Descriptor) m).setUnmappedDescriptor(((Descriptor.Mapped) m).getMappedDescriptor());
-            ((Descriptor.Mapped) m).setMappedDescriptor(unmapped);
-        } else if(supportDesc) ((Descriptor) m).reverseUnmapped(remapper);
-        else if(supportDescMapped) ((Descriptor.Mapped) m).reverseMapped(remapper);
+            String unmapped = m.getComponent(Descriptor.class).getUnmappedDescriptor();
+            m.getComponent(Descriptor.class).setUnmappedDescriptor(m.getComponent(Descriptor.Mapped.class).getMappedDescriptor());
+            m.getComponent(Descriptor.Mapped.class).setMappedDescriptor(unmapped);
+        } else if(supportDesc) m.getComponent(Descriptor.class).reverseUnmapped(remapper);
+        else if(supportDescMapped) m.getComponent(Descriptor.Mapped.class).reverseMapped(remapper);
     }
 
     /**
      * Swap the given class mapping<br>
-     * <b>WARNING: INTERNAL METHOD. DO NOT CALL. USE {@link cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader#swap(ClassifiedMappingReader, String)}}</b>
+     * <b>INTERNAL METHOD. DO NOT CALL. USE {@link cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader#swap(ClassifiedMappingReader, String)}}</b>
      * @param mapping Mapping to swap
      * @param remapper Remapper to remap descriptors
      * @param fromNamespace Namespace to swap from
@@ -187,12 +187,13 @@ public final class ClassMapping<T extends Mapping> {
 
     private static void swap(NamespacedMapping m, ClassifiedMappingRemapper remapper, String fromNamespace, String toNamespace) {
         m.swap(fromNamespace, toNamespace);
-        if(m.isSupported(Descriptor.Namespaced.class)) {
-            Descriptor.Namespaced n = ((Descriptor.Namespaced) m);
+        if(m.hasComponent(Descriptor.Namespaced.class)) {
+            Descriptor.Namespaced n = m.getComponent(Descriptor.Namespaced.class);
             if(!n.getDescriptorNamespace().equals(fromNamespace)) throw new IllegalArgumentException();
             n.reverseUnmapped(remapper);
         }
-        if(m.isSupported(LocalVariableTable.Namespaced.class)) ((LocalVariableTable.Namespaced) m).swapAll(fromNamespace, toNamespace);
+        if(m.hasComponent(LocalVariableTable.Namespaced.class))
+            m.getComponent(LocalVariableTable.Namespaced.class).swapAll(fromNamespace, toNamespace);
     }
 
     public static Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> genFieldsByUnmappedNameMap(

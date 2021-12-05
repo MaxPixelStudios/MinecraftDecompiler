@@ -23,7 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
-// https://github.com/ModCoderPack/MCInjector/blob/master/src/main/java/de/oceanlabs/mcp/mcinjector/adaptors/ParameterAnnotationFixer.java
+// Visitor version of https://github.com/ModCoderPack/MCInjector/blob/master/src/main/java/de/oceanlabs/mcp/mcinjector/adaptors/ParameterAnnotationFixer.java
 public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     private static final Logger LOGGER = LogManager.getLogger("Runtime(In)visibleParameterAnnotations Attribute Fixer");
     private int removeCount;// = isEnum ? 2 : 1

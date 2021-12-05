@@ -18,14 +18,30 @@
 
 package cn.maxpixel.mcdecompiler.mapping1.component;
 
-public interface Documented extends Component {
-    void setDoc(String doc);
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
-    String getDoc();
+public class Documented implements Component {
+    public String doc;
 
-    interface LocalVariable extends Documented {
-        void setLocalVariableDoc(int index, String doc);
+    public String getDoc() {
+        return doc;
+    }
 
-        String getLocalVariableDoc(int index);
+    public void setDoc(String doc) {
+        this.doc = doc;
+    }
+
+    public static class LocalVariable extends Documented {
+        private final Int2ObjectOpenHashMap<String> lvtDoc = new Int2ObjectOpenHashMap<>();
+
+        public void setLocalVariableDoc(int index, String doc) {
+            if(index < 0) throw new IndexOutOfBoundsException();
+            lvtDoc.put(index, doc);
+        }
+
+        public String getLocalVariableDoc(int index) {
+            if(index < 0) throw new IndexOutOfBoundsException();
+            return lvtDoc.get(index);
+        }
     }
 }

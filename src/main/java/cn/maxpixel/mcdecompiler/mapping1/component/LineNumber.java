@@ -18,12 +18,31 @@
 
 package cn.maxpixel.mcdecompiler.mapping1.component;
 
-public interface LineNumber extends Component {
-    int getStartLineNumber();
+public class LineNumber implements Component {
+    public int startLineNumber;
 
-    int getEndLineNumber();
+    public int endLineNumber;
 
-    void setStartLineNumber(int ns);
+    public LineNumber() {}
 
-    void setEndLineNumber(int ne);
+    public LineNumber(int startLineNumber, int endLineNumber) {
+        this.startLineNumber = startLineNumber;
+        this.endLineNumber = endLineNumber;
+    }
+
+    public int getStartLineNumber() {
+        return startLineNumber;
+    }
+
+    public void setStartLineNumber(int startLineNumber) {
+        this.startLineNumber = startLineNumber;
+    }
+
+    public int getEndLineNumber() {
+        return endLineNumber;
+    }
+
+    public void setEndLineNumber(int endLineNumber) {
+        this.endLineNumber = endLineNumber;
+    }
 }

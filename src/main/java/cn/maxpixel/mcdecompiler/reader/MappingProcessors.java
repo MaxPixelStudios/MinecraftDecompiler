@@ -18,13 +18,13 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.mapping1.MappingCreator;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping1.component.StaticIdentifiable;
+import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.*;
@@ -53,14 +53,14 @@ public final class MappingProcessors {
                         classes.putIfAbsent(classMapping.mapping.unmappedName, classMapping);
                     }
                 } else if(s.startsWith("FD:")) {
-                    PairedMapping fieldMapping = MappingCreator.Paired.newOwned(getName(strings[1]), getName(strings[2]));
+                    PairedMapping fieldMapping = MappingUtil.Paired.o(getName(strings[1]), getName(strings[2]));
                     String unmClassName = getClassName(strings[1]);
                     synchronized(classes) {
                         classes.computeIfAbsent(unmClassName, k -> new ClassMapping<>(new PairedMapping(unmClassName, getClassName(strings[2]))))
                                 .addField(fieldMapping);
                     }
                 } else if(s.startsWith("MD:")) {
-                    PairedMapping methodMapping = MappingCreator.Paired.newDescriptorsOwned(getName(strings[1]), getName(strings[3]), strings[2], strings[4]);
+                    PairedMapping methodMapping = MappingUtil.Paired.d2o(getName(strings[1]), getName(strings[3]), strings[2], strings[4]);
                     String unmClassName = getClassName(strings[1]);
                     synchronized(classes) {
                         classes.computeIfAbsent(unmClassName, k -> new ClassMapping<>(new PairedMapping(unmClassName, getClassName(strings[3]))))
@@ -116,13 +116,13 @@ public final class MappingProcessors {
                         }
                         break;
                     case 3: // Field
-                        PairedMapping fieldMapping = MappingCreator.Paired.newOwned(sa[1], sa[2]);
+                        PairedMapping fieldMapping = MappingUtil.Paired.o(sa[1], sa[2]);
                         synchronized(classes) {
                             classes.computeIfAbsent(sa[0], COMPUTE_FUNC).addField(fieldMapping);
                         }
                         break;
                     case 4: // Method
-                        PairedMapping methodMapping = MappingCreator.Paired.newDescriptorOwned(sa[1], sa[3], sa[2]);
+                        PairedMapping methodMapping = MappingUtil.Paired.duo(sa[1], sa[3], sa[2]);
                         synchronized(classes) {
                             classes.computeIfAbsent(sa[0], COMPUTE_FUNC).addMethod(methodMapping);
                         }
@@ -166,8 +166,8 @@ public final class MappingProcessors {
             if(s.charAt(0) == '\t') {
                 String[] sa = s.substring(1).split(" ");
                 switch(sa.length) {
-                    case 2 -> classMapping.addField(MappingCreator.Paired.newOwned(sa[0], sa[1]));
-                    case 3 -> classMapping.addMethod(MappingCreator.Paired.newDescriptorOwned(sa[0], sa[2], sa[1]));
+                    case 2 -> classMapping.addField(MappingUtil.Paired.o(sa[0], sa[1]));
+                    case 3 -> classMapping.addMethod(MappingUtil.Paired.duo(sa[0], sa[2], sa[1]));
                     default -> error();
                 }
                 return processTree(index + 1, size, content, classMapping);
@@ -192,12 +192,13 @@ public final class MappingProcessors {
                     new ObjectObjectImmutablePair<>(new ObjectArrayList<>(), new ObjectArrayList<>());
             if(!content.get(0).startsWith("tsrg2")) error();
             String[] namespaces = content.get(0).substring(6).split(" ");
-            for(int i = 1, len = content.size(); i < len; i++) {
+            for(int i = 1, len = content.size(); i < len; ) {
                 String[] sa = content.get(i).split(" ");
                 if(sa[0].charAt(0) != '\t') {
                     if(sa[0].charAt(sa[0].length() - 1) == '/') {
                         for(int j = 0; j < sa.length; j++) sa[j] = sa[j].substring(0, sa[j].length() - 1);
                         mappings.right().add(new NamespacedMapping(namespaces, sa));
+                        i++;
                     } else {
                         ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa));
                         i = processTree(i, len, namespaces, content, classMapping);
@@ -215,23 +216,23 @@ public final class MappingProcessors {
                 if(s.charAt(0) == '\t') {
                     String[] sa = s.substring(1).split(" ");
                     switch(sa.length - namespaces.length) {
-                        case 0 -> classMapping.addField(MappingCreator.Namespaced.newOwned(namespaces, sa));
+                        case 0 -> classMapping.addField(MappingUtil.Namespaced.o(namespaces, sa));
                         case 1 -> {
                             String desc = sa[1];
                             sa[1] = sa[0];
                             if(desc.charAt(0) == '(') {
-                                NamespacedMapping methodMapping = MappingCreator.Namespaced.newSiLvtDescriptorOwned(
+                                NamespacedMapping methodMapping = MappingUtil.Namespaced.slduo(
                                         namespaces, sa, 1, namespaces[0], desc);
                                 index = processTree1(index, size, namespaces, content, methodMapping);
                                 classMapping.addMethod(methodMapping);
                             } else {
-                                classMapping.addField(MappingCreator.Namespaced.newDescriptorOwned(namespaces,
+                                classMapping.addField(MappingUtil.Namespaced.duo(namespaces,
                                         sa, 1, namespaces[0], desc));
                             }
                         }
                         default -> error();
                     }
-                } else return index - 1;
+                } else return index;
             }
             return index;
         }
@@ -240,10 +241,11 @@ public final class MappingProcessors {
             for(index = index + 1; index < size; index++) {
                 String s = content.get(index);
                 if(s.charAt(1) == '\t') {
-                    if(s.equals("\t\tstatic")) ((StaticIdentifiable) methodMapping).setStatic(true);
+                    if(s.equals("\t\tstatic")) methodMapping.getComponent(StaticIdentifiable.class).setStatic(true);
                     else {
                         String[] sa = s.substring(2).split(" ");
-                        ((LocalVariableTable.Namespaced) methodMapping).setLocalVariableName(Integer.parseInt(sa[0]), namespaces, sa, 1);
+                        methodMapping.getComponent(LocalVariableTable.Namespaced.class)
+                                .setLocalVariableName(Integer.parseInt(sa[0]), namespaces, sa, 1);
                     }
                 } else return index - 1;
             }
@@ -291,17 +293,17 @@ public final class MappingProcessors {
                         StringBuilder descriptor = new StringBuilder("(");
                         for(String arg : sa[4].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
                         descriptor.append(')').append(NamingUtil.asDescriptor(sa[2]));
-                        classMapping.addMethod(MappingCreator.Paired.newLineNumberMappedDescriptorOwned(sa[5], sa[3],
+                        classMapping.addMethod(MappingUtil.Paired.ldmo(sa[5], sa[3],
                                 descriptor.toString(), Integer.parseInt(sa[0]), Integer.parseInt(sa[1])));
                     } else if(sa.length == 4) {
                         StringBuilder descriptor = new StringBuilder("(");
                         for(String arg : sa[2].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
                         descriptor.append(')').append(NamingUtil.asDescriptor(sa[0]));
-                        classMapping.addMethod(MappingCreator.Paired.newMappedDescriptorOwned(sa[3], sa[1], descriptor.toString()));
+                        classMapping.addMethod(MappingUtil.Paired.dmo(sa[3], sa[1], descriptor.toString()));
                     } else error();
                 } else {
                     String[] sa = split(s.substring(4), fieldMatcher, 3, true);
-                    classMapping.addField(MappingCreator.Paired.newMappedDescriptorOwned(sa[2], sa[1], NamingUtil.asDescriptor(sa[0])));
+                    classMapping.addField(MappingUtil.Paired.dmo(sa[2], sa[1], NamingUtil.asDescriptor(sa[0])));
                 }
                 return processTree(index + 1, size, content, classMapping, fieldMatcher, methodMatcher);
             }
@@ -354,13 +356,13 @@ public final class MappingProcessors {
                         classes.merge(sa[1], classMapping, (o, n) -> n.addFields(o.getFields()).addMethods(o.getMethods()));
                     }
                 } else if (s.startsWith("FIELD")) {
-                    NamespacedMapping fieldMapping = MappingCreator.Namespaced.newDescriptorOwned(namespaces, sa, 3, k, sa[2]);
+                    NamespacedMapping fieldMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
                     synchronized (classes) {
                         classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1])))
                                 .addField(fieldMapping);
                     }
                 } else if (s.startsWith("METHOD")) {
-                    NamespacedMapping methodMapping = MappingCreator.Namespaced.newDescriptorOwned(namespaces, sa, 3, k, sa[2]);
+                    NamespacedMapping methodMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
                     synchronized (classes) {
                         classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1])))
                                 .addMethod(methodMapping);
@@ -385,8 +387,7 @@ public final class MappingProcessors {
             for(int i = 1, len = content.size(); i < len; i++) {
                 String[] sa = content.get(i).split("\t");
                 if(sa[0].length() == 1 && sa[0].charAt(0) == 'c') {
-                    ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingCreator.Namespaced
-                            .newDocumented(namespaces, sa, 1));
+                    ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingUtil.Namespaced.d(namespaces, sa, 1));
                     i = processTree(i, len, namespaces, content, classMapping);
                     mappings.left().add(classMapping);
                 } else error();
@@ -401,16 +402,14 @@ public final class MappingProcessors {
             if(s.charAt(0) == '\t') {
                 String[] sa = s.substring(1).split("\t");
                 switch(sa[0].charAt(0)) {
-                    case 'c' -> ((Documented) classMapping.mapping).setDoc(sa[1]);
+                    case 'c' -> classMapping.mapping.getComponent(Documented.class).setDoc(sa[1]);
                     case 'f' -> {
-                        NamespacedMapping fieldMapping = MappingCreator.Namespaced.newDocumentedDescriptorOwned(namespaces, sa,
-                                2, namespaces[0], sa[1]);
+                        NamespacedMapping fieldMapping = MappingUtil.Namespaced.dduo(namespaces, sa, 2, namespaces[0], sa[1]);
                         index = processTree1(index + 1, size, namespaces, content, fieldMapping) - 1;
                         classMapping.addField(fieldMapping);
                     }
                     case 'm' -> {
-                        NamespacedMapping methodMapping = MappingCreator.Namespaced.newDocumentedLvtDescriptorOwned(
-                                namespaces, sa, 2, namespaces[0], sa[1]);
+                        NamespacedMapping methodMapping = MappingUtil.Namespaced.dllduo(namespaces, sa, 2, namespaces[0], sa[1]);
                         index = processTree1(index + 1, size, namespaces, content, methodMapping) - 1;
                         classMapping.addMethod(methodMapping);
                     }
@@ -427,11 +426,11 @@ public final class MappingProcessors {
             String s = content.get(index + 1);
             if(s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                 switch(s.charAt(2)) {
-                    case 'c' -> ((Documented) fieldOrMethod).setDoc(s.substring(4));
+                    case 'c' -> fieldOrMethod.getComponent(Documented.class).setDoc(s.substring(4));
                     case 'p' -> {
                         String[] sa = s.substring(4).split("\t");
                         int i = Integer.parseInt(sa[0]);
-                        ((LocalVariableTable.Namespaced) fieldOrMethod).setLocalVariableName(i, namespaces, sa, 1);
+                        fieldOrMethod.getComponent(LocalVariableTable.Namespaced.class).setLocalVariableName(i, namespaces, sa, 1);
                         index = processTree2(index + 1, size, i, content, fieldOrMethod) - 1;
                     }
                     default -> error();
@@ -445,7 +444,7 @@ public final class MappingProcessors {
             if(index + 1 >= size) return index;
             String s = content.get(index + 1);
             if(s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
-                if(s.charAt(3) == 'c') ((Documented.LocalVariable) methodMapping).setLocalVariableDoc(i, s.substring(5));
+                if(s.charAt(3) == 'c') methodMapping.getComponent(Documented.LocalVariable.class).setLocalVariableDoc(i, s.substring(5));
                 else error();
                 return index + 1;
             }

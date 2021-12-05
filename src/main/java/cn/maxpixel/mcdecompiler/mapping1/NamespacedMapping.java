@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping1;
 
 import cn.maxpixel.mcdecompiler.mapping1.component.Component;
+import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
@@ -91,9 +92,9 @@ public class NamespacedMapping extends Mapping {
     /**
      * Constructor
      * @param names A map keyed with namespace and valued with name
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    protected NamespacedMapping(Map<String, String> names, Class<? extends Component>... components) {
+    public NamespacedMapping(Map<String, String> names, Component... components) {
         super(components);
         if(names.containsKey(null)) throw new IllegalArgumentException();
         this.names.putAll(names);
@@ -103,9 +104,9 @@ public class NamespacedMapping extends Mapping {
      * Constructor
      * @param namespace The namespace
      * @param name The name
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    protected NamespacedMapping(String namespace, String name, Class<? extends Component>... components) {
+    public NamespacedMapping(String namespace, String name, Component... components) {
         super(components);
         this.names.put(Objects.requireNonNull(namespace), name);
     }
@@ -114,9 +115,9 @@ public class NamespacedMapping extends Mapping {
      * Constructor
      * @param namespaces The namespaces
      * @param names The names
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    protected NamespacedMapping(String[] namespaces, String[] names, Class<? extends Component>... components) {
+    public NamespacedMapping(String[] namespaces, String[] names, Component... components) {
         super(components);
         if(namespaces.length != names.length) throw new IllegalArgumentException();
         for(int i = 0; i < namespaces.length; i++) {
@@ -126,9 +127,9 @@ public class NamespacedMapping extends Mapping {
 
     /**
      * Constructor
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    protected NamespacedMapping(Class<? extends Component>... components) {
+    public NamespacedMapping(Component... components) {
         super(components);
     }
 
@@ -137,14 +138,19 @@ public class NamespacedMapping extends Mapping {
      * @param namespaces The namespaces
      * @param names The names
      * @param nameStart To put the names start from the index
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    protected NamespacedMapping(String[] namespaces, String[] names, int nameStart, Class<? extends Component>... components) {
+    public NamespacedMapping(String[] namespaces, String[] names, int nameStart, Component... components) {
         super(components);
         if(nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart)) throw new IllegalArgumentException();
         for(int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
         }
+    }
+
+    @Override
+    public Owned<? extends NamespacedMapping> getOwned() {
+        return (Owned<? extends NamespacedMapping>) super.getOwned();
     }
 
     /**
@@ -200,7 +206,7 @@ public class NamespacedMapping extends Mapping {
      * @param namespace the namespace to determine
      * @return if this mapping contains the given namespace
      */
-    public boolean containsNamespace(String namespace) {
+    public boolean contains(String namespace) {
         return names.containsKey(Objects.requireNonNull(namespace));
     }
 

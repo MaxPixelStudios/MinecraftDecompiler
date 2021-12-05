@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping1;
 
 import cn.maxpixel.mcdecompiler.mapping1.component.Component;
+import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
 
 import java.util.Objects;
 
@@ -40,10 +41,9 @@ public class PairedMapping extends Mapping {
      * Constructor
      * @param unmappedName The unmapped name
      * @param mappedName The mapped name
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    @SafeVarargs
-    protected PairedMapping(String unmappedName, String mappedName, Class<? extends Component>... components) {
+    public PairedMapping(String unmappedName, String mappedName, Component... components) {
         super(components);
         this.unmappedName = unmappedName;
         this.mappedName = mappedName;
@@ -61,10 +61,9 @@ public class PairedMapping extends Mapping {
 
     /**
      * Constructor
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    @SafeVarargs
-    protected PairedMapping(Class<? extends Component>... components) {
+    public PairedMapping(Component... components) {
         super(components);
     }
 
@@ -72,6 +71,10 @@ public class PairedMapping extends Mapping {
      * No-arg constructor
      */
     public PairedMapping() {}
+
+    public Owned<? extends PairedMapping> getOwned() {
+        return (Owned<? extends PairedMapping>) super.getOwned();
+    }
 
     /**
      * Reverse this mapping
@@ -82,6 +85,22 @@ public class PairedMapping extends Mapping {
         unmappedName = mappedName;
         mappedName = temp;
         return this;
+    }
+
+    public String getUnmappedName() {
+        return unmappedName;
+    }
+
+    public void setUnmappedName(String unmappedName) {
+        this.unmappedName = unmappedName;
+    }
+
+    public String getMappedName() {
+        return mappedName;
+    }
+
+    public void setMappedName(String mappedName) {
+        this.mappedName = mappedName;
     }
 
     /* Auto-generated equals, hashCode and toString methods */

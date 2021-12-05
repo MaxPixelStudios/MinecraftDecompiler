@@ -18,8 +18,14 @@
 
 package cn.maxpixel.mcdecompiler.mapping1.component;
 
-public interface StaticIdentifiable extends Component {
-    boolean isStatic();
+public class StaticIdentifiable implements Component {
+    public boolean isStatic;
 
-    void setStatic(boolean isStatic);
+    public boolean isStatic() {
+        return isStatic;
+    }
+
+    public void setStatic(boolean aStatic) {
+        isStatic = aStatic;
+    }
 }

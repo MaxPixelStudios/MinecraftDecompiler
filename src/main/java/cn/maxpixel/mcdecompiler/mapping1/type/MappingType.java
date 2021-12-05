@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessor;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-public interface MappingType<M extends Mapping, S> {
+public interface MappingType<M extends Mapping, S> {//TODO
     boolean isNamespaced();
 
     MappingProcessor<M, S> getProcessor();

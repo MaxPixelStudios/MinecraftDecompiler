@@ -18,13 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import cn.maxpixel.mcdecompiler.mapping1.MappingCreator;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -87,10 +86,10 @@ public class ClassifiedMappingRemapper extends Remapper {
                 old.mapping.getName(targetNamespace)));
         old.getFields().forEach(m -> cm.addField(new PairedMapping(m.getName(sourceNamespace), m.getName(targetNamespace))));
         old.getMethods().forEach(m -> {
-            if(!((Descriptor.Namespaced) m).getDescriptorNamespace().equals(sourceNamespace))
+            if(!m.getComponent(Descriptor.Namespaced.class).getDescriptorNamespace().equals(sourceNamespace))
                 throw new IllegalArgumentException();
-            cm.addMethod(MappingCreator.Paired.newDescriptorOwned(m.getName(sourceNamespace), m.getName(targetNamespace),
-                    ((Descriptor.Namespaced) m).getUnmappedDescriptor()));
+            cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), m.getName(targetNamespace),
+                    m.getComponent(Descriptor.Namespaced.class).getUnmappedDescriptor()));
         });
         return cm;
     }
@@ -149,8 +148,9 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     private String getUnmappedDesc(PairedMapping mapping) {
-        if(mapping.isSupported(Descriptor.class)) return ((Descriptor) mapping).getUnmappedDescriptor();
-        else if(mapping.isSupported(Descriptor.Mapped.class)) return getUnmappedDescByMappedDesc(((Descriptor.Mapped) mapping).getMappedDescriptor());
+        if(mapping.hasComponent(Descriptor.class)) return mapping.getComponent(Descriptor.class).getUnmappedDescriptor();
+        else if(mapping.hasComponent(Descriptor.Mapped.class))
+            return getUnmappedDescByMappedDesc(mapping.getComponent(Descriptor.Mapped.class).getMappedDescriptor());
         else throw new IllegalArgumentException("Mapping for methods must support at least one of Descriptor or Descriptor.Mapped");
     }
 
@@ -192,9 +192,9 @@ public class ClassifiedMappingRemapper extends Remapper {
     private PairedMapping reduceMethod(PairedMapping left, PairedMapping right) {
         if(nameAndDescEquals(left, right)) return left;
         // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
-        int leftAcc = extraClassesInformation.getAccessFlags(((Owned<PairedMapping>) left).getOwner().mapping.unmappedName,
+        int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().getOwner().mapping.unmappedName,
                 left.unmappedName.concat(getUnmappedDesc(left)), Opcodes.ACC_PUBLIC) & 0b111;
-        int rightAcc = extraClassesInformation.getAccessFlags(((Owned<PairedMapping>) right).getOwner().mapping.unmappedName,
+        int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().getOwner().mapping.unmappedName,
                 right.unmappedName.concat(getUnmappedDesc(right)), Opcodes.ACC_PUBLIC) & 0b111;
         // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
         if((leftAcc & 0b101) != 0) return left;
@@ -206,13 +206,13 @@ public class ClassifiedMappingRemapper extends Remapper {
 
     private static boolean nameAndDescEquals(PairedMapping left, PairedMapping right) {
         boolean b = left.unmappedName.equals(right.unmappedName) && left.mappedName.equals(right.mappedName);
-        if(left.isSupported(Descriptor.class)) {
-            if(right.isSupported(Descriptor.class)) return false;
-            b &= ((Descriptor) left).getUnmappedDescriptor().equals(((Descriptor) right).getUnmappedDescriptor());
+        if(left.hasComponent(Descriptor.class)) {
+            if(!right.hasComponent(Descriptor.class)) return false;
+            b &= left.getComponent(Descriptor.class).getUnmappedDescriptor().equals(right.getComponent(Descriptor.class).getUnmappedDescriptor());
         }
-        if(left.isSupported(Descriptor.Mapped.class)) {
-            if(right.isSupported(Descriptor.Mapped.class)) return false;
-            b &= ((Descriptor.Mapped) left).getMappedDescriptor().equals(((Descriptor.Mapped) right).getMappedDescriptor());
+        if(left.hasComponent(Descriptor.Mapped.class)) {
+            if(!right.hasComponent(Descriptor.Mapped.class)) return false;
+            b &= left.getComponent(Descriptor.Mapped.class).mappedDescriptor.equals(right.getComponent(Descriptor.Mapped.class).mappedDescriptor);
         }
         return b;
     }
@@ -248,9 +248,9 @@ public class ClassifiedMappingRemapper extends Remapper {
 
     private PairedMapping reduceField(PairedMapping left, PairedMapping right) {
         // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
-        int leftAcc = extraClassesInformation.getAccessFlags(((Owned<PairedMapping>) left).getOwner().mapping.unmappedName,
+        int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().getOwner().mapping.unmappedName,
                 left.unmappedName, Opcodes.ACC_PUBLIC) & 0b111;
-        int rightAcc = extraClassesInformation.getAccessFlags(((Owned<PairedMapping>) right).getOwner().mapping.unmappedName,
+        int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().getOwner().mapping.unmappedName,
                 right.unmappedName, Opcodes.ACC_PUBLIC) & 0b111;
         // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
         if((leftAcc & 0b101) != 0) return left;

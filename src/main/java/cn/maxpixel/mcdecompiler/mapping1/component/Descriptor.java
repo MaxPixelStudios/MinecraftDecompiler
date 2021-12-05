@@ -23,25 +23,49 @@ import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 /**
  * Descriptor component for paired mappings
  */
-public interface Descriptor extends Component {
-    String getUnmappedDescriptor();
+public class Descriptor implements Component {
+    public String unmappedDescriptor;
 
-    void setUnmappedDescriptor(String unmappedDescriptor);
+    public Descriptor() {}
 
-    default void reverseUnmapped(ClassifiedMappingRemapper remapper) {
-        setUnmappedDescriptor(remapper.getMappedDescByUnmappedDesc(getUnmappedDescriptor()));
+    public Descriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    public void reverseUnmapped(ClassifiedMappingRemapper remapper) {
+        unmappedDescriptor = remapper.getMappedDescByUnmappedDesc(unmappedDescriptor);
+    }
+
+    public String getUnmappedDescriptor() {
+        return unmappedDescriptor;
+    }
+
+    public void setUnmappedDescriptor(String unmappedDescriptor) {
+        this.unmappedDescriptor = unmappedDescriptor;
     }
 
     /**
      * Mapped descriptor component for paired mappings
      */
-    interface Mapped extends Component {
-        String getMappedDescriptor();
+    public static class Mapped implements Component {
+        public String mappedDescriptor;
 
-        void setMappedDescriptor(String mappedDescriptor);
+        public Mapped() {}
 
-        default void reverseMapped(ClassifiedMappingRemapper remapper) {
-            setMappedDescriptor(remapper.getUnmappedDescByMappedDesc(getMappedDescriptor()));
+        public Mapped(String mappedDescriptor) {
+            this.mappedDescriptor = mappedDescriptor;
+        }
+
+        public void reverseMapped(ClassifiedMappingRemapper remapper) {
+            mappedDescriptor = remapper.getUnmappedDescByMappedDesc(mappedDescriptor);
+        }
+
+        public String getMappedDescriptor() {
+            return mappedDescriptor;
+        }
+
+        public void setMappedDescriptor(String mappedDescriptor) {
+            this.mappedDescriptor = mappedDescriptor;
         }
     }
 
@@ -49,9 +73,22 @@ public interface Descriptor extends Component {
      * Namespaced descriptor component<br>
      * Extends {@link Descriptor} because the currently supported namespaced mappings only have unmapped descriptors
      */
-    interface Namespaced extends Descriptor {
-        String getDescriptorNamespace();
+    public static class Namespaced extends Descriptor {
+        public String descriptorNamespace;
 
-        void setDescriptorNamespace(String namespace);
+        public Namespaced() {}
+
+        public Namespaced(String unmappedDescriptor, String descriptorNamespace) {
+            super(unmappedDescriptor);
+            this.descriptorNamespace = descriptorNamespace;
+        }
+
+        public String getDescriptorNamespace() {
+            return descriptorNamespace;
+        }
+
+        public void setDescriptorNamespace(String descriptorNamespace) {
+            this.descriptorNamespace = descriptorNamespace;
+        }
     }
 }

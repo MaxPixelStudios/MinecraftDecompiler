@@ -97,13 +97,13 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                 .map(ObjectList::parallelStream)
                 .flatMap(stream -> {
                     NamespacedMapping[] m = stream.filter(mapping -> {
-                        Descriptor.Namespaced desc = ((Descriptor.Namespaced) mapping);
+                        Descriptor.Namespaced desc = mapping.getComponent(Descriptor.Namespaced.class);
                         if(!desc.getDescriptorNamespace().equals(fromNamespace))
                             throw new IllegalArgumentException("Descriptor namespace mismatch");
                         return mapping.getName(fromNamespace).equals(name) && desc.getUnmappedDescriptor().equals(descriptor);
                     }).toArray(NamespacedMapping[]::new);
                     if(m.length > 1) throw new IllegalArgumentException("Method duplicated");
-                    return m.length == 1 && m[0].isSupported(LocalVariableTable.Namespaced.class) ? Optional.of(m[0]) : Optional.empty();
+                    return m.length == 1 && m[0].hasComponent(LocalVariableTable.Namespaced.class) ? Optional.of(m[0]) : Optional.empty();
                 })
                 .map(LocalVariableTable.Namespaced.class::cast);
         return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {

@@ -19,28 +19,24 @@
 package cn.maxpixel.mcdecompiler.mapping1;
 
 import cn.maxpixel.mcdecompiler.mapping1.component.Component;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
+import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 /**
  * Every mapping's base class
  * <p>This class should only be extended, so it is abstract</p>
  */
 public abstract class Mapping {
-    private final ReferenceArrayList<Class<? extends Component>> supportedComponents = new ReferenceArrayList<>();
+    private final Reference2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Reference2ObjectOpenHashMap<>();
 
     /**
      * Constructor
-     * @param components Components supported by this mapping
+     * @param components Components add to this mapping
      */
-    @SafeVarargs
-    protected Mapping(Class<? extends Component>... components) {
-        supportedComponents.addElements(0, components);
-        if(!Arrays.asList(getClass().getInterfaces()).containsAll(supportedComponents))
-            throw new UnsupportedOperationException();
+    protected Mapping(Component... components) {
+        for(Component component : components) {
+            this.components.put(component.getClass(), component);
+        }
     }
 
     /**
@@ -49,50 +45,38 @@ public abstract class Mapping {
     protected Mapping() {}
 
     /**
-     * Indicates whether this mapping supports the given component
-     * @param component Component to test
-     * @return true if this mapping supports the given component
-     * @see #isSupported(Class[])
-     * @see #isSupported(Collection)
+     * Gets the component of given type if it is present.<br>
+     * For the {@link Owned} component, it is recommended to use {@link #getOwned()} instead of this method
+     * @param component Given component type. Cannot be null
+     * @return The component if exists, or {@code null}
      */
-    public final boolean isSupported(Class<? extends Component> component) {
-        return supportedComponents.contains(component);
+    public final <C extends Component> C getComponent(Class<? extends C> component) {
+        return (C) components.get(component);
     }
 
     /**
-     * Indicates whether this mapping supports the given components
-     * @param components Components to test
-     * @return true if this mapping supports all the given components
-     * @see #isSupported(Class)
-     * @see #isSupported(Collection)
+     * Gets the {@link Owned} component if it is present
+     * @return The {@link Owned} component if it exists, or null
      */
-    @SafeVarargs
-    public final boolean isSupported(Class<? extends Component>... components) {
-        return isSupported(Arrays.asList(components));
+    protected Owned<? extends Mapping> getOwned() {
+        return (Owned<? extends Mapping>) components.get(Owned.class);
     }
 
-    /**
-     * Indicates whether this mapping supports the given components
-     * @param components Components to test
-     * @return true if this mapping supports all the given components
-     * @see #isSupported(Class)
-     * @see #isSupported(Class[])
-     */
-    public final boolean isSupported(Collection<Class<? extends Component>> components) {
-        return supportedComponents.containsAll(components);
+    public final boolean hasComponent(Class<? extends Component> component) {
+        return components.containsKey(component);
     }
 
-    public final boolean isPairedMapping() {
+    public final boolean isPaired() {
         return this instanceof PairedMapping;
     }
-    public final boolean isNamespacedMapping() {
+    public final boolean isNamespaced() {
         return this instanceof NamespacedMapping;
     }
 
-    public final PairedMapping asPairedMapping() {
+    public final PairedMapping asPaired() {
         return (PairedMapping) this;
     }
-    public final NamespacedMapping asNamespacedMapping() {
+    public final NamespacedMapping asNamespaced() {
         return (NamespacedMapping) this;
     }
 
@@ -102,18 +86,18 @@ public abstract class Mapping {
         if (this == o) return true;
         if (!(o instanceof Mapping)) return false;
         Mapping mapping = (Mapping) o;
-        return supportedComponents.equals(mapping.supportedComponents);
+        return components.equals(mapping.components);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(supportedComponents);
+        return components.hashCode();
     }
 
     @Override
     public String toString() {
         return "Mapping{" +
-                "supportedComponents=" + supportedComponents +
+                "components=" + components +
                 '}';
     }
 }

@@ -21,7 +21,14 @@ package cn.maxpixel.mcdecompiler.mapping1.component;
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 
-public interface Owned<T extends Mapping> extends Component {
-    ClassMapping<T> getOwner();
-    void setOwner(ClassMapping<T> owner);
+public class Owned<T extends Mapping> implements Component {
+    public ClassMapping<T> owner;
+
+    public ClassMapping<T> getOwner() {
+        return owner;
+    }
+
+    public void setOwner(ClassMapping<T> owner) {
+        this.owner = owner;
+    }
 }
