@@ -274,7 +274,7 @@ public final class MappingProcessors {
                 if (!s.startsWith("    ")) {
                     String[] sa = split(s, classMatcher, 2, true);
                     ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(
-                            NamingUtil.asNativeName(sa[0]), NamingUtil.asNativeName(sa[1])));
+                            NamingUtil.asNativeName(sa[1]), NamingUtil.asNativeName(sa[0])));
                     i = processTree(i, len, content, classMapping, fieldMatcher, methodMatcher);
                     mappings.left().add(classMapping);
                 } else error();

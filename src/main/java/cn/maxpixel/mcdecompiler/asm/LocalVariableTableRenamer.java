@@ -74,6 +74,7 @@ public class LocalVariableTableRenamer extends ClassVisitor {
         if(mapping != null && !mapping.mapping.getName(fromNamespace).equals(name))
             throw new IllegalArgumentException("Mapping mismatch");
         this.className = name;
+        super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override

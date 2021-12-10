@@ -42,15 +42,17 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
             this.toProcess = "(Ljava/lang/String;I";
             LOGGER.debug("Fixing class {} because it is an enum", name);
         }
+        super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-        if(toProcess == null && className.equals(name) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && innerName != null) {
+        if(toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && innerName != null) {
             this.removeCount = 1;
             this.toProcess = '(' + Type.getObjectType(outerName).getDescriptor();
             LOGGER.debug("Fixing class {} because it is an inner class of {}", name, outerName);
         }
+        super.visitInnerClass(name, outerName, innerName, access);
     }
 
     @Override

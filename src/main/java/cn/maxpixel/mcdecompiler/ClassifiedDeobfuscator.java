@@ -131,8 +131,9 @@ public class ClassifiedDeobfuscator {
                             os.write(writer.toByteArray());
                         }
                     } else if(options.includeOthers()) {
-                        String outputPath = path.toString().toUpperCase();
-                        if(outputPath.endsWith(".SF") || outputPath.endsWith(".RSA")) return;
+                        String outputPath = path.toString();
+                        String upper = outputPath.toUpperCase();
+                        if(upper.endsWith(".SF") || upper.endsWith(".RSA")) return;
                         try(InputStream inputStream = Files.newInputStream(path);
                             OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(outputPath)))) {
                             if(path.endsWith("META-INF/MANIFEST.MF")) {

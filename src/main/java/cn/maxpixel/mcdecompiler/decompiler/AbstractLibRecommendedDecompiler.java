@@ -49,7 +49,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
 
     @Override
     public void downloadLib(Path libDir, String version) throws IOException {
-        if(version == null || version.isEmpty()) {
+        if(version == null || version.isBlank()) {
             LOGGER.info("Minecraft version is not provided, skipping downloading libs");
             return;
         }
@@ -99,7 +99,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
 
     /**
      * Get all Minecraft libraries.
-     * @return All Minecraft libs. If version isn't provided, return a empty list.
+     * @return All Minecraft libs. If version isn't provided, will return an empty list.
      */
     protected final ObjectList<String> listLibs() {
         return libsUnmodifiable;
