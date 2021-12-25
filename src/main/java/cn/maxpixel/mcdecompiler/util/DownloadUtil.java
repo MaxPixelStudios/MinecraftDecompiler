@@ -78,8 +78,9 @@ public class DownloadUtil {
                     HttpResponse.BodyHandlers.ofString()).body(), -1L)) {
                 FileUtil.deleteIfExists(localPath);
                 LOGGER.debug("Downloading the resource");
+                FileUtil.ensureFileExist(localPath);
                 HTTP_CLIENT.send(HttpRequest.newBuilder(remoteResource).build(),
-                        HttpResponse.BodyHandlers.ofFile(localPath, WRITE, CREATE, TRUNCATE_EXISTING));
+                        HttpResponse.BodyHandlers.ofFile(localPath, WRITE, TRUNCATE_EXISTING));
             }
         } catch(InterruptedException e) {
             LOGGER.fatal("Download process interrupted");

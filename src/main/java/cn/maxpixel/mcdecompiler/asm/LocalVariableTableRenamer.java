@@ -23,6 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
+import cn.maxpixel.mcdecompiler.util.FileUtil;
 import it.unimi.dsi.fastutil.objects.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -156,8 +157,9 @@ public class LocalVariableTableRenamer extends ClassVisitor {
 
     public static void endRecord(Path writeTo) throws IOException {
         if(!recordStarted) throw new IllegalStateException("Record not started yet");
-        Files.writeString(writeTo, String.join("\n", generatedAbstractParameterNames),
-                StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        FileUtil.deleteIfExists(writeTo);
+        Files.writeString(FileUtil.ensureFileExist(writeTo), String.join("\n", generatedAbstractParameterNames),
+                StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         LOGGER.debug("Saved record to {}", writeTo);
         recordStarted = false;
         LOGGER.debug("Ended record");

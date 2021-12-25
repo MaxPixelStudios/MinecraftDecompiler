@@ -52,15 +52,15 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
         StreamSupport.stream(VersionManifest.get(version).getAsJsonArray("libraries").spliterator(), true)
                 .map(ele -> ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
                 .forEach(artifact -> {
-                    Path file = libDir.resolve(artifact.get("path").getAsString());
+                    String url = artifact.get("url").getAsString();
+                    Path file = libDir.resolve(url.substring(url.lastIndexOf('/') + 1)); // libDir.resolve(lib file name)
                     libs.add(file.toAbsolutePath().normalize().toString());
                     if(!FileUtil.verify(file, artifact.get("sha1").getAsString(), artifact.get("size").getAsLong())) {
-                        String url = artifact.get("url").getAsString();
                         LOGGER.debug("Downloading {}", url);
                         FileUtil.deleteIfExists(file);
                         try {
                             HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(),
-                                    HttpResponse.BodyHandlers.ofFile(libDir, CREATE, WRITE, TRUNCATE_EXISTING))
+                                    HttpResponse.BodyHandlers.ofFile(file, CREATE, WRITE, TRUNCATE_EXISTING))
                                     .body();
                         } catch(IOException e) {
                             LOGGER.fatal("Error downloading files");
