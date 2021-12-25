@@ -26,15 +26,16 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
+import static java.nio.file.StandardOpenOption.*;
 
 public class DownloadUtil {
     private static final Logger LOGGER = LogManager.getLogger("Download Utility");
@@ -51,16 +52,39 @@ public class DownloadUtil {
                         .newBuilder(URI.create(versionDownloads.get(type + "_mappings").getAsJsonObject().get("url").getAsString()))
                         .build();
                 HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
-            } catch (IOException | InterruptedException e) {
+            } catch(IOException | InterruptedException e) {
                 LOGGER.fatal("Error downloading Proguard mapping file");
                 throw Utils.wrapInRuntime(LOGGER.throwing(e));
             }
         }
         try {
             return Files.newBufferedReader(p);
-        } catch (IOException e) {
+        } catch(IOException e) {
             LOGGER.fatal("Error creating BufferedReader for Proguard mapping file");
             throw Utils.wrapInRuntime(LOGGER.throwing(e));
         }
+    }
+
+    /**
+     * Download the remote resource if the local file is invalid
+     * @param localPath The local file
+     * @param remoteResource The URI of the resource
+     * @param remoteHash The hash file of the resource
+     * @return The input stream of the local file
+     */
+    public static InputStream getRemoteResource(Path localPath, URI remoteResource, URI remoteHash) throws IOException {
+        try {
+            if(!FileUtil.verify(Objects.requireNonNull(localPath), HTTP_CLIENT.send(HttpRequest.newBuilder(remoteHash).build(),
+                    HttpResponse.BodyHandlers.ofString()).body(), -1L)) {
+                FileUtil.deleteIfExists(localPath);
+                LOGGER.debug("Downloading the resource");
+                HTTP_CLIENT.send(HttpRequest.newBuilder(remoteResource).build(),
+                        HttpResponse.BodyHandlers.ofFile(localPath, WRITE, CREATE, TRUNCATE_EXISTING));
+            }
+        } catch(InterruptedException e) {
+            LOGGER.fatal("Download process interrupted");
+            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        }
+        return Files.newInputStream(localPath, READ);
     }
 }

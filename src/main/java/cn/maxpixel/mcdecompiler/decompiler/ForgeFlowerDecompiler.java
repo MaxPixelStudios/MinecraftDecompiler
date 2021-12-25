@@ -18,16 +18,21 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
+import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.util.DownloadUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.nio.file.StandardCopyOption;
 
 public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
+    private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/1.5.498.23/forgeflower-1.5.498.23.jar");
+    private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/1.5.498.23/forgeflower-1.5.498.23.jar.sha1");
     public static final String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
     private Path decompilerJarPath;
     ForgeFlowerDecompiler() {}
@@ -40,8 +45,8 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
     @Override
     public void extractTo(Path extractPath) throws IOException {
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");
-        if(Files.notExists(decompilerJarPath))
-            Files.copy(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("forgeflower-1.5.498.12.jar")), decompilerJarPath);
+        Files.copy(DownloadUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.FORGEFLOWER), RESOURCE, RESOURCE_HASH),
+                decompilerJarPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     @Override

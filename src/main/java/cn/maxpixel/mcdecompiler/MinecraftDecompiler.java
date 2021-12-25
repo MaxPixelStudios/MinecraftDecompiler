@@ -128,7 +128,7 @@ public class MinecraftDecompiler {
         try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
-            Path libDownloadPath = Properties.getDownloadedLibPath().toAbsolutePath().normalize();
+            Path libDownloadPath = Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize();
             FileUtil.ensureDirectoryExist(libDownloadPath);
             if(decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
@@ -136,7 +136,7 @@ public class MinecraftDecompiler {
                 lrd.downloadLib(libDownloadPath, options.version());
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
-                    Path decompileClasses = Properties.getTempDecompileClassesPath().toAbsolutePath().normalize();
+                    Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
                     FileUtil.copyDirectory(jarFs.getPath("/net"), decompileClasses);
                     try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
                             !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||

@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
+import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -30,20 +31,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.stream.StreamSupport;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 import static java.nio.file.StandardOpenOption.*;
 
 public abstract class AbstractLibRecommendedDecompiler implements ILibRecommendedDecompiler {
-    private static final Logger LOGGER = LogManager.getLogger("Lib downloader");
+    private static final Logger LOGGER = LogManager.getLogger("Lib Downloader");
     private final ObjectArrayList<String> libs = new ObjectArrayList<>();
     private final ObjectList<String> libsUnmodifiable = ObjectLists.unmodifiable(libs);
 
@@ -55,51 +50,32 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
         }
         LOGGER.info("Downloading libs of version {}", version);
         StreamSupport.stream(VersionManifest.get(version).getAsJsonArray("libraries").spliterator(), true)
-                .map(ele->ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
+                .map(ele -> ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
                 .forEach(artifact -> {
-                    String url = artifact.get("url").getAsString();
-                    Path file = libDir.resolve(url.substring(url.lastIndexOf('/') + 1)); // libDir.resolve(lib file name)
+                    Path file = libDir.resolve(artifact.get("path").getAsString());
                     libs.add(file.toAbsolutePath().normalize().toString());
-                    try(FileChannel channel = FileChannel.open(file, CREATE, READ, WRITE)) {
-                        if(channel.size() > 0L && channel.size() == artifact.get("size").getAsInt()) {
-                            MessageDigest md = MessageDigest.getInstance("SHA-1");
-                            ByteBuffer bb = ByteBuffer.allocate(65536);
-                            while(channel.read(bb) != -1) {
-                                bb.flip();
-                                md.update(bb);
-                                bb.clear();
-                            }
-                            StringBuilder out = new StringBuilder();
-                            for(byte b : md.digest()) {
-                                String hex = Integer.toHexString(b & 0xff);
-                                if (hex.length() < 2) out.append('0');
-                                out.append(hex);
-                            }
-                            if(artifact.get("sha1").getAsString().contentEquals(out)) return;
-                        }
+                    if(!FileUtil.verify(file, artifact.get("sha1").getAsString(), artifact.get("size").getAsLong())) {
+                        String url = artifact.get("url").getAsString();
                         LOGGER.debug("Downloading {}", url);
-                        channel.position(0L);
-                        try(ReadableByteChannel ch = Channels.newChannel(
-                                HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofInputStream())
-                                        .body())) {
-                            channel.transferFrom(ch, 0, Long.MAX_VALUE);
-                        } catch (InterruptedException e) {
-                            LOGGER.fatal("Network connection interrupted, why?");
+                        FileUtil.deleteIfExists(file);
+                        try {
+                            HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(),
+                                    HttpResponse.BodyHandlers.ofFile(libDir, CREATE, WRITE, TRUNCATE_EXISTING))
+                                    .body();
+                        } catch(IOException e) {
+                            LOGGER.fatal("Error downloading files");
+                            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                        } catch(InterruptedException e) {
+                            LOGGER.fatal("Download process interrupted");
                             throw Utils.wrapInRuntime(LOGGER.throwing(e));
                         }
-                    } catch (IOException e) {
-                        LOGGER.fatal("Error opening file");
-                        throw Utils.wrapInRuntime(LOGGER.throwing(e));
-                    } catch (NoSuchAlgorithmException e) {
-                        LOGGER.fatal("Hmm... You need a SHA-1 digest implementation");
-                        throw Utils.wrapInRuntime(LOGGER.throwing(e));
                     }
                 });
     }
 
     /**
      * Get all Minecraft libraries.
-     * @return All Minecraft libs. If version isn't provided, will return an empty list.
+     * @return All Minecraft libs. If the version isn't provided, will return an empty list.
      */
     protected final ObjectList<String> listLibs() {
         return libsUnmodifiable;

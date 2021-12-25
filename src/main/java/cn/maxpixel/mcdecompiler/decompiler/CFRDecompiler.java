@@ -43,7 +43,6 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
         checkArgs(source, target);
         Object2ObjectOpenHashMap<String, String> options = new Object2ObjectOpenHashMap<>();
         options.put(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG.getName(), "true");
-        options.put(OptionsImpl.FORCE_CLASSFILEVER.getName(), "52.0");
         options.put(OptionsImpl.CLOBBER_FILES.getName(), "true");
         options.put(OptionsImpl.ECLIPSE.getName(), "false");
         options.put(OptionsImpl.EXTRA_CLASS_PATH.getName(), String.join(Info.PATH_SEPARATOR, listLibs()));

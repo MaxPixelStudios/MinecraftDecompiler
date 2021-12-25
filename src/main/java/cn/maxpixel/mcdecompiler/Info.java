@@ -35,7 +35,6 @@ public interface Info {
 
     enum DecompilerType {
         FERNFLOWER,
-        OFFICIAL_FERNFLOWER,
         FORGEFLOWER,
         CFR,
         USER_DEFINED;

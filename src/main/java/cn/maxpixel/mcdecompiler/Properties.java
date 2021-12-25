@@ -19,18 +19,11 @@
 package cn.maxpixel.mcdecompiler;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class Properties {
     public static Path TEMP_DIR = Path.of("temp");
     public static Path DOWNLOAD_DIR = Path.of("downloads");
-
-    public static Path getTempDecompileClassesPath() {
-        return TEMP_DIR.resolve("decompileClasses");
-    }
-
-    public static Path getDownloadedLibPath() {
-        return DOWNLOAD_DIR.resolve("libs");
-    }
 
     public static Path getDownloadedMcJarPath(String version, Info.SideType type) {
         return DOWNLOAD_DIR.resolve(version).resolve(type + ".jar");
@@ -38,5 +31,10 @@ public class Properties {
 
     public static Path getDownloadedProguardMappingPath(String version, Info.SideType type) {
         return DOWNLOAD_DIR.resolve(version).resolve(type + "_mappings.txt");
+    }
+
+    public static Path getDownloadedDecompilerPath(Info.DecompilerType type) {
+        if(Objects.requireNonNull(type) == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
+        return DOWNLOAD_DIR.resolve("decompiler").resolve(Objects.requireNonNull(type) + ".jar");
     }
 }

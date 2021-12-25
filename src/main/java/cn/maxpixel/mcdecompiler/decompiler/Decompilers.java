@@ -39,9 +39,8 @@ public class Decompilers {
     }
 
     private static void init() {
-        decompilers.put(Info.DecompilerType.FERNFLOWER, new SpigotFernFlowerDecompiler());
+        decompilers.put(Info.DecompilerType.FERNFLOWER, new FernFlowerDecompiler());
         decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
-        decompilers.put(Info.DecompilerType.OFFICIAL_FERNFLOWER, new FernFlowerDecompiler());
         decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
         decompilers.put(Info.DecompilerType.USER_DEFINED, findUserDefined());
     }

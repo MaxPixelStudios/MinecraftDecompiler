@@ -24,15 +24,20 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class FileUtil {
@@ -59,7 +64,7 @@ public class FileUtil {
                     byte[] buf = new byte[8192];
                     for(int len = in.read(buf); len != -1; len = in.read(buf)) out.write(buf, 0, len);
                 } catch (IOException e) {
-                    LOGGER.error("Error when coping file \"{}\"", path, e);
+                    LOGGER.error("Error coping file \"{}\"", path, e);
                 }
             });
         }
@@ -78,7 +83,7 @@ public class FileUtil {
             Files.copy(source, target, REPLACE_EXISTING);
         } catch(FileAlreadyExistsException ignored) {
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error copying files");
         }
     }
 
@@ -92,7 +97,7 @@ public class FileUtil {
             try {
                 Files.delete(path);
             } catch (IOException e) {
-                LOGGER.error("Error when deleting file \"{}\"", path, e);
+                LOGGER.error("Error deleting file \"{}\"", path, e);
             }
         }
     }
@@ -109,7 +114,7 @@ public class FileUtil {
                     .forEach(FileUtil::deleteDirectory0);
             Files.delete(directory);
         } catch (IOException e) {
-            LOGGER.error("Error when deleting directory \"{}\"", directory, e);
+            LOGGER.error("Error deleting directory \"{}\"", directory, e);
         }
     }
 
@@ -124,7 +129,7 @@ public class FileUtil {
             LOGGER.debug("Deleting {}", path);
             Files.delete(path);
         } catch (IOException e) {
-            LOGGER.error("Error when deleting directory \"{}\"", path, e);
+            LOGGER.error("Error deleting directory \"{}\"", path, e);
         }
     }
 
@@ -165,8 +170,35 @@ public class FileUtil {
                     })
                     .onClose(LambdaUtil.unwrap(ds::close));
         } catch (IOException e) {
-            LOGGER.fatal("Error iterating files");
+            LOGGER.error("Error iterating files");
             throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        }
+    }
+
+    public static boolean verify(Path path, String hash, long size) {
+        if(Files.notExists(path)) return false;
+        if(Files.isDirectory(path)) throw new IllegalArgumentException("Verify a directory is not supported");
+        try(FileChannel fc = FileChannel.open(path, READ)) {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            ByteBuffer buf = ByteBuffer.allocateDirect(65536);
+            while(fc.read(buf) != -1) {
+                buf.flip();
+                md.update(buf);
+                buf.clear();
+            }
+            StringBuilder out = new StringBuilder();
+            for(byte b : md.digest()) {
+                String hex = Integer.toHexString(Byte.toUnsignedInt(b));
+                if(hex.length() < 2) out.append('0');
+                out.append(hex);
+            }
+            return (size < 1 || fc.size() == size) && (hash == null || hash.isBlank() || hash.contentEquals(out));
+        } catch(IOException e) {
+            LOGGER.error("Error reading files");
+            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error("Hmm... You need a SHA-1 digest implementation");
+            return false;
         }
     }
 }
