@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import joptsimple.*;
 import joptsimple.util.PathConverter;
+import joptsimple.util.PathProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -58,14 +59,14 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to remap " +
                 "to if you are using namespaced mappings(Tiny, Tsrgv2)").availableUnless(sideTypeO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
-                "specify --mappingPath option and musn't specify --version or --side option.").availableUnless(sideTypeO).requiredUnless(sideTypeO)
-                .withRequiredArg().withValuesConvertedBy(new PathConverter());
+                "specify --mappingPath option and can't specify --version or --side option.").availableUnless(sideTypeO).requiredUnless(sideTypeO)
+                .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(asList("m", "map", "mappingPath"), "Mapping file use to " +
                 "deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
-        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(asList("o", "output"), "The remapped file. Includes suffix.")
+        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(asList("o", "output"), "The remapped file. Including the suffix.")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("outputDecomp", "The output decompile directory")
-                .withRequiredArg().withValuesConvertedBy(new PathConverter());
+        ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("outputDecomp", "The decompiled output directory. Will " +
+                "be deleted before decompiling if it is exist").withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(asList("d", "decompile"), "Decompile the " +
                 "deobfuscated jar. Values are \"FERNFLOWER\", \"OFFICIAL_FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Do NOT pass " +
                 "any arg to this option when \"customDecompilerName\" option is specified.").withOptionalArg().ofType(Info.DecompilerType.class)

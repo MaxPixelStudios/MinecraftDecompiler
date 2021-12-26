@@ -113,15 +113,13 @@ public class MinecraftDecompiler {
     public void decompile(Info.DecompilerType decompilerType) {
         if(Files.notExists(options.outputJar())) deobfuscate();
         LOGGER.info("Decompiling using \"{}\"", decompilerType);
-        decompile0(Decompilers.get(decompilerType), options.outputJar().toAbsolutePath().normalize(),
-                options.outputDecompDir().toAbsolutePath().normalize());
+        decompile0(Decompilers.get(decompilerType), options.outputJar(), options.outputDecompDir());
     }
 
     public void decompileCustomized(String customizedDecompilerName) {
         if(Files.notExists(options.outputJar())) deobfuscate();
         LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
-        decompile0(Decompilers.getCustom(customizedDecompilerName), options.outputJar().toAbsolutePath().normalize(),
-                options.outputDecompDir().toAbsolutePath().normalize());
+        decompile0(Decompilers.getCustom(customizedDecompilerName), options.outputJar(), options.outputDecompDir());
     }
 
     private void decompile0(IDecompiler decompiler, Path inputJar, Path outputDir) {
@@ -170,8 +168,8 @@ public class MinecraftDecompiler {
         public OptionBuilder(String version, Info.SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
             this.type = Objects.requireNonNull(type, "type cannot be null!");
-            this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar");
-            this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled");
+            this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar").toAbsolutePath().normalize();
+            this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled").toAbsolutePath().normalize();
         }
 
         public OptionBuilder(Path inputJar) {
@@ -181,8 +179,8 @@ public class MinecraftDecompiler {
         public OptionBuilder(Path inputJar, boolean reverse) {
             this.inputJar = inputJar;
             this.reverse = reverse;
-            this.outputJar = Path.of("output", "deobfuscated.jar");
-            this.outputDecompDir = Path.of("output", "decompiled");
+            this.outputJar = Path.of("output", "deobfuscated.jar").toAbsolutePath().normalize();
+            this.outputDecompDir = Path.of("output", "decompiled").toAbsolutePath().normalize();
         }
 
         public OptionBuilder libsUsing(String version) {
@@ -214,12 +212,12 @@ public class MinecraftDecompiler {
         }
 
         public OptionBuilder output(Path outputJar) {
-            this.outputJar = Objects.requireNonNull(outputJar, "outputJar cannot be null");
+            this.outputJar = Objects.requireNonNull(outputJar, "outputJar cannot be null").toAbsolutePath().normalize();
             return this;
         }
 
         public OptionBuilder outputDecomp(Path outputDecompDir) {
-            this.outputDecompDir = Objects.requireNonNull(outputDecompDir, "outputDecompDir cannot be null");
+            this.outputDecompDir = Objects.requireNonNull(outputDecompDir, "outputDecompDir cannot be null").toAbsolutePath().normalize();
             return this;
         }
 
@@ -239,6 +237,8 @@ public class MinecraftDecompiler {
         }
 
         public Options build() {
+            if(this.outputJar.getParent().equals(this.outputDecompDir))
+                throw new IllegalArgumentException("The parent directory of outputJar cannot be the same as outputDecomp");
             return new Options() {
                 @Override
                 public String version() {
