@@ -119,10 +119,10 @@ public class ClassifiedDeobfuscator {
                         ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
                         ClassWriter writer = new ClassWriter(0);
                         ClassProcessor processor = new ClassProcessor(parent -> {
-                            ClassVisitor cv = new RuntimeParameterAnnotationFixer(new ClassRemapper(parent, mappingRemapper));
-                            return isNamespaced ? new LocalVariableTableRenamer(cv, options.rvn(), sourceNamespace, targetNamespace,
-                                    (ClassMapping<NamespacedMapping>) cm) :
-                                    new LocalVariableTableRenamer(cv, options.rvn());
+                            ClassVisitor cv = isNamespaced ? new LocalVariableTableRenamer(parent, options.rvn(), sourceNamespace,
+                                    targetNamespace, (ClassMapping<NamespacedMapping>) cm) :
+                                    new LocalVariableTableRenamer(parent, options.rvn());
+                            return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
                         }, writer);
                         new ClassReader(IOUtil.readAllBytes(path)).accept(processor.getVisitor(), 0);
                         try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath((isNamespaced ?

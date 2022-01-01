@@ -119,7 +119,7 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                                 name, descriptor, lambdaHandle.getName(), lambdaHandle.getDesc(), className);
                     }
                 }
-                super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+                super.visitInvokeDynamicInsn(n, desc, bootstrapMethodHandle, bootstrapMethodArguments);
             }
 
             @Override

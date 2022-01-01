@@ -25,7 +25,6 @@ import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +35,6 @@ import org.objectweb.asm.commons.Remapper;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ClassifiedMappingRemapper extends Remapper {
@@ -75,10 +73,8 @@ public class ClassifiedMappingRemapper extends Remapper {
                 .map(m -> asPaired(m, sourceNamespace, targetNamespace))
                 .collect(Collectors.toCollection(ObjectArrayList::new));
         this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(mappings);
-        this.mappingByUnm = mappings.parallelStream().collect(Collectors.toMap(m -> m.mapping.unmappedName, Function.identity(),
-                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-        this.mappingByMap = mappings.parallelStream().collect(Collectors.toMap(m -> m.mapping.mappedName, Function.identity(),
-                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+        this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(mappings);
+        this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(mappings);
     }
 
     private static ClassMapping<PairedMapping> asPaired(ClassMapping<NamespacedMapping> old, String sourceNamespace, String targetNamespace) {

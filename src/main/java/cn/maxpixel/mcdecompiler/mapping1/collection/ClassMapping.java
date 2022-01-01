@@ -213,7 +213,7 @@ public final class ClassMapping<T extends Mapping> {
 
     public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByMappedNameMap(
             ObjectList<ClassMapping<PairedMapping>> mapping) {
-        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName,
+        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.mappedName,
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
