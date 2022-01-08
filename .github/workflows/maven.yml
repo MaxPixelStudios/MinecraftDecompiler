@@ -1,11 +1,7 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
 name: Java CI with Maven
 
 on:
   push:
-    branches: [ master ]
     paths-ignore:
       - README.md
       - LICENSE
@@ -15,25 +11,29 @@ on:
       - src/test/resources
       - decompiler
 
+permissions:
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.3.4
+    - uses: actions/checkout@v2.4.0
     - name: Set up JDK
-      uses: actions/setup-java@v1.4.3
+      uses: actions/setup-java@v2.5.0
       with:
-        java-version: 16
-        architecture: x64
-        server-id: github
-        settings-path: ${{ github.workspace }}
-    - name: Build with Maven and deploy to GitHub Packages
-      run: mvn -B clean deploy --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+        java-version: 17.0.1
+        distribution: temurin
+        cache: 'maven'
+    - name: Build with Maven
+      run: mvn -B clean package
     - name: Upload target
       if: success()
       uses: actions/upload-artifact@v2
       with:
         name: MinecraftDecompiler
         path: MinecraftDecompiler.jar
+    - name: Deploy to GitHub Packages
+      run: mvn -B deploy
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
