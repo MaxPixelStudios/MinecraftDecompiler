@@ -306,13 +306,13 @@ public class MinecraftDecompiler {
                         return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc.getProcessor(), inputMappings()),
                                 targetNamespace());
                     } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc.getProcessor(), inputMappings()));
-                } else throw new UnsupportedOperationException("Unsupported yet");//TODO
+                } else throw new UnsupportedOperationException("Unsupported yet");
             }
             return new ClassifiedDeobfuscator(version(), type());
         }
 
         private boolean shouldDownloadJar() {
-            return version() != null || type() != null;
+            return version() != null && type() != null;
         }
 
         @Override

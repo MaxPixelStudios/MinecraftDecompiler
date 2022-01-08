@@ -52,7 +52,7 @@ public class MinecraftDecompilerCommandLine {
                 "deobfuscate/decompile. Only works on Proguard mappings or when downloading libraries for the decompiler. ")
                 .requiredIf(sideTypeO).withRequiredArg();
         OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
-                "names using JAD style if the input mapping doesn't provide one");
+                "names if the input mapping doesn't provide one");
         OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping " +
                 "to deobfuscate.").availableUnless(sideTypeO);
         OptionSpecBuilder dontIncludeOthersO = parser.accepts("dontIncludeOthers", "Drop the resource files of the output jar.");

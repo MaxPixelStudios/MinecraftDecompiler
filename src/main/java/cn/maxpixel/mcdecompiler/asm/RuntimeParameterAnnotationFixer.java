@@ -23,7 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
-// Visitor version of https://github.com/ModCoderPack/MCInjector/blob/master/src/main/java/de/oceanlabs/mcp/mcinjector/adaptors/ParameterAnnotationFixer.java
+// Visitor version of https://github.com/MinecraftForge/ForgeAutoRenamingTool/blob/master/src/main/java/net/minecraftforge/fart/internal/ParameterAnnotationFixer.java
 public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     private static final Logger LOGGER = LogManager.getLogger("Runtime(In)visibleParameterAnnotations Attribute Fixer");
     private int removeCount;// = isEnum ? 2 : 1
@@ -47,10 +47,21 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-        if(toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && innerName != null) {
-            this.removeCount = 1;
-            this.toProcess = '(' + Type.getObjectType(outerName).getDescriptor();
-            LOGGER.debug("Fixing class {} because it is an inner class of {}", name, outerName);
+        if(toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 &&
+                innerName != null) {
+            if(outerName == null) {
+                int i = className.lastIndexOf('$');
+                if(i != -1) {
+                    this.removeCount = 1;
+                    String s = className.substring(0, i);
+                    this.toProcess = '(' + Type.getObjectType(s).getDescriptor();
+                    LOGGER.debug("Fixing class {} as its name appears to be an inner class of {}", name, s);
+                }
+            } else {
+                this.removeCount = 1;
+                this.toProcess = '(' + Type.getObjectType(outerName).getDescriptor();
+                LOGGER.debug("Fixing class {} as its an inner class of {}", name, outerName);
+            }
         }
         super.visitInnerClass(name, outerName, innerName, access);
     }

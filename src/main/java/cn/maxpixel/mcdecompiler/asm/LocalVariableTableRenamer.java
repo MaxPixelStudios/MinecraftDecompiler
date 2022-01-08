@@ -54,6 +54,10 @@ public class LocalVariableTableRenamer extends ClassVisitor {
     private final String toNamespace;
     private final ClassMapping<NamespacedMapping> mapping;
 
+    private boolean isRecord;
+    private ObjectArrayList<String> recordNames;
+    private StringBuilder recordDesc;
+
     public LocalVariableTableRenamer(ClassVisitor classVisitor, boolean rvn) {
         super(Info.ASM_VERSION, classVisitor);
         this.rvn = rvn;
@@ -75,13 +79,33 @@ public class LocalVariableTableRenamer extends ClassVisitor {
         if(mapping != null && !mapping.mapping.getName(fromNamespace).equals(name))
             throw new IllegalArgumentException("Mapping mismatch");
         this.className = name;
+        this.isRecord = (access & Opcodes.ACC_RECORD) != 0;
+        if(isRecord) {
+            recordDesc = new StringBuilder("<init>(");
+            recordNames = new ObjectArrayList<>();
+        }
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
+    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+        recordDesc.append(descriptor);
+        recordNames.add(name);
+        return super.visitRecordComponent(name, descriptor, signature);
+    }
+
+    @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+        if(isRecord && recordDesc.charAt(recordDesc.length() - 2) != ')') recordDesc.append(")V");
+        boolean maySkip = false;
+        if(isRecord) {
+            String nd = name.concat(descriptor);
+            if(nd.equals("equals(Ljava/lang/Object;)Z") || nd.equals("hashCode()I") || nd.equals("toString()Ljava/lang/String"))
+                return super.visitMethod(access, name, descriptor, signature, exceptions);
+            if(nd.contentEquals(recordDesc)) maySkip = true;
+        }
         // Filter some methods because only lambda methods need to share renamer with the caller
-        Renamer renamer = (access & (Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE)) == (Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE) ?
+        Renamer renamer = (access & (Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE)) != 0 ?
                 sharedRenamers.getOrDefault(String.join(".", className, name, descriptor), new Renamer()) : new Renamer();
         if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.startsWith("()")) {
             StringJoiner joiner = new StringJoiner(" ").add(className).add(name).add(descriptor);
@@ -106,9 +130,19 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                     }).toArray(NamespacedMapping[]::new);
                     if(m.length > 1) throw new IllegalArgumentException("Method duplicated");
                     return m.length == 1 && m[0].hasComponent(LocalVariableTable.Namespaced.class) ? Optional.of(m[0]) : Optional.empty();
-                })
-                .map(LocalVariableTable.Namespaced.class::cast);
+                }).map(m -> m.getComponent(LocalVariableTable.Namespaced.class));
+        final boolean finalMaySkip = maySkip;
         return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+            private boolean skip;
+            private int i;
+            @Override
+            public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+                if(finalMaySkip && !skip && opcode == Opcodes.INVOKESPECIAL && owner.equals("java/lang/Record") &&
+                        name.equals("<init>") && descriptor.equals("()V"))
+                    skip = true;
+                super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+            }
+
             @Override
             public void visitInvokeDynamicInsn(String n, String desc, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
                 if("java/lang/invoke/LambdaMetafactory".equals(bootstrapMethodHandle.getOwner())) {
@@ -124,9 +158,11 @@ public class LocalVariableTableRenamer extends ClassVisitor {
 
             @Override
             public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                if(index == 0 && (access & Opcodes.ACC_STATIC) == 0) {
-                    super.visitLocalVariable("this", descriptor, signature, start, end, index);
-                } else {
+                if(index != 0 || (access & Opcodes.ACC_STATIC) != 0) {
+                    if(skip && i < recordNames.size()) {
+                        super.visitLocalVariable(recordNames.get(i++), descriptor, signature, start, end, index);
+                        return;
+                    }
                     if(lvt.isPresent()) {
                         String s = lvt.get().getLocalVariableName(index, toNamespace);
                         if(s != null && !s.isBlank() && !placeholderMatcher.reset(s).matches()) {
@@ -138,8 +174,8 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                         super.visitLocalVariable(renamer.getVarName(Type.getType(descriptor)), descriptor, signature, start, end, index);
                         return;
                     }
-                    super.visitLocalVariable(name, descriptor, signature, start, end, index);
                 }
+                super.visitLocalVariable(name, descriptor, signature, start, end, index);
             }
         };
     }
@@ -168,12 +204,12 @@ public class LocalVariableTableRenamer extends ClassVisitor {
     public static class Renamer {
         private static class Holder {
             public final int id;
-            public final boolean skip_zero;
+            public final boolean skipZero;
             public final ObjectArrayList<String> names = new ObjectArrayList<>();
 
-            public Holder(int id, boolean skip_zero, String... names) {
+            public Holder(int id, boolean skipZero, String... names) {
                 this.id = id;
-                this.skip_zero = skip_zero;
+                this.skipZero = skipZero;
                 this.names.addElements(0, names);
             }
         }
@@ -219,7 +255,7 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                     varBaseName = holder.names.get(0);
                     int count = vars.getOrDefault(varBaseName, holder.id);
                     vars.put(varBaseName, count + 1);
-                    return varBaseName + (count == 0 && holder.skip_zero ? "" : count);
+                    return varBaseName + (count == 0 && holder.skipZero ? "" : count);
                 } else {
                     ids.computeIfAbsent(holder, (ToIntFunction<? super Holder>) h -> h.id);
                     for(;;) {
@@ -228,7 +264,7 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                             if(!vars.containsKey(varBaseName)) {
                                 int j = ids.getInt(holder);
                                 vars.put(varBaseName, j);
-                                return varBaseName + (j == 0 && holder.skip_zero ? "" : j);
+                                return varBaseName + (j == 0 && holder.skipZero ? "" : j);
                             }
                         }
                         ids.addTo(holder, 1);

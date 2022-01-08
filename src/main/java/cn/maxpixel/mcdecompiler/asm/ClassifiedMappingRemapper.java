@@ -214,6 +214,11 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     @Override
+    public String mapRecordComponentName(String owner, String name, String descriptor) {
+        return mapFieldName(owner, name, descriptor);
+    }
+
+    @Override
     public String mapFieldName(String owner, String name, String descriptor) {
         return Optional.ofNullable(fieldByUnm.get(owner))
                 .map(map -> map.get(name))
