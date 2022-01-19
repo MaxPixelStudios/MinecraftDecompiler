@@ -10,6 +10,7 @@ on:
       - src/main/resources
       - src/test/resources
       - decompiler
+      - .github
 
 permissions:
   packages: write
@@ -34,6 +35,7 @@ jobs:
         name: MinecraftDecompiler
         path: MinecraftDecompiler.jar
     - name: Deploy to GitHub Packages
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: mvn -B deploy
       env:
         GITHUB_TOKEN: ${{ github.token }}
