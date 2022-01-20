@@ -27,8 +27,6 @@ import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -42,12 +40,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
 
 public class ClassifiedDeobfuscator {
-    private static final Logger LOGGER = LogManager.getLogger("ClassifiedDeobfuscator");
+    private static final Logger LOGGER = Logging.getLogger("ClassifiedDeobfuscator");
     private final ClassifiedMappingReader<? extends Mapping> reader;
 
     private final boolean isNamespaced;
@@ -144,12 +144,12 @@ public class ClassifiedDeobfuscator {
                         }
                     }
                 } catch(Exception e) {
-                    LOGGER.error("Error when remapping classes or coping files", e);
+                    LOGGER.log(Level.WARNING, "Error when remapping classes or coping files", e);
                 }
             });
             if(options.rvn()) LocalVariableTableRenamer.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         } catch (IOException e) {
-            LOGGER.error("Error when deobfuscating", e);
+            LOGGER.log(Level.WARNING, "Error when deobfuscating", e);
         }
         return this;
     }

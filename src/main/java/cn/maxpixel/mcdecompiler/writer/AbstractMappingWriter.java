@@ -24,9 +24,8 @@ import cn.maxpixel.mcdecompiler.mapping.components.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.namespaced.*;
 import cn.maxpixel.mcdecompiler.mapping.paired.*;
 import cn.maxpixel.mcdecompiler.mapping.proguard.ProguardFieldMapping;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Type;
 
 import java.io.IOException;
@@ -37,9 +36,10 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 public abstract class AbstractMappingWriter {
-    protected static final Logger LOGGER = LogManager.getLogger("Mapping Writer");
+    protected static final Logger LOGGER = Logging.getLogger("Mapping Writer");
 
     protected final ObjectArrayList<String> buf = new ObjectArrayList<>();
     protected final ClassifiedMappingRemapper remapper;

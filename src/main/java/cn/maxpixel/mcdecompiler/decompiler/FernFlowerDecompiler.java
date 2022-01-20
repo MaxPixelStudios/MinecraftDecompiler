@@ -18,8 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -30,10 +29,11 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.logging.Logger;
 
 // Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make FernFlowerDecompiler read all libraries successfully
-public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */implements IDecompiler {
+public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ implements IDecompiler {
     FernFlowerDecompiler() {}
 
     @Override
@@ -50,26 +50,24 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */i
                 "asc", "1",
                 "rsy", "1"
         );
-        ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options, new PrintStreamLogger(System.out));
+        ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options,
+                new PrintStreamLogger(new PrintStream(new OutputStream() {
+                    private static final Logger LOGGER = Logging.getLogger("FernFlower");
+
+                    @Override
+                    public void write(int b) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public void write(byte[] b, int off, int len) {
+                        LOGGER.fine(new String(b, off, len).stripTrailing());
+                    }
+                })));
         decompiler.addSource(source.toFile());
 //		ObjectList<String> libs = listLibs();
 //		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
-        PrintStream sysOut = System.out;
-        System.setOut(new PrintStream(new OutputStream() {
-            private static final Logger LOGGER = LogManager.getLogger("FernFlower");
-
-            @Override
-            public void write(int b) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void write(byte[] b, int off, int len) {
-                LOGGER.debug(new String(b, off, len).stripTrailing());
-            }
-        }));
         decompiler.decompileContext();
-        System.setOut(sysOut);
     }
 
     private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {

@@ -18,12 +18,11 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import joptsimple.*;
 import joptsimple.util.PathConverter;
 import joptsimple.util.PathProperties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -31,6 +30,8 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static java.util.Arrays.asList;
 
@@ -38,9 +39,8 @@ public class MinecraftDecompilerCommandLine {
     static {
         System.setProperty("org.openjdk.java.util.stream.tripwire", "true");
     }
-    private static final Logger LOGGER = LogManager.getLogger("CommandLine");
-    public static final Proxy INTERNAL_PROXY = System.console() == null &&
-            Boolean.getBoolean("mcd.internalProxy") ?
+    private static final Logger LOGGER = Logging.getLogger("CommandLine");
+    public static final Proxy INTERNAL_PROXY = Info.IS_DEV ?
             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
             Proxy.NO_PROXY;
     public static void main(String[] args) throws Throwable {
@@ -139,7 +139,7 @@ public class MinecraftDecompilerCommandLine {
             if(options.has(customDecompilerO)) md.decompileCustomized(options.valueOf(customDecompilerO));
             else md.decompile(options.valueOf(decompileO));
         }
-        LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
+        LOGGER.log(Level.INFO, "Done. Thanks for using Minecraft Decompiler {0}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
     }
 
     private static void printHelp(OptionParser parser) {

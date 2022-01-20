@@ -19,16 +19,16 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JarUtil {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Logging.getLogger();
     private static final FileSystemProvider JAR_FSP;
 
     public static FileSystemProvider getJarFileSystemProvider() {
@@ -36,7 +36,7 @@ public class JarUtil {
     }
 
     public static FileSystem createZipFs(Path zipPath) throws IOException {
-        LOGGER.debug("Creating JarFileSystem for \"{}\"", zipPath);
+        LOGGER.log(Level.FINER, "Creating JarFileSystem for \"{0}\"", zipPath);
         return JAR_FSP.newFileSystem(zipPath, Object2ObjectMaps.singleton("create", "true"));
     }
 

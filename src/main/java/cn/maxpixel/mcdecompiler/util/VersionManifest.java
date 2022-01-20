@@ -22,8 +22,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,13 +30,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 
 public class VersionManifest {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Logging.getLogger();
     public static final JsonObject VERSION_MANIFEST;
     private static final Map<String, String> versions;
     private static final Object2ObjectOpenHashMap<String, JsonObject> versionJsonCache = new Object2ObjectOpenHashMap<>();
@@ -52,8 +52,8 @@ public class VersionManifest {
                             HttpResponse.BodyHandlers.ofInputStream()).body())) {
                 return JsonParser.parseReader(isr).getAsJsonObject();
             } catch (IOException | InterruptedException e) {
-                LOGGER.error("Error fetching Minecraft version JSON", e);
-                throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                LOGGER.log(Level.SEVERE, "Error fetching Minecraft version JSON", e);
+                throw Utils.wrapInRuntime(e);
             }
         });
     }
@@ -67,7 +67,7 @@ public class VersionManifest {
                     .map(JsonElement::getAsJsonObject)
                     .collect(Collectors.toMap(obj->obj.get("id").getAsString(), obj->obj.get("url").getAsString()));
         } catch (IOException | InterruptedException e) {
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            throw Utils.wrapInRuntime(e);
         }
     }
 }

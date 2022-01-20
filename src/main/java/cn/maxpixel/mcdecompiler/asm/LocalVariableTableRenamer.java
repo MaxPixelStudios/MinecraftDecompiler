@@ -24,9 +24,8 @@ import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -37,12 +36,15 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LocalVariableTableRenamer extends ClassVisitor {
-    private static final Logger LOGGER = LogManager.getLogger("LVT Renamer");
+    private static final Logger LOGGER = Logging.getLogger("LVT Renamer");
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("o");
 
     private final Object2ObjectOpenHashMap<String, Renamer> sharedRenamers = new Object2ObjectOpenHashMap<>();
@@ -109,14 +111,16 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                 sharedRenamers.getOrDefault(String.join(".", className, name, descriptor), new Renamer()) : new Renamer();
         if((access & Opcodes.ACC_ABSTRACT) != 0 && recordStarted && !descriptor.startsWith("()")) {
             StringJoiner joiner = new StringJoiner(" ").add(className).add(name).add(descriptor);
-            LOGGER.trace("Generation of abstract parameter names started for method {}{} in class {}", name, descriptor, className);
+            LOGGER.log(Level.FINEST, "Generation of abstract parameter names started for method {0}{1} in class {2}",
+                    new Object[] {name, descriptor, className});
             for(Type type : Type.getArgumentTypes(descriptor)) {
                 joiner.add(renamer.getVarName(type));
-                LOGGER.trace("Generated an abstract parameter name from descriptor \"{}\" for method {}{} in class {}",
-                        type::getDescriptor, () -> name, () -> descriptor, () -> className);
+                LOGGER.log(Level.FINEST, "Generated an abstract parameter name from descriptor \"{0}\" for method {1}{2} in class {3}",
+                        new Supplier[] {type::getDescriptor, () -> name, () -> descriptor, () -> className});
             }
             generatedAbstractParameterNames.add(joiner.toString());
-            LOGGER.trace("Generation of abstract parameter names completed for method {}{} in class {}", name, descriptor, className);
+            LOGGER.log(Level.FINEST, "Generation of abstract parameter names completed for method {0}{1} in class {2}",
+                    new Object[] {name, descriptor, className});
         }
         Optional<LocalVariableTable.Namespaced> lvt = Optional.ofNullable(mapping)
                 .map(ClassMapping::getMethods)
@@ -149,8 +153,8 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                     Handle lambdaHandle = (Handle) bootstrapMethodArguments[1];
                     if(sharedRenamers.putIfAbsent(String.join(".", className, lambdaHandle.getName(), lambdaHandle.getDesc()),
                             renamer) == null) {
-                        LOGGER.trace("Method {}{} is going to share renamer with {}{} in class {}",
-                                name, descriptor, lambdaHandle.getName(), lambdaHandle.getDesc(), className);
+                        LOGGER.log(Level.FINEST, "Method {0}{1} is going to share renamer with {2}{3} in class {4}",
+                                new Object[] {name, descriptor, lambdaHandle.getName(), lambdaHandle.getDesc(), className});
                     }
                 }
                 super.visitInvokeDynamicInsn(n, desc, bootstrapMethodHandle, bootstrapMethodArguments);
@@ -186,9 +190,9 @@ public class LocalVariableTableRenamer extends ClassVisitor {
     public static void startRecord() {
         if(recordStarted) throw new IllegalStateException("Record already started");
         generatedAbstractParameterNames.clear();
-        LOGGER.trace("Cleared previously generated abstract parameter names(if any)");
+        LOGGER.finest("Cleared previously generated abstract parameter names(if any)");
         recordStarted = true;
-        LOGGER.debug("Started to record the generated abstract method parameter names");
+        LOGGER.finest("Started to record the generated abstract method parameter names");
     }
 
     public static void endRecord(Path writeTo) throws IOException {
@@ -196,9 +200,9 @@ public class LocalVariableTableRenamer extends ClassVisitor {
         FileUtil.deleteIfExists(writeTo);
         Files.writeString(FileUtil.ensureFileExist(writeTo), String.join("\n", generatedAbstractParameterNames),
                 StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-        LOGGER.debug("Saved record to {}", writeTo);
+        LOGGER.log(Level.FINE, "Saved record to {0}", writeTo);
         recordStarted = false;
-        LOGGER.debug("Ended record");
+        LOGGER.finer("Ended record");
     }
 
     public static class Renamer {

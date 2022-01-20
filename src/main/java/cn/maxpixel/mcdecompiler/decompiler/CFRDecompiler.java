@@ -19,16 +19,16 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.benf.cfr.reader.util.getopt.OptionsImpl;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.logging.Logger;
 
 public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
     CFRDecompiler() {}
@@ -53,7 +53,7 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
         CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
         PrintStream sysErr = System.err;
         System.setErr(new PrintStream(new OutputStream() {
-            private static final Logger LOGGER = LogManager.getLogger("CFR");
+            private static final Logger LOGGER = Logging.getLogger("CFR");
 
             @Override
             public void write(int b) {
@@ -62,7 +62,7 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
 
             @Override
             public void write(byte[] b, int off, int len) {
-                LOGGER.debug(new String(b, off, len).stripTrailing());
+                LOGGER.fine(new String(b, off, len).stripTrailing());
             }
         }));
         cfr.analyse(ObjectLists.singleton(source.toString()));

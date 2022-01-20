@@ -18,11 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import cn.maxpixel.mcdecompiler.util.Logging;
+
+import java.util.logging.Logger;
 
 public class FunctionTest {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Logging.getLogger();
 
     public void test() throws Throwable {
     }

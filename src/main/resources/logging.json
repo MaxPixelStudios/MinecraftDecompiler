@@ -1,0 +1,13 @@
+{
+  "style": {
+    "color": {
+      "SEVERE": "BRIGHT_RED",
+      "WARNING": "YELLOW",
+      "INFO": "BRIGHT WHITE",
+      "CONFIG": "WHITE"
+    },
+    "time": "ISO_LOCAL_DATE_TIME"
+  },
+  "format": "[%time%] [%source_class%/%source_method%] [%name%] [%level%] %msg%\n",
+  "global_level": "INFO"
+}

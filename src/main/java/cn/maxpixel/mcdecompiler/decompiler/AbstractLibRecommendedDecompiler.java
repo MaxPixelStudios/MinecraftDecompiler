@@ -19,26 +19,27 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.util.FileUtil;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.StreamSupport;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 import static java.nio.file.StandardOpenOption.*;
 
 public abstract class AbstractLibRecommendedDecompiler implements ILibRecommendedDecompiler {
-    private static final Logger LOGGER = LogManager.getLogger("Lib Downloader");
+    private static final Logger LOGGER = Logging.getLogger("Lib Downloader");
     private final ObjectArrayList<String> libs = new ObjectArrayList<>();
     private final ObjectList<String> libsUnmodifiable = ObjectLists.unmodifiable(libs);
 
@@ -48,7 +49,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
             LOGGER.info("Minecraft version is not provided, skipping downloading libs");
             return;
         }
-        LOGGER.info("Downloading libs of version {}", version);
+        LOGGER.log(Level.INFO, "Downloading libs of version {0}", version);
         StreamSupport.stream(VersionManifest.get(version).getAsJsonArray("libraries").spliterator(), true)
                 .map(ele -> ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
                 .forEach(artifact -> {
@@ -56,18 +57,18 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
                     Path file = libDir.resolve(url.substring(url.lastIndexOf('/') + 1)); // libDir.resolve(lib file name)
                     libs.add(file.toAbsolutePath().normalize().toString());
                     if(!FileUtil.verify(file, artifact.get("sha1").getAsString(), artifact.get("size").getAsLong())) {
-                        LOGGER.debug("Downloading {}", url);
+                        LOGGER.log(Level.FINER, "Downloading {0}", url);
                         FileUtil.deleteIfExists(file);
                         try {
                             HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(),
                                     HttpResponse.BodyHandlers.ofFile(file, CREATE, WRITE, TRUNCATE_EXISTING))
                                     .body();
                         } catch(IOException e) {
-                            LOGGER.fatal("Error downloading files");
-                            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                            LOGGER.log(Level.SEVERE, "Error downloading files", e);
+                            throw Utils.wrapInRuntime(e);
                         } catch(InterruptedException e) {
-                            LOGGER.fatal("Download process interrupted");
-                            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                            LOGGER.log(Level.SEVERE, "Download process interrupted", e);
+                            throw Utils.wrapInRuntime(e);
                         }
                     }
                 });

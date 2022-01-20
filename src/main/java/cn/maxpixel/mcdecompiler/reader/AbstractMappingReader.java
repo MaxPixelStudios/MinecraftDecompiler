@@ -20,21 +20,21 @@ package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMappingReader<M extends Mapping, R, P extends MappingProcessor<M, R>> {
-    protected static final Logger LOGGER = LogManager.getLogger("Mapping Reader");
+    protected static final Logger LOGGER = Logging.getLogger("Mapping Reader");
     public final R mappings;
     public final ObjectList<M> packages;
 
@@ -42,7 +42,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
         Objects.requireNonNull(processor);
         Objects.requireNonNull(reader);
         try(reader) {
-            LOGGER.debug("Reading file");
+            LOGGER.finer("Reading file");
             ObjectArrayList<String> lines = reader.lines().map(s -> {
                 if(s.startsWith("#") || s.isEmpty() || s.isBlank()) return null;
 
@@ -52,10 +52,10 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
 
                 return s;
             }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
-            LOGGER.trace("Read file");
-            LOGGER.debug("Processing content");
+            LOGGER.finest("Read file");
+            LOGGER.fine("Processing content");
             Pair<R, ObjectList<M>> result = processor.process(lines);
-            LOGGER.trace("Processed content");
+            LOGGER.finest("Processed content");
             mappings = result.left();
             packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
         } catch(IOException e) {
@@ -76,7 +76,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
     }
 
     public AbstractMappingReader(P processor, BufferedReader... readers) {
-        LOGGER.debug("Reading files");
+        LOGGER.finer("Reading files");
         ObjectArrayList<String>[] contents = Utils.mapArray(readers, new ObjectArrayList[readers.length], reader -> {
             try(reader) {
                 return reader.lines().map(s -> {
@@ -92,10 +92,10 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
                 throw Utils.wrapInRuntime(e);
             }
         });
-        LOGGER.trace("Read files");
-        LOGGER.debug("Processing contents");
+        LOGGER.finest("Read files");
+        LOGGER.fine("Processing contents");
         Pair<R, ObjectList<M>> result = processor.process(contents);
-        LOGGER.trace("Processed contents");
+        LOGGER.finest("Processed contents");
         mappings = result.left();
         packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
     }

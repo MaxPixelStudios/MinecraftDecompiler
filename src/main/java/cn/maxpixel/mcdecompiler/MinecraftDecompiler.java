@@ -29,8 +29,6 @@ import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -45,13 +43,15 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 public class MinecraftDecompiler {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Logging.getLogger();
     public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .proxy(ProxySelector.of((InetSocketAddress) MinecraftDecompilerCommandLine.INTERNAL_PROXY.address()))
             .executor(ForkJoinPool.commonPool())
@@ -69,9 +69,9 @@ public class MinecraftDecompiler {
         FileUtil.deleteIfExists(Properties.TEMP_DIR);
         try {
             Files.createDirectories(Properties.TEMP_DIR);
-        } catch (IOException e) {
-            LOGGER.fatal("Error creating temp directory");
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+        } catch(IOException e) {
+            LOGGER.severe("Error creating temp directory");
+            throw Utils.wrapInRuntime(e);
         }
         this.options = options;
         this.deobfuscator = options.buildDeobfuscator();
@@ -94,8 +94,8 @@ public class MinecraftDecompiler {
                 LOGGER.info("Downloading jar...");
                 HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
             } catch(IOException | InterruptedException e) {
-                LOGGER.fatal("Error downloading Minecraft jar");
-                throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                LOGGER.severe("Error downloading Minecraft jar");
+                throw Utils.wrapInRuntime(e);
             }
         }
     }
@@ -105,20 +105,20 @@ public class MinecraftDecompiler {
             Path input = options.shouldDownloadJar() ? Properties.getDownloadedMcJarPath(options.version(), options.type()) :
                     options.inputJar();
             deobfuscator.deobfuscate(input, options.outputJar(), options);
-        } catch (IOException e) {
-            LOGGER.fatal("Error deobfuscating", e);
+        } catch(IOException e) {
+            LOGGER.log(Level.SEVERE, "Error deobfuscating", e);
         }
     }
 
     public void decompile(Info.DecompilerType decompilerType) {
         if(Files.notExists(options.outputJar())) deobfuscate();
-        LOGGER.info("Decompiling using \"{}\"", decompilerType);
+        LOGGER.log(Level.INFO, "Decompiling using \"{0}\"", decompilerType);
         decompile0(Decompilers.get(decompilerType), options.outputJar(), options.outputDecompDir());
     }
 
     public void decompileCustomized(String customizedDecompilerName) {
         if(Files.notExists(options.outputJar())) deobfuscate();
-        LOGGER.info("Decompiling using customized decompiler \"{}\"", customizedDecompilerName);
+        LOGGER.log(Level.INFO, "Decompiling using customized decompiler \"{0}\"", customizedDecompilerName);
         decompile0(Decompilers.getCustom(customizedDecompilerName), options.outputJar(), options.outputDecompDir());
     }
 
@@ -146,12 +146,12 @@ public class MinecraftDecompiler {
                 case FILE -> decompiler.decompile(inputJar, outputDir);
             }
         } catch (IOException e) {
-            LOGGER.fatal("Error when decompiling", e);
+            LOGGER.log(Level.SEVERE, "Error when decompiling", e);
         }
     }
 
     public static class OptionBuilder {
-        private static final Logger LOGGER = LogManager.getLogger("Option Builder");
+        private static final Logger LOGGER = Logging.getLogger("Option Builder");
         private String version;
         private Info.SideType type;
         private boolean includeOthers = true;
@@ -193,8 +193,8 @@ public class MinecraftDecompiler {
             try {
                 return withMapping(Files.newInputStream(Path.of(inputMappings)));
             } catch (IOException e) {
-                LOGGER.fatal("Error opening mapping file");
-                throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                LOGGER.severe("Error opening mapping file");
+                throw Utils.wrapInRuntime(e);
             }
         }
 

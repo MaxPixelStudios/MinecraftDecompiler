@@ -21,8 +21,6 @@ package cn.maxpixel.mcdecompiler.util;
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import cn.maxpixel.mcdecompiler.mapping1.type.MappingTypes;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import sun.misc.Unsafe;
 
 import java.io.BufferedReader;
@@ -37,12 +35,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Utils {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
     }
@@ -58,23 +55,23 @@ public class Utils {
     }
 
     public static void waitForProcess(Process pro) {
-        Logger logger = LogManager.getLogger("Process PID: " + pro.pid());
+        Logger logger = Logging.getLogger("Process PID: " + pro.pid());
         try(BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
             BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
             Thread inT = new Thread(() -> {
                 try {
                     String ins;
-                    while ((ins = in.readLine()) != null) logger.debug(ins);
+                    while ((ins = in.readLine()) != null) logger.fine(ins);
                 } catch (Throwable e) {
-                    logger.catching(e);
+                    logger.throwing("Utils", "waitForProcess", e);
                 }
             });
             Thread errT = new Thread(() -> {
                 try {
                     String ins;
-                    while ((ins = err.readLine()) != null) logger.error(ins);
+                    while ((ins = err.readLine()) != null) logger.warning(ins);
                 } catch (Throwable e) {
-                    logger.catching(e);
+                    logger.throwing("Utils", "waitForProcess", e);
                 }
             });
             inT.setDaemon(true);
@@ -83,7 +80,7 @@ public class Utils {
             errT.start();
             pro.waitFor();
         } catch (IOException | InterruptedException e) {
-            logger.catching(e);
+            logger.throwing("Utils", "waitForProcess", e);
         }
     }
 
@@ -135,7 +132,7 @@ public class Utils {
         try(Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#"))) {
             return tryIdentifyingMappingType(lines);
         } catch (IOException e) {
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            throw Utils.wrapInRuntime(e);
         }
     }
 
@@ -146,7 +143,7 @@ public class Utils {
             reader.reset();
             return result;
         } catch (IOException e) {
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            throw Utils.wrapInRuntime(e);
         }
     }
 

@@ -11,7 +11,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <depend.asm.ver>9.2</depend.asm.ver>
         <depend.gson.ver>2.8.9</depend.gson.ver>
-        <depend.log4j.ver>2.17.1</depend.log4j.ver>
+        <depend.jansi.ver>2.4.0</depend.jansi.ver>
         <depend.fastutil.ver>8.5.6</depend.fastutil.ver>
         <depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
         <depend.cfr.ver>0.152</depend.cfr.ver>
@@ -67,7 +67,6 @@
                             <manifestEntries>
                                 <Automatic-Module-Name>cn.maxpixel.mcdecompiler</Automatic-Module-Name>
                                 <Implementation-Version>${project.version}</Implementation-Version>
-                                <Multi-Release>true</Multi-Release><!-- Log4j 2 -->
                             </manifestEntries>
                         </transformer>
                     </transformers>
@@ -75,7 +74,7 @@
                     <minimizeJar>true</minimizeJar>
                     <filters>
                         <filter>
-                            <artifact>it.unimi.dsi:fastutil-core</artifact>
+                            <artifact>it.unimi.dsi:fastutil</artifact>
                             <excludes>
                                 <exclude>it/unimi/dsi/fastutil/booleans/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/chars/**</exclude>
@@ -86,14 +85,6 @@
                                 <exclude>it/unimi/dsi/fastutil/longs/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/shorts/**</exclude>
                             </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>org.apache.logging.log4j:log4j-core</artifact>
-                            <includes><include>**</include></includes>
-                        </filter>
-                        <filter>
-                            <artifact>org.apache.logging.log4j:log4j-api</artifact>
-                            <includes><include>**</include></includes>
                         </filter>
                         <filter>
                             <artifact>org.benf:cfr</artifact>
@@ -178,14 +169,9 @@
             <version>${depend.gson.ver}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${depend.log4j.ver}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${depend.log4j.ver}</version>
+            <groupId>org.fusesource.jansi</groupId>
+            <artifactId>jansi</artifactId>
+            <version>${depend.jansi.ver}</version>
         </dependency>
         <dependency>
             <groupId>it.unimi.dsi</groupId>

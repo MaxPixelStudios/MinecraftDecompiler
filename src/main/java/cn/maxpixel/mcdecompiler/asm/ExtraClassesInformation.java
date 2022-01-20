@@ -19,18 +19,19 @@
 package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.util.IOUtil;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
-    private static final Logger LOGGER = LogManager.getLogger("Class Info Collector");
+    private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
     private final Object2ObjectOpenHashMap<String, ObjectImmutableList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
 
@@ -87,7 +88,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 }
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         } catch(IOException e) {
-            LOGGER.error("Error when creating super class mapping", e);
+            LOGGER.log(Level.WARNING, "Error when creating super class mapping", e);
         }
     }
 

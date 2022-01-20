@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler;
 import org.objectweb.asm.Opcodes;
 
 public interface Info {
+    boolean IS_DEV = System.console() == null && Boolean.getBoolean("mcd.isDevEnv");
     int ASM_VERSION = Opcodes.ASM9;
     String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
 

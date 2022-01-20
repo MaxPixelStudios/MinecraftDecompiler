@@ -19,13 +19,15 @@
 package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.Info;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import org.objectweb.asm.*;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // Visitor version of https://github.com/MinecraftForge/ForgeAutoRenamingTool/blob/master/src/main/java/net/minecraftforge/fart/internal/ParameterAnnotationFixer.java
 public class RuntimeParameterAnnotationFixer extends ClassVisitor {
-    private static final Logger LOGGER = LogManager.getLogger("Runtime(In)visibleParameterAnnotations Attribute Fixer");
+    private static final Logger LOGGER = Logging.getLogger("Runtime(In)visibleParameterAnnotations Attribute Fixer");
     private int removeCount;// = isEnum ? 2 : 1
     private String className;
     private String toProcess;
@@ -40,7 +42,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
         if((access & Opcodes.ACC_ENUM) != 0) {
             this.removeCount = 2;
             this.toProcess = "(Ljava/lang/String;I";
-            LOGGER.debug("Fixing class {} because it is an enum", name);
+            LOGGER.log(Level.FINER, "Fixing class {0} because it is an enum", name);
         }
         super.visit(version, access, name, signature, superName, interfaces);
     }
@@ -55,12 +57,12 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
                     this.removeCount = 1;
                     String s = className.substring(0, i);
                     this.toProcess = '(' + Type.getObjectType(s).getDescriptor();
-                    LOGGER.debug("Fixing class {} as its name appears to be an inner class of {}", name, s);
+                    LOGGER.log(Level.FINER, "Fixing class {0} as its name appears to be an inner class of {1}", new Object[] {name, s});
                 }
             } else {
                 this.removeCount = 1;
                 this.toProcess = '(' + Type.getObjectType(outerName).getDescriptor();
-                LOGGER.debug("Fixing class {} as its an inner class of {}", name, outerName);
+                LOGGER.log(Level.FINER, "Fixing class {0} as its an inner class of {1}", new Object[] {name, outerName});
             }
         }
         super.visitInnerClass(name, outerName, innerName, access);
@@ -76,8 +78,8 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
                 @Override
                 public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
                     if(params == parameterCount) {
-                        LOGGER.trace("Found {} extra {}, try removing...", removeCount, visible ?
-                                "RuntimeVisibleParameterAnnotations" : "RuntimeInvisibleParameterAnnotations");
+                        LOGGER.log(Level.FINEST, "Found {0} extra {1}, try removing...", new Object[] {removeCount, visible ?
+                                "RuntimeVisibleParameterAnnotations" : "RuntimeInvisibleParameterAnnotations"});
                         if(visible) processVisible = true;
                         else processInvisible = true;
                         super.visitAnnotableParameterCount(parameterCount - removeCount, visible);
@@ -90,7 +92,8 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
                         if(parameter >= removeCount) {
                             return super.visitParameterAnnotation(parameter - removeCount, descriptor, true);
                         } else {
-                            LOGGER.trace("Dropped an annotation(descriptor={}) on synthetic param {}", descriptor, parameter);
+                            LOGGER.log(Level.FINEST, "Dropped an annotation(descriptor={0}) on synthetic param {1}",
+                                    new Object[] {descriptor, parameter});
                             return null;
                         }
                     }
@@ -98,7 +101,8 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
                         if(parameter >= removeCount) {
                             return super.visitParameterAnnotation(parameter - removeCount, descriptor, false);
                         } else {
-                            LOGGER.trace("Dropped an annotation(descriptor={}) on synthetic param {}", descriptor, parameter);
+                            LOGGER.log(Level.FINEST, "Dropped an annotation(descriptor={}) on synthetic param {}",
+                                    new Object[] {descriptor, parameter});
                             return null;
                         }
                     }

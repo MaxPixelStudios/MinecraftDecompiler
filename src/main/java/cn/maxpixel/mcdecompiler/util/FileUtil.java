@@ -18,9 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +30,8 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -41,7 +40,7 @@ import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class FileUtil {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = Logging.getLogger();
 
     public static void copy(Path source, Path target) {
         if(Files.isDirectory(source)) copyDirectory(source, target);
@@ -50,13 +49,13 @@ public class FileUtil {
 
     public static void copyDirectory(Path source, Path target) {
         if(Files.notExists(source)) {
-            LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
+            LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
             return;
         }
         if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
         if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
         try(Stream<Path> sourceStream = iterateFiles(source)) {
-            LOGGER.debug("Coping directory \"{}\" to \"{}\"...", source, target);
+            LOGGER.log(Level.FINER, "Coping directory \"{0}\" to \"{1}\"...", new Object[] {source, target});
             FileUtil.ensureDirectoryExist(target);
             sourceStream.forEach(path -> {
                 try(InputStream in = Files.newInputStream(path);
@@ -64,7 +63,7 @@ public class FileUtil {
                     byte[] buf = new byte[8192];
                     for(int len = in.read(buf); len != -1; len = in.read(buf)) out.write(buf, 0, len);
                 } catch (IOException e) {
-                    LOGGER.error("Error coping file \"{}\"", path, e);
+                    LOGGER.log(Level.WARNING, "Error coping file \"{0}\"", new Object[] {path, e});
                 }
             });
         }
@@ -72,24 +71,24 @@ public class FileUtil {
 
     public static void copyFile(Path source, Path target) {
         if(Files.notExists(source)) {
-            LOGGER.debug("Source \"{}\" does not exist, skipping this operation...", source);
+            LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
             return;
         }
         if(Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a file");
         if(Files.exists(target) && Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
-        LOGGER.debug("Coping file {} to {} ...", source, target);
+        LOGGER.log(Level.FINER, "Coping file {0} to {1} ...", new Object[] {source, target});
         try {
             Files.createDirectories(target.getParent());
             Files.copy(source, target, REPLACE_EXISTING);
         } catch(FileAlreadyExistsException ignored) {
         } catch (IOException e) {
-            LOGGER.error("Error copying files");
+            LOGGER.log(Level.WARNING, "Error coping file", e);
         }
     }
 
     public static void deleteIfExists(Path path) {
         if(Files.notExists(path)) {
-            LOGGER.debug("\"{}\" does not exist, skipping this operation...", path);
+            LOGGER.log(Level.FINER, "\"{0}\" does not exist, skipping this operation...", path);
             return;
         }
         if(Files.isDirectory(path)) deleteDirectoryIfExists(path);
@@ -97,24 +96,24 @@ public class FileUtil {
             try {
                 Files.delete(path);
             } catch (IOException e) {
-                LOGGER.error("Error deleting file \"{}\"", path, e);
+                LOGGER.log(Level.WARNING, "Error deleting file \"{0}\"", new Object[] {path, e});
             }
         }
     }
 
     public static void deleteDirectoryIfExists(Path directory) {
         if(Files.notExists(directory)) {
-            LOGGER.debug("\"{}\" does not exist, skipping this operation...", directory);
+            LOGGER.log(Level.FINER, "\"{0}\" does not exist, skipping this operation...", directory);
             return;
         }
         if(!Files.isDirectory(directory)) throw new IllegalArgumentException("Not a directory!");
         try(DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(directory, "path cannot be null"))) {
-            LOGGER.debug("Deleting directory \"{}\"...", directory);
+            LOGGER.log(Level.FINER, "Deleting directory \"{0}\"...", directory);
             StreamSupport.stream(ds.spliterator(), true)
                     .forEach(FileUtil::deleteDirectory0);
             Files.delete(directory);
         } catch (IOException e) {
-            LOGGER.error("Error deleting directory \"{}\"", directory, e);
+            LOGGER.log(Level.WARNING, "Error deleting directory \"{0}\"", new Object[] {directory, e});
         }
     }
 
@@ -126,10 +125,10 @@ public class FileUtil {
                             .forEach(FileUtil::deleteDirectory0);
                 }
             }
-            LOGGER.debug("Deleting {}", path);
+            LOGGER.log(Level.FINEST, "Deleting {0}", path);
             Files.delete(path);
         } catch (IOException e) {
-            LOGGER.error("Error deleting directory \"{}\"", path, e);
+            LOGGER.log(Level.WARNING, "Error deleting directory \"{0}\"", new Object[] {path, e});
         }
     }
 
@@ -170,8 +169,8 @@ public class FileUtil {
                     })
                     .onClose(LambdaUtil.unwrap(ds::close));
         } catch (IOException e) {
-            LOGGER.error("Error iterating files");
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            LOGGER.log(Level.SEVERE, "Error iterating files", e);
+            throw Utils.wrapInRuntime(e);
         }
     }
 
@@ -194,10 +193,10 @@ public class FileUtil {
             }
             return (size < 1 || fc.size() == size) && (hash == null || hash.isBlank() || hash.contentEquals(out));
         } catch(IOException e) {
-            LOGGER.error("Error reading files");
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            LOGGER.log(Level.SEVERE, "Error reading files", e);
+            throw Utils.wrapInRuntime(e);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.error("Hmm... You need a SHA-1 digest implementation");
+            LOGGER.warning("Hmm... You need a SHA-1 digest implementation");
             return false;
         }
     }

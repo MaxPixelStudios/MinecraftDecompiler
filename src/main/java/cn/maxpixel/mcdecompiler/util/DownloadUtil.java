@@ -21,8 +21,6 @@ package cn.maxpixel.mcdecompiler.util;
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.Properties;
 import com.google.gson.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,12 +31,14 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 import static java.nio.file.StandardOpenOption.*;
 
 public class DownloadUtil {
-    private static final Logger LOGGER = LogManager.getLogger("Download Utility");
+    private static final Logger LOGGER = Logging.getLogger("Download Utility");
 
     public static BufferedReader downloadMapping(String version, Info.SideType type) {
         JsonObject versionDownloads = VersionManifest.get(version).get("downloads").getAsJsonObject();
@@ -53,15 +53,15 @@ public class DownloadUtil {
                         .build();
                 HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
             } catch(IOException | InterruptedException e) {
-                LOGGER.fatal("Error downloading Proguard mapping file");
-                throw Utils.wrapInRuntime(LOGGER.throwing(e));
+                LOGGER.log(Level.SEVERE, "Error downloading Proguard mapping file", e);
+                throw Utils.wrapInRuntime(e);
             }
         }
         try {
             return Files.newBufferedReader(p);
         } catch(IOException e) {
-            LOGGER.fatal("Error creating BufferedReader for Proguard mapping file");
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            LOGGER.log(Level.SEVERE, "Error creating BufferedReader for Proguard mapping file", e);
+            throw Utils.wrapInRuntime(e);
         }
     }
 
@@ -77,14 +77,14 @@ public class DownloadUtil {
             if(!FileUtil.verify(Objects.requireNonNull(localPath), HTTP_CLIENT.send(HttpRequest.newBuilder(remoteHash).build(),
                     HttpResponse.BodyHandlers.ofString()).body(), -1L)) {
                 FileUtil.deleteIfExists(localPath);
-                LOGGER.debug("Downloading the resource");
+                LOGGER.fine("Downloading the resource");
                 FileUtil.ensureFileExist(localPath);
                 HTTP_CLIENT.send(HttpRequest.newBuilder(remoteResource).build(),
                         HttpResponse.BodyHandlers.ofFile(localPath, WRITE, TRUNCATE_EXISTING));
             }
         } catch(InterruptedException e) {
-            LOGGER.fatal("Download process interrupted");
-            throw Utils.wrapInRuntime(LOGGER.throwing(e));
+            LOGGER.log(Level.SEVERE, "Download process interrupted", e);
+            throw Utils.wrapInRuntime(e);
         }
         return Files.newInputStream(localPath, READ);
     }
