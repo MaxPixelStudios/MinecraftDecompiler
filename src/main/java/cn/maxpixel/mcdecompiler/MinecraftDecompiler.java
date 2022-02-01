@@ -28,6 +28,8 @@ import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -188,8 +190,11 @@ public class MinecraftDecompiler {
                         libs.add(extractDir.resolve(lib.getFileName().toString()));
                     });
                     this.bundledLibs = Optional.of(libs);
-                } else {
-                    this.inputJar = inputJar;
+                } else this.inputJar = inputJar;
+                Path versionJson = jarFs.getPath("/version.json");
+                if(version == null && Files.exists(versionJson)) {
+                    JsonObject object = JsonParser.parseString(Files.readString(versionJson)).getAsJsonObject();
+                    this.version = object.get("id").getAsString();
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Error opening jar file {0}", new Object[] {inputJar, e});
