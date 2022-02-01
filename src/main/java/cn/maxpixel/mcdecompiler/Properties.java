@@ -25,10 +25,6 @@ public class Properties {
     public static Path TEMP_DIR = Path.of("temp");
     public static Path DOWNLOAD_DIR = Path.of("downloads");
 
-    public static Path getDownloadedMcJarPath(String version, Info.SideType type) {
-        return DOWNLOAD_DIR.resolve(version).resolve(type + ".jar");
-    }
-
     public static Path getDownloadedProguardMappingPath(String version, Info.SideType type) {
         return DOWNLOAD_DIR.resolve(version).resolve(type + "_mappings.txt");
     }

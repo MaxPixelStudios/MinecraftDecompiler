@@ -45,6 +45,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,45 +70,13 @@ public class MinecraftDecompiler {
     }
 
     public MinecraftDecompiler(Options options) {
-        FileUtil.deleteIfExists(Properties.TEMP_DIR);
-        try {
-            Files.createDirectories(Properties.TEMP_DIR);
-        } catch(IOException e) {
-            LOGGER.severe("Error creating temp directory");
-            throw Utils.wrapInRuntime(e);
-        }
         this.options = options;
         this.deobfuscator = options.buildDeobfuscator();
-        if(options.shouldDownloadJar()) downloadJar(options.version(), options.type());
-    }
-
-    private void downloadJar(String version, Info.SideType type) {
-        Path p = Properties.getDownloadedMcJarPath(version, type);
-        if(Files.notExists(p)) {
-            try {
-                HttpRequest request = HttpRequest.newBuilder(
-                        URI.create(VersionManifest.get(version)
-                                .get("downloads")
-                                .getAsJsonObject()
-                                .get(type.toString())
-                                .getAsJsonObject()
-                                .get("url")
-                                .getAsString()
-                        )).build();
-                LOGGER.info("Downloading jar...");
-                HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
-            } catch(IOException | InterruptedException e) {
-                LOGGER.severe("Error downloading Minecraft jar");
-                throw Utils.wrapInRuntime(e);
-            }
-        }
     }
 
     public void deobfuscate() {
         try {
-            Path input = options.shouldDownloadJar() ? Properties.getDownloadedMcJarPath(options.version(), options.type()) :
-                    options.inputJar();
-            deobfuscator.deobfuscate(input, options.outputJar(), options);
+            deobfuscator.deobfuscate(options.inputJar(), options.outputJar(), options);
         } catch(IOException e) {
             LOGGER.log(Level.SEVERE, "Error deobfuscating", e);
         }
@@ -133,16 +102,20 @@ public class MinecraftDecompiler {
             FileUtil.ensureDirectoryExist(libDownloadPath);
             if(decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
-            if(decompiler instanceof ILibRecommendedDecompiler lrd && options.version() != null)
-                lrd.downloadLib(libDownloadPath, options.version());
+            if(decompiler instanceof ILibRecommendedDecompiler lrd) {
+                if(options.bundledLibs().isPresent()) lrd.receiveLibs(options.bundledLibs().get());
+                else if(options.version() != null) lrd.downloadLib(libDownloadPath, options.version());
+            }
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
                     Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
                     FileUtil.copyDirectory(jarFs.getPath("/net"), decompileClasses);
-                    try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
-                            !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
-                                    p.endsWith("serialization") || p.endsWith("util")))) {
-                        mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompileClasses));
+                    if(options.bundledLibs().isEmpty()) {
+                        try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
+                                !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
+                                        p.endsWith("serialization") || p.endsWith("util")))) {
+                            mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompileClasses));
+                        }
                     }
                     decompiler.decompile(decompileClasses, outputDir);
                 }
@@ -169,9 +142,12 @@ public class MinecraftDecompiler {
 
         private String targetNamespace;
 
+        private Optional<ObjectList<Path>> bundledLibs = Optional.empty();
+
         public OptionBuilder(String version, Info.SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
             this.type = Objects.requireNonNull(type, "type cannot be null!");
+            preprocess(downloadJar(version, type));
             this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar").toAbsolutePath().normalize();
             this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled").toAbsolutePath().normalize();
         }
@@ -181,10 +157,67 @@ public class MinecraftDecompiler {
         }
 
         public OptionBuilder(Path inputJar, boolean reverse) {
-            this.inputJar = inputJar;
+            preprocess(inputJar);
             this.reverse = reverse;
             this.outputJar = Path.of("output", "deobfuscated.jar").toAbsolutePath().normalize();
             this.outputDecompDir = Path.of("output", "decompiled").toAbsolutePath().normalize();
+        }
+
+        private void preprocess(Path inputJar) {
+            FileUtil.deleteIfExists(Properties.TEMP_DIR);
+            try {
+                Files.createDirectories(Properties.TEMP_DIR);
+            } catch(IOException e) {
+                LOGGER.severe("Error creating temp directory");
+                throw Utils.wrapInRuntime(e);
+            }
+            try(FileSystem jarFs = JarUtil.createZipFs(FileUtil.requireExist(inputJar))) {
+                if(Files.exists(jarFs.getPath("/net/minecraft/bundler/Main.class"))) {
+                    Path metaInf = jarFs.getPath("META-INF");
+                    Path extractDir = FileUtil.ensureDirectoryExist(Properties.TEMP_DIR.resolve("bundleExtract"));
+                    List<String> jar = Files.readAllLines(metaInf.resolve("versions.list"));
+                    if(jar.size() == 1) {
+                        Path versionPath = metaInf.resolve("versions").resolve(jar.get(0).split("\t")[2]);
+                        FileUtil.copyFile(versionPath, extractDir);
+                        this.inputJar = extractDir.resolve(versionPath.getFileName().toString());
+                    } else throw new IllegalArgumentException("Why multiple versions in a bundle?");
+                    ObjectArrayList<Path> libs = new ObjectArrayList<>();
+                    Files.lines(metaInf.resolve("libraries.list")).forEach(line -> {
+                        Path lib = metaInf.resolve("libraries").resolve(line.split("\t")[2]);
+                        FileUtil.copyFile(lib, extractDir);
+                        libs.add(extractDir.resolve(lib.getFileName().toString()));
+                    });
+                    this.bundledLibs = Optional.of(libs);
+                } else {
+                    this.inputJar = inputJar;
+                }
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Error opening jar file {0}", new Object[] {inputJar, e});
+                throw Utils.wrapInRuntime(e);
+            }
+        }
+
+        private static Path downloadJar(String version, Info.SideType type) {
+            Path p = Properties.DOWNLOAD_DIR.resolve(version).resolve(type + ".jar");
+            if(Files.notExists(p)) {
+                try {
+                    HttpRequest request = HttpRequest.newBuilder(
+                            URI.create(VersionManifest.get(version)
+                                    .get("downloads")
+                                    .getAsJsonObject()
+                                    .get(type.toString())
+                                    .getAsJsonObject()
+                                    .get("url")
+                                    .getAsString()
+                            )).build();
+                    LOGGER.info("Downloading jar...");
+                    HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
+                } catch(IOException | InterruptedException e) {
+                    LOGGER.severe("Error downloading Minecraft jar");
+                    throw Utils.wrapInRuntime(e);
+                }
+            }
+            return p;
         }
 
         public OptionBuilder libsUsing(String version) {
@@ -313,6 +346,11 @@ public class MinecraftDecompiler {
                 public ObjectList<Path> extraJars() {
                     return extraJars;
                 }
+
+                @Override
+                public Optional<ObjectList<Path>> bundledLibs() {
+                    return bundledLibs;
+                }
             };
         }
     }
@@ -333,10 +371,6 @@ public class MinecraftDecompiler {
                 } else throw new UnsupportedOperationException("Unsupported yet");
             }
             return new ClassifiedDeobfuscator(version(), type());
-        }
-
-        private boolean shouldDownloadJar() {
-            return version() != null && type() != null;
         }
 
         @Override
@@ -360,5 +394,7 @@ public class MinecraftDecompiler {
 
         @Override
         ObjectList<Path> extraJars();
+
+        Optional<ObjectList<Path>> bundledLibs();
     }
 }

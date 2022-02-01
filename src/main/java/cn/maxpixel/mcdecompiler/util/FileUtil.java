@@ -132,8 +132,9 @@ public class FileUtil {
         }
     }
 
-    public static void requireExist(Path p) {
-        if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
+    public static Path requireExist(Path p) {
+        if(Files.notExists(Objects.requireNonNull(p))) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
+        return p;
     }
 
     public static Path ensureFileExist(Path p) {

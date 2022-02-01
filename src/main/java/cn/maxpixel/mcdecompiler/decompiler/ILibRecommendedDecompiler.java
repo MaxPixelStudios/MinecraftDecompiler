@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
+import it.unimi.dsi.fastutil.objects.ObjectList;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -40,4 +42,6 @@ public interface ILibRecommendedDecompiler extends IDecompiler {
      * @see AbstractLibRecommendedDecompiler#listLibs()
      */
     void downloadLib(Path libDir, String version) throws IOException;
+
+    void receiveLibs(ObjectList<Path> libs);
 }

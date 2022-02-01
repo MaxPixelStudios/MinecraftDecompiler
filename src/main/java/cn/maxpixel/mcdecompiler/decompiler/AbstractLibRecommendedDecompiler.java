@@ -31,8 +31,10 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
@@ -72,6 +74,12 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
                         }
                     }
                 });
+    }
+
+    @Override
+    public void receiveLibs(ObjectList<Path> libs) {
+        this.libs.addAll(Objects.requireNonNull(libs).stream().map(p -> p.toAbsolutePath().normalize().toString())
+                .collect(Collectors.toCollection(ObjectArrayList::new)));
     }
 
     /**

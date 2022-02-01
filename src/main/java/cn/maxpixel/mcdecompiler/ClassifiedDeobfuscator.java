@@ -95,7 +95,6 @@ public class ClassifiedDeobfuscator {
 
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target, DeobfuscateOptions options) throws IOException {
         LOGGER.info("Deobfuscating...");
-        FileUtil.requireExist(source);
         Files.deleteIfExists(target);
         if(options.reverse()) {
             if(isNamespaced) ClassifiedMappingReader.swap((ClassifiedMappingReader<NamespacedMapping>) reader, sourceNamespace, targetNamespace);
@@ -105,7 +104,7 @@ public class ClassifiedDeobfuscator {
                 ClassMapping.genMappingsByNamespaceMap(((ClassifiedMappingReader<NamespacedMapping>) reader).mappings, targetNamespace) :
                 ClassMapping.genMappingsByUnmappedNameMap(((ClassifiedMappingReader<PairedMapping>) reader).mappings);
         FileUtil.ensureDirectoryExist(target.getParent());
-        try(FileSystem fs = JarUtil.createZipFs(source);
+        try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
             FileSystem targetFs = JarUtil.createZipFs(target);
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath("/"))) {
             ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath("/"))
