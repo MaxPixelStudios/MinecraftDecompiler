@@ -27,6 +27,8 @@ import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -108,6 +110,13 @@ public class ClassifiedDeobfuscator {
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath("/"))) {
             ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath("/"))
                     .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1)))), true);
+            options.extraJars().forEach(jar -> {
+                try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
+                    FileUtil.iterateFiles(jarFs.getPath("/")).filter(p -> p.toString().endsWith(".class")).forEach(info);
+                } catch(IOException e) {
+                    LOGGER.log(Level.WARNING, "Error reading extra jar: {0}", new Object[] {jar, e});
+                }
+            });
             ClassifiedMappingRemapper mappingRemapper = isNamespaced ?
                     new ClassifiedMappingRemapper((ClassifiedMappingReader<NamespacedMapping>) reader, info, sourceNamespace, targetNamespace) :
                     new ClassifiedMappingRemapper((ClassifiedMappingReader<PairedMapping>) reader, info);
@@ -148,7 +157,7 @@ public class ClassifiedDeobfuscator {
                 }
             });
             if(options.rvn()) LocalVariableTableRenamer.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
-        } catch (IOException e) {
+        } catch(IOException e) {
             LOGGER.log(Level.WARNING, "Error when deobfuscating", e);
         }
         return this;
@@ -160,5 +169,9 @@ public class ClassifiedDeobfuscator {
         boolean rvn();
 
         boolean reverse();
+
+        default ObjectList<Path> extraJars() {
+            return ObjectLists.emptyList();
+        }
     }
 }

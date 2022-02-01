@@ -29,6 +29,8 @@ import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -41,6 +43,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
@@ -159,6 +162,7 @@ public class MinecraftDecompiler {
         private BufferedReader inputMappings;
         private Path outputJar;
         private Path outputDecompDir;
+        private final ObjectArrayList<Path> extraJars = new ObjectArrayList<>();
 
         private Path inputJar;
         private boolean reverse;
@@ -236,6 +240,21 @@ public class MinecraftDecompiler {
             return this;
         }
 
+        public OptionBuilder addExtraJar(Path jar) {
+            this.extraJars.add(jar);
+            return this;
+        }
+
+        public OptionBuilder addExtraJars(List<Path> jars) {
+            this.extraJars.addAll(jars);
+            return this;
+        }
+
+        public OptionBuilder addExtraJars(ObjectList<Path> jars) {
+            this.extraJars.addAll(jars);
+            return this;
+        }
+
         public Options build() {
             if(this.outputJar.getParent().equals(this.outputDecompDir))
                 throw new IllegalArgumentException("The parent directory of outputJar cannot be the same as outputDecomp");
@@ -289,6 +308,11 @@ public class MinecraftDecompiler {
                 public String targetNamespace() {
                     return targetNamespace;
                 }
+
+                @Override
+                public ObjectList<Path> extraJars() {
+                    return extraJars;
+                }
             };
         }
     }
@@ -333,5 +357,8 @@ public class MinecraftDecompiler {
         boolean reverse();
 
         String targetNamespace();
+
+        @Override
+        ObjectList<Path> extraJars();
     }
 }

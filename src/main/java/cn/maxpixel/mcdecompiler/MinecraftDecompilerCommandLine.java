@@ -92,6 +92,8 @@ public class MinecraftDecompilerCommandLine {
                 "to decompile, do NOT pass any arg to \"decompile\" option when you use this option").withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("tempDir", "Temp directory for saving unzipped and remapped " +
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
+        ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.accepts("extraJars", "Extra jars that will be used to get the " +
+                "class information").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         AbstractOptionSpec<Void> help = parser.acceptsAll(asList("h", "?", "help"), "For help").forHelp();
 
         if(args == null) {
@@ -131,6 +133,7 @@ public class MinecraftDecompilerCommandLine {
         options.valueOfOptional(targetNamespaceO).ifPresent(builder::targetNamespace);
         options.valueOfOptional(outputO).ifPresent(builder::output);
         options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
+        builder.addExtraJars(options.valuesOf(extraJarsO));
 
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();

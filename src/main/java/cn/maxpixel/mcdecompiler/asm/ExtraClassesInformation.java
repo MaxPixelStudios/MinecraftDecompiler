@@ -56,7 +56,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 @Override
                 public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                     this.name = name;
-                    if((access & Opcodes.ACC_INTERFACE) == 0 && !superName.equals("java/lang/Object")) {
+                    if((access & (Opcodes.ACC_INTERFACE | Opcodes.ACC_ENUM | Opcodes.ACC_RECORD)) == 0 &&
+                            !superName.startsWith("java/")) {
                         String[] arr = new String[interfaces.length + 1];
                         System.arraycopy(interfaces, 0, arr, 0, interfaces.length);
                         arr[arr.length - 1] = superName;
