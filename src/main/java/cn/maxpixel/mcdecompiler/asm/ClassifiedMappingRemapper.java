@@ -80,7 +80,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     private static ClassMapping<PairedMapping> asPaired(ClassMapping<NamespacedMapping> old, String sourceNamespace, String targetNamespace) {
         ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
                 old.mapping.getName(targetNamespace)));
-        old.getFields().forEach(m -> cm.addField(new PairedMapping(m.getName(sourceNamespace), m.getName(targetNamespace))));
+        old.getFields().forEach(m -> cm.addField(MappingUtil.Paired.o(m.getName(sourceNamespace), m.getName(targetNamespace))));
         old.getMethods().forEach(m -> {
             if(!m.getComponent(Descriptor.Namespaced.class).getDescriptorNamespace().equals(sourceNamespace))
                 throw new IllegalArgumentException();

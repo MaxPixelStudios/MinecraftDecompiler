@@ -56,13 +56,13 @@ public class MinecraftDecompilerCommandLine {
         OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping " +
                 "to deobfuscate.").availableUnless(sideTypeO);
         OptionSpecBuilder dontIncludeOthersO = parser.accepts("dontIncludeOthers", "Drop the resource files of the output jar.");
-        ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to " +
-                "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableUnless(sideTypeO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
                 "specify --mappingPath option and can't specify --side option.").availableUnless(sideTypeO).requiredUnless(sideTypeO)
                 .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(asList("m", "map", "mappingPath"), "Mapping file uses to " +
                 "deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to " +
+                "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(asList("o", "output"), "The remapped file. Including the suffix.")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("outputDecomp", "The decompiled output directory. Will " +

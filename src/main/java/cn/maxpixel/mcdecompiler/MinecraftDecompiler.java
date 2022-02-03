@@ -371,9 +371,9 @@ public class MinecraftDecompiler {
                 if(type instanceof MappingType.Classified mtc) {
                     if(type.isNamespaced()) {
                         return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc.getProcessor(), inputMappings()),
-                                targetNamespace());
+                                Objects.requireNonNull(targetNamespace(), "You are using a namespaced mapping but no target namespace is specified"));
                     } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc.getProcessor(), inputMappings()));
-                } else throw new UnsupportedOperationException("Unsupported yet");
+                } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
             return new ClassifiedDeobfuscator(version(), type());
         }

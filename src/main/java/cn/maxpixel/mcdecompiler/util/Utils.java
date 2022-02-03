@@ -149,13 +149,14 @@ public class Utils {
 
     public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(Stream<String> lines) {
         List<String> list = lines.limit(2).collect(Collectors.toList());
-        String s = list.get(1);
+        String s = list.get(0);
+        if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingTypes.SRG;
+        else if(s.startsWith("v1")) return MappingTypes.TINY_V1;
+        else if(s.startsWith("tiny\t2\t0")) return MappingTypes.TINY_V2;
+        else if(s.startsWith("tsrg2")) return MappingTypes.TSRG_V2;
+        s = list.get(1);
         if(s.startsWith("    ")) return MappingTypes.PROGUARD;
         else if(s.startsWith("\t")) return MappingTypes.TSRG_V1;
-        s = list.get(0);
-        if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingTypes.SRG;
-        else if(s.startsWith("tiny\t2\t0") || s.startsWith("v1")) return MappingTypes.TINY_V1;
-        else if(s.startsWith("tsrg2")) return MappingTypes.TSRG_V1;
         else return MappingTypes.CSRG;
     }
 }

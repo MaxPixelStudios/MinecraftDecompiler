@@ -38,7 +38,7 @@ public class NamingUtil {
     public static String findSourceNamespace(ClassifiedMappingReader<NamespacedMapping> mappingReader) {
         return mappingReader.mappings.parallelStream()
                 .flatMap(cm -> cm.getMethods().parallelStream())
-                .map(Descriptor.Namespaced.class::cast)
+                .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class))
                 .map(Descriptor.Namespaced::getDescriptorNamespace)
                 .findAny().orElseThrow(IllegalArgumentException::new);
     }

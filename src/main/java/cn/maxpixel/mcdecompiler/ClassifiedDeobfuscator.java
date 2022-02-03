@@ -101,7 +101,7 @@ public class ClassifiedDeobfuscator {
             else ClassifiedMappingReader.reverse((ClassifiedMappingReader<PairedMapping>) reader);
         }
         Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappings = isNamespaced ?
-                ClassMapping.genMappingsByNamespaceMap(((ClassifiedMappingReader<NamespacedMapping>) reader).mappings, targetNamespace) :
+                ClassMapping.genMappingsByNamespaceMap(((ClassifiedMappingReader<NamespacedMapping>) reader).mappings, sourceNamespace) :
                 ClassMapping.genMappingsByUnmappedNameMap(((ClassifiedMappingReader<PairedMapping>) reader).mappings);
         FileUtil.ensureDirectoryExist(target.getParent());
         try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
@@ -128,7 +128,7 @@ public class ClassifiedDeobfuscator {
                         ClassWriter writer = new ClassWriter(0);
                         ClassProcessor processor = new ClassProcessor(parent -> {
                             ClassVisitor cv = isNamespaced ? new LocalVariableTableRenamer(parent, options.rvn(), sourceNamespace,
-                                    targetNamespace, (ClassMapping<NamespacedMapping>) cm) :
+                                    targetNamespace, (ClassMapping<NamespacedMapping>) cm, mappingRemapper) :
                                     new LocalVariableTableRenamer(parent, options.rvn());
                             return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
                         }, writer);
