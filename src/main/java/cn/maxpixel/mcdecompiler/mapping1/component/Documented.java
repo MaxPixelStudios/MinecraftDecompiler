@@ -31,7 +31,7 @@ public class Documented implements Component {
         this.doc = doc;
     }
 
-    public static class LocalVariable extends Documented {
+    public static class LocalVariable implements Component {
         private final Int2ObjectOpenHashMap<String> lvtDoc = new Int2ObjectOpenHashMap<>();
 
         public void setLocalVariableDoc(int index, String doc) {

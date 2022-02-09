@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.reader;
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.UniqueMapping;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -28,24 +29,23 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
 /**
- * A processor which processes files to mappings.<br>
- * <b>NOTE: You should implements {@link Unique} or {@link Classified} instead of this class</b>
+ * A processor which processes strings to mappings.<br>
+ * <b>NOTE: You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new type of mapping</b>
  * @param <T> Mapping type
- * @param <R> Return value
+ * @param <C> Collection type
  */
-public interface MappingProcessor<T extends Mapping, R> {
+public interface MappingProcessor<T extends Mapping, C> {
+    MappingType<T, C> getType();
+
     default boolean supportPackage() {
-        return false;
+        return getType().supportPackage();
     }
 
-    Pair<R, ObjectList<T>> process(ObjectList<String> content);
+    Pair<C, ObjectList<T>> process(ObjectList<String> content);
 
-    Pair<R, ObjectList<T>> process(ObjectList<String>... contents);
+    Pair<C, ObjectList<T>> process(ObjectList<String>... contents);
 
     interface Unique<T extends Mapping> extends MappingProcessor<T, UniqueMapping<T>> {
-        @Override
-        Pair<UniqueMapping<T>, ObjectList<T>> process(ObjectList<String> content);
-
         @Override
         default Pair<UniqueMapping<T>, ObjectList<T>> process(ObjectList<String>... contents) {
             ObjectObjectImmutablePair<UniqueMapping<T>, ObjectList<T>> pair = new ObjectObjectImmutablePair<>(new UniqueMapping<>(),
@@ -62,9 +62,6 @@ public interface MappingProcessor<T extends Mapping, R> {
     }
 
     interface Classified<T extends Mapping> extends MappingProcessor<T, ObjectList<ClassMapping<T>>> {
-        @Override
-        Pair<ObjectList<ClassMapping<T>>, ObjectList<T>> process(ObjectList<String> content);
-
         @Override
         default Pair<ObjectList<ClassMapping<T>>, ObjectList<T>> process(ObjectList<String>... contents) {
             ObjectObjectImmutablePair<ObjectList<ClassMapping<T>>, ObjectList<T>> pair = new ObjectObjectImmutablePair<>(

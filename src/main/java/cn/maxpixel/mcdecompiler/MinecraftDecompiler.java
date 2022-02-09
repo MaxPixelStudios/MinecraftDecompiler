@@ -45,6 +45,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -283,7 +284,7 @@ public class MinecraftDecompiler {
             return this;
         }
 
-        public OptionBuilder addExtraJars(List<Path> jars) {
+        public OptionBuilder addExtraJars(Collection<Path> jars) {
             this.extraJars.addAll(jars);
             return this;
         }

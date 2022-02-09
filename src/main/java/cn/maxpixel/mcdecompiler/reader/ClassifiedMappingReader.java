@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.reader;
 
-import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
@@ -65,20 +64,16 @@ public class ClassifiedMappingReader<M extends Mapping> extends AbstractMappingR
     }
 
     public static ClassifiedMappingReader<PairedMapping> reverse(ClassifiedMappingReader<PairedMapping> reader) {
-        ClassifiedMappingRemapper remapper = new ClassifiedMappingRemapper(reader);
-        reader.mappings.forEach(cm -> ClassMapping.reverse(cm, remapper));
-        reader.packages.forEach(PairedMapping::reverse);
+        ClassMapping.reverse(reader.mappings, reader.packages);
         return reader;
     }
 
     public static ClassifiedMappingReader<NamespacedMapping> swap(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace) {
-        return swap(reader, NamingUtil.findSourceNamespace(reader), targetNamespace);
+        return swap(reader, NamingUtil.findSourceNamespace(reader.mappings), targetNamespace);
     }
 
     public static ClassifiedMappingReader<NamespacedMapping> swap(ClassifiedMappingReader<NamespacedMapping> reader, String sourceNamespace, String targetNamespace) {
-        ClassifiedMappingRemapper remapper = new ClassifiedMappingRemapper(reader, sourceNamespace, targetNamespace);
-        reader.mappings.forEach(cm -> ClassMapping.swap(cm, remapper, sourceNamespace, targetNamespace));
-        reader.packages.forEach(m -> m.swap(sourceNamespace, targetNamespace));
+        ClassMapping.swap(reader.mappings, reader.packages, sourceNamespace, targetNamespace);
         return reader;
     }
 }

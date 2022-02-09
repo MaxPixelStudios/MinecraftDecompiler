@@ -20,16 +20,37 @@ package cn.maxpixel.mcdecompiler.mapping1.type;
 
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessor;
+import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-public interface MappingType<M extends Mapping, S> {//TODO
-    boolean isNamespaced();
+public interface MappingType<M extends Mapping, C> {
+    default boolean isNamespaced() {
+        return false;
+    }
 
-    MappingProcessor<M, S> getProcessor();
+    default boolean supportPackage() {
+        return false;
+    }
+
+    MappingProcessor<M, C> getProcessor();
+
+    MappingGenerator<M, C> getGenerator();
 
     interface Classified<M extends Mapping> extends MappingType<M, ObjectList<ClassMapping<M>>> {
         @Override
         MappingProcessor.Classified<M> getProcessor();
+
+        @Override
+        MappingGenerator.Classified<M> getGenerator();
+    }
+
+    interface Unique<M extends Mapping> extends MappingType<M, UniqueMapping<M>> {
+        @Override
+        MappingProcessor.Unique<M> getProcessor();
+
+        @Override
+        MappingGenerator.Unique<M> getGenerator();
     }
 }

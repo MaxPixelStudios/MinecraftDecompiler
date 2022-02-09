@@ -74,7 +74,7 @@
                     <minimizeJar>true</minimizeJar>
                     <filters>
                         <filter>
-                            <artifact>it.unimi.dsi:fastutil</artifact>
+                            <artifact>it.unimi.dsi:fastutil-core</artifact>
                             <excludes>
                                 <exclude>it/unimi/dsi/fastutil/booleans/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/chars/**</exclude>
@@ -84,6 +84,14 @@
                                 <exclude>it/unimi/dsi/fastutil/io/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/longs/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/shorts/**</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Double*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Float*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Byte*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Char*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Long*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Short*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Reference*</exclude>
+                                <exclude>it/unimi/dsi/fastutil/**/*Stack*</exclude>
                             </excludes>
                         </filter>
                         <filter>
@@ -175,7 +183,7 @@
         </dependency>
         <dependency>
             <groupId>it.unimi.dsi</groupId>
-            <artifactId>fastutil</artifactId>
+            <artifactId>fastutil-core</artifactId>
             <version>${depend.fastutil.ver}</version>
         </dependency>
         <dependency>

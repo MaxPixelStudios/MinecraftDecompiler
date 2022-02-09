@@ -22,41 +22,58 @@ import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessor;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
+import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
+import cn.maxpixel.mcdecompiler.writer.MappingGenerators;
 
 public final class MappingTypes {
     public static final MappingType.Classified<PairedMapping> SRG = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return false;
+        public boolean supportPackage() {
+            return true;
         }
 
         @Override
         public MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.SRG;
         }
+
+        @Override
+        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+            return MappingGenerators.SRG;
+        }
     };
 
     public static final MappingType.Classified<PairedMapping> CSRG = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return false;
+        public boolean supportPackage() {
+            return true;
         }
 
         @Override
         public MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.CSRG;
         }
+
+        @Override
+        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+            return MappingGenerators.CSRG;
+        }
     };
 
     public static final MappingType.Classified<PairedMapping> TSRG_V1 = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return false;
+        public boolean supportPackage() {
+            return true;
         }
 
         @Override
         public MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.TSRG_V1;
+        }
+
+        @Override
+        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+            return MappingGenerators.TSRG_V1;
         }
     };
 
@@ -67,20 +84,30 @@ public final class MappingTypes {
         }
 
         @Override
+        public boolean supportPackage() {
+            return true;
+        }
+
+        @Override
         public MappingProcessor.Classified<NamespacedMapping> getProcessor() {
             return MappingProcessors.TSRG_V2;
+        }
+
+        @Override
+        public MappingGenerator.Classified<NamespacedMapping> getGenerator() {
+            return MappingGenerators.TSRG_V2;
         }
     };
 
     public static final MappingType.Classified<PairedMapping> PROGUARD = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return false;
+        public MappingProcessor.Classified<PairedMapping> getProcessor() {
+            return MappingProcessors.PROGUARD;
         }
 
         @Override
-        public MappingProcessor.Classified<PairedMapping> getProcessor() {
-            return MappingProcessors.PROGUARD;
+        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+            return MappingGenerators.PROGUARD;
         }
     };
 
@@ -94,6 +121,11 @@ public final class MappingTypes {
         public MappingProcessor.Classified<NamespacedMapping> getProcessor() {
             return MappingProcessors.TINY_V1;
         }
+
+        @Override
+        public MappingGenerator.Classified<NamespacedMapping> getGenerator() {
+            return MappingGenerators.TINY_V1;
+        }
     };
 
     public static final MappingType.Classified<NamespacedMapping> TINY_V2 = new MappingType.Classified<>() {
@@ -105,6 +137,11 @@ public final class MappingTypes {
         @Override
         public MappingProcessor.Classified<NamespacedMapping> getProcessor() {
             return MappingProcessors.TINY_V2;
+        }
+
+        @Override
+        public MappingGenerator.Classified<NamespacedMapping> getGenerator() {
+            return MappingGenerators.TINY_V2;
         }
     };
 }

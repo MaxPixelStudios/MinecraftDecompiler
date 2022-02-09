@@ -19,11 +19,15 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class NamingUtil {
     private static final Pattern ARR_DIM = Pattern.compile("\\[]");
@@ -35,12 +39,19 @@ public class NamingUtil {
         return arrDimension;
     }
 
-    public static String findSourceNamespace(ClassifiedMappingReader<NamespacedMapping> mappingReader) {
-        return mappingReader.mappings.parallelStream()
+    public static String findSourceNamespace(ObjectList<ClassMapping<NamespacedMapping>> mappings) {
+        return mappings.parallelStream()
                 .flatMap(cm -> cm.getMethods().parallelStream())
+                .filter(mapping -> mapping.hasComponent(Descriptor.Namespaced.class))
                 .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class))
                 .map(Descriptor.Namespaced::getDescriptorNamespace)
                 .findAny().orElseThrow(IllegalArgumentException::new);
+    }
+
+    public static String concatNamespaces(ObjectSet<String> namespaces, Function<String, String> namespaceMapper, String delimiter) {
+        return namespaces.stream().map(namespaceMapper).peek(name -> {
+            if(name == null) throw new IllegalArgumentException("Namespace mismatch");
+        }).collect(Collectors.joining(delimiter));
     }
 
     public static String asJavaName(String pureNativeName) {
@@ -56,7 +67,7 @@ public class NamingUtil {
     }
 
     public static String asDescriptor(String javaName) {
-        if(javaName == null || javaName.isEmpty()) return "";
+        if(javaName == null || javaName.isBlank()) return "";
         if(!javaName.contains("[]")) {
             return switch(javaName) {
                 case "boolean" -> "Z";

@@ -20,14 +20,16 @@ package cn.maxpixel.mcdecompiler.mapping1;
 
 import cn.maxpixel.mcdecompiler.mapping1.component.Component;
 import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.ObjectCollections;
 
 /**
  * Every mapping's base class
  * <p>This class should only be extended, so it is abstract</p>
  */
 public abstract class Mapping {
-    private final Reference2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Reference2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
 
     /**
      * Constructor
@@ -64,6 +66,10 @@ public abstract class Mapping {
 
     public final boolean hasComponent(Class<? extends Component> component) {
         return components.containsKey(component);
+    }
+
+    public final ObjectCollection<? extends Component> getComponents() {
+        return ObjectCollections.unmodifiable(components.values());
     }
 
     public final boolean isPaired() {

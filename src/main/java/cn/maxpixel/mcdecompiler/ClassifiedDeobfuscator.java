@@ -70,7 +70,7 @@ public class ClassifiedDeobfuscator {
     public ClassifiedDeobfuscator(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace) {
         this.reader = Objects.requireNonNull(reader);
         this.isNamespaced = true;
-        this.sourceNamespace = NamingUtil.findSourceNamespace(reader);
+        this.sourceNamespace = NamingUtil.findSourceNamespace(reader.mappings);
         this.targetNamespace = Objects.requireNonNull(targetNamespace);
     }
 
@@ -117,8 +117,8 @@ public class ClassifiedDeobfuscator {
                 }
             });
             ClassifiedMappingRemapper mappingRemapper = isNamespaced ?
-                    new ClassifiedMappingRemapper((ClassifiedMappingReader<NamespacedMapping>) reader, info, sourceNamespace, targetNamespace) :
-                    new ClassifiedMappingRemapper((ClassifiedMappingReader<PairedMapping>) reader, info);
+                    new ClassifiedMappingRemapper(((ClassifiedMappingReader<NamespacedMapping>) reader).mappings, info, sourceNamespace, targetNamespace) :
+                    new ClassifiedMappingRemapper(((ClassifiedMappingReader<PairedMapping>) reader).mappings, info);
             if(options.rvn()) LocalVariableTableRenamer.startRecord();
             paths.forEach(path -> {
                  try {

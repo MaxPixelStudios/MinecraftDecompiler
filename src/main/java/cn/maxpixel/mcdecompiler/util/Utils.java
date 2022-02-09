@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntFunction;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,10 +45,12 @@ public class Utils {
         return new RuntimeException(e);
     }
 
-    public static <I, O, E extends Throwable> O[] mapArray(I[] input, O[] output, LambdaUtil.Function_WithThrowable<I, O, E> func) throws E {
+    public static <I, O, E extends Throwable> O[] mapArray(I[] input, IntFunction<O[]> outputGenerator,
+                                                           LambdaUtil.Function_WithThrowable<I, O, E> func) throws E {
         Objects.requireNonNull(input);
-        Objects.requireNonNull(output);
+        Objects.requireNonNull(outputGenerator);
         Objects.requireNonNull(func);
+        O[] output = outputGenerator.apply(input.length);
         for(int i = 0; i < input.length; i++) {
             output[i] = Objects.requireNonNull(func.apply(Objects.requireNonNull(input[i])));
         }

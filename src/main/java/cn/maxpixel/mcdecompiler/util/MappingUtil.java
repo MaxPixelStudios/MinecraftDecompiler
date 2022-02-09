@@ -18,12 +18,30 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.*;
 
 public final class MappingUtil {
+    public static <T extends Mapping> void checkOwner(Owned<? extends T> owned, ClassMapping<T> owner) {
+        if(owned.owner != owner) throw new IllegalArgumentException("Owner mismatch");
+    }
+
     public static final class Paired {
+        public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, ClassifiedMappingRemapper remapper) {
+            if(!method.hasComponent(Owned.class)) throw new UnsupportedOperationException();
+            checkOwner(method.getOwned(), cls);
+            if(method.hasComponent(Descriptor.class)) {
+                return method.getComponent(Descriptor.class).getUnmappedDescriptor();
+            } else if(remapper != null && method.hasComponent(Descriptor.Mapped.class)) {
+                return remapper.getUnmappedDescByMappedDesc(method.getComponent(Descriptor.Mapped.class)
+                        .getMappedDescriptor());
+            } else throw new UnsupportedOperationException();
+        }
+
         public static PairedMapping o(String unmapped, String mapped) {
             return new PairedMapping(unmapped, mapped, new Owned<>());
         }
@@ -46,6 +64,15 @@ public final class MappingUtil {
     }
 
     public static final class Namespaced {
+        public static String checkTiny(String namespace0, ClassMapping<NamespacedMapping> cls, NamespacedMapping mapping) {
+            if(!mapping.hasComponent(Owned.class) || !mapping.hasComponent(Descriptor.Namespaced.class))
+                throw new UnsupportedOperationException();
+            MappingUtil.checkOwner(mapping.getOwned(), cls);
+            Descriptor.Namespaced desc = mapping.getComponent(Descriptor.Namespaced.class);
+            if(!namespace0.equals(desc.getDescriptorNamespace())) throw new IllegalArgumentException();
+            return desc.getUnmappedDescriptor();
+        }
+
         public static NamespacedMapping o(String[] namespaces, String[] names) {
             return new NamespacedMapping(namespaces, names, new Owned<>());
         }

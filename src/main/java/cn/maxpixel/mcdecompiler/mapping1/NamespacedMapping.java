@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  * A mapping with names under namespaces
  */
-public class NamespacedMapping extends Mapping {
+public final class NamespacedMapping extends Mapping {
     // Forge
     public static final String OBF = "obf";
     public static final String SRG = "srg";

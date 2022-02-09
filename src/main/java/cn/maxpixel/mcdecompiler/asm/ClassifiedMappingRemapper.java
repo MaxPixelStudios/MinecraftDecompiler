@@ -22,12 +22,12 @@ import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
@@ -44,37 +44,37 @@ public class ClassifiedMappingRemapper extends Remapper {
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByMap;
 
-    public ClassifiedMappingRemapper(ClassifiedMappingReader<PairedMapping> mappingReader) {
-        this(mappingReader, null);
+    public ClassifiedMappingRemapper(ObjectList<ClassMapping<PairedMapping>> mappings) {
+        this(mappings, null);
     }
 
-    public ClassifiedMappingRemapper(ClassifiedMappingReader<PairedMapping> mappingReader, ExtraClassesInformation extraClassesInformation) {
+    public ClassifiedMappingRemapper(ObjectList<ClassMapping<PairedMapping>> mappings, ExtraClassesInformation extraClassesInformation) {
         this.extraClassesInformation = extraClassesInformation;
-        this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(mappingReader.mappings);
-        this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(mappingReader.mappings);
-        this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(mappingReader.mappings);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMappingReader<NamespacedMapping> mappingReader, String targetNamespace) {
-        this(mappingReader, NamingUtil.findSourceNamespace(mappingReader), targetNamespace);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMappingReader<NamespacedMapping> mappingReader, String sourceNamespace, String targetNamespace) {
-        this(mappingReader, null, sourceNamespace, targetNamespace);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMappingReader<NamespacedMapping> mappingReader, ExtraClassesInformation extraClassesInformation, String targetNamespace) {
-        this(mappingReader, extraClassesInformation, NamingUtil.findSourceNamespace(mappingReader), targetNamespace);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMappingReader<NamespacedMapping> mappingReader, ExtraClassesInformation extraClassesInformation, String sourceNamespace, String targetNamespace) {
-        this.extraClassesInformation = extraClassesInformation;
-        ObjectArrayList<ClassMapping<PairedMapping>> mappings = mappingReader.mappings.parallelStream()
-                .map(m -> asPaired(m, sourceNamespace, targetNamespace))
-                .collect(Collectors.toCollection(ObjectArrayList::new));
         this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(mappings);
         this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(mappings);
         this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(mappings);
+    }
+
+    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String targetNamespace) {
+        this(mappings, NamingUtil.findSourceNamespace(mappings), targetNamespace);
+    }
+
+    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String sourceNamespace, String targetNamespace) {
+        this(mappings, null, sourceNamespace, targetNamespace);
+    }
+
+    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, ExtraClassesInformation extraClassesInformation, String targetNamespace) {
+        this(mappings, extraClassesInformation, NamingUtil.findSourceNamespace(mappings), targetNamespace);
+    }
+
+    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, ExtraClassesInformation extraClassesInformation, String sourceNamespace, String targetNamespace) {
+        this.extraClassesInformation = extraClassesInformation;
+        ObjectArrayList<ClassMapping<PairedMapping>> pairedMappings = mappings.parallelStream()
+                .map(m -> asPaired(m, sourceNamespace, targetNamespace))
+                .collect(Collectors.toCollection(ObjectArrayList::new));
+        this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(pairedMappings);
+        this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(pairedMappings);
+        this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(pairedMappings);
     }
 
     private static ClassMapping<PairedMapping> asPaired(ClassMapping<NamespacedMapping> old, String sourceNamespace, String targetNamespace) {
@@ -123,7 +123,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     public String mapToMapped(final Type unmappedType) {
         switch (unmappedType.getSort()) {
             case Type.ARRAY:
-                return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToUnmapped(unmappedType.getElementType());
+                return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToMapped(unmappedType.getElementType());
             case Type.OBJECT:
                 ClassMapping<PairedMapping> cm = mappingByUnm.get(unmappedType.getInternalName());
                 return cm != null ? Type.getObjectType(cm.mapping.mappedName).getDescriptor() : unmappedType.getDescriptor();

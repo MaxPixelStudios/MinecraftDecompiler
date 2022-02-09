@@ -77,7 +77,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
 
     public AbstractMappingReader(P processor, BufferedReader... readers) {
         LOGGER.finer("Reading files");
-        ObjectArrayList<String>[] contents = Utils.mapArray(readers, new ObjectArrayList[readers.length], reader -> {
+        ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
             try(reader) {
                 return reader.lines().map(s -> {
                     if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
@@ -101,14 +101,14 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
     }
 
     public AbstractMappingReader(P processor, Reader... rd) {
-        this(processor, Utils.mapArray(rd, new BufferedReader[rd.length], IOUtil::asBufferedReader));
+        this(processor, Utils.mapArray(rd, BufferedReader[]::new, IOUtil::asBufferedReader));
     }
 
     public AbstractMappingReader(P processor, InputStream... is) {
-        this(processor, Utils.mapArray(is, new InputStreamReader[is.length], i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
+        this(processor, Utils.mapArray(is, InputStreamReader[]::new, i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
     }
 
     public AbstractMappingReader(P processor, String... path) throws FileNotFoundException {
-        this(processor, Utils.mapArray(path, new FileInputStream[path.length], FileInputStream::new));
+        this(processor, Utils.mapArray(path, FileInputStream[]::new, FileInputStream::new));
     }
 }

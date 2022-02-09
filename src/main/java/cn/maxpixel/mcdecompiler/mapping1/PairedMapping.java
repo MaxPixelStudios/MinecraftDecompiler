@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * A mapping with an unmapped name and a mapped name
  */
-public class PairedMapping extends Mapping {
+public final class PairedMapping extends Mapping {
     /**
      * Unmapped name of this mapping
      */
