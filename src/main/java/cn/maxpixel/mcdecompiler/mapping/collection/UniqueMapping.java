@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2021  MaxPixelStudios
+ * Copyright (C) 2019-2022  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping1.collection;
+package cn.maxpixel.mcdecompiler.mapping.collection;
 
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Objects;

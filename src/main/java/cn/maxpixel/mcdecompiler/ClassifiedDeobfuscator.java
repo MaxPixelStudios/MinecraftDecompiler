@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2021  MaxPixelStudios
+ * Copyright (C) 2019-2022  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.*;
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
-import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -57,7 +57,7 @@ public class ClassifiedDeobfuscator {
     private final String targetNamespace;
 
     public ClassifiedDeobfuscator(String version, Info.SideType side) {
-        this(new ClassifiedMappingReader<>(MappingProcessors.PROGUARD, DownloadUtil.downloadMapping(version, side)));
+        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD, DownloadUtil.downloadMapping(version, side)));
     }
 
     public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader) {

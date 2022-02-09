@@ -18,9 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.writer;
 
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 

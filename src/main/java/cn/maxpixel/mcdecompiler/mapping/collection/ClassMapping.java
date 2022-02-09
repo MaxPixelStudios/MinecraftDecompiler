@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2021  MaxPixelStudios
+ * Copyright (C) 2019-2022  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping1.collection;
+package cn.maxpixel.mcdecompiler.mapping.collection;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.component.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping1.component.LocalVariableTable;
-import cn.maxpixel.mcdecompiler.mapping1.component.Owned;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
+import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
+import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;

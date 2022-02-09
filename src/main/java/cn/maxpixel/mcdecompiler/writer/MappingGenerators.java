@@ -19,12 +19,12 @@
 package cn.maxpixel.mcdecompiler.writer;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping1.component.*;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingTypes;
+import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.component.*;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;

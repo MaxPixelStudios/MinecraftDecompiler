@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2021  MaxPixelStudios
+ * Copyright (C) 2019-2022  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,33 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping1.component;
+package cn.maxpixel.mcdecompiler.mapping.component;
 
-public class LineNumber implements Component {
-    public int startLineNumber;
+public class StaticIdentifiable implements Component {
+    public boolean isStatic;
 
-    public int endLineNumber;
-
-    public LineNumber() {}
-
-    public LineNumber(int startLineNumber, int endLineNumber) {
-        this.startLineNumber = startLineNumber;
-        this.endLineNumber = endLineNumber;
+    public boolean isStatic() {
+        return isStatic;
     }
 
-    public int getStartLineNumber() {
-        return startLineNumber;
-    }
-
-    public void setStartLineNumber(int startLineNumber) {
-        this.startLineNumber = startLineNumber;
-    }
-
-    public int getEndLineNumber() {
-        return endLineNumber;
-    }
-
-    public void setEndLineNumber(int endLineNumber) {
-        this.endLineNumber = endLineNumber;
+    public void setStatic(boolean aStatic) {
+        isStatic = aStatic;
     }
 }

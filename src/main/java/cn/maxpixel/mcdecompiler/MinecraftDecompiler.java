@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2021  MaxPixelStudios
+ * Copyright (C) 2019-2022  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@ import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
 import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import com.google.gson.JsonObject;
@@ -371,9 +371,9 @@ public class MinecraftDecompiler {
                 MappingType<? extends Mapping, ?> type = Utils.tryIdentifyingMappingType(inputMappings());
                 if(type instanceof MappingType.Classified mtc) {
                     if(type.isNamespaced()) {
-                        return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc.getProcessor(), inputMappings()),
+                        return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc, inputMappings()),
                                 Objects.requireNonNull(targetNamespace(), "You are using a namespaced mapping but no target namespace is specified"));
-                    } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc.getProcessor(), inputMappings()));
+                    } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc, inputMappings()));
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
             return new ClassifiedDeobfuscator(version(), type());

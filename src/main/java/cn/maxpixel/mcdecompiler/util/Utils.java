@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile Minecraft.
- * Copyright (C) 2019-2021  MaxPixelStudios
+ * Copyright (C) 2019-2022  MaxPixelStudios
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingTypes;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import sun.misc.Unsafe;
 
 import java.io.BufferedReader;
@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Utils {
@@ -151,7 +150,7 @@ public class Utils {
     }
 
     public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(Stream<String> lines) {
-        List<String> list = lines.limit(2).collect(Collectors.toList());
+        List<String> list = lines.limit(2).toList();
         String s = list.get(0);
         if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingTypes.SRG;
         else if(s.startsWith("v1")) return MappingTypes.TINY_V1;

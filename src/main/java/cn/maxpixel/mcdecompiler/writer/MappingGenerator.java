@@ -19,10 +19,10 @@
 package cn.maxpixel.mcdecompiler.writer;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping1.Mapping;
-import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping1.collection.UniqueMapping;
-import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
+import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
