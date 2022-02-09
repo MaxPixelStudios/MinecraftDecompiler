@@ -33,7 +33,9 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.objectweb.asm.Type;
 
-public class MappingGenerators {
+public final class MappingGenerators {
+    private MappingGenerators() {}
+
     public static final MappingGenerator.Classified<PairedMapping> SRG = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {

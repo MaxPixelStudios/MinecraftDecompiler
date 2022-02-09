@@ -20,42 +20,43 @@ package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.UniqueMapping;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 
-public class UniqueMappingReader<M extends Mapping> extends AbstractMappingReader<M, UniqueMapping<M>, MappingProcessor.Unique<M>> {
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, BufferedReader reader) {
-        super(processor, reader);
+public final class UniqueMappingReader<M extends Mapping> extends AbstractMappingReader<M, UniqueMapping<M>, MappingType.Unique<M>> {
+    public UniqueMappingReader(MappingType.Unique<M> type, BufferedReader reader) {
+        super(type, reader);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, Reader rd) {
-        super(processor, rd);
+    public UniqueMappingReader(MappingType.Unique<M> type, Reader rd) {
+        super(type, rd);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, InputStream is) {
-        super(processor, is);
+    public UniqueMappingReader(MappingType.Unique<M> type, InputStream is) {
+        super(type, is);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, String path) throws FileNotFoundException {
-        super(processor, path);
+    public UniqueMappingReader(MappingType.Unique<M> type, String path) throws FileNotFoundException {
+        super(type, path);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, BufferedReader... readers) {
-        super(processor, readers);
+    public UniqueMappingReader(MappingType.Unique<M> type, BufferedReader... readers) {
+        super(type, readers);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, Reader... rd) {
-        super(processor, rd);
+    public UniqueMappingReader(MappingType.Unique<M> type, Reader... rd) {
+        super(type, rd);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, InputStream... is) {
-        super(processor, is);
+    public UniqueMappingReader(MappingType.Unique<M> type, InputStream... is) {
+        super(type, is);
     }
 
-    public UniqueMappingReader(MappingProcessor.Unique<M> processor, String... path) throws FileNotFoundException {
-        super(processor, path);
+    public UniqueMappingReader(MappingType.Unique<M> type, String... path) throws FileNotFoundException {
+        super(type, path);
     }
 }

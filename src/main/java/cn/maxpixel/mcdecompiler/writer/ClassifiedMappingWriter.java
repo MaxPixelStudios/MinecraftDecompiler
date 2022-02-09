@@ -21,27 +21,39 @@ package cn.maxpixel.mcdecompiler.writer;
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Collection;
+import java.util.Objects;
 
-public class ClassifiedMappingWriter<M extends Mapping> extends AbstractMappingWriter<M, ObjectList<ClassMapping<M>>, MappingType.Classified<M>> {
+public final class ClassifiedMappingWriter<M extends Mapping> extends AbstractMappingWriter<M, ObjectList<ClassMapping<M>>, MappingType.Classified<M>> {
+    private final ObjectArrayList<ClassMapping<M>> mappings = new ObjectArrayList<>();
+
     public ClassifiedMappingWriter(MappingType.Classified<M> type) {
         super(type);
     }
 
-    @Override
-    public void addMapping(M mapping) {
+    public void addMapping(ClassMapping<M> mapping) {
+        this.mappings.add(Objects.requireNonNull(mapping));
+    }
 
+    public void addMappings(Collection<ClassMapping<M>> mappings) {
+        this.mappings.addAll(Objects.requireNonNull(mappings));
     }
 
     @Override
-    public void addMappings(Collection<M> mappings) {
-
+    public void addMappings(ObjectList<ClassMapping<M>> mappings) {
+        this.mappings.addAll(Objects.requireNonNull(mappings));
     }
 
     @Override
-    public void addMappings(ObjectList<M> mappings) {
+    protected ObjectList<ClassMapping<M>> getCollection() {
+        return mappings;
+    }
 
+    @Override
+    protected void clearCollection() {
+        mappings.clear();
     }
 }

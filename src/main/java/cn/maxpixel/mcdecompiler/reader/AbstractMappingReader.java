@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping1.Mapping;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
@@ -33,13 +34,13 @@ import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public abstract class AbstractMappingReader<M extends Mapping, R, P extends MappingProcessor<M, R>> {
+public abstract class AbstractMappingReader<M extends Mapping, R, T extends MappingType<M, R>> {
     protected static final Logger LOGGER = Logging.getLogger("Mapping Reader");
     public final R mappings;
     public final ObjectList<M> packages;
 
-    public AbstractMappingReader(P processor, BufferedReader reader) {
-        Objects.requireNonNull(processor);
+    public AbstractMappingReader(T type, BufferedReader reader) {
+        Objects.requireNonNull(type);
         Objects.requireNonNull(reader);
         try(reader) {
             LOGGER.finer("Reading file");
@@ -54,28 +55,28 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
             }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
             LOGGER.finest("Read file");
             LOGGER.fine("Processing content");
-            Pair<R, ObjectList<M>> result = processor.process(lines);
+            Pair<R, ObjectList<M>> result = type.getProcessor().process(lines);
             LOGGER.finest("Processed content");
             mappings = result.left();
-            packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
+            packages = type.supportPackage() ? result.right() : ObjectLists.emptyList();
         } catch(IOException e) {
             throw Utils.wrapInRuntime(e);
         }
     }
 
-    public AbstractMappingReader(P processor, Reader rd) {
-        this(processor, IOUtil.asBufferedReader(rd));
+    public AbstractMappingReader(T type, Reader rd) {
+        this(type, IOUtil.asBufferedReader(rd));
     }
 
-    public AbstractMappingReader(P processor, InputStream is) {
-        this(processor, new InputStreamReader(is, StandardCharsets.UTF_8));
+    public AbstractMappingReader(T type, InputStream is) {
+        this(type, new InputStreamReader(is, StandardCharsets.UTF_8));
     }
 
-    public AbstractMappingReader(P processor, String path) throws FileNotFoundException {
-        this(processor, new FileInputStream(path));
+    public AbstractMappingReader(T type, String path) throws FileNotFoundException {
+        this(type, new FileInputStream(path));
     }
 
-    public AbstractMappingReader(P processor, BufferedReader... readers) {
+    public AbstractMappingReader(T type, BufferedReader... readers) {
         LOGGER.finer("Reading files");
         ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
             try(reader) {
@@ -94,21 +95,21 @@ public abstract class AbstractMappingReader<M extends Mapping, R, P extends Mapp
         });
         LOGGER.finest("Read files");
         LOGGER.fine("Processing contents");
-        Pair<R, ObjectList<M>> result = processor.process(contents);
+        Pair<R, ObjectList<M>> result = type.getProcessor().process(contents);
         LOGGER.finest("Processed contents");
         mappings = result.left();
-        packages = processor.supportPackage() ? result.right() : ObjectLists.emptyList();
+        packages = type.supportPackage() ? result.right() : ObjectLists.emptyList();
     }
 
-    public AbstractMappingReader(P processor, Reader... rd) {
-        this(processor, Utils.mapArray(rd, BufferedReader[]::new, IOUtil::asBufferedReader));
+    public AbstractMappingReader(T type, Reader... rd) {
+        this(type, Utils.mapArray(rd, BufferedReader[]::new, IOUtil::asBufferedReader));
     }
 
-    public AbstractMappingReader(P processor, InputStream... is) {
-        this(processor, Utils.mapArray(is, InputStreamReader[]::new, i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
+    public AbstractMappingReader(T type, InputStream... is) {
+        this(type, Utils.mapArray(is, InputStreamReader[]::new, i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
     }
 
-    public AbstractMappingReader(P processor, String... path) throws FileNotFoundException {
-        this(processor, Utils.mapArray(path, FileInputStream[]::new, FileInputStream::new));
+    public AbstractMappingReader(T type, String... path) throws FileNotFoundException {
+        this(type, Utils.mapArray(path, FileInputStream[]::new, FileInputStream::new));
     }
 }

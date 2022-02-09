@@ -22,6 +22,7 @@ import cn.maxpixel.mcdecompiler.mapping1.Mapping;
 import cn.maxpixel.mcdecompiler.mapping1.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping1.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping1.type.MappingType;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -30,37 +31,37 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 
-public class ClassifiedMappingReader<M extends Mapping> extends AbstractMappingReader<M, ObjectList<ClassMapping<M>>, MappingProcessor.Classified<M>> {
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, BufferedReader reader) {
-        super(processor, reader);
+public final class ClassifiedMappingReader<M extends Mapping> extends AbstractMappingReader<M, ObjectList<ClassMapping<M>>, MappingType.Classified<M>> {
+    public ClassifiedMappingReader(MappingType.Classified<M> type, BufferedReader reader) {
+        super(type, reader);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, Reader rd) {
-        super(processor, rd);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, Reader rd) {
+        super(type, rd);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, InputStream is) {
-        super(processor, is);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, InputStream is) {
+        super(type, is);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, String path) throws FileNotFoundException {
-        super(processor, path);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, String path) throws FileNotFoundException {
+        super(type, path);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, BufferedReader... readers) {
-        super(processor, readers);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, BufferedReader... readers) {
+        super(type, readers);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, Reader... rd) {
-        super(processor, rd);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, Reader... rd) {
+        super(type, rd);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, InputStream... is) {
-        super(processor, is);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, InputStream... is) {
+        super(type, is);
     }
 
-    public ClassifiedMappingReader(MappingProcessor.Classified<M> processor, String... path) throws FileNotFoundException {
-        super(processor, path);
+    public ClassifiedMappingReader(MappingType.Classified<M> type, String... path) throws FileNotFoundException {
+        super(type, path);
     }
 
     public static ClassifiedMappingReader<PairedMapping> reverse(ClassifiedMappingReader<PairedMapping> reader) {

@@ -36,6 +36,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class MappingProcessors {
+    private MappingProcessors() {}
+
     public static final MappingProcessor.Classified<PairedMapping> SRG = new MappingProcessor.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
@@ -449,19 +451,16 @@ public final class MappingProcessors {
 
         private static int processTree1(int index, int size, String[] namespaces, ObjectList<String> content,
                                         NamespacedMapping mapping) {
-            for(index = index + 1; index < size; ) {
+            for(index = index + 1; index < size; index++) {
                 String s = content.get(index);
                 if(s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                     switch(s.charAt(2)) {
-                        case 'c' -> {
-                            mapping.getComponent(Documented.class).setDoc(s.substring(4));
-                            index++;
-                        }
+                        case 'c' -> mapping.getComponent(Documented.class).setDoc(s.substring(4));
                         case 'p' -> {
                             String[] sa = s.substring(4).split("\t");
                             int i = Integer.parseInt(sa[0]);
                             mapping.getComponent(LocalVariableTable.Namespaced.class).setLocalVariableName(i, namespaces, sa, 1);
-                            index = processTree2(index + 1, size, i, content, mapping);
+                            index = processTree2(index, size, i, content, mapping);
                         }
                         default -> error();
                     }

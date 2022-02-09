@@ -26,6 +26,8 @@ import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
 import cn.maxpixel.mcdecompiler.writer.MappingGenerators;
 
 public final class MappingTypes {
+    private MappingTypes() {}
+
     public static final MappingType.Classified<PairedMapping> SRG = new MappingType.Classified<>() {
         @Override
         public boolean supportPackage() {

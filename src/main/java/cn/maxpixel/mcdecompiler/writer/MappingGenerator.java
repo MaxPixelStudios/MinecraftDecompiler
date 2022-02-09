@@ -62,7 +62,7 @@ public interface MappingGenerator<T extends Mapping, C> {
         throw new UnsupportedOperationException();
     }
 
-    default ObjectList<String>[] generateMulti(C mappings, ObjectList<T> packages) {
+    default ObjectList<String>[] generatePackagesMulti(ObjectList<T> packages) {
         throw new UnsupportedOperationException();
     }
 
@@ -76,5 +76,14 @@ public interface MappingGenerator<T extends Mapping, C> {
         }
 
         ObjectList<String> generate(ObjectList<ClassMapping<T>> mappings, ClassifiedMappingRemapper remapper);
+
+        @Override
+        default ObjectList<String>[] generateMulti(ObjectList<ClassMapping<T>> mappings) {
+            return generateMulti(mappings, null);
+        }
+
+        default ObjectList<String>[] generateMulti(ObjectList<ClassMapping<T>> mappings, ClassifiedMappingRemapper remapper) {
+            throw new UnsupportedOperationException();
+        }
     }
 }
