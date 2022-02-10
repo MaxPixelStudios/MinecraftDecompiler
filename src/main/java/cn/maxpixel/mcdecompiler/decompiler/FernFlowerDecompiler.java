@@ -18,22 +18,30 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
+import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
+import cn.maxpixel.mcdecompiler.util.DownloadUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import cn.maxpixel.mcdecompiler.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.logging.Logger;
+import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
 
 // Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make FernFlowerDecompiler read all libraries successfully
-public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ implements IDecompiler {
+public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ implements IExternalResourcesDecompiler {
+    private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar");
+    private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar.sha1");
+    private Path decompilerJarPath;
+    private ExternalJarClassLoader cl;
+
     FernFlowerDecompiler() {}
 
     @Override
@@ -44,35 +52,22 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
-        Map<String, Object> options = Map.of(
-                "log", "TRACE",
-                "dgs", "1",
-                "asc", "1",
-                "rsy", "1"
-        );
-        ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target.toFile(), options,
-                new PrintStreamLogger(new PrintStream(new OutputStream() {
-                    private static final Logger LOGGER = Logging.getLogger("FernFlower");
-
-                    @Override
-                    public void write(int b) {
-                        throw new UnsupportedOperationException();
-                    }
-
-                    @Override
-                    public void write(byte[] b, int off, int len) {
-                        LOGGER.fine(new String(b, off, len).stripTrailing());
-                    }
-                })));
-        decompiler.addSource(source.toFile());
-//		ObjectList<String> libs = listLibs();
-//		for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
-        decompiler.decompileContext();
+        try {
+            if(cl == null) cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()}, getClass().getClassLoader());
+            Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.FernFlowerDecompileThread")
+                    .getConstructor(File.class, File.class).newInstance(source.toFile(), target.toFile());
+            thread.start();
+            while(thread.isAlive()) Thread.onSpinWait();
+        } catch(ReflectiveOperationException e) {
+            Logging.getLogger().log(Level.SEVERE, "Failed to load FernFlower", e);
+            throw Utils.wrapInRuntime(e);
+        }
     }
 
-    private static class AccessibleConsoleDecompiler extends ConsoleDecompiler {
-        public AccessibleConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
-            super(destination, options, logger);
-        }
+    @Override
+    public void extractTo(Path extractPath) throws IOException {
+        this.decompilerJarPath = extractPath.resolve("decompiler.jar");
+        Files.copy(DownloadUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.FERNFLOWER), RESOURCE, RESOURCE_HASH),
+                decompilerJarPath, StandardCopyOption.REPLACE_EXISTING);
     }
 }

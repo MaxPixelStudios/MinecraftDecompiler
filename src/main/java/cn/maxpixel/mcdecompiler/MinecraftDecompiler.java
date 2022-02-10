@@ -113,7 +113,7 @@ public class MinecraftDecompiler {
                 case DIRECTORY -> {
                     Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
                     FileUtil.copyDirectory(jarFs.getPath("/net"), decompileClasses);
-                    if(options.bundledLibs().isEmpty()) {
+                    if(options.bundledLibs().isEmpty() && Files.isDirectory(jarFs.getPath("/com/mojang"))) {
                         try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
                                 !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
                                         p.endsWith("serialization") || p.endsWith("util")))) {

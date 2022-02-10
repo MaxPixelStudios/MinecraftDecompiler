@@ -20,21 +20,27 @@ package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
 import cn.maxpixel.mcdecompiler.util.DownloadUtil;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
 
 public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
     private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/1.5.498.23/forgeflower-1.5.498.23.jar");
     private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/1.5.498.23/forgeflower-1.5.498.23.jar.sha1");
     public static final String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
     private Path decompilerJarPath;
+    private ExternalJarClassLoader cl;
+
     ForgeFlowerDecompiler() {}
 
     @Override
@@ -52,12 +58,21 @@ public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler impl
     @Override
     public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
-        ObjectArrayList<String> args = new ObjectArrayList<>(new String[] {"java", "-jar", decompilerJarPath.toString(), "-rsy=1", "-dgs=1", "-asc=1", "-bsm=1", "-iec=1", "-log=TRACE"});
-        listLibs().forEach(lib -> args.add("-e=" + lib));
-        args.add(source.toString());
-        Path abstractMethodParameterNames = Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES);
-        if(Files.exists(abstractMethodParameterNames)) args.add(abstractMethodParameterNames.toAbsolutePath().normalize().toString());
-        args.add(target.toString());
-        Utils.waitForProcess(Runtime.getRuntime().exec(args.toArray(new String[0])));
+        try {
+            if(cl == null) cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()}, getClass().getClassLoader());
+            File[] sources;
+            Path abstractMethodParameterNames = Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES);
+            if(Files.exists(abstractMethodParameterNames))
+                sources = new File[] {source.toFile(), abstractMethodParameterNames.toAbsolutePath().normalize().toFile()};
+            else sources = new File[] {source.toFile()};
+            Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.ForgeFlowerDecompileThread")
+                    .getConstructor(File[].class, File[].class, File.class)
+                    .newInstance(sources, listLibs().stream().map(File::new).toArray(File[]::new), target.toFile());
+            thread.start();
+            while(thread.isAlive()) Thread.onSpinWait();
+        } catch(ReflectiveOperationException e) {
+            Logging.getLogger().log(Level.SEVERE, "Failed to load ForgeFlower", e);
+            throw Utils.wrapInRuntime(e);
+        }
     }
 }

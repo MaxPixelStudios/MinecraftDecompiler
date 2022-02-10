@@ -19,18 +19,26 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
+import cn.maxpixel.mcdecompiler.util.DownloadUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
-import org.benf.cfr.reader.api.CfrDriver;
-import org.benf.cfr.reader.util.getopt.OptionsImpl;
+import cn.maxpixel.mcdecompiler.util.Utils;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.logging.Logger;
+import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
 
-public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
+public class CFRDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
+    private static final URI RESOURCE = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/0.152/cfr-0.152.jar");
+    private static final URI RESOURCE_HASH = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/0.152/cfr-0.152.jar.sha1");
+    private Path decompilerJarPath;
+    private ExternalJarClassLoader cl;
+
     CFRDecompiler() {}
 
     @Override
@@ -39,33 +47,25 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler {
     }
 
     @Override
-    public void decompile(Path source, Path target) {
+    public void decompile(Path source, Path target) throws IOException {
         checkArgs(source, target);
-        Object2ObjectOpenHashMap<String, String> options = new Object2ObjectOpenHashMap<>();
-        options.put(OptionsImpl.FORCE_AGGRESSIVE_EXCEPTION_AGG.getName(), "true");
-        options.put(OptionsImpl.CLOBBER_FILES.getName(), "true");
-        options.put(OptionsImpl.ECLIPSE.getName(), "false");
-        options.put(OptionsImpl.EXTRA_CLASS_PATH.getName(), String.join(Info.PATH_SEPARATOR, listLibs()));
-        options.put(OptionsImpl.OUTPUT_PATH.getName(), target.toString());
-        options.put(OptionsImpl.REMOVE_BAD_GENERICS.getName(), "false");
-        options.put(OptionsImpl.REMOVE_DEAD_CONDITIONALS.getName(), "false");
-        options.put(OptionsImpl.JAR_FILTER.getName(), "^(net\\.minecraft|com\\.mojang\\.(blaze3d|math|realmsclient))\\.*");
-        CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
-        PrintStream sysErr = System.err;
-        System.setErr(new PrintStream(new OutputStream() {
-            private static final Logger LOGGER = Logging.getLogger("CFR");
+        try {
+            if(cl == null) cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()}, getClass().getClassLoader());
+            Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.CFRDecompileThread")
+                    .getConstructor(String.class, String.class, String.class)
+                    .newInstance(source.toString(), target.toString(), String.join(Info.PATH_SEPARATOR, listLibs()));
+            thread.start();
+            while(thread.isAlive()) Thread.onSpinWait();
+        } catch(ReflectiveOperationException e) {
+            Logging.getLogger().log(Level.SEVERE, "Failed to load CFR", e);
+            throw Utils.wrapInRuntime(e);
+        }
+    }
 
-            @Override
-            public void write(int b) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void write(byte[] b, int off, int len) {
-                LOGGER.fine(new String(b, off, len).stripTrailing());
-            }
-        }));
-        cfr.analyse(ObjectLists.singleton(source.toString()));
-        System.setErr(sysErr);
+    @Override
+    public void extractTo(Path extractPath) throws IOException {
+        this.decompilerJarPath = extractPath.resolve("decompiler.jar");
+        Files.copy(DownloadUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.CFR), RESOURCE, RESOURCE_HASH),
+                decompilerJarPath, StandardCopyOption.REPLACE_EXISTING);
     }
 }

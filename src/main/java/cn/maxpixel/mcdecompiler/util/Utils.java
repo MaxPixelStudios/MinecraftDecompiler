@@ -92,7 +92,7 @@ public class Utils {
 
     // https://github.com/LXGaming/ClassLoaderUtils/blob/master/src/main/java/io/github/lxgaming/classloader/ClassLoaderUtils.java
     @SuppressWarnings("unchecked")
-    public static void appendToClassPath(ClassLoader classLoader, List<URL> urlList) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+    public static void appendToClassPath(ClassLoader classLoader, List<URL> urlList) throws ReflectiveOperationException {
         Class<?> classLoaderClass = Class.forName("jdk.internal.loader.BuiltinClassLoader");
         Class<?> classPathClass = Class.forName("jdk.internal.loader.URLClassPath");
         if (classLoaderClass.isInstance(classLoader)) {
@@ -124,7 +124,24 @@ public class Utils {
         }
     }
 
-    private static Unsafe getUnsafe() throws NoSuchFieldException, IllegalAccessException {
+    public static URL[] getClassPath() throws ReflectiveOperationException {
+        ClassLoader cl = Utils.class.getClassLoader();
+        Class<?> classLoaderClass = Class.forName("jdk.internal.loader.BuiltinClassLoader");
+        Unsafe unsafe = getUnsafe();
+
+        // jdk.internal.loader.BuiltinClassLoader.ucp
+        Field ucpField = classLoaderClass.getDeclaredField("ucp");
+        long ucpFieldOffset = unsafe.objectFieldOffset(ucpField);
+        Object ucpObject = unsafe.getObject(cl, ucpFieldOffset);
+
+        // jdk.internal.loader.URLClassPath.path
+        Field pathField = ucpField.getType().getDeclaredField("path");
+        long pathFieldOffset = unsafe.objectFieldOffset(pathField);
+        ArrayList<URL> path = (ArrayList<URL>) unsafe.getObject(ucpObject, pathFieldOffset);
+        return path.toArray(new URL[0]);
+    }
+
+    private static Unsafe getUnsafe() throws ReflectiveOperationException {
         Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
         theUnsafeField.setAccessible(true);
         return (Unsafe) theUnsafeField.get(null);

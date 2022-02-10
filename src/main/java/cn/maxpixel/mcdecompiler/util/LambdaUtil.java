@@ -19,7 +19,6 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class LambdaUtil {
     @FunctionalInterface
@@ -35,6 +34,11 @@ public class LambdaUtil {
     @FunctionalInterface
     public interface Function_WithThrowable<T, R, E extends Throwable> {
         R apply(T t) throws E;
+    }
+
+    @FunctionalInterface
+    public interface Consumer_WithThrowable<T, E extends Throwable> {
+        void accept(T t) throws E;
     }
 
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
@@ -64,8 +68,18 @@ public class LambdaUtil {
         };
     }
 
-    public static <T, I> T safeCall(I input, Function<I, T> func) {
-        if(input == null) return null;
-        return func.apply(input);
+    public static <T, E extends Throwable> Consumer<T> unwrap(Consumer_WithThrowable<T, E> consumerWithThrowable) {
+        return unwrap(consumerWithThrowable, LambdaUtil::rethrowAsRuntime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T, E extends Throwable> Consumer<T> unwrap(Consumer_WithThrowable<T, E> consumerWithThrowable, Consumer<E> exceptionHandler) {
+        return t -> {
+            try {
+                consumerWithThrowable.accept(t);
+            } catch(Throwable e) {
+                exceptionHandler.accept((E) e);
+            }
+        };
     }
 }
