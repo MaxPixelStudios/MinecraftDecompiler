@@ -42,11 +42,6 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 public class FileUtil {
     private static final Logger LOGGER = Logging.getLogger();
 
-    public static void copy(Path source, Path target) {
-        if(Files.isDirectory(source)) copyDirectory(source, target);
-        else copyFile(source, target);
-    }
-
     public static void copyDirectory(Path source, Path target) {
         if(Files.notExists(source)) {
             LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
@@ -87,48 +82,22 @@ public class FileUtil {
     }
 
     public static void deleteIfExists(Path path) {
-        if(Files.notExists(path)) {
+        if(Files.notExists(Objects.requireNonNull(path, "path cannot be null"))) {
             LOGGER.log(Level.FINER, "\"{0}\" does not exist, skipping this operation...", path);
             return;
         }
-        if(Files.isDirectory(path)) deleteDirectoryIfExists(path);
-        else {
-            try {
-                Files.delete(path);
-            } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "Error deleting file \"{0}\"", new Object[] {path, e});
-            }
-        }
-    }
-
-    public static void deleteDirectoryIfExists(Path directory) {
-        if(Files.notExists(directory)) {
-            LOGGER.log(Level.FINER, "\"{0}\" does not exist, skipping this operation...", directory);
-            return;
-        }
-        if(!Files.isDirectory(directory)) throw new IllegalArgumentException("Not a directory!");
-        try(DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(directory, "path cannot be null"))) {
-            LOGGER.log(Level.FINER, "Deleting directory \"{0}\"...", directory);
-            StreamSupport.stream(ds.spliterator(), true)
-                    .forEach(FileUtil::deleteDirectory0);
-            Files.delete(directory);
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Error deleting directory \"{0}\"", new Object[] {directory, e});
-        }
-    }
-
-    private static void deleteDirectory0(Path path) {
         try {
-            if(Files.isDirectory(Objects.requireNonNull(path, "path cannot be null"))) {
+            LOGGER.log(Level.FINER, "Deleting \"{0}\"...", path);
+            if(Files.isDirectory(path)) {
                 try(DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
                     StreamSupport.stream(ds.spliterator(), true)
-                            .forEach(FileUtil::deleteDirectory0);
+                            .forEach(FileUtil::deleteIfExists);
                 }
             }
-            LOGGER.log(Level.FINEST, "Deleting {0}", path);
             Files.delete(path);
+            Files.deleteIfExists(path);
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Error deleting directory \"{0}\"", new Object[] {path, e});
+            LOGGER.log(Level.WARNING, "Failed to delete \"{0}\"", new Object[] {path, e});
         }
     }
 
@@ -192,7 +161,7 @@ public class FileUtil {
                 if(hex.length() < 2) out.append('0');
                 out.append(hex);
             }
-            return (size < 1 || fc.size() == size) && (hash == null || hash.isBlank() || hash.contentEquals(out));
+            return (size < 0 || fc.size() == size) && (hash == null || hash.isBlank() || hash.contentEquals(out));
         } catch(IOException e) {
             LOGGER.log(Level.SEVERE, "Error reading files", e);
             throw Utils.wrapInRuntime(e);
