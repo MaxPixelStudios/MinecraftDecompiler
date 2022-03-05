@@ -34,8 +34,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 
 public class CFRDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
-    private static final URI RESOURCE = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/0.152/cfr-0.152.jar");
-    private static final URI RESOURCE_HASH = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/0.152/cfr-0.152.jar.sha1");
+    private static final String VERSION = Properties.getProperty("CFR-Version", "cfr.version");
+    private static final URI RESOURCE = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/" + VERSION + "/cfr-" + VERSION + ".jar");
+    private static final URI RESOURCE_HASH = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/" + VERSION + "/cfr-" + VERSION + ".jar.sha1");
     private Path decompilerJarPath;
     private ExternalJarClassLoader cl;
 

@@ -68,6 +68,8 @@
                             <manifestEntries>
                                 <Automatic-Module-Name>cn.maxpixel.mcdecompiler</Automatic-Module-Name>
                                 <Implementation-Version>${project.version}</Implementation-Version>
+                                <CFR-Version>${depend.cfr.ver}</CFR-Version>
+                                <ForgeFlower-Version>${depend.forgeflower.ver}</ForgeFlower-Version>
                             </manifestEntries>
                         </transformer>
                     </transformers>

@@ -35,8 +35,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 
 public class ForgeFlowerDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
-    private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/1.5.498.23/forgeflower-1.5.498.23.jar");
-    private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/1.5.498.23/forgeflower-1.5.498.23.jar.sha1");
+    private static final String VERSION = Properties.getProperty("ForgeFlower-Version", "forgeflower.version");
+    private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/" + VERSION + "/forgeflower-" + VERSION + ".jar");
+    private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/" + VERSION + "/forgeflower-" + VERSION + ".jar.sha1");
     public static final String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
     private Path decompilerJarPath;
     private ExternalJarClassLoader cl;

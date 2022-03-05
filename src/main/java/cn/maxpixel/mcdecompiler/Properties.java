@@ -33,4 +33,11 @@ public class Properties {
         if(Objects.requireNonNull(type) == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
         return DOWNLOAD_DIR.resolve("decompiler").resolve(Objects.requireNonNull(type) + ".jar");
     }
+
+    public static String getProperty(String name, String prop) {
+        if(Info.IS_DEV || Info.MANIFEST == null)
+            return Objects.requireNonNull(System.getProperty(prop), "System property \"" + prop + "\" is not set");
+        return Objects.requireNonNull(Info.MANIFEST.getMainAttributes().getValue(name),
+                "Guess you forgot to add the " + name + " property to the manifest!");
+    }
 }

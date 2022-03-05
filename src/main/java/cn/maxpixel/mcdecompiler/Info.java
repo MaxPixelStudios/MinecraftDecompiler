@@ -20,10 +20,17 @@ package cn.maxpixel.mcdecompiler;
 
 import org.objectweb.asm.Opcodes;
 
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+
 public interface Info {
     boolean IS_DEV = System.console() == null && Boolean.getBoolean("mcd.isDevEnv");
     int ASM_VERSION = Opcodes.ASM9;
     String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
+    Manifest MANIFEST = getManifest();
 
     enum SideType {
         CLIENT,
@@ -43,5 +50,20 @@ public interface Info {
         public String toString() {
             return name().toLowerCase();
         }
+    }
+
+    private static Manifest getManifest() {
+        try {
+            URL location = Info.class.getProtectionDomain().getCodeSource().getLocation();
+            if(location != null) {
+                URLClassLoader loader = new URLClassLoader(new URL[] {location}, null);
+                URL url = loader.findResource(JarFile.MANIFEST_NAME);
+                if(url != null) {
+                    return new Manifest(url.openStream());
+                }
+            }
+        } catch(IOException ignored) {
+        }
+        return null;
     }
 }
