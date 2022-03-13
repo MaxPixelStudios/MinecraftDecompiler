@@ -49,13 +49,8 @@ public final class Logging {
         PARENT = Logger.getLogger("cn.maxpixel.mcdecompiler");
         PARENT.setUseParentHandlers(false);
         PARENT.setLevel(CONFIG.globalLevel);
-        StreamHandler handler = new StreamHandler(System.out, new LogFormatter());
+        StdoutHandler handler = new StdoutHandler();
         handler.setLevel(CONFIG.globalLevel);
-        try {
-            handler.setEncoding(StandardCharsets.UTF_8.name());
-        } catch(UnsupportedEncodingException e) {
-            throw Utils.wrapInRuntime(e);// Shouldn't happen
-        }
         PARENT.addHandler(handler);
     }
 
@@ -122,6 +117,44 @@ public final class Logging {
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
             }
+        }
+    }
+
+    private static final class StdoutHandler extends Handler {
+        {
+            setFormatter(new LogFormatter());
+        }
+
+        private boolean doneHeader;
+
+        @Override
+        public void publish(LogRecord record) {
+            if (!isLoggable(record)) return;
+            String msg;
+            try {
+                msg = getFormatter().format(record);
+            } catch (Exception ex) {
+                reportError(null, ex, ErrorManager.FORMAT_FAILURE);
+                return;
+            }
+
+            try {
+                if (!doneHeader) {
+                    System.out.print(getFormatter().getHead(this));
+                    doneHeader = true;
+                }
+                System.out.print(msg);
+            } catch (Exception ex) {
+                reportError(null, ex, ErrorManager.WRITE_FAILURE);
+            }
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() throws SecurityException {
         }
     }
 

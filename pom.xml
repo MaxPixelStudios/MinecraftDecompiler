@@ -39,9 +39,7 @@
                             <directory>${project.basedir}</directory>
                             <followSymlinks>false</followSymlinks>
                             <useDefaultExcludes>true</useDefaultExcludes>
-                            <includes>
-                                <include>MinecraftDecompiler.jar</include>
-                            </includes>
+                            <includes><include>MinecraftDecompiler.jar</include></includes>
                         </fileset>
                     </filesets>
                 </configuration>
