@@ -28,21 +28,34 @@ import java.util.Objects;
 import java.util.zip.InflaterInputStream;
 
 public class IOUtil {
-    private static final Class<?> ZIP_FILESYSTEM = LambdaUtil.trySupply(() -> Class.forName("jdk.nio.zipfs.ZipFileSystem"));
-    private static final Class<?> ENTRY_INPUT_STREAM = LambdaUtil.trySupply(() -> Class.forName("jdk.nio.zipfs.ZipFileSystem$EntryInputStream"));
+    private static final Class<?> ZIP_FILESYSTEM;
+    private static final Class<?> ENTRY_INPUT_STREAM;
+
+    static {
+        try {
+            ZIP_FILESYSTEM = Class.forName("jdk.nio.zipfs.ZipFileSystem");
+            ENTRY_INPUT_STREAM = Class.forName("jdk.nio.zipfs.ZipFileSystem$EntryInputStream");
+        } catch (ClassNotFoundException e) {
+            throw Utils.wrapInRuntime(e);
+        }
+    }
 
     public static byte[] readAllBytes(Path file) throws IOException {
         if(ZIP_FILESYSTEM == file.getFileSystem().getClass()) { // Ensure the filesystem is zipfs
-            try(InputStream is = Files.newInputStream(file)) {
-                if(is instanceof InflaterInputStream || ENTRY_INPUT_STREAM.isInstance(is)) {
-                    byte[] bytes = new byte[is.available()];
-                    if(bytes.length > 65536)
-                        for(int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
-                    else is.read(bytes);
-                    return bytes;
-                }
-                if(is instanceof ByteArrayInputStream) return is.readAllBytes();
+            InputStream is = Files.newInputStream(file); // Caller will close this stream
+            if(is instanceof InflaterInputStream) {
+                byte[] bytes = new byte[is.available()];
+                if(bytes.length > 65536)
+                    for(int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
+                else is.read(bytes);
+                return bytes;
             }
+            if(ENTRY_INPUT_STREAM.isInstance(is)) {
+                byte[] bytes = new byte[is.available()];
+                is.read(bytes);
+                return bytes;
+            }
+            if(is instanceof ByteArrayInputStream) return is.readAllBytes();
             throw new UnsupportedOperationException();
         } else try(FileChannel ch = FileChannel.open(file, StandardOpenOption.READ)) {
             MappedByteBuffer mbb = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size());

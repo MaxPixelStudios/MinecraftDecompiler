@@ -30,7 +30,6 @@ import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -98,7 +97,7 @@ public class MinecraftDecompiler {
     }
 
     private void decompile0(IDecompiler decompiler, Path inputJar, Path outputDir) {
-        try(FileSystem jarFs = JarUtil.getJarFileSystemProvider().newFileSystem(inputJar, Object2ObjectMaps.emptyMap())) {
+        try(FileSystem jarFs = JarUtil.createZipFs(inputJar, false)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
             Path libDownloadPath = Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize();

@@ -22,11 +22,6 @@ import java.util.function.Consumer;
 
 public class LambdaUtil {
     @FunctionalInterface
-    public interface Supplier_WithThrowable<T, E extends Throwable> {
-        T get() throws E;
-    }
-
-    @FunctionalInterface
     public interface Runnable_WithThrowable<E extends Throwable> {
         void run() throws E;
     }
@@ -36,21 +31,8 @@ public class LambdaUtil {
         R apply(T t) throws E;
     }
 
-    @FunctionalInterface
-    public interface Consumer_WithThrowable<T, E extends Throwable> {
-        void accept(T t) throws E;
-    }
-
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
         throw Utils.wrapInRuntime(throwable);
-    }
-
-    public static <T, E extends Throwable> T trySupply(Supplier_WithThrowable<T, E> supplierWithThrowable) {
-        try {
-            return supplierWithThrowable.get();
-        } catch(Throwable e) {
-            throw Utils.wrapInRuntime(e);
-        }
     }
 
     public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
@@ -62,21 +44,6 @@ public class LambdaUtil {
         return () -> {
             try {
                 runnableWithThrowable.run();
-            } catch(Throwable e) {
-                exceptionHandler.accept((E) e);
-            }
-        };
-    }
-
-    public static <T, E extends Throwable> Consumer<T> unwrap(Consumer_WithThrowable<T, E> consumerWithThrowable) {
-        return unwrap(consumerWithThrowable, LambdaUtil::rethrowAsRuntime);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T, E extends Throwable> Consumer<T> unwrap(Consumer_WithThrowable<T, E> consumerWithThrowable, Consumer<E> exceptionHandler) {
-        return t -> {
-            try {
-                consumerWithThrowable.accept(t);
             } catch(Throwable e) {
                 exceptionHandler.accept((E) e);
             }

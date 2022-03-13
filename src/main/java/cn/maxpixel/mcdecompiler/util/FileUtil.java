@@ -135,7 +135,7 @@ public class FileUtil {
             return StreamSupport.stream(ds.spliterator(), true)
                     .flatMap(p -> {
                         if(Files.isDirectory(p)) return iterateFiles(p);
-                        else return Stream.of(p);
+                        return Stream.of(p);
                     })
                     .onClose(LambdaUtil.unwrap(ds::close));
         } catch (IOException e) {

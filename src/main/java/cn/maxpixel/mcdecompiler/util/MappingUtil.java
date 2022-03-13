@@ -67,9 +67,9 @@ public final class MappingUtil {
         public static String checkTiny(String namespace0, ClassMapping<NamespacedMapping> cls, NamespacedMapping mapping) {
             if(!mapping.hasComponent(Owned.class) || !mapping.hasComponent(Descriptor.Namespaced.class))
                 throw new UnsupportedOperationException();
-            MappingUtil.checkOwner(mapping.getOwned(), cls);
+            checkOwner(mapping.getOwned(), cls);
             Descriptor.Namespaced desc = mapping.getComponent(Descriptor.Namespaced.class);
-            if(!namespace0.equals(desc.getDescriptorNamespace())) throw new IllegalArgumentException();
+            if(!namespace0.equals(desc.getDescriptorNamespace())) throw new IllegalArgumentException("Descriptor namespace mismatch");
             return desc.getUnmappedDescriptor();
         }
 

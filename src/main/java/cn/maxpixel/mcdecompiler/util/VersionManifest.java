@@ -28,6 +28,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -39,17 +40,16 @@ import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 
 public class VersionManifest {
     private static final Logger LOGGER = Logging.getLogger();
-    public static final JsonObject VERSION_MANIFEST;
     private static final Map<String, String> versions;
     private static final Object2ObjectOpenHashMap<String, JsonObject> versionJsonCache = new Object2ObjectOpenHashMap<>();
 
     public static JsonObject get(String versionId) {
         if(!versions.containsKey(Objects.requireNonNull(versionId, "versionId cannot be null!")))
-            throw new RuntimeException("Game ID \"" + versionId + "\" does not exists!");
+            throw new IllegalArgumentException("Game ID \"" + versionId + "\" does not exists!");
         return versionJsonCache.computeIfAbsent(versionId, _id -> {
             try(InputStreamReader isr = new InputStreamReader(
                     HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(versions.get(_id))).build(),
-                            HttpResponse.BodyHandlers.ofInputStream()).body())) {
+                            HttpResponse.BodyHandlers.ofInputStream()).body(), StandardCharsets.UTF_8)) {
                 return JsonParser.parseReader(isr).getAsJsonObject();
             } catch (IOException | InterruptedException e) {
                 LOGGER.log(Level.SEVERE, "Error fetching Minecraft version JSON", e);
@@ -62,11 +62,11 @@ public class VersionManifest {
         try(InputStreamReader isr = new InputStreamReader(
                 HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create("https://launchermeta.mojang.com/mc/game/version_manifest.json")).build(),
                         HttpResponse.BodyHandlers.ofInputStream()).body())) {
-            VERSION_MANIFEST = JsonParser.parseReader(isr).getAsJsonObject();
-            versions = StreamSupport.stream(VERSION_MANIFEST.getAsJsonArray("versions").spliterator(), false)
+            versions = StreamSupport.stream(JsonParser.parseReader(isr).getAsJsonObject().getAsJsonArray("versions").spliterator(), false)
                     .map(JsonElement::getAsJsonObject)
                     .collect(Collectors.toMap(obj->obj.get("id").getAsString(), obj->obj.get("url").getAsString()));
         } catch (IOException | InterruptedException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching Minecraft version manifest", e);
             throw Utils.wrapInRuntime(e);
         }
     }
