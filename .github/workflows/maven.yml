@@ -7,10 +7,10 @@ on:
       - LICENSE
       - .gitignore
       - CODE_OF_CONDUCT.md
-      - src/main/resources
-      - src/test/resources
-      - decompiler
-      - .github
+      - src/main/resources/**
+      - src/test/resources/**
+      - decompiler/**
+      - .github/**
     branches:
       - master
 
