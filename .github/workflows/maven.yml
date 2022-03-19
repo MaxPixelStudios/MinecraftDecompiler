@@ -11,6 +11,8 @@ on:
       - src/test/resources
       - decompiler
       - .github
+    branches:
+      - master
 
 permissions:
   packages: write
