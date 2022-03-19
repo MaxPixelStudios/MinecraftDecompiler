@@ -17,7 +17,7 @@ For usage and more information, visit [the wiki](https://github.com/MaxPixelStud
 
 ## Community
 **Discord: [here](https://discord.gg/NMnhG5hYAC)**  
-**GH Discussions: [here](https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions/)**
+**GH Discussions: [here](https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions)**
 
 ## Special Thanks
 ### JetBrains - Provide awesome IDEs and free licence codes
