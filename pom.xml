@@ -17,6 +17,7 @@
         <depend.cfr.ver>0.152</depend.cfr.ver>
         <depend.fernflower.ver>403</depend.fernflower.ver>
         <depend.forgeflower.ver>1.5.498.29</depend.forgeflower.ver>
+        <depend.jbannos.ver>23.0.0</depend.jbannos.ver>
         <depend.jmh.ver>1.34</depend.jmh.ver>
     </properties>
     <pluginRepositories>
@@ -200,6 +201,12 @@
             <groupId>net.minecraftforge</groupId>
             <artifactId>forgeflower</artifactId>
             <version>${depend.forgeflower.ver}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>${depend.jbannos.ver}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
