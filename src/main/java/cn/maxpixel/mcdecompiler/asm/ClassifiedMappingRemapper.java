@@ -39,17 +39,12 @@ import java.util.stream.Collectors;
 
 public class ClassifiedMappingRemapper extends Remapper {
     private static final Logger LOGGER = Logging.getLogger("Remapper");
-    private final ExtraClassesInformation extraClassesInformation;
+    private ExtraClassesInformation extraClassesInformation;
     private final Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> fieldByUnm;
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByMap;
 
     public ClassifiedMappingRemapper(ObjectList<ClassMapping<PairedMapping>> mappings) {
-        this(mappings, null);
-    }
-
-    public ClassifiedMappingRemapper(ObjectList<ClassMapping<PairedMapping>> mappings, ExtraClassesInformation extraClassesInformation) {
-        this.extraClassesInformation = extraClassesInformation;
         this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(mappings);
         this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(mappings);
         this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(mappings);
@@ -60,15 +55,6 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String sourceNamespace, String targetNamespace) {
-        this(mappings, null, sourceNamespace, targetNamespace);
-    }
-
-    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, ExtraClassesInformation extraClassesInformation, String targetNamespace) {
-        this(mappings, extraClassesInformation, NamingUtil.findSourceNamespace(mappings), targetNamespace);
-    }
-
-    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, ExtraClassesInformation extraClassesInformation, String sourceNamespace, String targetNamespace) {
-        this.extraClassesInformation = extraClassesInformation;
         ObjectArrayList<ClassMapping<PairedMapping>> pairedMappings = mappings.parallelStream()
                 .map(m -> asPaired(m, sourceNamespace, targetNamespace))
                 .collect(Collectors.toCollection(ObjectArrayList::new));
@@ -76,6 +62,12 @@ public class ClassifiedMappingRemapper extends Remapper {
         this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(pairedMappings);
         this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(pairedMappings);
     }
+
+    public ClassifiedMappingRemapper setExtraClassesInformation(ExtraClassesInformation extraClassesInformation) {
+        this.extraClassesInformation = Objects.requireNonNull(extraClassesInformation);
+        return this;
+    }
+
 
     private static ClassMapping<PairedMapping> asPaired(ClassMapping<NamespacedMapping> old, String sourceNamespace, String targetNamespace) {
         ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),

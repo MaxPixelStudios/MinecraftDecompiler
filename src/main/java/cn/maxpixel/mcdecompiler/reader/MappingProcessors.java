@@ -211,10 +211,11 @@ public final class MappingProcessors {
                 if(sa[0].charAt(0) != '\t') {
                     if(sa[0].charAt(sa[0].length() - 1) == '/') {
                         for(int j = 0; j < sa.length; j++) sa[j] = sa[j].substring(0, sa[j].length() - 1);
-                        mappings.right().add(new NamespacedMapping(namespaces, sa));
+                        mappings.right().add(new NamespacedMapping(namespaces, sa).setUnmappedNamespace(namespaces[0]));
                         i++;
                     } else {
-                        ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa));
+                        ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa)
+                                .setUnmappedNamespace(namespaces[0]));
                         i = processTree(i, len, namespaces, content, classMapping);
                         mappings.left().add(classMapping);
                     }
@@ -375,20 +376,21 @@ public final class MappingProcessors {
             content.parallelStream().skip(1).forEach(s -> {
                 String[] sa = s.split("\t");
                 if(s.startsWith("CLASS")) {
-                    ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa, 1));
+                    ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa, 1)
+                            .setUnmappedNamespace(k));
                     synchronized(classes) {
                         classes.merge(sa[1], classMapping, (o, n) -> n.addFields(o.getFields()).addMethods(o.getMethods()));
                     }
                 } else if(s.startsWith("FIELD")) {
                     NamespacedMapping fieldMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
                     synchronized(classes) {
-                        classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1])))
+                        classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1]).setUnmappedNamespace(k)))
                                 .addField(fieldMapping);
                     }
                 } else if(s.startsWith("METHOD")) {
                     NamespacedMapping methodMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
                     synchronized(classes) {
-                        classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1])))
+                        classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1]).setUnmappedNamespace(k)))
                                 .addMethod(methodMapping);
                     }
                 } else error();

@@ -53,8 +53,6 @@ public class LocalVariableTableRenamer extends ClassVisitor {
     private String className;
     private final boolean rvn;
 
-    private final String fromNamespace;
-    private final String toNamespace;
     private final ClassMapping<NamespacedMapping> mapping;
     private final ClassifiedMappingRemapper remapper;
 
@@ -65,25 +63,23 @@ public class LocalVariableTableRenamer extends ClassVisitor {
     public LocalVariableTableRenamer(ClassVisitor classVisitor, boolean rvn) {
         super(Info.ASM_VERSION, classVisitor);
         this.rvn = rvn;
-        this.fromNamespace = null;
-        this.toNamespace = null;
         this.mapping = null;
         this.remapper = null;
     }
 
-    public LocalVariableTableRenamer(ClassVisitor classVisitor, boolean rvn, String fromNamespace, String toNamespace,
-                                     ClassMapping<NamespacedMapping> mapping, ClassifiedMappingRemapper remapper) {
+    public LocalVariableTableRenamer(ClassVisitor classVisitor, boolean rvn, ClassMapping<NamespacedMapping> mapping,
+                                     ClassifiedMappingRemapper remapper) {
         super(Info.ASM_VERSION, classVisitor);
         this.rvn = rvn;
-        this.fromNamespace = Objects.requireNonNull(fromNamespace);
-        this.toNamespace = Objects.requireNonNull(toNamespace);
         this.mapping = Objects.requireNonNull(mapping);
+        mapping.getFields().parallelStream().forEach(m -> m.setMappedNamespace(mapping.mapping.getMappedNamespace()));
+        mapping.getMethods().parallelStream().forEach(m -> m.setMappedNamespace(mapping.mapping.getMappedNamespace()));
         this.remapper = Objects.requireNonNull(remapper);
     }
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        if(mapping != null && !mapping.mapping.getName(toNamespace).equals(name))
+        if(mapping != null && !mapping.mapping.getMappedName().equals(name))
             throw new IllegalArgumentException("Mapping mismatch");
         this.className = name;
         this.isRecord = (access & Opcodes.ACC_RECORD) != 0;
@@ -128,21 +124,19 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                     new Object[] {name, descriptor, className});
         }
         Optional<NamespacedMapping> methodMapping = Optional.ofNullable(mapping)
-                .map(ClassMapping::getMethods)
-                .map(ObjectList::parallelStream)
-                .flatMap(stream -> {
-                    NamespacedMapping[] m = stream.filter(mapping -> {
-                        Descriptor.Namespaced desc = mapping.getComponent(Descriptor.Namespaced.class);
-                        if(!desc.getDescriptorNamespace().equals(fromNamespace))
+                .map(cm -> {
+                    NamespacedMapping[] m = cm.getMethods().parallelStream().filter(m1 -> {
+                        Descriptor.Namespaced desc = m1.getComponent(Descriptor.Namespaced.class);
+                        if(!desc.getDescriptorNamespace().equals(mapping.mapping.getUnmappedNamespace()))
                             throw new IllegalArgumentException("Descriptor namespace mismatch");
-                        return mapping.getName(toNamespace).equals(name) &&
+                        return m1.getMappedName().equals(name) && m1.hasComponent(LocalVariableTable.Namespaced.class) &&
                                 desc.getUnmappedDescriptor().equals(remapper.getUnmappedDescByMappedDesc(descriptor));
                     }).toArray(NamespacedMapping[]::new);
                     if(m.length > 1) throw new IllegalArgumentException("Method duplicated");
-                    return m.length == 1 && m[0].hasComponent(LocalVariableTable.Namespaced.class) ? Optional.of(m[0]) : Optional.empty();
+                    return m.length == 1 ? m[0] : null;
                 });
         boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-        // tsrgv2 mapping always omits this pointer
+        // tsrgv2 mapping always omits `this`
         boolean omitThis = methodMapping.isPresent() && methodMapping.get().hasComponent(StaticIdentifiable.class);
         Optional<LocalVariableTable.Namespaced> lvt = methodMapping.map(m -> m.getComponent(LocalVariableTable.Namespaced.class));
         final boolean finalMaySkip = maySkip;
@@ -178,7 +172,7 @@ public class LocalVariableTableRenamer extends ClassVisitor {
                         return;
                     }
                     if(lvt.isPresent()) {
-                        String s = lvt.get().getLocalVariableName(!isStatic && omitThis ? index - 1 : index, toNamespace);
+                        String s = lvt.get().getMappedLocalVariableName(!isStatic && omitThis ? index - 1 : index);
                         if(s != null && !s.isBlank() && !placeholderMatcher.reset(s).matches()) {
                             super.visitLocalVariable(s, descriptor, signature, start, end, index);
                             return;

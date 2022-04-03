@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,6 +32,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -42,21 +45,25 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 public class FileUtil {
     private static final Logger LOGGER = Logging.getLogger();
 
-    public static void copyDirectory(Path source, Path target) {
+    public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
         if(Files.notExists(source)) {
             LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
             return;
         }
         if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
-        if(Files.exists(target) && !Files.isDirectory(target)) throw new IllegalArgumentException("Target isn't a directory");
-        try(Stream<Path> sourceStream = iterateFiles(source)) {
+        final Path dest;
+        if(Files.exists(target)) {
+            if(!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
+            dest = FileUtil.ensureDirectoryExist(target.resolve(source.getFileName().toString()));
+        } else dest = FileUtil.ensureDirectoryExist(target);
+        Path p = source.toAbsolutePath().normalize();
+        try(Stream<Path> sourceStream = iterateFiles(p)) {
             LOGGER.log(Level.FINER, "Coping directory \"{0}\" to \"{1}\"...", new Object[] {source, target});
-            FileUtil.ensureDirectoryExist(target);
             sourceStream.forEach(path -> {
+                Path relative = p.relativize(path);
                 try(InputStream in = Files.newInputStream(path);
-                    OutputStream out = Files.newOutputStream(ensureFileExist(target.resolve(path.toString().substring(1))), TRUNCATE_EXISTING)) {
-                    byte[] buf = new byte[8192];
-                    for(int len = in.read(buf); len != -1; len = in.read(buf)) out.write(buf, 0, len);
+                    OutputStream out = Files.newOutputStream(ensureFileExist(dest.resolve(relative.toString())), TRUNCATE_EXISTING)) {
+                    in.transferTo(out);
                 } catch (IOException e) {
                     LOGGER.log(Level.WARNING, "Error coping file \"{0}\"", new Object[] {path, e});
                 }
@@ -107,7 +114,7 @@ public class FileUtil {
     }
 
     public static Path ensureFileExist(Path p) {
-        if(p != null && Files.notExists(p)) {
+        if(Files.notExists(p)) {
             try {
                 ensureDirectoryExist(p.getParent());
                 Files.createFile(p);
@@ -131,13 +138,12 @@ public class FileUtil {
 
     public static Stream<Path> iterateFiles(Path path) {
         try {
-            DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(path, "path cannot be null"));
+            DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(path, "path"));
             return StreamSupport.stream(ds.spliterator(), true)
-                    .flatMap(p -> {
-                        if(Files.isDirectory(p)) return iterateFiles(p);
-                        return Stream.of(p);
-                    })
-                    .onClose(LambdaUtil.unwrap(ds::close));
+                    .mapMulti((Path p, Consumer<Path> cons) -> {
+                        if(Files.isDirectory(p)) iterateFiles(p).forEach(cons);
+                        else cons.accept(p);
+                    }).onClose(LambdaUtil.unwrap(ds::close));
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error iterating files", e);
             throw Utils.wrapInRuntime(e);

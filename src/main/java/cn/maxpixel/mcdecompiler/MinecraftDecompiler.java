@@ -44,10 +44,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -78,7 +75,7 @@ public class MinecraftDecompiler {
 
     public void deobfuscate() {
         try {
-            deobfuscator.deobfuscate(options.inputJar(), options.outputJar(), options);
+            deobfuscator.deobfuscate(options.inputJar(), options.outputJar());
         } catch(IOException e) {
             LOGGER.log(Level.SEVERE, "Error deobfuscating", e);
         }
@@ -96,12 +93,14 @@ public class MinecraftDecompiler {
         decompile0(Decompilers.getCustom(customizedDecompilerName), options.outputJar(), options.outputDecompDir());
     }
 
+    private static final Set<String> skippedPkgs = Set.of("authlib", "bridge", "brigadier", "datafixers", "serialization", "util");
+
     private void decompile0(IDecompiler decompiler, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.createZipFs(inputJar, false)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
             Path libDownloadPath = Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize();
-            FileUtil.ensureDirectoryExist(libDownloadPath);
+            Files.createDirectories(libDownloadPath);
             if(decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler lrd) {
@@ -110,13 +109,13 @@ public class MinecraftDecompiler {
             }
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
-                    Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
-                    FileUtil.copyDirectory(jarFs.getPath("/net"), decompileClasses);
-                    if(options.bundledLibs().isEmpty() && Files.isDirectory(jarFs.getPath("/com/mojang"))) {
-                        try(Stream<Path> mjDirs = Files.list(jarFs.getPath("/com", "mojang")).filter(p ->
-                                !(p.endsWith("authlib") || p.endsWith("bridge") || p.endsWith("brigadier") || p.endsWith("datafixers") ||
-                                        p.endsWith("serialization") || p.endsWith("util")))) {
-                            mjDirs.forEach(p -> FileUtil.copyDirectory(p, decompileClasses));
+                    Path decompileClasses = Files.createDirectories(Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize());
+                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses);
+                    if(options.bundledLibs().isEmpty() && Files.isDirectory(jarFs.getPath("com/mojang"))) {
+                        try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com/mojang"))
+                                .filter(p -> !skippedPkgs.contains(p.getFileName().toString()))) {
+                            Path mjDir = decompileClasses.resolve("com/mojang");
+                            mjDirs.forEach(p -> FileUtil.copyDirectory(p, mjDir));
                         }
                     }
                     decompiler.decompile(decompileClasses, outputDir);
@@ -128,7 +127,7 @@ public class MinecraftDecompiler {
         }
     }
 
-    public static class OptionBuilder {
+    public static final class OptionBuilder {
         private static final Logger LOGGER = Logging.getLogger("Option Builder");
         private String version;
         private Info.SideType type;
@@ -371,8 +370,8 @@ public class MinecraftDecompiler {
                 if(type instanceof MappingType.Classified mtc) {
                     if(type.isNamespaced()) {
                         return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc, inputMappings()),
-                                Objects.requireNonNull(targetNamespace(), "You are using a namespaced mapping but no target namespace is specified"));
-                    } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc, inputMappings()));
+                                Objects.requireNonNull(targetNamespace(), "You are using a namespaced mapping but no target namespace is specified"), this);
+                    } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc, inputMappings()), this);
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
             return new ClassifiedDeobfuscator(version(), type());

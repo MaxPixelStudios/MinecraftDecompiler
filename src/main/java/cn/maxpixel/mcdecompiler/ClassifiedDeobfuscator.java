@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.*;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
@@ -50,10 +51,26 @@ import static cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler.FERNFLOW
 
 public class ClassifiedDeobfuscator {
     private static final Logger LOGGER = Logging.getLogger("ClassifiedDeobfuscator");
-    private final ClassifiedMappingReader<? extends Mapping> reader;
+    private static final DeobfuscateOptions DEFAULT_OPTIONS = new DeobfuscateOptions() {
+        @Override
+        public boolean includeOthers() {
+            return true;
+        }
 
-    private final boolean isNamespaced;
-    private final String sourceNamespace;
+        @Override
+        public boolean rvn() {
+            return false;
+        }
+
+        @Override
+        public boolean reverse() {
+            return false;
+        }
+    };
+    private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappings;
+    private final ClassifiedMappingRemapper mappingRemapper;
+    private final DeobfuscateOptions options;
+
     private final String targetNamespace;
 
     public ClassifiedDeobfuscator(String version, Info.SideType side) {
@@ -61,48 +78,33 @@ public class ClassifiedDeobfuscator {
     }
 
     public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader) {
-        this.reader = Objects.requireNonNull(reader);
-        this.isNamespaced = false;
-        this.sourceNamespace = null;
+        this(reader, DEFAULT_OPTIONS);
+    }
+
+    public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader, DeobfuscateOptions options) {
+        this.options = Objects.requireNonNull(options);
         this.targetNamespace = null;
+        if(options.reverse()) ClassifiedMappingReader.reverse(Objects.requireNonNull(reader));
+        this.mappings = ClassMapping.genMappingsByUnmappedNameMap(reader.mappings);
+        this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings);
     }
 
     public ClassifiedDeobfuscator(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace) {
-        this.reader = Objects.requireNonNull(reader);
-        this.isNamespaced = true;
-        this.sourceNamespace = NamingUtil.findSourceNamespace(reader.mappings);
+        this(reader, targetNamespace, DEFAULT_OPTIONS);
+    }
+
+    public ClassifiedDeobfuscator(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace, DeobfuscateOptions options) {
+        this.options = Objects.requireNonNull(options);
+        String sourceNamespace = NamingUtil.findSourceNamespace(Objects.requireNonNull(reader).mappings);
         this.targetNamespace = Objects.requireNonNull(targetNamespace);
+        if(options.reverse()) ClassifiedMappingReader.swap(reader, sourceNamespace, targetNamespace);
+        this.mappings = ClassMapping.genMappingsByNamespaceMap(reader.mappings, sourceNamespace);
+        this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings, sourceNamespace, targetNamespace);
     }
 
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
-        return deobfuscate(source, target, new DeobfuscateOptions() {
-            @Override
-            public boolean includeOthers() {
-                return true;
-            }
-
-            @Override
-            public boolean rvn() {
-                return false;
-            }
-
-            @Override
-            public boolean reverse() {
-                return false;
-            }
-        });
-    }
-
-    public ClassifiedDeobfuscator deobfuscate(Path source, Path target, DeobfuscateOptions options) throws IOException {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);
-        if(options.reverse()) {
-            if(isNamespaced) ClassifiedMappingReader.swap((ClassifiedMappingReader<NamespacedMapping>) reader, sourceNamespace, targetNamespace);
-            else ClassifiedMappingReader.reverse((ClassifiedMappingReader<PairedMapping>) reader);
-        }
-        Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappings = isNamespaced ?
-                ClassMapping.genMappingsByNamespaceMap(((ClassifiedMappingReader<NamespacedMapping>) reader).mappings, sourceNamespace) :
-                ClassMapping.genMappingsByUnmappedNameMap(((ClassifiedMappingReader<PairedMapping>) reader).mappings);
         FileUtil.ensureDirectoryExist(target.getParent());
         try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
             FileSystem targetFs = JarUtil.createZipFs(target);
@@ -111,14 +113,12 @@ public class ClassifiedDeobfuscator {
                     .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1)))), true);
             options.extraJars().forEach(jar -> {
                 try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
-                    FileUtil.iterateFiles(jarFs.getPath("/")).filter(p -> p.toString().endsWith(".class")).forEach(info);
+                    FileUtil.iterateFiles(jarFs.getPath("")).filter(p -> p.toString().endsWith(".class")).forEach(info);
                 } catch(IOException e) {
                     LOGGER.log(Level.WARNING, "Error reading extra jar: {0}", new Object[] {jar, e});
                 }
             });
-            ClassifiedMappingRemapper mappingRemapper = isNamespaced ?
-                    new ClassifiedMappingRemapper(((ClassifiedMappingReader<NamespacedMapping>) reader).mappings, info, sourceNamespace, targetNamespace) :
-                    new ClassifiedMappingRemapper(((ClassifiedMappingReader<PairedMapping>) reader).mappings, info);
+            mappingRemapper.setExtraClassesInformation(info);
             if(options.rvn()) LocalVariableTableRenamer.startRecord();
             paths.forEach(path -> {
                  try {
@@ -127,15 +127,17 @@ public class ClassifiedDeobfuscator {
                         ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
                         ClassWriter writer = new ClassWriter(0);
                         ClassProcessor processor = new ClassProcessor(parent -> {
-                            ClassVisitor cv = isNamespaced ? new LocalVariableTableRenamer(parent, options.rvn(), sourceNamespace,
-                                    targetNamespace, (ClassMapping<NamespacedMapping>) cm, mappingRemapper) :
-                                    new LocalVariableTableRenamer(parent, options.rvn());
+                            ClassVisitor cv;
+                            if(cm.mapping instanceof NameGetter.Namespaced ngn) {
+                                ngn.setMappedNamespace(targetNamespace);
+                                cv = new LocalVariableTableRenamer(parent, options.rvn(),
+                                        (ClassMapping<NamespacedMapping>) cm, mappingRemapper);
+                            } else cv = new LocalVariableTableRenamer(parent, options.rvn());
                             return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
                         }, writer);
                         new ClassReader(IOUtil.readAllBytes(path)).accept(processor.getVisitor(), 0);
-                        try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath((isNamespaced ?
-                                ((NamespacedMapping) cm.mapping).getName(targetNamespace) :
-                                ((PairedMapping) cm.mapping).mappedName).concat(".class"))))) {
+                        try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs
+                                .getPath(cm.mapping.getMappedName().concat(".class"))))) {
                             os.write(writer.toByteArray());
                         }
                     } else if(options.includeOthers()) {

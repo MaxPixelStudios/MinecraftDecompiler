@@ -24,6 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,11 +42,13 @@ public class NamingUtil {
 
     public static String findSourceNamespace(ObjectList<ClassMapping<NamespacedMapping>> mappings) {
         return mappings.parallelStream()
-                .flatMap(cm -> cm.getMethods().parallelStream())
-                .filter(mapping -> mapping.hasComponent(Descriptor.Namespaced.class))
-                .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class))
-                .map(Descriptor.Namespaced::getDescriptorNamespace)
-                .findAny().orElseThrow(IllegalArgumentException::new);
+                .map(mapping -> mapping.mapping.getUnmappedNamespace())
+                .filter(Objects::nonNull).findAny()
+                .orElse(mappings.parallelStream()
+                        .flatMap(cm -> cm.getMethods().parallelStream())
+                        .filter(mapping -> mapping.hasComponent(Descriptor.Namespaced.class))
+                        .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class).descriptorNamespace)
+                        .findAny().orElseThrow(IllegalArgumentException::new));
     }
 
     public static String concatNamespaces(ObjectSet<String> namespaces, Function<String, String> namespaceMapper, String delimiter) {

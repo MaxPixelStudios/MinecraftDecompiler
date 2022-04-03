@@ -16,16 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.component;
+package cn.maxpixel.mcdecompiler.mapping;
 
-public class StaticIdentifiable implements Component {
-    public boolean isStatic;
+public interface NameGetter {
+    String getUnmappedName();
 
-    public boolean isStatic() {
-        return isStatic;
-    }
+    String getMappedName();
 
-    public void setStatic(boolean isStatic) {
-        this.isStatic = isStatic;
+    interface Namespaced {
+        String getUnmappedNamespace();
+
+        String getMappedNamespace();
+
+        void setMappedNamespace(String namespace);
     }
 }

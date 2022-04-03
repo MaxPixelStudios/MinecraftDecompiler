@@ -45,7 +45,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
         try(reader) {
             LOGGER.finer("Reading file");
             ObjectArrayList<String> lines = reader.lines().map(s -> {
-                if(s.startsWith("#") || s.isEmpty() || s.isBlank()) return null;
+                if(s.startsWith("#") || s.isBlank()) return null;
 
                 int index = s.indexOf('#');
                 if(index > 0) return s.substring(0, index);
@@ -81,7 +81,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
         ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
             try(reader) {
                 return reader.lines().map(s -> {
-                    if(s.startsWith("#") || s.isEmpty() || s.replaceAll("\\s+", "").isEmpty()) return null;
+                    if(s.startsWith("#") || s.isBlank()) return null;
 
                     int index = s.indexOf('#');
                     if(index > 0) return s.substring(0, index);

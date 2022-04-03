@@ -16,16 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.component;
+/**
+ * Internal utilities used my MinecraftDecompiler.
+ */
+@ApiStatus.Internal
+package cn.maxpixel.mcdecompiler.util;
 
-public class StaticIdentifiable implements Component {
-    public boolean isStatic;
-
-    public boolean isStatic() {
-        return isStatic;
-    }
-
-    public void setStatic(boolean isStatic) {
-        this.isStatic = isStatic;
-    }
-}
+import org.jetbrains.annotations.ApiStatus;

@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -28,8 +29,20 @@ import java.util.Map;
 import java.util.Objects;
 
 public interface LocalVariableTable {
-    class Namespaced implements Component {
+    class Namespaced implements Component, NameGetter.Namespaced {
+        private String unmappedNamespace;
+        private String mappedNamespace;
         private final Int2ObjectOpenHashMap<Object2ObjectMap<String, String>> lvt = new Int2ObjectOpenHashMap<>();
+
+        public String getUnmappedLocalVariableName(int index) {
+            if(unmappedNamespace == null) throw new IllegalStateException("Set a namespace for unmapped name first");
+            return lvt.getOrDefault(index, Object2ObjectMaps.emptyMap()).get(unmappedNamespace);
+        }
+
+        public String getMappedLocalVariableName(int index) {
+            if(mappedNamespace == null) throw new IllegalStateException("Set a namespace for mapped name first");
+            return lvt.getOrDefault(index, Object2ObjectMaps.emptyMap()).get(mappedNamespace);
+        }
 
         public String getLocalVariableName(int index, String namespace) {
             return lvt.getOrDefault(index, Object2ObjectMaps.emptyMap()).get(namespace);
@@ -83,6 +96,26 @@ public interface LocalVariableTable {
             Objects.requireNonNull(toNamespace);
             Object2ObjectMap<String, String> map = lvt.get(index);
             map.put(toNamespace, map.put(fromNamespace, map.get(toNamespace)));
+        }
+
+        @Override
+        public String getUnmappedNamespace() {
+            return unmappedNamespace;
+        }
+
+        @Override
+        public String getMappedNamespace() {
+            return mappedNamespace;
+        }
+
+        public Namespaced setUnmappedNamespace(String namespace) {
+            this.unmappedNamespace = Objects.requireNonNull(namespace);
+            return this;
+        }
+
+        @Override
+        public void setMappedNamespace(String namespace) {
+            this.mappedNamespace = Objects.requireNonNull(namespace);
         }
     }
 }

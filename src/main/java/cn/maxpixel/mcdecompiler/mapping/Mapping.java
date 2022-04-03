@@ -28,7 +28,7 @@ import it.unimi.dsi.fastutil.objects.ObjectCollections;
  * Every mapping's base class
  * <p>This class should only be extended, so it is abstract</p>
  */
-public abstract class Mapping {
+public abstract class Mapping implements NameGetter {
     private final Object2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
 
     /**

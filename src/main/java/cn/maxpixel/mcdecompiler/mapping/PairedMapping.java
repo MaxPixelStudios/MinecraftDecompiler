@@ -72,8 +72,8 @@ public final class PairedMapping extends Mapping {
      */
     public PairedMapping() {}
 
-    public Owned<? extends PairedMapping> getOwned() {
-        return (Owned<? extends PairedMapping>) super.getOwned();
+    public Owned<PairedMapping> getOwned() {
+        return (Owned<PairedMapping>) super.getOwned();
     }
 
     /**
@@ -87,6 +87,7 @@ public final class PairedMapping extends Mapping {
         return this;
     }
 
+    @Override
     public String getUnmappedName() {
         return unmappedName;
     }
@@ -95,6 +96,7 @@ public final class PairedMapping extends Mapping {
         this.unmappedName = unmappedName;
     }
 
+    @Override
     public String getMappedName() {
         return mappedName;
     }

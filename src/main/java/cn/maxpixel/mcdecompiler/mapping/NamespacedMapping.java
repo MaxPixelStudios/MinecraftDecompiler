@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping;
 
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
+import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -29,7 +30,7 @@ import java.util.Objects;
 /**
  * A mapping with names under namespaces
  */
-public final class NamespacedMapping extends Mapping {
+public final class NamespacedMapping extends Mapping implements NameGetter.Namespaced {
     // Forge
     public static final String OBF = "obf";
     public static final String SRG = "srg";
@@ -39,6 +40,8 @@ public final class NamespacedMapping extends Mapping {
     public static final String INTERMEDIARY = "intermediary";
     public static final String YARN = "named";
 
+    private String unmappedNamespace;
+    private String mappedNamespace;
     private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
 
     /**
@@ -149,8 +152,8 @@ public final class NamespacedMapping extends Mapping {
     }
 
     @Override
-    public Owned<? extends NamespacedMapping> getOwned() {
-        return (Owned<? extends NamespacedMapping>) super.getOwned();
+    public Owned<NamespacedMapping> getOwned() {
+        return (Owned<NamespacedMapping>) super.getOwned();
     }
 
     /**
@@ -208,6 +211,40 @@ public final class NamespacedMapping extends Mapping {
      */
     public boolean contains(String namespace) {
         return names.containsKey(Objects.requireNonNull(namespace));
+    }
+
+    @Override
+    public String getUnmappedName() {
+        if(unmappedNamespace == null) throw new IllegalStateException("Set a namespace for unmapped name first");
+        return names.get(unmappedNamespace);
+    }
+
+    @Override
+    public String getMappedName() {
+        if(mappedNamespace == null) throw new IllegalStateException("Set a namespace for mapped name first");
+        return names.get(mappedNamespace);
+    }
+
+    @Override
+    public String getUnmappedNamespace() {
+        return unmappedNamespace;
+    }
+
+    @Override
+    public String getMappedNamespace() {
+        return mappedNamespace;
+    }
+
+    public NamespacedMapping setUnmappedNamespace(String namespace) {
+        this.unmappedNamespace = Objects.requireNonNull(namespace);
+        return this;
+    }
+
+    @Override
+    public void setMappedNamespace(String namespace) {
+        this.mappedNamespace = Objects.requireNonNull(namespace);
+        LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
+        if(n != null) n.setMappedNamespace(namespace);
     }
 
     /* Auto-generated equals, hashCode and toString methods */
