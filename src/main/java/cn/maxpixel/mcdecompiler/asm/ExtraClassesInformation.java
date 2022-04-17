@@ -36,16 +36,13 @@ public class ExtraClassesInformation implements Consumer<Path> {
     private final Object2ObjectOpenHashMap<String, ObjectList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
 
-    public ExtraClassesInformation() {
-        accessMap.defaultReturnValue(Object2IntMaps.emptyMap());
-    }
+    public ExtraClassesInformation() {}
 
     public ExtraClassesInformation(Stream<Path> classes) {
         this(classes, false);
     }
 
     public ExtraClassesInformation(Stream<Path> classes, boolean close) {
-        this();
         if(close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -116,6 +113,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
     }
 
     public int getAccessFlags(String className, String composedMemberName) {
-        return accessMap.get(className).getInt(composedMemberName);
+        Object2IntMap<String> map = accessMap.get(className);
+        if(map == null) return Opcodes.ACC_PUBLIC;
+        return map.getInt(composedMemberName);
     }
 }
