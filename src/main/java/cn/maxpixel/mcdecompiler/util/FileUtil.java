@@ -51,13 +51,13 @@ public class FileUtil {
             return;
         }
         if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
-        final Path dest;
-        if(Files.exists(target)) {
-            if(!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
-            dest = FileUtil.ensureDirectoryExist(target.resolve(source.getFileName().toString()));
-        } else dest = FileUtil.ensureDirectoryExist(target);
         Path p = source.toAbsolutePath().normalize();
         try(Stream<Path> sourceStream = iterateFiles(p)) {
+            final Path dest;
+            if(Files.exists(target)) {
+                if(!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
+                dest = Files.createDirectories(target.resolve(source.getFileName().toString()));
+            } else dest = Files.createDirectories(target);
             LOGGER.log(Level.FINER, "Coping directory \"{0}\" to \"{1}\"...", new Object[] {source, target});
             sourceStream.forEach(path -> {
                 Path relative = p.relativize(path);
@@ -68,6 +68,8 @@ public class FileUtil {
                     LOGGER.log(Level.WARNING, "Error coping file \"{0}\"", new Object[] {path, e});
                 }
             });
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Error coping directory", e);
         }
     }
 
@@ -101,7 +103,6 @@ public class FileUtil {
                             .forEach(FileUtil::deleteIfExists);
                 }
             }
-            Files.delete(path);
             Files.deleteIfExists(path);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Failed to delete \"{0}\"", new Object[] {path, e});
@@ -116,19 +117,8 @@ public class FileUtil {
     public static Path ensureFileExist(Path p) {
         if(Files.notExists(p)) {
             try {
-                ensureDirectoryExist(p.getParent());
+                Files.createDirectories(p.getParent());
                 Files.createFile(p);
-            } catch (IOException e) {
-                throw Utils.wrapInRuntime(e);
-            }
-        }
-        return p;
-    }
-
-    public static Path ensureDirectoryExist(Path p) {
-        if(p != null && Files.notExists(p)) {
-            try {
-                Files.createDirectories(p);
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
             }

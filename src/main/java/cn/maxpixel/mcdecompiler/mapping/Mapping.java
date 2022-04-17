@@ -52,6 +52,7 @@ public abstract class Mapping implements NameGetter {
      * @param component Given component type. Cannot be null
      * @return The component if exists, or {@code null}
      */
+    @SuppressWarnings("unchecked")
     public final <C extends Component> C getComponent(Class<? extends C> component) {
         return (C) components.get(component);
     }
@@ -90,8 +91,7 @@ public abstract class Mapping implements NameGetter {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Mapping)) return false;
-        Mapping mapping = (Mapping) o;
+        if (!(o instanceof Mapping mapping)) return false;
         return components.equals(mapping.components);
     }
 

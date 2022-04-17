@@ -105,12 +105,12 @@ public class ClassifiedDeobfuscator {
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);
-        FileUtil.ensureDirectoryExist(target.getParent());
+        Files.createDirectories(target.getParent());
         try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
             FileSystem targetFs = JarUtil.createZipFs(target);
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath("/"))) {
-            ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath("/"))
-                    .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString().substring(1)))), true);
+            ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath(""))
+                    .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString()))), true);
             options.extraJars().forEach(jar -> {
                 try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
                     FileUtil.iterateFiles(jarFs.getPath("")).filter(p -> p.toString().endsWith(".class")).forEach(info);

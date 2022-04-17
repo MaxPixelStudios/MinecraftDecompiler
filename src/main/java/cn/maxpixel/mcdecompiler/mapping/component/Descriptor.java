@@ -19,16 +19,17 @@
 package cn.maxpixel.mcdecompiler.mapping.component;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
+import org.intellij.lang.annotations.Subst;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Descriptor component for paired mappings
  */
 public class Descriptor implements Component {
-    public String unmappedDescriptor;
+    @Subst("()V")
+    public @NotNull String unmappedDescriptor;
 
-    public Descriptor() {}
-
-    public Descriptor(String unmappedDescriptor) {
+    public Descriptor(@NotNull String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
     }
 
@@ -36,23 +37,34 @@ public class Descriptor implements Component {
         unmappedDescriptor = remapper.getMappedDescByUnmappedDesc(unmappedDescriptor);
     }
 
-    public String getUnmappedDescriptor() {
+    public @NotNull String getUnmappedDescriptor() {
         return unmappedDescriptor;
     }
 
-    public void setUnmappedDescriptor(String unmappedDescriptor) {
+    public void setUnmappedDescriptor(@NotNull String unmappedDescriptor) {
         this.unmappedDescriptor = unmappedDescriptor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Descriptor that)) return false;
+        return unmappedDescriptor.equals(that.unmappedDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return unmappedDescriptor.hashCode();
     }
 
     /**
      * Mapped descriptor component for paired mappings
      */
     public static class Mapped implements Component {
-        public String mappedDescriptor;
+        @Subst("()V")
+        public @NotNull String mappedDescriptor;
 
-        public Mapped() {}
-
-        public Mapped(String mappedDescriptor) {
+        public Mapped(@NotNull String mappedDescriptor) {
             this.mappedDescriptor = mappedDescriptor;
         }
 
@@ -60,12 +72,24 @@ public class Descriptor implements Component {
             mappedDescriptor = remapper.getUnmappedDescByMappedDesc(mappedDescriptor);
         }
 
-        public String getMappedDescriptor() {
+        public @NotNull String getMappedDescriptor() {
             return mappedDescriptor;
         }
 
-        public void setMappedDescriptor(String mappedDescriptor) {
+        public void setMappedDescriptor(@NotNull String mappedDescriptor) {
             this.mappedDescriptor = mappedDescriptor;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Mapped mapped)) return false;
+            return mappedDescriptor.equals(mapped.mappedDescriptor);
+        }
+
+        @Override
+        public int hashCode() {
+            return mappedDescriptor.hashCode();
         }
     }
 
@@ -74,21 +98,32 @@ public class Descriptor implements Component {
      * Extends {@link Descriptor} because the currently supported namespaced mappings only have unmapped descriptors
      */
     public static class Namespaced extends Descriptor {
-        public String descriptorNamespace;
+        public @NotNull String descriptorNamespace;
 
-        public Namespaced() {}
-
-        public Namespaced(String unmappedDescriptor, String descriptorNamespace) {
+        public Namespaced(@NotNull String unmappedDescriptor, @NotNull String descriptorNamespace) {
             super(unmappedDescriptor);
             this.descriptorNamespace = descriptorNamespace;
         }
 
-        public String getDescriptorNamespace() {
+        public @NotNull String getDescriptorNamespace() {
             return descriptorNamespace;
         }
 
-        public void setDescriptorNamespace(String descriptorNamespace) {
+        public void setDescriptorNamespace(@NotNull String descriptorNamespace) {
             this.descriptorNamespace = descriptorNamespace;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Namespaced that)) return false;
+            if (!super.equals(o)) return false;
+            return descriptorNamespace.equals(that.descriptorNamespace);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * super.hashCode() + descriptorNamespace.hashCode();
         }
     }
 }

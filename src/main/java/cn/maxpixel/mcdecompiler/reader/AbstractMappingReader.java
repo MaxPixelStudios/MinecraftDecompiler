@@ -32,7 +32,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public abstract class AbstractMappingReader<M extends Mapping, R, T extends MappingType<M, R>> {
     protected static final Logger LOGGER = Logging.getLogger("Mapping Reader");
@@ -52,7 +51,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
                 else if(index == 0) return null;
 
                 return s;
-            }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
+            }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
             LOGGER.finest("Read file");
             LOGGER.fine("Processing content");
             Pair<R, ObjectList<M>> result = type.getProcessor().process(lines);
@@ -78,6 +77,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
 
     public AbstractMappingReader(T type, BufferedReader... readers) {
         LOGGER.finer("Reading files");
+        @SuppressWarnings("unchecked")
         ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
             try(reader) {
                 return reader.lines().map(s -> {
@@ -88,7 +88,7 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
                     else if(index == 0) return null;
 
                     return s;
-                }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
+                }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
             }

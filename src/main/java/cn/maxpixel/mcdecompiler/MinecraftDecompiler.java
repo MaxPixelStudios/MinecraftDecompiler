@@ -175,7 +175,7 @@ public class MinecraftDecompiler {
             try(FileSystem jarFs = JarUtil.createZipFs(FileUtil.requireExist(inputJar))) {
                 if(Files.exists(jarFs.getPath("/net/minecraft/bundler/Main.class"))) {
                     Path metaInf = jarFs.getPath("META-INF");
-                    Path extractDir = FileUtil.ensureDirectoryExist(Properties.TEMP_DIR.resolve("bundleExtract"));
+                    Path extractDir = Files.createDirectories(Properties.TEMP_DIR.resolve("bundleExtract"));
                     List<String> jar = Files.readAllLines(metaInf.resolve("versions.list"));
                     if(jar.size() == 1) {
                         Path versionPath = metaInf.resolve("versions").resolve(jar.get(0).split("\t")[2]);
@@ -364,6 +364,7 @@ public class MinecraftDecompiler {
 
         Info.SideType type();
 
+        @SuppressWarnings("unchecked")
         private ClassifiedDeobfuscator buildDeobfuscator() {
             if(inputMappings() != null) {
                 MappingType<? extends Mapping, ?> type = Utils.tryIdentifyingMappingType(inputMappings());

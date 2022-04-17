@@ -20,6 +20,8 @@ package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.Logging;
+import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import org.intellij.lang.annotations.Subst;
 import org.objectweb.asm.*;
 
 import java.util.logging.Level;
@@ -49,8 +51,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-        if(toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 &&
-                innerName != null) {
+        if(toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && innerName != null) {
             if(outerName == null) {
                 int i = className.lastIndexOf('$');
                 if(i != -1) {
@@ -69,17 +70,17 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+    public MethodVisitor visitMethod(int access, String name, @Subst("(Ljava/lang/String;I)V") String descriptor, String signature, String[] exceptions) {
         if(toProcess != null && name.equals("<init>") && descriptor.startsWith(toProcess)) {
-            int params = Type.getArgumentTypes(descriptor).length;
             return new MethodVisitor(Info.ASM_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+                private final int params = NamingUtil.getArgumentLength(descriptor);
                 private boolean processVisible;
                 private boolean processInvisible;
                 @Override
                 public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
                     if(params == parameterCount) {
-                        LOGGER.log(Level.FINEST, "Found {0} extra {1}, try removing...", new Object[] {removeCount, visible ?
-                                "RuntimeVisibleParameterAnnotations" : "RuntimeInvisibleParameterAnnotations"});
+                        LOGGER.log(Level.FINEST, "Found {0} extra Runtime{1}isibleParameterAnnotations, try removing...",
+                                new Object[] {removeCount, visible ? "V" : "Inv"});
                         if(visible) processVisible = true;
                         else processInvisible = true;
                         super.visitAnnotableParameterCount(parameterCount - removeCount, visible);
@@ -101,7 +102,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
                         if(parameter >= removeCount) {
                             return super.visitParameterAnnotation(parameter - removeCount, descriptor, false);
                         } else {
-                            LOGGER.log(Level.FINEST, "Dropped an annotation(descriptor={}) on synthetic param {}",
+                            LOGGER.log(Level.FINEST, "Dropped an annotation(descriptor={0}) on synthetic param {1}",
                                     new Object[] {descriptor, parameter});
                             return null;
                         }

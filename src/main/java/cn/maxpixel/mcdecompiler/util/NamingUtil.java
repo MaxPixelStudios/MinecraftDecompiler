@@ -18,59 +18,74 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class NamingUtil {
-    private static final Pattern ARR_DIM = Pattern.compile("\\[]");
-
-    public static int getDimension(String javaName) {
-        Matcher m = ARR_DIM.matcher(javaName);
+    public static int getDimension(@NotNull String javaName) {
         int arrDimension = 0;
-        while(m.find()) arrDimension++;
+        for(int i = javaName.indexOf("[]"); i != -1; i = javaName.indexOf("[]", i + 2)) {
+            arrDimension++;
+        }
         return arrDimension;
     }
 
-    public static String findSourceNamespace(ObjectList<ClassMapping<NamespacedMapping>> mappings) {
+    public static String findSourceNamespace(@NotNull ObjectList<ClassMapping<NamespacedMapping>> mappings) {
         return mappings.parallelStream()
                 .map(mapping -> mapping.mapping.getUnmappedNamespace())
                 .filter(Objects::nonNull).findAny()
-                .orElse(mappings.parallelStream()
+                .or(() -> mappings.parallelStream()
                         .flatMap(cm -> cm.getMethods().parallelStream())
                         .filter(mapping -> mapping.hasComponent(Descriptor.Namespaced.class))
                         .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class).descriptorNamespace)
-                        .findAny().orElseThrow(IllegalArgumentException::new));
+                        .findAny()
+                ).orElseThrow(NullPointerException::new);
     }
 
-    public static String concatNamespaces(ObjectSet<String> namespaces, Function<String, String> namespaceMapper, String delimiter) {
+    public static int getArgumentLength(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String descriptor) {
+        int length = 0;
+        for(int i = 1, max = descriptor.lastIndexOf(')'); i < max; i++) {
+            switch(descriptor.charAt(i)) {
+                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> length++;
+                case 'L' -> {
+                    length++;
+                    if((i = descriptor.indexOf(';', i)) == -1) throw new IllegalArgumentException("Invalid method descriptor");
+                }
+            }
+        }
+        return length;
+    }
+
+    public static String concatNamespaces(@NotNull ObjectSet<String> namespaces, @NotNull Function<String, String> namespaceMapper, @NotNull String delimiter) {
         return namespaces.stream().map(namespaceMapper).peek(name -> {
             if(name == null) throw new IllegalArgumentException("Namespace mismatch");
         }).collect(Collectors.joining(delimiter));
     }
 
-    public static String asJavaName(String pureNativeName) {
+    public static String asJavaName(@NotNull String pureNativeName) {
         return pureNativeName.replace('/', '.');
     }
 
-    public static String asNativeName(String javaName) {
+    public static String asNativeName(@NotNull String javaName) {
         return javaName.replace('.', '/');
     }
 
-    public static String asNativeName0(String fileName) {
+    public static String asNativeName0(@NotNull String fileName) {
         return fileName.replace('\\', '/').replace(".class", "");
     }
 
-    public static String asDescriptor(String javaName) {
-        if(javaName == null || javaName.isBlank()) return "";
+    public static String asDescriptor(@NotNull String javaName) {
+        if(javaName.isBlank()) return "";
         if(!javaName.contains("[]")) {
             return switch(javaName) {
                 case "boolean" -> "Z";

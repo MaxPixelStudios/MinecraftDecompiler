@@ -33,7 +33,7 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.util.Arrays.asList;
+import static java.util.List.of;
 
 public class MinecraftDecompilerCommandLine {
     static {
@@ -45,29 +45,29 @@ public class MinecraftDecompilerCommandLine {
             Proxy.NO_PROXY;
     public static void main(String[] args) throws Throwable {
         OptionParser parser = new OptionParser();
-        ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(asList("s", "side"), "Side to deobfuscate/" +
+        ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(of("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". With this option, you must specify --version option and can't " +
                 "specify --input option.").withRequiredArg().ofType(Info.SideType.class);
-        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(asList("v", "ver", "version"), "Version to " +
+        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(of("v", "ver", "version"), "Version to " +
                 "deobfuscate/decompile. Only works on Proguard mappings or when downloading libraries for the decompiler. ")
                 .requiredIf(sideTypeO).withRequiredArg();
-        OptionSpecBuilder regenVarNameO = parser.acceptsAll(asList("r", "rvn", "regenVarName"), "Regenerate local variable " +
+        OptionSpecBuilder regenVarNameO = parser.acceptsAll(of("r", "rvn", "regenVarName"), "Regenerate local variable " +
                 "names if the input mapping doesn't provide one");
         OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping " +
                 "to deobfuscate.").availableUnless(sideTypeO);
         OptionSpecBuilder dontIncludeOthersO = parser.accepts("dontIncludeOthers", "Drop the resource files of the output jar.");
-        ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(asList("i", "input"), "The input file. With this option, you must " +
+        ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(of("i", "input"), "The input file. With this option, you must " +
                 "specify --mappingPath option and can't specify --side option.").availableUnless(sideTypeO).requiredUnless(sideTypeO)
                 .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
-        ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(asList("m", "map", "mappingPath"), "Mapping file uses to " +
+        ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(of("m", "map", "mappingPath"), "Mapping file uses to " +
                 "deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
         ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("targetNamespace", "The target namespace to " +
                 "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
-        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(asList("o", "output"), "The remapped file. Including the suffix.")
+        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(of("o", "output"), "The remapped file. Including the suffix.")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("outputDecomp", "The decompiled output directory. Will " +
                 "be deleted before decompiling if it is exist").withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(asList("d", "decompile"), "Decompile the " +
+        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(of("d", "decompile"), "Decompile the " +
                 "deobfuscated jar. Values are \"FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to FORGEFLOWER. If a value " +
                 "other than above is passed, will use the default decompiler to decompile. Do NOT pass any arg to this option when " +
                 "\"customDecompilerName\" option is specified.").withOptionalArg().ofType(Info.DecompilerType.class)
@@ -88,13 +88,13 @@ public class MinecraftDecompilerCommandLine {
                     @Override
                     public String valuePattern() { return null; }
                 });
-        ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("customDecompiler", "Use your custom decompiler " +
-                "to decompile, do NOT pass any arg to \"decompile\" option when you use this option").withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("customDecompiler", "FQCN of your custom decompiler" +
+                ", do NOT pass any arg to \"decompile\" option when you use this option").withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("tempDir", "Temp directory for saving unzipped and remapped " +
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.accepts("extraJars", "Extra jars that will be used to get the " +
                 "class information").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
-        AbstractOptionSpec<Void> help = parser.acceptsAll(asList("h", "?", "help"), "For help").forHelp();
+        AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
 
         if(args == null) {
             printHelp(parser);

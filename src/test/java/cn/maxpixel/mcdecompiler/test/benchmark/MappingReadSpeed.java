@@ -27,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Fork(1)
 @Threads(1)
@@ -54,7 +53,7 @@ public class MappingReadSpeed {
             else if(index == 0) return null;
 
             return s;
-        }).filter(Objects::nonNull).collect(Collectors.toCollection(ObjectArrayList::new));
+        }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
     }
 
     @Benchmark

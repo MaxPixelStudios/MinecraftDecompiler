@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
+import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
@@ -28,6 +29,8 @@ import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
@@ -35,7 +38,6 @@ import org.objectweb.asm.commons.Remapper;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class ClassifiedMappingRemapper extends Remapper {
     private static final Logger LOGGER = Logging.getLogger("Remapper");
@@ -55,31 +57,24 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String sourceNamespace, String targetNamespace) {
-        ObjectArrayList<ClassMapping<PairedMapping>> pairedMappings = mappings.parallelStream()
-                .map(m -> asPaired(m, sourceNamespace, targetNamespace))
-                .collect(Collectors.toCollection(ObjectArrayList::new));
-        this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(pairedMappings);
-        this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(pairedMappings);
-        this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(pairedMappings);
+        this(mappings.parallelStream()
+                .map(old -> {
+                    ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
+                            old.mapping.getName(targetNamespace)));
+                    old.getFields().forEach(m -> cm.addField(MappingUtil.Paired.o(m.getName(sourceNamespace), m.getName(targetNamespace))));
+                    old.getMethods().forEach(m -> {
+                        if(!m.getComponent(Descriptor.Namespaced.class).getDescriptorNamespace().equals(sourceNamespace))
+                            throw new IllegalArgumentException();
+                        cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), m.getName(targetNamespace),
+                                m.getComponent(Descriptor.Namespaced.class).getUnmappedDescriptor()));
+                    });
+                    return cm;
+                }).collect(ObjectArrayList.toList()));
     }
 
     public ClassifiedMappingRemapper setExtraClassesInformation(ExtraClassesInformation extraClassesInformation) {
         this.extraClassesInformation = Objects.requireNonNull(extraClassesInformation);
         return this;
-    }
-
-
-    private static ClassMapping<PairedMapping> asPaired(ClassMapping<NamespacedMapping> old, String sourceNamespace, String targetNamespace) {
-        ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
-                old.mapping.getName(targetNamespace)));
-        old.getFields().forEach(m -> cm.addField(MappingUtil.Paired.o(m.getName(sourceNamespace), m.getName(targetNamespace))));
-        old.getMethods().forEach(m -> {
-            if(!m.getComponent(Descriptor.Namespaced.class).getDescriptorNamespace().equals(sourceNamespace))
-                throw new IllegalArgumentException();
-            cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), m.getName(targetNamespace),
-                    m.getComponent(Descriptor.Namespaced.class).getUnmappedDescriptor()));
-        });
-        return cm;
     }
 
     @Override
@@ -89,8 +84,8 @@ public class ClassifiedMappingRemapper extends Remapper {
         return internalName;
     }
 
-    public String mapToUnmapped(final Type mappedType) {
-        switch (mappedType.getSort()) {
+    public String mapToUnmapped(@NotNull final Type mappedType) {
+        switch(mappedType.getSort()) {
             case Type.ARRAY:
                 return "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
             case Type.OBJECT:
@@ -101,8 +96,8 @@ public class ClassifiedMappingRemapper extends Remapper {
         }
     }
 
-    public String getUnmappedDescByMappedDesc(String mappedDescriptor) {
-        if ("()V".equals(mappedDescriptor)) {
+    public String getUnmappedDescByMappedDesc(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
+        if(mappedDescriptor.startsWith("()") && mappedDescriptor.charAt(2) != 'L') {
             return mappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
@@ -112,8 +107,8 @@ public class ClassifiedMappingRemapper extends Remapper {
         return stringBuilder.append(')').append(mapToUnmapped(Type.getReturnType(mappedDescriptor))).toString();
     }
 
-    public String mapToMapped(final Type unmappedType) {
-        switch (unmappedType.getSort()) {
+    public String mapToMapped(@NotNull final Type unmappedType) {
+        switch(unmappedType.getSort()) {
             case Type.ARRAY:
                 return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToMapped(unmappedType.getElementType());
             case Type.OBJECT:
@@ -124,8 +119,8 @@ public class ClassifiedMappingRemapper extends Remapper {
         }
     }
 
-    public String getMappedDescByUnmappedDesc(String unmappedDescriptor) {
-        if ("()V".equals(unmappedDescriptor)) {
+    public String getMappedDescByUnmappedDesc(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String unmappedDescriptor) {
+        if (unmappedDescriptor.startsWith("()") && unmappedDescriptor.charAt(2) != 'L') {
             return unmappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
@@ -136,21 +131,20 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     private String getUnmappedDesc(PairedMapping mapping) {
-        if(mapping.hasComponent(Descriptor.class)) return mapping.getComponent(Descriptor.class).getUnmappedDescriptor();
+        if(mapping.hasComponent(Descriptor.class)) return mapping.getComponent(Descriptor.class).unmappedDescriptor;
         else if(mapping.hasComponent(Descriptor.Mapped.class))
-            return getUnmappedDescByMappedDesc(mapping.getComponent(Descriptor.Mapped.class).getMappedDescriptor());
+            return getUnmappedDescByMappedDesc(mapping.getComponent(Descriptor.Mapped.class).mappedDescriptor);
         else throw new IllegalArgumentException("Mapping for methods must support at least one of Descriptor or Descriptor.Mapped");
     }
 
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
-        if(!(name.equals("<init>") || name.equals("<clinit>"))) {
+        if(name.charAt(0) != '<') { // equivalent to !(name.equals("<init>") || name.equals("<clinit>"))
             return Optional.ofNullable(mappingByUnm.get(owner))
                     .flatMap(cm -> cm.getMethods().parallelStream()
                             .filter(m -> m.unmappedName.equals(name) && getUnmappedDesc(m).equals(descriptor))
                             .reduce((left, right) -> {throw new IllegalArgumentException("Method duplicated... This should not happen!");})
-                    )
-                    .or(() -> processSuperMethod(owner, name, descriptor))
+                    ).or(() -> processSuperMethod(owner, name, descriptor))
                     .map(m -> m.mappedName).orElse(name);
         }
         return name;
@@ -160,49 +154,55 @@ public class ClassifiedMappingRemapper extends Remapper {
         if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor ClassifiedMappingRemapper(AbstractMappingReader) is only " +
                 "for reversing mapping. For remapping, please use ClassifiedMappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
         return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
-                .flatMap(superNames -> superNames.parallelStream()
-                        .map(mappingByUnm::get)
-                        .filter(Objects::nonNull)
-                        .flatMap(cm -> cm.getMethods().stream())
-                        .filter(m -> m.unmappedName.equals(name) && getUnmappedDesc(m).equals(descriptor))
-                        .reduce(this::reduceMethod)
-                        .or(() -> superNames.parallelStream()
-                                .map(mappingByUnm::get)
-                                .filter(Objects::nonNull)
-                                .map(cm -> processSuperMethod(cm.mapping.unmappedName, name, descriptor))
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
-                                .reduce(this::reduceMethod)
-                        )
-                );
+                .flatMap(superNames -> {
+                    ObjectArrayList<ClassMapping<PairedMapping>> cms = superNames.stream()
+                            .map(mappingByUnm::get)
+                            .filter(Objects::nonNull)
+                            .collect(ObjectArrayList.toList());
+                    return cms.parallelStream()
+                            .flatMap(cm -> cm.getMethods().stream())
+                            .filter(m -> m.unmappedName.equals(name) && getUnmappedDesc(m).equals(descriptor))
+                            .reduce(this::reduceMethod)
+                            .or(() -> cms.parallelStream()
+                                    .filter(cm -> !cms.contains(cm))
+                                    .map(cm -> processSuperMethod(cm.mapping.unmappedName, name, descriptor))
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .reduce(this::reduceMethod)
+                            );
+                });
     }
 
-    private PairedMapping reduceMethod(PairedMapping left, PairedMapping right) {
-        if(nameAndDescEquals(left, right)) return left;
-        // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
+    private PairedMapping reduceMethod(@NotNull PairedMapping left, @NotNull PairedMapping right) {
+        if(left == right || nameAndDescEquals(left, right)) return left;
         int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().getOwner().mapping.unmappedName,
-                left.unmappedName.concat(getUnmappedDesc(left)), Opcodes.ACC_PUBLIC) & 0b111;
+                left.unmappedName.concat(getUnmappedDesc(left))) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
         int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().getOwner().mapping.unmappedName,
-                right.unmappedName.concat(getUnmappedDesc(right)), Opcodes.ACC_PUBLIC) & 0b111;
-        // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
-        if((leftAcc & 0b101) != 0) return left;
-        else if((rightAcc & 0b101) != 0) return right;
+                right.unmappedName.concat(getUnmappedDesc(right))) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
+        if((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {
+            if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) throw new IllegalArgumentException("This can't happen!");
+            return left;
+        } else if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) return right;
         else if(leftAcc == Opcodes.ACC_PRIVATE || rightAcc == Opcodes.ACC_PRIVATE)
             throw new IllegalArgumentException("This can't happen!");
         else throw new IllegalArgumentException("Method duplicated... This should not happen!");
     }
 
-    private static boolean nameAndDescEquals(PairedMapping left, PairedMapping right) {
-        boolean b = left.unmappedName.equals(right.unmappedName) && left.mappedName.equals(right.mappedName);
-        if(left.hasComponent(Descriptor.class)) {
-            if(!right.hasComponent(Descriptor.class)) return false;
-            b &= left.getComponent(Descriptor.class).getUnmappedDescriptor().equals(right.getComponent(Descriptor.class).getUnmappedDescriptor());
+    private static boolean nameAndDescEquals(@NotNull PairedMapping left, @NotNull PairedMapping right) {
+        if(left.unmappedName.equals(right.unmappedName) && left.mappedName.equals(right.mappedName)) {
+            // Will return false if they either have no descriptor components
+            boolean leftD = left.hasComponent(Descriptor.class), leftDM = left.hasComponent(Descriptor.Mapped.class),
+                    rightD = right.hasComponent(Descriptor.class), rightDM = right.hasComponent(Descriptor.Mapped.class);
+            if(leftD && rightD) {
+                boolean b = left.getComponent(Descriptor.class).equals(right.getComponent(Descriptor.class));
+                if(leftDM && rightDM) {
+                    return b && left.getComponent(Descriptor.Mapped.class).equals(right.getComponent(Descriptor.Mapped.class));
+                } else if(leftDM || rightDM) return false;
+                return b;
+            } else if(leftD || rightD) return false;
+            else if(leftDM && rightDM) return left.getComponent(Descriptor.Mapped.class).equals(right.getComponent(Descriptor.Mapped.class));
         }
-        if(left.hasComponent(Descriptor.Mapped.class)) {
-            if(!right.hasComponent(Descriptor.Mapped.class)) return false;
-            b &= left.getComponent(Descriptor.Mapped.class).mappedDescriptor.equals(right.getComponent(Descriptor.Mapped.class).mappedDescriptor);
-        }
-        return b;
+        return false;
     }
 
     @Override
@@ -215,7 +215,7 @@ public class ClassifiedMappingRemapper extends Remapper {
         return Optional.ofNullable(fieldByUnm.get(owner))
                 .map(map -> map.get(name))
                 .or(() -> processSuperField(owner, name))
-                .map(m -> m.mappedName).orElse(name);
+                .map(PairedMapping::getMappedName).orElse(name);
     }
 
     private Optional<PairedMapping> processSuperField(String owner, String name) {
@@ -240,14 +240,14 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     private PairedMapping reduceField(PairedMapping left, PairedMapping right) {
-        // 0b111 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
-        int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().getOwner().mapping.unmappedName,
-                left.unmappedName, Opcodes.ACC_PUBLIC) & 0b111;
-        int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().getOwner().mapping.unmappedName,
-                right.unmappedName, Opcodes.ACC_PUBLIC) & 0b111;
-        // 0b101 = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED
-        if((leftAcc & 0b101) != 0) return left;
-        else if((rightAcc & 0b101) != 0) return right;
+        int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().owner.mapping.unmappedName,
+                left.unmappedName) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
+        int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().owner.mapping.unmappedName,
+                right.unmappedName) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
+        if((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {
+            if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) throw new IllegalArgumentException("This can't happen!");
+            return left;
+        } else if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) return right;
         else if(leftAcc == Opcodes.ACC_PRIVATE || rightAcc == Opcodes.ACC_PRIVATE)
             throw new IllegalArgumentException("This can't happen!");
         throw new IllegalArgumentException("Field duplicated... This should not happen!");

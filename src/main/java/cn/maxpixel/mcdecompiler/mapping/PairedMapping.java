@@ -72,6 +72,7 @@ public final class PairedMapping extends Mapping {
      */
     public PairedMapping() {}
 
+    @SuppressWarnings("unchecked")
     public Owned<PairedMapping> getOwned() {
         return (Owned<PairedMapping>) super.getOwned();
     }
@@ -109,9 +110,8 @@ public final class PairedMapping extends Mapping {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PairedMapping)) return false;
+        if (!(o instanceof PairedMapping that)) return false;
         if (!super.equals(o)) return false;
-        PairedMapping that = (PairedMapping) o;
         return unmappedName.equals(that.unmappedName) && mappedName.equals(that.mappedName);
     }
 

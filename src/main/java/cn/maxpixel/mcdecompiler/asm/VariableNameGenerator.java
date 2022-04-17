@@ -18,34 +18,5 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-
-import java.util.function.Function;
-
-public class ClassProcessor {//TODO
-    private final ClassVisitor visitor;
-
-    public ClassProcessor(Function<ClassVisitor, ClassVisitor> visitor, ClassWriter writer) {
-        this.visitor = visitor.apply(writer);
-    }
-
-    public ClassVisitor getVisitor() {
-        return visitor;
-    }
-
-    public interface Process {
-        enum State {
-            BEFORE,
-            AFTER
-        }
-
-        State getState();
-
-        void beforeRunning();
-
-        void afterRunning();
-
-        Function<ClassVisitor, ClassVisitor> getVisitor();
-    }
+public class VariableNameGenerator {
 }

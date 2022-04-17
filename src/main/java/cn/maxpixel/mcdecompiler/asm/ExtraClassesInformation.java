@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.asm;
 
+import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.*;
@@ -32,16 +33,19 @@ import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
-    private final Object2ObjectOpenHashMap<String, ObjectImmutableList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, ObjectList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
 
-    public ExtraClassesInformation() {}
+    public ExtraClassesInformation() {
+        accessMap.defaultReturnValue(Object2IntMaps.emptyMap());
+    }
 
     public ExtraClassesInformation(Stream<Path> classes) {
         this(classes, false);
     }
 
     public ExtraClassesInformation(Stream<Path> classes, boolean close) {
+        this();
         if(close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -50,44 +54,58 @@ public class ExtraClassesInformation implements Consumer<Path> {
     @Override
     public void accept(Path classFilePath) {
         try {
-            new ClassReader(IOUtil.readAllBytes(classFilePath)).accept(new ClassVisitor(Opcodes.ASM9) {
-                private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
-                private String name;
-                @Override
-                public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                    this.name = name;
-                    if((access & (Opcodes.ACC_INTERFACE | Opcodes.ACC_ENUM | Opcodes.ACC_RECORD)) == 0 &&
-                            !superName.startsWith("java/")) {
-                        String[] arr = new String[interfaces.length + 1];
-                        System.arraycopy(interfaces, 0, arr, 0, interfaces.length);
-                        arr[arr.length - 1] = superName;
-                        synchronized(superClassMap) {
-                            superClassMap.put(name, new ObjectImmutableList<>(arr));
+            ClassReader reader = new ClassReader(IOUtil.readAllBytes(classFilePath));
+            String className = reader.getClassName();
+            boolean needToRecord = (reader.getAccess() & (Opcodes.ACC_INTERFACE | Opcodes.ACC_ENUM | Opcodes.ACC_RECORD)) == 0;
+            String superName = reader.getSuperName();
+            String[] interfaces = reader.getInterfaces();
+            int itfLen = interfaces.length;
+            if(needToRecord && !superName.startsWith("java/")) {
+                ObjectArrayList<String> list = new ObjectArrayList<>(itfLen + 1);
+                list.add(superName);
+                if(itfLen > 0) for(String itf : interfaces) {
+                    if(itf.startsWith("java/")) continue;
+                    list.add(itf);
+                }
+                synchronized(superClassMap) {
+                    superClassMap.put(className, list);
+                }
+            } else if(itfLen > 0) {
+                ObjectArrayList<String> list = new ObjectArrayList<>(itfLen);
+                for(String itf : interfaces) {
+                    if(itf.startsWith("java/")) continue;
+                    list.add(itf);
+                }
+                synchronized(superClassMap) {
+                    superClassMap.put(className, list);
+                }
+            }
+            if(needToRecord) {
+                reader.accept(new ClassVisitor(Info.ASM_VERSION) {
+                    private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
+                    @Override
+                    public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                        if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
+                        return null;
+                    }
+
+                    @Override
+                    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                        if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
+                        return null;
+                    }
+
+                    @Override
+                    public void visitEnd() {
+                        if(!map.isEmpty()) {
+                            map.defaultReturnValue(Opcodes.ACC_PUBLIC);
+                            synchronized(accessMap) {
+                                accessMap.put(className, map);
+                            }
                         }
-                    } else if(interfaces.length > 0) synchronized(superClassMap) {
-                        superClassMap.put(name, new ObjectImmutableList<>(interfaces));
                     }
-                }
-
-                @Override
-                public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                    if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
-                    return null;
-                }
-
-                @Override
-                public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                    if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
-                    return null;
-                }
-
-                @Override
-                public void visitEnd() {
-                    if(!map.isEmpty()) synchronized(accessMap) {
-                        accessMap.put(name, map);
-                    }
-                }
-            }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+                }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            }
         } catch(IOException e) {
             LOGGER.log(Level.WARNING, "Error when creating super class mapping", e);
         }
@@ -99,9 +117,5 @@ public class ExtraClassesInformation implements Consumer<Path> {
 
     public int getAccessFlags(String className, String composedMemberName) {
         return accessMap.get(className).getInt(composedMemberName);
-    }
-
-    public int getAccessFlags(String className, String composedMemberName, int defaultValue) {
-        return accessMap.get(className).getOrDefault(composedMemberName, defaultValue);
     }
 }
