@@ -109,8 +109,8 @@ public class MinecraftDecompiler {
             }
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
-                    Path decompileClasses = Files.createDirectories(Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize());
-                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses);
+                    Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
+                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses.resolve("net"));
                     if(options.bundledLibs().isEmpty() && Files.isDirectory(jarFs.getPath("com/mojang"))) {
                         try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com/mojang"))
                                 .filter(p -> !skippedPkgs.contains(p.getFileName().toString()))) {
@@ -166,13 +166,8 @@ public class MinecraftDecompiler {
 
         private void preprocess(Path inputJar) {
             FileUtil.deleteIfExists(Properties.TEMP_DIR);
-            try {
-                Files.createDirectories(Properties.TEMP_DIR);
-            } catch(IOException e) {
-                LOGGER.severe("Error creating temp directory");
-                throw Utils.wrapInRuntime(e);
-            }
             try(FileSystem jarFs = JarUtil.createZipFs(FileUtil.requireExist(inputJar))) {
+                Files.createDirectories(Properties.TEMP_DIR);
                 if(Files.exists(jarFs.getPath("/net/minecraft/bundler/Main.class"))) {
                     Path metaInf = jarFs.getPath("META-INF");
                     Path extractDir = Files.createDirectories(Properties.TEMP_DIR.resolve("bundleExtract"));
@@ -196,7 +191,7 @@ public class MinecraftDecompiler {
                     this.version = object.get("id").getAsString();
                 }
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error opening jar file {0}", new Object[] {inputJar, e});
+                LOGGER.log(Level.SEVERE, "Error preprocessing jar file {0}", new Object[] {inputJar, e});
                 throw Utils.wrapInRuntime(e);
             }
         }
@@ -375,7 +370,7 @@ public class MinecraftDecompiler {
                     } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc, inputMappings()), this);
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
-            return new ClassifiedDeobfuscator(version(), type());
+            return new ClassifiedDeobfuscator(version(), type(), this);
         }
 
         @Override

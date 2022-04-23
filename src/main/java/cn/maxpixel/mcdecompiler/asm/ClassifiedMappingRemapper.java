@@ -30,6 +30,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.intellij.lang.annotations.Pattern;
+import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -96,7 +97,7 @@ public class ClassifiedMappingRemapper extends Remapper {
         }
     }
 
-    public String getUnmappedDescByMappedDesc(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
+    public String getUnmappedDescByMappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
         if(mappedDescriptor.startsWith("()") && mappedDescriptor.charAt(2) != 'L') {
             return mappedDescriptor;
         }
@@ -119,7 +120,7 @@ public class ClassifiedMappingRemapper extends Remapper {
         }
     }
 
-    public String getMappedDescByUnmappedDesc(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String unmappedDescriptor) {
+    public String getMappedDescByUnmappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String unmappedDescriptor) {
         if (unmappedDescriptor.startsWith("()") && unmappedDescriptor.charAt(2) != 'L') {
             return unmappedDescriptor;
         }
@@ -164,7 +165,6 @@ public class ClassifiedMappingRemapper extends Remapper {
                             .filter(m -> m.unmappedName.equals(name) && getUnmappedDesc(m).equals(descriptor))
                             .reduce(this::reduceMethod)
                             .or(() -> cms.parallelStream()
-                                    .filter(cm -> !cms.contains(cm))
                                     .map(cm -> processSuperMethod(cm.mapping.unmappedName, name, descriptor))
                                     .filter(Optional::isPresent)
                                     .map(Optional::get)

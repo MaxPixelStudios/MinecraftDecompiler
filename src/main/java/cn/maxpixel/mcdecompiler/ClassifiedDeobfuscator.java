@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.IOException;
@@ -74,7 +75,11 @@ public class ClassifiedDeobfuscator {
     private final String targetNamespace;
 
     public ClassifiedDeobfuscator(String version, Info.SideType side) {
-        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD, DownloadUtil.downloadMapping(version, side)));
+        this(version, side, DEFAULT_OPTIONS);
+    }
+
+    public ClassifiedDeobfuscator(String version, Info.SideType side, DeobfuscateOptions options) {
+        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD, DownloadUtil.downloadMapping(version, side)), options);
     }
 
     public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader) {
@@ -102,6 +107,7 @@ public class ClassifiedDeobfuscator {
         this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings, sourceNamespace, targetNamespace);
     }
 
+    @SuppressWarnings("unchecked")
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);
@@ -119,23 +125,26 @@ public class ClassifiedDeobfuscator {
                 }
             });
             mappingRemapper.setExtraClassesInformation(info);
-            if(options.rvn()) LocalVariableTableRenamer.startRecord();
+            if(options.rvn()) VariableNameGenerator.startRecord();
             paths.forEach(path -> {
                  try {
                     String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
                     if(mappings.containsKey(classKeyName)) {
-                        ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
                         ClassWriter writer = new ClassWriter(0);
+                        ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
+                        boolean isRecord = (reader.getAccess() & Opcodes.ACC_RECORD) != 0;
+                        ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
                         ClassProcessor processor = new ClassProcessor(parent -> {
-                            ClassVisitor cv;
+                            ClassVisitor cv = parent;
+                            if(options.rvn()) cv = new VariableNameGenerator(cv);
+                            if(isRecord) cv = new RecordNameRemapper(cv);
                             if(cm.mapping instanceof NameGetter.Namespaced ngn) {
                                 ngn.setMappedNamespace(targetNamespace);
-                                cv = new LocalVariableTableRenamer(parent, options.rvn(),
-                                        (ClassMapping<NamespacedMapping>) cm, mappingRemapper);
-                            } else cv = new LocalVariableTableRenamer(parent, options.rvn());
+                                cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) cm, mappingRemapper);
+                            }
                             return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
                         }, writer);
-                        new ClassReader(IOUtil.readAllBytes(path)).accept(processor.getVisitor(), 0);
+                        reader.accept(processor.getVisitor(), 0);
                         try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs
                                 .getPath(cm.mapping.getMappedName().concat(".class"))))) {
                             os.write(writer.toByteArray());
@@ -157,7 +166,7 @@ public class ClassifiedDeobfuscator {
                     LOGGER.log(Level.WARNING, "Error when remapping classes or coping files", e);
                 }
             });
-            if(options.rvn()) LocalVariableTableRenamer.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
+            if(options.rvn()) VariableNameGenerator.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         } catch(IOException e) {
             LOGGER.log(Level.WARNING, "Error when deobfuscating", e);
         }

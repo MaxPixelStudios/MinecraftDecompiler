@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,8 +42,13 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
-public class FileUtil {
+@ApiStatus.Internal
+public final class FileUtil {
     private static final Logger LOGGER = Logging.getLogger();
+
+    private FileUtil() {
+        throw new AssertionError("No instances");
+    }
 
     public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
         if(Files.notExists(source)) {
@@ -73,7 +78,7 @@ public class FileUtil {
         }
     }
 
-    public static void copyFile(Path source, Path target) {
+    public static void copyFile(@NotNull Path source, @NotNull Path target) {
         if(Files.notExists(source)) {
             LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
             return;
@@ -90,8 +95,8 @@ public class FileUtil {
         }
     }
 
-    public static void deleteIfExists(Path path) {
-        if(Files.notExists(Objects.requireNonNull(path, "path cannot be null"))) {
+    public static void deleteIfExists(@NotNull Path path) {
+        if(Files.notExists(path)) {
             LOGGER.log(Level.FINER, "\"{0}\" does not exist, skipping this operation...", path);
             return;
         }
@@ -109,12 +114,12 @@ public class FileUtil {
         }
     }
 
-    public static Path requireExist(Path p) {
-        if(Files.notExists(Objects.requireNonNull(p))) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
+    public static Path requireExist(@NotNull Path p) {
+        if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
         return p;
     }
 
-    public static Path ensureFileExist(Path p) {
+    public static Path ensureFileExist(@NotNull Path p) {
         if(Files.notExists(p)) {
             try {
                 Files.createDirectories(p.getParent());
@@ -126,9 +131,9 @@ public class FileUtil {
         return p;
     }
 
-    public static Stream<Path> iterateFiles(Path path) {
+    public static Stream<Path> iterateFiles(@NotNull Path path) {
         try {
-            DirectoryStream<Path> ds = Files.newDirectoryStream(Objects.requireNonNull(path, "path"));
+            DirectoryStream<Path> ds = Files.newDirectoryStream(path);
             return StreamSupport.stream(ds.spliterator(), true)
                     .mapMulti((Path p, Consumer<Path> cons) -> {
                         if(Files.isDirectory(p)) iterateFiles(p).forEach(cons);
@@ -140,7 +145,7 @@ public class FileUtil {
         }
     }
 
-    public static boolean verify(Path path, String hash, long size) {
+    public static boolean verify(@NotNull Path path, String hash, long size) {
         if(Files.notExists(path)) return false;
         if(Files.isDirectory(path)) throw new IllegalArgumentException("Verify a directory is not supported");
         try(FileChannel fc = FileChannel.open(path, READ)) {

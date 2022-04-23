@@ -23,6 +23,8 @@ import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectCollections;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Every mapping's base class
@@ -35,8 +37,8 @@ public abstract class Mapping implements NameGetter {
      * Constructor
      * @param components Components add to this mapping
      */
-    protected Mapping(Component... components) {
-        for(Component component : components) {
+    protected Mapping(@NotNull Component... components) {
+        for(@NotNull Component component : components) {
             this.components.put(component.getClass(), component);
         }
     }
@@ -53,7 +55,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> C getComponent(Class<? extends C> component) {
+    public final <C extends Component> @Nullable C getComponent(@NotNull Class<? extends C> component) {
         return (C) components.get(component);
     }
 
@@ -61,30 +63,16 @@ public abstract class Mapping implements NameGetter {
      * Gets the {@link Owned} component if it is present
      * @return The {@link Owned} component if it exists, or null
      */
-    protected Owned<? extends Mapping> getOwned() {
+    protected @Nullable Owned<? extends Mapping> getOwned() {
         return (Owned<? extends Mapping>) components.get(Owned.class);
     }
 
-    public final boolean hasComponent(Class<? extends Component> component) {
+    public final boolean hasComponent(@NotNull Class<? extends Component> component) {
         return components.containsKey(component);
     }
 
-    public final ObjectCollection<? extends Component> getComponents() {
+    public final @NotNull ObjectCollection<? extends Component> getComponents() {
         return ObjectCollections.unmodifiable(components.values());
-    }
-
-    public final boolean isPaired() {
-        return this instanceof PairedMapping;
-    }
-    public final boolean isNamespaced() {
-        return this instanceof NamespacedMapping;
-    }
-
-    public final PairedMapping asPaired() {
-        return (PairedMapping) this;
-    }
-    public final NamespacedMapping asNamespaced() {
-        return (NamespacedMapping) this;
     }
 
     /* Auto-generated equals, hashCode and toString methods */

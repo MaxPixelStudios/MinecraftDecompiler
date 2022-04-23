@@ -40,6 +40,8 @@ public class ClassProcessor {//TODO
             AFTER
         }
 
+        String name();
+
         State getState();
 
         void beforeRunning();
