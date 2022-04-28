@@ -24,6 +24,7 @@ import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
 import cn.maxpixel.mcdecompiler.util.DownloadUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
     }
 
     @Override
-    public void decompile(Path source, Path target) throws IOException {
+    public void decompile(@NotNull Path source, @NotNull Path target) throws IOException {
         checkArgs(source, target);
         try {
             if(cl == null) cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()}, getClass().getClassLoader());

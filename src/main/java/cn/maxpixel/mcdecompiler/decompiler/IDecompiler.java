@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,9 +35,9 @@ public interface IDecompiler {
      * @param source Path for input. The path is absolute and normalized.
      * @param targetDir Path for output. The path is absolute and normalized.
      */
-    void decompile(Path source, Path targetDir) throws IOException;
+    void decompile(@NotNull Path source, @NotNull Path targetDir) throws IOException;
 
-    default void checkArgs(Path source, Path target) {
+    default void checkArgs(@NotNull Path source, @NotNull Path target) {
         if(!Files.isDirectory(target)) throw new IllegalArgumentException("target must be directory");
         if(getSourceType() == SourceType.FILE && Files.isDirectory(source)) throw new IllegalArgumentException("source must be file");
         if(getSourceType() == SourceType.DIRECTORY && !Files.isDirectory(source)) throw new IllegalArgumentException("source must be directory!");

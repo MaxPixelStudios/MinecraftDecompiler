@@ -22,16 +22,16 @@ import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
     public static final UserDefinedDecompiler NONE = new UserDefinedDecompiler() {
         @Override
-        public void decompile(Path source, Path target) {
+        public void decompile(@NotNull Path source, @NotNull Path target) {
             throw new RuntimeException("User decompiler not found. Make sure you put correct config file in \"decompiler\" directory");
         }
         @Override
@@ -39,24 +39,25 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
     };
     private SourceType sourceType;
     private Path decompilerPath;
-    private ObjectArrayList<String> options;
+    private List<String> options;
     private boolean libRecommended;
 
     private UserDefinedDecompiler() {}
-    UserDefinedDecompiler(SourceType sourceType, Path decompilerPath, ObjectArrayList<String> options, boolean libRecommended) {
-        this.sourceType = Objects.requireNonNull(sourceType);
+
+    UserDefinedDecompiler(@NotNull SourceType sourceType, Path decompilerPath, @NotNull List<String> options, boolean libRecommended) {
+        this.sourceType = sourceType;
         this.decompilerPath = FileUtil.requireExist(decompilerPath);
-        this.options = Objects.requireNonNull(options);
+        this.options = options;
         this.libRecommended = libRecommended;
     }
 
     @Override
-    public SourceType getSourceType() {
+    public @NotNull SourceType getSourceType() {
         return sourceType;
     }
 
     @Override
-    public void decompile(Path source, Path target) throws IOException {
+    public void decompile(@NotNull Path source, @NotNull Path target) throws IOException {
         checkArgs(source, target);
         ObjectArrayList<String> arrayList = new ObjectArrayList<>();
         arrayList.add("java");
@@ -66,7 +67,7 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         Utils.waitForProcess(Runtime.getRuntime().exec(arrayList.toArray(new String[0])));
     }
 
-    private ObjectArrayList<String> resolveArgs(Path source, Path target, ObjectArrayList<String> options) {
+    private ObjectArrayList<String> resolveArgs(Path source, Path target, List<String> options) {
         ObjectArrayList<String> resolvedOptions = new ObjectArrayList<>();
         List<String> libs = listLibs();
         for(int i = 0; i < options.size(); i++) {

@@ -22,9 +22,9 @@ import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Objects;
 
 public class UniqueMappingWriter<M extends Mapping> extends AbstractMappingWriter<M, UniqueMapping<M>, MappingType.Unique<M>> {
     private final UniqueMapping<M> mapping = new UniqueMapping<>();
@@ -33,51 +33,51 @@ public class UniqueMappingWriter<M extends Mapping> extends AbstractMappingWrite
         super(type);
     }
 
-    public void addClass(M mapping) {
-        this.mapping.classes.add(Objects.requireNonNull(mapping));
+    public void addClass(@NotNull M mapping) {
+        this.mapping.classes.add(mapping);
     }
 
-    public void addClasses(Collection<M> mappings) {
-        this.mapping.classes.addAll(Objects.requireNonNull(mappings));
+    public void addClasses(@NotNull Collection<M> mappings) {
+        this.mapping.classes.addAll(mappings);
     }
 
-    public void addClasses(ObjectList<M> mappings) {
-        this.mapping.classes.addAll(Objects.requireNonNull(mappings));
+    public void addClasses(@NotNull ObjectList<M> mappings) {
+        this.mapping.classes.addAll(mappings);
     }
 
-    public void addField(M mapping) {
-        this.mapping.fields.add(Objects.requireNonNull(mapping));
+    public void addField(@NotNull M mapping) {
+        this.mapping.fields.add(mapping);
     }
 
-    public void addFields(Collection<M> mappings) {
-        this.mapping.fields.addAll(Objects.requireNonNull(mappings));
+    public void addFields(@NotNull Collection<M> mappings) {
+        this.mapping.fields.addAll(mappings);
     }
 
-    public void addFields(ObjectList<M> mappings) {
-        this.mapping.fields.addAll(Objects.requireNonNull(mappings));
+    public void addFields(@NotNull ObjectList<M> mappings) {
+        this.mapping.fields.addAll(mappings);
     }
 
-    public void addMethod(M mapping) {
-        this.mapping.methods.add(Objects.requireNonNull(mapping));
+    public void addMethod(@NotNull M mapping) {
+        this.mapping.methods.add(mapping);
     }
 
-    public void addMethods(Collection<M> mappings) {
-        this.mapping.methods.addAll(Objects.requireNonNull(mappings));
+    public void addMethods(@NotNull Collection<M> mappings) {
+        this.mapping.methods.addAll(mappings);
     }
 
-    public void addMethods(ObjectList<M> mappings) {
-        this.mapping.methods.addAll(Objects.requireNonNull(mappings));
+    public void addMethods(@NotNull ObjectList<M> mappings) {
+        this.mapping.methods.addAll(mappings);
     }
 
     @Override
-    public void addMappings(UniqueMapping<M> mappings) {
+    public void addMappings(@NotNull UniqueMapping<M> mappings) {
         this.mapping.classes.addAll(mappings.classes);
         this.mapping.fields.addAll(mappings.fields);
         this.mapping.methods.addAll(mappings.methods);
     }
 
     @Override
-    protected UniqueMapping<M> getCollection() {
+    protected @NotNull UniqueMapping<M> getCollection() {
         return mapping;
     }
 

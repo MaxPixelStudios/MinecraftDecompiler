@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -29,8 +31,8 @@ public class Properties {
         return DOWNLOAD_DIR.resolve(version).resolve(type + "_mappings.txt");
     }
 
-    public static Path getDownloadedDecompilerPath(Info.DecompilerType type) {
-        if(Objects.requireNonNull(type) == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
+    public static Path getDownloadedDecompilerPath(@NotNull Info.DecompilerType type) {
+        if(type == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
         return DOWNLOAD_DIR.resolve("decompiler").resolve(Objects.requireNonNull(type) + ".jar");
     }
 

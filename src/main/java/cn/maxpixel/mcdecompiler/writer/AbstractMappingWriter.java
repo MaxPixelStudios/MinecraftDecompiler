@@ -23,6 +23,8 @@ import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,20 +32,36 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 public abstract class AbstractMappingWriter<M extends Mapping, C, T extends MappingType<M, C>> {
     protected static final Logger LOGGER = Logging.getLogger("Mapping Writer");
 
     protected final T type;
-    private final ObjectArrayList<M> packages = new ObjectArrayList<>();
+    private final ObjectList<M> packages;
 
-    public AbstractMappingWriter(T type) {
-        this.type = Objects.requireNonNull(type);
+    public AbstractMappingWriter(@NotNull T type) {
+        this.type = type;
+        this.packages = type.getGenerator().supportPackage() ? new ObjectArrayList<>() : ObjectLists.emptyList();
     }
 
-    public abstract void addMappings(C mappings);
+    public abstract void addMappings(@NotNull C mappings);
+
+    public final void addPackage(@NotNull M pkg) {
+        if(!type.getGenerator().supportPackage()) throw new UnsupportedOperationException();
+        packages.add(pkg);
+    }
+
+    public final void addPackages(@NotNull Collection<M> packages) {
+        if(!type.getGenerator().supportPackage()) throw new UnsupportedOperationException();
+        this.packages.addAll(packages);
+    }
+
+    public final void addPackages(@NotNull ObjectList<M> packages) {
+        if(!type.getGenerator().supportPackage()) throw new UnsupportedOperationException();
+        this.packages.addAll(packages);
+    }
 
     protected abstract C getCollection();
 
@@ -72,22 +90,22 @@ public abstract class AbstractMappingWriter<M extends Mapping, C, T extends Mapp
         return output;
     }
 
-    public final void writeTo(OutputStream os) throws IOException {
+    public final void writeTo(@NotNull OutputStream os) throws IOException {
         if(type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(OutputStream...) instead.");
         os.write(String.join("\n", generate()).getBytes(StandardCharsets.UTF_8));
     }
 
-    public final void writeTo(Writer writer) throws IOException {
+    public final void writeTo(@NotNull Writer writer) throws IOException {
         if(type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(Writer...) instead.");
         writer.write(String.join("\n", generate()));
     }
 
-    public final void writeTo(WritableByteChannel ch) throws IOException {
+    public final void writeTo(@NotNull WritableByteChannel ch) throws IOException {
         if(type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(WritableByteChannel...) instead.");
         ch.write(ByteBuffer.wrap(String.join("\n", generate()).getBytes(StandardCharsets.UTF_8)));
     }
 
-    public final void writeTo(OutputStream... os) throws IOException {
+    public final void writeTo(@NotNull OutputStream... os) throws IOException {
         if(!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(OutputStream) instead.");
         ObjectList<String>[] output = generateMulti();
         if(output.length != os.length) throw new UnsupportedOperationException();
@@ -96,7 +114,7 @@ public abstract class AbstractMappingWriter<M extends Mapping, C, T extends Mapp
         }
     }
 
-    public final void writeTo(Writer... writer) throws IOException {
+    public final void writeTo(@NotNull Writer... writer) throws IOException {
         if(!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(Writer) instead.");
         ObjectList<String>[] output = generateMulti();
         if(output.length != writer.length) throw new UnsupportedOperationException();
@@ -105,7 +123,7 @@ public abstract class AbstractMappingWriter<M extends Mapping, C, T extends Mapp
         }
     }
 
-    public final void writeTo(WritableByteChannel... ch) throws IOException {
+    public final void writeTo(@NotNull WritableByteChannel... ch) throws IOException {
         if(!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(WritableByteChannel) instead.");
         ObjectList<String>[] output = generateMulti();
         if(output.length != ch.length) throw new UnsupportedOperationException();

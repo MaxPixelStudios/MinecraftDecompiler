@@ -19,8 +19,9 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,21 +29,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.StreamSupport;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Decompilers {
+    private static final Logger LOGGER = Logging.getLogger("Decompiler Manager");
     private static final EnumMap<Info.DecompilerType, IDecompiler> decompilers = new EnumMap<>(Info.DecompilerType.class);
     private static final Object2ObjectOpenHashMap<String, ICustomDecompiler> customDecompilers = new Object2ObjectOpenHashMap<>();
     static {
-        init();
-        initCustom();
-    }
-
-    private static void init() {
         decompilers.put(Info.DecompilerType.FERNFLOWER, new FernFlowerDecompiler());
         decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
         decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
         decompilers.put(Info.DecompilerType.USER_DEFINED, findUserDefined());
+
+        for(ICustomDecompiler icd : ServiceLoader.load(ICustomDecompiler.class)) {
+            customDecompilers.put(icd.name(), icd);
+        }
     }
 
     private static UserDefinedDecompiler findUserDefined() {
@@ -59,21 +61,12 @@ public class Decompilers {
                 String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required property")
                         .split(" ");
                 return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Path.of("decompiler", decompilerPath).
-                        toAbsolutePath().normalize(), ObjectArrayList.wrap(args), Boolean.parseBoolean(libRecommended));
+                        toAbsolutePath().normalize(), ObjectImmutableList.of(args), Boolean.parseBoolean(libRecommended));
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Error occurred when constructing the user-defined decompiler", e);
             }
         }
         return UserDefinedDecompiler.NONE;
-    }
-
-    private static void initCustom() {
-        StreamSupport.stream(ServiceLoader.load(ICustomDecompiler.class).spliterator(), true)
-                .forEach(icd -> {
-                    synchronized(customDecompilers) {
-                        customDecompilers.put(icd.name(), icd);
-                    }
-                });
     }
 
     public static IDecompiler get(Info.DecompilerType type) {

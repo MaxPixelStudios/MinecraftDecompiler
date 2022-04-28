@@ -18,9 +18,10 @@
 
 package cn.maxpixel.mcdecompiler;
 
-import cn.maxpixel.mcdecompiler.asm.*;
+import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.asm.ExtraClassesInformation;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
@@ -31,10 +32,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,8 +45,6 @@ import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-
-import static cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
 
 public class ClassifiedDeobfuscator {
     private static final Logger LOGGER = Logging.getLogger("ClassifiedDeobfuscator");
@@ -68,6 +64,11 @@ public class ClassifiedDeobfuscator {
             return false;
         }
     };
+
+    static {
+        ClassProcessor.fetchOptions();
+    }
+
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappings;
     private final ClassifiedMappingRemapper mappingRemapper;
     private final DeobfuscateOptions options;
@@ -125,26 +126,15 @@ public class ClassifiedDeobfuscator {
                 }
             });
             mappingRemapper.setExtraClassesInformation(info);
-            if(options.rvn()) VariableNameGenerator.startRecord();
+            ClassProcessor.beforeRunning(options, targetNamespace, mappingRemapper);
             paths.forEach(path -> {
                  try {
                     String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
                     if(mappings.containsKey(classKeyName)) {
-                        ClassWriter writer = new ClassWriter(0);
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
-                        boolean isRecord = (reader.getAccess() & Opcodes.ACC_RECORD) != 0;
+                        ClassWriter writer = new ClassWriter(0);
                         ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
-                        ClassProcessor processor = new ClassProcessor(parent -> {
-                            ClassVisitor cv = parent;
-                            if(options.rvn()) cv = new VariableNameGenerator(cv);
-                            if(isRecord) cv = new RecordNameRemapper(cv);
-                            if(cm.mapping instanceof NameGetter.Namespaced ngn) {
-                                ngn.setMappedNamespace(targetNamespace);
-                                cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) cm, mappingRemapper);
-                            }
-                            return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
-                        }, writer);
-                        reader.accept(processor.getVisitor(), 0);
+                        reader.accept(ClassProcessor.getVisitor(writer, options, reader, cm, targetNamespace, mappingRemapper), 0);
                         try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs
                                 .getPath(cm.mapping.getMappedName().concat(".class"))))) {
                             os.write(writer.toByteArray());
@@ -166,14 +156,14 @@ public class ClassifiedDeobfuscator {
                     LOGGER.log(Level.WARNING, "Error when remapping classes or coping files", e);
                 }
             });
-            if(options.rvn()) VariableNameGenerator.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
+            ClassProcessor.afterRunning(options, targetNamespace, mappingRemapper);
         } catch(IOException e) {
             LOGGER.log(Level.WARNING, "Error when deobfuscating", e);
         }
         return this;
     }
 
-    interface DeobfuscateOptions {
+    public interface DeobfuscateOptions {
         boolean includeOthers();
 
         boolean rvn();

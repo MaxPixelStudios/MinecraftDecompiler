@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import joptsimple.*;
@@ -95,6 +96,7 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.accepts("extraJars", "Extra jars that will be used to get the " +
                 "class information").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
+        ClassProcessor.registerCommandLineOptions(parser);
 
         if(args == null) {
             printHelp(parser);
@@ -134,6 +136,7 @@ public class MinecraftDecompilerCommandLine {
         options.valueOfOptional(outputO).ifPresent(builder::output);
         options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
         builder.addExtraJars(options.valuesOf(extraJarsO));
+        ClassProcessor.acceptCommandLineValues(options);
 
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();
