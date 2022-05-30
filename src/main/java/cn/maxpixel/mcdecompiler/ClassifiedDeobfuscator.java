@@ -108,7 +108,6 @@ public class ClassifiedDeobfuscator {
         this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings, sourceNamespace, targetNamespace);
     }
 
-    @SuppressWarnings("unchecked")
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);

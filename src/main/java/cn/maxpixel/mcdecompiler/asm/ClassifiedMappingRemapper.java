@@ -98,7 +98,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     public String getUnmappedDescByMappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
-        if(mappedDescriptor.startsWith("()") && mappedDescriptor.charAt(2) != 'L') {
+        if(mappedDescriptor.startsWith("()") && mappedDescriptor.charAt(2) != 'L' && mappedDescriptor.charAt(2) != '[') {
             return mappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
@@ -121,7 +121,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     public String getMappedDescByUnmappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String unmappedDescriptor) {
-        if (unmappedDescriptor.startsWith("()") && unmappedDescriptor.charAt(2) != 'L') {
+        if (unmappedDescriptor.startsWith("()") && unmappedDescriptor.charAt(2) != 'L' && unmappedDescriptor.charAt(2) != '[') {
             return unmappedDescriptor;
         }
         StringBuilder stringBuilder = new StringBuilder("(");
