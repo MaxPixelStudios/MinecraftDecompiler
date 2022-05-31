@@ -44,7 +44,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,18 +87,16 @@ public class MinecraftDecompiler {
     public void decompile(Info.DecompilerType decompilerType) {
         if(Files.notExists(options.outputJar())) deobfuscate();
         LOGGER.log(Level.INFO, "Decompiling using \"{0}\"", decompilerType);
-        decompile0(Decompilers.get(decompilerType), options.outputJar(), options.outputDecompDir());
+        decompile0(Decompilers.get(decompilerType), deobfuscator.toDecompile, options.outputJar(), options.outputDecompDir());
     }
 
     public void decompileCustomized(String customizedDecompilerName) {
         if(Files.notExists(options.outputJar())) deobfuscate();
         LOGGER.log(Level.INFO, "Decompiling using customized decompiler \"{0}\"", customizedDecompilerName);
-        decompile0(Decompilers.getCustom(customizedDecompilerName), options.outputJar(), options.outputDecompDir());
+        decompile0(Decompilers.getCustom(customizedDecompilerName), deobfuscator.toDecompile, options.outputJar(), options.outputDecompDir());
     }
 
-    private static final Set<String> skippedPkgs = Set.of("authlib", "bridge", "brigadier", "datafixers", "serialization", "util");
-
-    private void decompile0(IDecompiler decompiler, Path inputJar, Path outputDir) {
+    private void decompile0(IDecompiler decompiler, ObjectList<String> paths, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.createZipFs(inputJar, false)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
@@ -104,20 +105,14 @@ public class MinecraftDecompiler {
             if(decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler lrd) {
-                if(options.bundledLibs().isPresent()) lrd.receiveLibs(options.bundledLibs().get());
-                else if(options.version() != null) lrd.downloadLib(libDownloadPath, options.version());
+                options.bundledLibs().ifPresentOrElse(lrd::receiveLibs, LambdaUtil.unwrap(() -> {
+                    if(options.version() != null) lrd.downloadLib(libDownloadPath, options.version());
+                }));
             }
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
                     Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
-                    FileUtil.copyDirectory(jarFs.getPath("net"), decompileClasses.resolve("net"));
-                    if(options.bundledLibs().isEmpty() && Files.isDirectory(jarFs.getPath("com/mojang"))) {
-                        try(Stream<Path> mjDirs = Files.list(jarFs.getPath("com/mojang"))
-                                .filter(p -> !skippedPkgs.contains(p.getFileName().toString()))) {
-                            Path mjDir = decompileClasses.resolve("com/mojang");
-                            mjDirs.forEach(p -> FileUtil.copyDirectory(p, mjDir));
-                        }
-                    }
+                    paths.parallelStream().forEach(path -> FileUtil.copyFile(jarFs.getPath(path), decompileClasses.resolve(path)));
                     decompiler.decompile(decompileClasses, outputDir);
                 }
                 case FILE -> decompiler.decompile(inputJar, outputDir);
@@ -178,11 +173,13 @@ public class MinecraftDecompiler {
                         this.inputJar = extractDir.resolve(versionPath.getFileName().toString());
                     } else throw new IllegalArgumentException("Why multiple versions in a bundle?");
                     ObjectArrayList<Path> libs = new ObjectArrayList<>();
-                    Files.lines(metaInf.resolve("libraries.list")).forEach(line -> {
-                        Path lib = metaInf.resolve("libraries").resolve(line.split("\t")[2]);
-                        FileUtil.copyFile(lib, extractDir);
-                        libs.add(extractDir.resolve(lib.getFileName().toString()));
-                    });
+                    try(Stream<String> lines = Files.lines(metaInf.resolve("libraries.list"))) {
+                        lines.forEach(line -> {
+                            Path lib = metaInf.resolve("libraries").resolve(line.split("\t")[2]);
+                            FileUtil.copyFile(lib, extractDir);
+                            libs.add(extractDir.resolve(lib.getFileName().toString()));
+                        });
+                    }
                     this.bundledLibs = Optional.of(libs);
                 } else this.inputJar = inputJar;
                 Path versionJson = jarFs.getPath("/version.json");

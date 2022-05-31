@@ -31,7 +31,6 @@ import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.logging.*;
 
@@ -193,13 +192,10 @@ public final class Logging {
             } else if(sourceMethod != null) builder.append("[Method ").append(sourceMethod).append("] ");
             if(message != null) {
                 if(params != null && params.length > 0) {
-                    if(params[params.length - 1] instanceof Throwable) {
-                        thrown = (Throwable) params[params.length - 1];
-                        params = Arrays.copyOf(params, params.length - 1);
-                        for(int i = 0; i < params.length; i++) {
-                            Object o = params[i];
-                            if(o instanceof Supplier s) params[i] = s.get();
-                        }
+                    int paramLength = params.length;
+                    if(params[paramLength - 1] instanceof Throwable) thrown = (Throwable) params[--paramLength];
+                    for(int i = 0; i < paramLength; i++) {
+                        if(params[i] instanceof Supplier s) params[i] = s.get();
                     }
                     message = String.format(MessageFormat.format(message, params), params);
                 }

@@ -29,6 +29,7 @@ import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.objectweb.asm.ClassReader;
@@ -108,6 +109,8 @@ public class ClassifiedDeobfuscator {
         this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings, sourceNamespace, targetNamespace);
     }
 
+    final ObjectArrayList<String> toDecompile = new ObjectArrayList<>();
+
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);
@@ -126,6 +129,7 @@ public class ClassifiedDeobfuscator {
             });
             mappingRemapper.setExtraClassesInformation(info);
             ClassProcessor.beforeRunning(options, targetNamespace, mappingRemapper);
+            toDecompile.clear();
             paths.forEach(path -> {
                  try {
                     String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
@@ -134,8 +138,11 @@ public class ClassifiedDeobfuscator {
                         ClassWriter writer = new ClassWriter(0);
                         ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
                         reader.accept(ClassProcessor.getVisitor(writer, options, reader, cm, targetNamespace, mappingRemapper), 0);
-                        try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs
-                                .getPath(cm.mapping.getMappedName().concat(".class"))))) {
+                        String mapped = cm.mapping.getMappedName().concat(".class");
+                        synchronized(toDecompile) {
+                            toDecompile.add(mapped);
+                        }
+                        try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(mapped)))) {
                             os.write(writer.toByteArray());
                         }
                     } else if(options.includeOthers()) {
