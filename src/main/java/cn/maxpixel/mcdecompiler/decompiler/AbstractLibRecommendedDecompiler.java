@@ -25,6 +25,7 @@ import cn.maxpixel.mcdecompiler.util.VersionManifest;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.io.IOException;
 import java.net.URI;
@@ -76,7 +77,7 @@ public abstract class AbstractLibRecommendedDecompiler implements ILibRecommende
     }
 
     @Override
-    public void receiveLibs(ObjectList<Path> libs) {
+    public void receiveLibs(ObjectSet<Path> libs) {
         this.libs.addAll(Objects.requireNonNull(libs).stream().map(p -> p.toAbsolutePath().normalize().toString())
                 .collect(ObjectArrayList.toList()));
     }

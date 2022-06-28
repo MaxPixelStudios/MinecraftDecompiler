@@ -95,7 +95,7 @@ public final class ClassProcessor {
     }
 
     public static ClassVisitor getVisitor(ClassWriter writer, ClassifiedDeobfuscator.DeobfuscateOptions options, ClassReader reader,
-                                   ClassMapping<? extends Mapping> mapping, String targetNamespace,
+                                   @Nullable ClassMapping<? extends Mapping> mapping, String targetNamespace,
                                    ClassifiedMappingRemapper mappingRemapper) {
         ClassVisitor cv = writer;
         for(Process process : AFTER) {
@@ -153,8 +153,8 @@ public final class ClassProcessor {
         }
 
         Function<ClassVisitor, ClassVisitor> getVisitor(ClassifiedDeobfuscator.DeobfuscateOptions options, ClassReader reader,
-                                                        ClassMapping<? extends Mapping> mapping, @Nullable String targetNamespace,
-                                                        ClassifiedMappingRemapper mappingRemapper);
+                                                        @Nullable ClassMapping<? extends Mapping> mapping,
+                                                        @Nullable String targetNamespace, ClassifiedMappingRemapper mappingRemapper);
     }
 
     private enum CoreProcess implements Process {

@@ -17,7 +17,7 @@
  */
 
 /**
- * Internal utilities used my MinecraftDecompiler.
+ * Internal utilities used by MinecraftDecompiler.
  */
 @ApiStatus.Internal
 package cn.maxpixel.mcdecompiler.util;

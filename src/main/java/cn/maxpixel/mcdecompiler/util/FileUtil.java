@@ -22,8 +22,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.DirectoryStream;
@@ -40,7 +38,6 @@ import java.util.stream.StreamSupport;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 @ApiStatus.Internal
 public final class FileUtil {
@@ -50,33 +47,33 @@ public final class FileUtil {
         throw new AssertionError("No instances");
     }
 
-    public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
-        if(Files.notExists(source)) {
-            LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
-            return;
-        }
-        if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
-        Path p = source.toAbsolutePath().normalize();
-        try(Stream<Path> sourceStream = iterateFiles(p)) {
-            final Path dest;
-            if(Files.exists(target)) {
-                if(!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
-                dest = Files.createDirectories(target.resolve(source.getFileName().toString()));
-            } else dest = Files.createDirectories(target);
-            LOGGER.log(Level.FINER, "Coping directory \"{0}\" to \"{1}\"...", new Object[] {source, target});
-            sourceStream.forEach(path -> {
-                Path relative = p.relativize(path);
-                try(InputStream in = Files.newInputStream(path);
-                    OutputStream out = Files.newOutputStream(ensureFileExist(dest.resolve(relative.toString())), TRUNCATE_EXISTING)) {
-                    in.transferTo(out);
-                } catch (IOException e) {
-                    LOGGER.log(Level.WARNING, "Error coping file \"{0}\"", new Object[] {path, e});
-                }
-            });
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Error coping directory", e);
-        }
-    }
+//    public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
+//        if(Files.notExists(source)) {
+//            LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
+//            return;
+//        }
+//        if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
+//        Path p = source.toAbsolutePath().normalize();
+//        try(Stream<Path> sourceStream = iterateFiles(p)) {
+//            final Path dest;
+//            if(Files.exists(target)) {
+//                if(!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
+//                dest = Files.createDirectories(target.resolve(source.getFileName().toString()));
+//            } else dest = Files.createDirectories(target);
+//            LOGGER.log(Level.FINER, "Coping directory \"{0}\" to \"{1}\"...", new Object[] {source, target});
+//            sourceStream.forEach(path -> {
+//                Path relative = p.relativize(path);
+//                try(InputStream in = Files.newInputStream(path);
+//                    OutputStream out = Files.newOutputStream(ensureFileExist(dest.resolve(relative.toString())), TRUNCATE_EXISTING)) {
+//                    in.transferTo(out);
+//                } catch (IOException e) {
+//                    LOGGER.log(Level.WARNING, "Error coping file \"{0}\"", new Object[] {path, e});
+//                }
+//            });
+//        } catch (IOException e) {
+//            LOGGER.log(Level.WARNING, "Error coping directory", e);
+//        }
+//    }
 
     public static void copyFile(@NotNull Path source, @NotNull Path target) {
         if(Files.notExists(source)) {
@@ -122,7 +119,8 @@ public final class FileUtil {
     public static Path ensureFileExist(@NotNull Path p) {
         if(Files.notExists(p)) {
             try {
-                Files.createDirectories(p.getParent());
+                Path parent = p.getParent();
+                if(parent != null) Files.createDirectories(parent);
                 Files.createFile(p);
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);

@@ -30,8 +30,10 @@ import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -96,7 +98,7 @@ public class MinecraftDecompiler {
         decompile0(Decompilers.getCustom(customizedDecompilerName), deobfuscator.toDecompile, options.outputJar(), options.outputDecompDir());
     }
 
-    private void decompile0(IDecompiler decompiler, ObjectList<String> paths, Path inputJar, Path outputDir) {
+    private void decompile0(IDecompiler decompiler, ObjectSet<String> paths, Path inputJar, Path outputDir) {
         try(FileSystem jarFs = JarUtil.createZipFs(inputJar, false)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
@@ -131,14 +133,14 @@ public class MinecraftDecompiler {
         private BufferedReader inputMappings;
         private Path outputJar;
         private Path outputDecompDir;
-        private final ObjectArrayList<Path> extraJars = new ObjectArrayList<>();
+        private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
+        private final ObjectSet<String> extraClasses = new ObjectOpenHashSet<>();
+        private Optional<ObjectSet<Path>> bundledLibs = Optional.empty();
 
         private Path inputJar;
         private boolean reverse;
 
         private String targetNamespace;
-
-        private Optional<ObjectList<Path>> bundledLibs = Optional.empty();
 
         public OptionBuilder(String version, Info.SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
@@ -172,7 +174,7 @@ public class MinecraftDecompiler {
                         FileUtil.copyFile(versionPath, extractDir);
                         this.inputJar = extractDir.resolve(versionPath.getFileName().toString());
                     } else throw new IllegalArgumentException("Why multiple versions in a bundle?");
-                    ObjectArrayList<Path> libs = new ObjectArrayList<>();
+                    ObjectOpenHashSet<Path> libs = new ObjectOpenHashSet<>();
                     try(Stream<String> lines = Files.lines(metaInf.resolve("libraries.list"))) {
                         lines.forEach(line -> {
                             Path lib = metaInf.resolve("libraries").resolve(line.split("\t")[2]);
@@ -180,7 +182,7 @@ public class MinecraftDecompiler {
                             libs.add(extractDir.resolve(lib.getFileName().toString()));
                         });
                     }
-                    this.bundledLibs = Optional.of(libs);
+                    this.bundledLibs = Optional.of(ObjectSets.unmodifiable(libs));
                 } else this.inputJar = inputJar;
                 Path versionJson = jarFs.getPath("/version.json");
                 if(version == null && Files.exists(versionJson)) {
@@ -284,10 +286,28 @@ public class MinecraftDecompiler {
             return this;
         }
 
+        public OptionBuilder addExtraClass(String cls) {
+            this.extraClasses.add(cls);
+            return this;
+        }
+
+        public OptionBuilder addExtraClasses(Collection<String> classes) {
+            this.extraClasses.addAll(classes);
+            return this;
+        }
+
+        public OptionBuilder addExtraClasses(ObjectList<String> classes) {
+            this.extraClasses.addAll(classes);
+            return this;
+        }
+
         public Options build() {
             if(this.outputJar.getParent().equals(this.outputDecompDir))
                 throw new IllegalArgumentException("The parent directory of outputJar cannot be the same as outputDecomp");
             return new Options() {
+                private final ObjectSet<Path> uExtraJars = ObjectSets.unmodifiable(extraJars);
+                private final ObjectSet<String> uExtraClasses = ObjectSets.unmodifiable(extraClasses);
+
                 @Override
                 public String version() {
                     return version;
@@ -339,12 +359,17 @@ public class MinecraftDecompiler {
                 }
 
                 @Override
-                public ObjectList<Path> extraJars() {
-                    return extraJars;
+                public ObjectSet<Path> extraJars() {
+                    return uExtraJars;
                 }
 
                 @Override
-                public Optional<ObjectList<Path>> bundledLibs() {
+                public ObjectSet<String> extraClasses() {
+                    return uExtraClasses;
+                }
+
+                @Override
+                public Optional<ObjectSet<Path>> bundledLibs() {
                     return bundledLibs;
                 }
             };
@@ -390,8 +415,11 @@ public class MinecraftDecompiler {
         String targetNamespace();
 
         @Override
-        ObjectList<Path> extraJars();
+        ObjectSet<Path> extraJars();
 
-        Optional<ObjectList<Path>> bundledLibs();
+        @Override
+        ObjectSet<String> extraClasses();
+
+        Optional<ObjectSet<Path>> bundledLibs();
     }
 }

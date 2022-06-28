@@ -73,8 +73,8 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         for(int i = 0; i < options.size(); i++) {
             String s = options.get(i);
             if(!libRecommended && (s.contains("%lib_all%") || s.contains("%lib_repeat%")))
-                throw new RuntimeException("lib-recommended option is set to false, if you want to use %lib_all% or %lib_repeat% variable, " +
-                        "please change lib-recommended option to true(in decompiler.properties)");
+                throw new IllegalArgumentException("lib-recommended option is set to false, if you want to use %lib_all% or %lib_repeat% " +
+                        "variable, please change lib-recommended option to true(in decompiler.properties)");
             if(s.contains("%source%")) s = s.replace("%source%", source.toString());
             if(s.contains("%target%")) s = s.replace("%target%", target.toString());
             if(libRecommended && s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(Info.PATH_SEPARATOR, libs));

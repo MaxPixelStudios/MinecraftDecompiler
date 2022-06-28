@@ -29,9 +29,9 @@ import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
@@ -109,7 +109,7 @@ public class ClassifiedDeobfuscator {
         this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings, sourceNamespace, targetNamespace);
     }
 
-    final ObjectArrayList<String> toDecompile = new ObjectArrayList<>();
+    final ObjectOpenHashSet<String> toDecompile = new ObjectOpenHashSet<>();
 
     public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
         LOGGER.info("Deobfuscating...");
@@ -117,7 +117,7 @@ public class ClassifiedDeobfuscator {
         Files.createDirectories(target.getParent());
         try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
             FileSystem targetFs = JarUtil.createZipFs(target);
-            Stream<Path> paths = FileUtil.iterateFiles(fs.getPath("/"))) {
+            Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString()))), true);
             options.extraJars().forEach(jar -> {
@@ -130,15 +130,19 @@ public class ClassifiedDeobfuscator {
             mappingRemapper.setExtraClassesInformation(info);
             ClassProcessor.beforeRunning(options, targetNamespace, mappingRemapper);
             toDecompile.clear();
+            ObjectSet<String> extraClasses = options.extraClasses();
+            boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             paths.forEach(path -> {
-                 try {
-                    String classKeyName = NamingUtil.asNativeName0(path.toString().substring(1));
-                    if(mappings.containsKey(classKeyName)) {
+                try {
+                    String pathString = path.toString();
+                    String classKeyName = NamingUtil.asNativeName0(pathString);
+                    if(mappings.containsKey(classKeyName) ||
+                            (extraClassesNotEmpty && extraClasses.stream().anyMatch(classKeyName::startsWith))) {
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
                         ClassWriter writer = new ClassWriter(0);
                         ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
                         reader.accept(ClassProcessor.getVisitor(writer, options, reader, cm, targetNamespace, mappingRemapper), 0);
-                        String mapped = cm.mapping.getMappedName().concat(".class");
+                        String mapped = cm != null ? cm.mapping.getMappedName().concat(".class") : pathString;
                         synchronized(toDecompile) {
                             toDecompile.add(mapped);
                         }
@@ -146,11 +150,9 @@ public class ClassifiedDeobfuscator {
                             os.write(writer.toByteArray());
                         }
                     } else if(options.includeOthers()) {
-                        String outputPath = path.toString();
-                        String upper = outputPath.toUpperCase();
-                        if(upper.endsWith(".SF") || upper.endsWith(".RSA")) return;
+                        if(pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;
                         try(InputStream inputStream = Files.newInputStream(path);
-                            OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(outputPath)))) {
+                            OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(pathString)))) {
                             if(path.endsWith("META-INF/MANIFEST.MF")) {
                                 Manifest man = new Manifest(inputStream);
                                 man.getEntries().clear();
@@ -176,8 +178,12 @@ public class ClassifiedDeobfuscator {
 
         boolean reverse();
 
-        default ObjectList<Path> extraJars() {
-            return ObjectLists.emptyList();
+        default ObjectSet<Path> extraJars() {
+            return ObjectSets.emptySet();
+        }
+
+        default ObjectSet<String> extraClasses() {
+            return ObjectSets.emptySet();
         }
     }
 }
