@@ -190,7 +190,7 @@ public final class ClassProcessor {
                 ClassVisitor cv = parent;
                 if(options.rvn()) cv = new VariableNameGenerator(cv);
                 if((reader.getAccess() & Opcodes.ACC_RECORD) != 0) cv = new RecordNameRemapper(cv);
-                if(mapping.mapping instanceof NameGetter.Namespaced ngn) {
+                if(mapping != null && mapping.mapping instanceof NameGetter.Namespaced ngn) {
                     ngn.setMappedNamespace(targetNamespace);
                     cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
                 }
