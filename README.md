@@ -16,8 +16,9 @@ For usage and more information, visit [the wiki](https://github.com/MaxPixelStud
 4. Mapping IO
 
 ## Community
-**Discord: [here](https://discord.gg/NMnhG5hYAC)**  
-**GH Discussions: [here](https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions)**
+**Discord: https://discord.gg/NMnhG5hYAC**  
+**GH Discussions: https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions**  
+**KOOK/开黑啦(仅中文): https://kaihei.co/WI8xyn**
 
 ## Special Thanks
 ### JetBrains - Provide awesome IDEs and free licence codes
