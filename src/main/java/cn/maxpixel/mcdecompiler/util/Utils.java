@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
@@ -88,40 +87,6 @@ public class Utils {
 
     public static <T> T onKeyDuplicate(T t, T u) {
         throw new IllegalArgumentException("Key \"" + t + "\" and \"" + u + "\" duplicated!");
-    }
-
-    // https://github.com/LXGaming/ClassLoaderUtils/blob/master/src/main/java/io/github/lxgaming/classloader/ClassLoaderUtils.java
-    @SuppressWarnings("unchecked")
-    public static void appendToClassPath(ClassLoader classLoader, List<URL> urlList) throws ReflectiveOperationException {
-        Class<?> classLoaderClass = Class.forName("jdk.internal.loader.BuiltinClassLoader");
-        Class<?> classPathClass = Class.forName("jdk.internal.loader.URLClassPath");
-        if (classLoaderClass.isInstance(classLoader)) {
-            Unsafe unsafe = getUnsafe();
-
-            // jdk.internal.loader.BuiltinClassLoader.ucp
-            Field ucpField = classLoaderClass.getDeclaredField("ucp");
-            long ucpFieldOffset = unsafe.objectFieldOffset(ucpField);
-            Object ucpObject = unsafe.getObject(classLoader, ucpFieldOffset);
-
-            // jdk.internal.loader.URLClassPath.path
-            Field pathField = classPathClass.getDeclaredField("path");
-            long pathFieldOffset = unsafe.objectFieldOffset(pathField);
-            ArrayList<URL> path = (ArrayList<URL>) unsafe.getObject(ucpObject, pathFieldOffset);
-
-            // Java 11 - jdk.internal.loader.URLClassPath.unopenedUrls
-            Field urlsField = classPathClass.getDeclaredField("unopenedUrls");
-            long urlsFieldOffset = unsafe.objectFieldOffset(urlsField);
-            Collection<URL> urls = (Collection<URL>) unsafe.getObject(ucpObject, urlsFieldOffset);
-
-            // noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (urls) {
-                if (!path.containsAll(urlList)) {
-                    urls.addAll(urlList);
-                    path.addAll(urlList);
-                }
-            }
-
-        }
     }
 
     public static URL[] getClassPath() throws ReflectiveOperationException {

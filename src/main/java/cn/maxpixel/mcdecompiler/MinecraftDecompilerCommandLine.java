@@ -27,9 +27,7 @@ import joptsimple.util.PathProperties;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -72,22 +70,6 @@ public class MinecraftDecompilerCommandLine {
                 "deobfuscated jar. Values are \"FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to FORGEFLOWER. If a value " +
                 "other than above is used, will use the default decompiler to decompile. Do NOT pass any arg to this option when " +
                 "--custom-decompiler is specified.").withOptionalArg().ofType(Info.DecompilerType.class).defaultsTo(Info.DecompilerType.FORGEFLOWER);
-        ArgumentAcceptingOptionSpec<URL> customDecompilerJarsO = parser.accepts("custom-decompiler-jars", "Jars that " +
-                "contain implementations of ICustomizedDecompiler that can be loaded by SPI. Alternative option is to add them to classpath.")
-                .withRequiredArg().withValuesSeparatedBy(';').withValuesConvertedBy(new ValueConverter<>() {
-                    @Override
-                    public URL convert(String value) {
-                        try {
-                            return Path.of(value).toAbsolutePath().normalize().toUri().toURL();
-                        } catch (MalformedURLException e) {
-                            throw Utils.wrapInRuntime(e);
-                        }
-                    }
-                    @Override
-                    public Class<? extends URL> valueType() { return URL.class; }
-                    @Override
-                    public String valuePattern() { return null; }
-                });
         ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("custom-decompiler", "FQCN of your custom decompiler" +
                 ", do NOT pass any arg to --decompile when you use this option").withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("temp", "Temp directory for saving unzipped and remapped " +
@@ -112,7 +94,6 @@ public class MinecraftDecompilerCommandLine {
         if(options.has(customDecompilerO) && options.hasArgument(decompileO)) {
             throw new IllegalArgumentException("Do NOT pass args to --decompile when --custom-decompiler is specified");
         }
-        Utils.appendToClassPath(MinecraftDecompilerCommandLine.class.getClassLoader(), options.valuesOf(customDecompilerJarsO));
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.TEMP_DIR = p);
         if(!options.has(sideTypeO)) {
