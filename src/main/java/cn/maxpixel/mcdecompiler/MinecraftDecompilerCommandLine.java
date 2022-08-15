@@ -26,8 +26,6 @@ import joptsimple.util.PathConverter;
 import joptsimple.util.PathProperties;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,9 +37,7 @@ public class MinecraftDecompilerCommandLine {
         System.setProperty("org.openjdk.java.util.stream.tripwire", Boolean.toString(Info.IS_DEV));
     }
     private static final Logger LOGGER = Logging.getLogger("CommandLine");
-    public static final Proxy INTERNAL_PROXY = Info.IS_DEV ?
-            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
-            Proxy.NO_PROXY;
+
     public static void main(String[] args) throws Throwable {
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<Info.SideType> sideTypeO = parser.acceptsAll(of("s", "side"), "Side to deobfuscate/" +

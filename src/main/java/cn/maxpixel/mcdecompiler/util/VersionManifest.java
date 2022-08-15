@@ -18,10 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,8 +31,11 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -40,34 +45,59 @@ import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 
 public class VersionManifest {
     private static final Logger LOGGER = Logging.getLogger();
-    private static final Map<String, String> versions;
-    private static final Object2ObjectOpenHashMap<String, JsonObject> versionJsonCache = new Object2ObjectOpenHashMap<>();
+    private static final CompletableFuture<String> LATEST_RELEASE;
+    private static final CompletableFuture<String> LATEST_SNAPSHOT;
+    private static final CompletableFuture<Object2ObjectOpenHashMap<String, URI>> VERSIONS;
+    private static final Object2ObjectOpenHashMap<String, CompletableFuture<JsonObject>> CACHE = new Object2ObjectOpenHashMap<>();
 
     public static JsonObject get(String versionId) {
-        if(!versions.containsKey(Objects.requireNonNull(versionId, "versionId cannot be null!")))
-            throw new IllegalArgumentException("Game ID \"" + versionId + "\" does not exists!");
-        return versionJsonCache.computeIfAbsent(versionId, _id -> {
-            try(InputStreamReader isr = new InputStreamReader(
-                    HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(versions.get(_id))).build(),
-                            HttpResponse.BodyHandlers.ofInputStream()).body(), StandardCharsets.UTF_8)) {
+        return getAsync(versionId).join();
+    }
+
+    public static CompletableFuture<JsonObject> getAsync(@NotNull String versionId) {
+        Objects.requireNonNull(versionId, "versionId cannot be null!");
+        return CACHE.computeIfAbsent(versionId, id -> VERSIONS.thenCompose(versions -> {
+            if (!versions.containsKey(id)) throw new IllegalArgumentException("Game ID \"" + id + "\" does not exists!");
+            return HTTP_CLIENT.sendAsync(HttpRequest.newBuilder(versions.get(id)).build(),
+                    HttpResponse.BodyHandlers.ofInputStream());
+        }).thenApplyAsync(response -> {
+            try(InputStreamReader isr = new InputStreamReader(response.body(), StandardCharsets.UTF_8)) {
                 return JsonParser.parseReader(isr).getAsJsonObject();
-            } catch (IOException | InterruptedException e) {
-                LOGGER.log(Level.SEVERE, "Error fetching Minecraft version JSON", e);
-                throw Utils.wrapInRuntime(e);
+            } catch (IOException e) {
+                throw new CompletionException(e);
             }
-        });
+        }).whenComplete((o, t) -> {
+            if (t != null) LOGGER.log(Level.SEVERE, "Error fetching Minecraft version JSON", t);
+        }));
     }
 
     static {
-        try(InputStreamReader isr = new InputStreamReader(
-                HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create("https://launchermeta.mojang.com/mc/game/version_manifest.json")).build(),
-                        HttpResponse.BodyHandlers.ofInputStream()).body())) {
-            versions = StreamSupport.stream(JsonParser.parseReader(isr).getAsJsonObject().getAsJsonArray("versions").spliterator(), false)
-                    .map(JsonElement::getAsJsonObject)
-                    .collect(Collectors.toMap(obj->obj.get("id").getAsString(), obj->obj.get("url").getAsString()));
-        } catch (IOException | InterruptedException e) {
-            LOGGER.log(Level.SEVERE, "Error fetching Minecraft version manifest", e);
-            throw Utils.wrapInRuntime(e);
-        }
+        CompletableFuture<JsonObject> versionManifest = HTTP_CLIENT.sendAsync(
+                HttpRequest.newBuilder(
+                        URI.create("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+                ).build(),
+                HttpResponse.BodyHandlers.ofInputStream()
+        ).thenApplyAsync(response -> {
+            try(InputStreamReader isr = new InputStreamReader(response.body(), StandardCharsets.UTF_8)) {
+                return JsonParser.parseReader(isr).getAsJsonObject();
+            } catch (IOException e) {
+                throw new CompletionException(e);
+            }
+        }).whenComplete((o, t) -> {
+            if (t != null) LOGGER.log(Level.SEVERE, "Error fetching Minecraft version manifest", t);
+        });
+        CompletableFuture<JsonObject> latest = versionManifest.thenApply(obj -> obj.getAsJsonObject("latest"));
+        LATEST_RELEASE = latest.thenApply(obj -> obj.get("release").getAsString());
+        LATEST_SNAPSHOT = latest.thenApply(obj -> obj.get("snapshot").getAsString());
+        VERSIONS = versionManifest.thenApplyAsync(o -> {
+            JsonArray versions = o.getAsJsonArray("versions");
+            return StreamSupport.stream(Spliterators.spliterator(versions.iterator(), versions.size(),
+                    Spliterator.DISTINCT + Spliterator.NONNULL + Spliterator.IMMUTABLE), true
+            ).map(JsonElement::getAsJsonObject).collect(Collectors.toMap(
+                    obj -> obj.get("id").getAsString(),
+                    LambdaUtil.unwrap(obj -> new URI(obj.get("url").getAsString()), LambdaUtil::rethrowAsCompletion),
+                    Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new
+            ));
+        });
     }
 }

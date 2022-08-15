@@ -18,7 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class LambdaUtil {
     @FunctionalInterface
@@ -35,6 +37,10 @@ public class LambdaUtil {
         throw Utils.wrapInRuntime(throwable);
     }
 
+    public static <E extends Throwable> void rethrowAsCompletion(E throwable) {
+        throw new CompletionException(throwable);
+    }
+
     public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
         return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
     }
@@ -49,4 +55,39 @@ public class LambdaUtil {
             }
         };
     }
+
+    public static <T, R, E extends Throwable> Function<T, R> unwrap(Function_WithThrowable<T, R, E> functionWithThrowable) {
+        return unwrap(functionWithThrowable, LambdaUtil::rethrowAsRuntime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T, R, E extends Throwable> Function<T, R> unwrap(Function_WithThrowable<T, R, E> functionWithThrowable, Consumer<E> exceptionHandler) {
+        return t -> {
+            try {
+                return functionWithThrowable.apply(t);
+            } catch(Throwable e) {
+                exceptionHandler.accept((E) e);
+                return null;
+            }
+        };
+    }
+
+//    @SuppressWarnings("unchecked")
+//    public static <T, R, E extends Throwable> Function<T, R> unwrap(Function_WithThrowable<T, R, E> functionWithThrowable, Consumer<E> exceptionHandler) {
+//        return unwrap(functionWithThrowable, e -> {
+//            exceptionHandler.accept(e);
+//            return null;
+//        });
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    public static <T, R, E extends Throwable> Function<T, R> unwrap(Function_WithThrowable<T, R, E> functionWithThrowable, Function<E, R> exceptionHandler) {
+//        return t -> {
+//            try {
+//                return functionWithThrowable.apply(t);
+//            } catch(Throwable e) {
+//                return exceptionHandler.apply((E) e);
+//            }
+//        };
+//    }
 }

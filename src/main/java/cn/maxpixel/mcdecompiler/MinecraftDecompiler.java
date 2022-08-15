@@ -36,9 +36,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.net.URI;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -59,8 +57,23 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 public class MinecraftDecompiler {
     private static final Logger LOGGER = Logging.getLogger();
+    public static final Proxy INTERNAL_PROXY = Info.IS_DEV ?
+            new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
+            Proxy.NO_PROXY;
     public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .proxy(ProxySelector.of((InetSocketAddress) MinecraftDecompilerCommandLine.INTERNAL_PROXY.address()))
+            .proxy(new ProxySelector() {
+                private static final Logger LOGGER = Logging.getLogger("Proxy");
+                private static final List<Proxy> PROXY_LIST = List.of(INTERNAL_PROXY);
+                @Override
+                public List<Proxy> select(URI uri) {
+                    return PROXY_LIST;
+                }
+
+                @Override
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+                    LOGGER.log(Level.WARNING, "Error connecting to {0}", new Object[] {uri, ioe});
+                }
+            })
             .connectTimeout(Duration.ofSeconds(10L))
             .build();
 
