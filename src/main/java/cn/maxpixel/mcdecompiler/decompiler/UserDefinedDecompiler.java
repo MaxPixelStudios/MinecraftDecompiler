@@ -22,33 +22,33 @@ import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
+public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
     public static final UserDefinedDecompiler NONE = new UserDefinedDecompiler() {
         @Override
         public void decompile(@NotNull Path source, @NotNull Path target) {
-            throw new RuntimeException("User decompiler not found. Make sure you put correct config file in \"decompiler\" directory");
+            throw new RuntimeException("User decompiler not found. Please make sure you have put correct config file in \"decompiler\" directory");
         }
-        @Override
-        public void downloadLib(Path libDir, String version) {}
     };
     private SourceType sourceType;
     private Path decompilerPath;
     private List<String> options;
-    private boolean libRecommended;
+    private ObjectList<String> libs = ObjectLists.emptyList();
 
     private UserDefinedDecompiler() {}
 
-    UserDefinedDecompiler(@NotNull SourceType sourceType, Path decompilerPath, @NotNull List<String> options, boolean libRecommended) {
+    UserDefinedDecompiler(@NotNull SourceType sourceType, @NotNull Path decompilerPath, @NotNull List<String> options) {
         this.sourceType = sourceType;
         this.decompilerPath = FileUtil.requireExist(decompilerPath);
         this.options = options;
-        this.libRecommended = libRecommended;
     }
 
     @Override
@@ -67,18 +67,14 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
         Utils.waitForProcess(Runtime.getRuntime().exec(arrayList.toArray(new String[0])));
     }
 
-    private ObjectArrayList<String> resolveArgs(Path source, Path target, List<String> options) {
+    private ObjectArrayList<String> resolveArgs(@NotNull Path source, @NotNull Path target, @NotNull List<String> options) {
         ObjectArrayList<String> resolvedOptions = new ObjectArrayList<>();
-        List<String> libs = listLibs();
         for(int i = 0; i < options.size(); i++) {
             String s = options.get(i);
-            if(!libRecommended && (s.contains("%lib_all%") || s.contains("%lib_repeat%")))
-                throw new IllegalArgumentException("lib-recommended option is set to false, if you want to use %lib_all% or %lib_repeat% " +
-                        "variable, please change lib-recommended option to true(in decompiler.properties)");
             if(s.contains("%source%")) s = s.replace("%source%", source.toString());
             if(s.contains("%target%")) s = s.replace("%target%", target.toString());
-            if(libRecommended && s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(Info.PATH_SEPARATOR, libs));
-            if(libRecommended && s.contains("%lib_repeat%")) {
+            if(s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(Info.PATH_SEPARATOR, libs));
+            if(s.contains("%lib_repeat%")) {
                 for(int j = 0; j < libs.size(); j++) {
                     if(s.equals("%lib_repeat%")) {
                         resolvedOptions.add(options.get(i - 1));
@@ -91,7 +87,8 @@ public class UserDefinedDecompiler extends AbstractLibRecommendedDecompiler {
     }
 
     @Override
-    public void downloadLib(Path libDir, String version) throws IOException {
-        if(libRecommended) super.downloadLib(libDir, version);
+    public void receiveLibs(@NotNull ObjectSet<Path> libs) {
+        this.libs = libs.stream().map(p -> p.toAbsolutePath().normalize().toString())
+                .collect(ObjectArrayList.toListWithExpectedSize(libs.size()));
     }
 }

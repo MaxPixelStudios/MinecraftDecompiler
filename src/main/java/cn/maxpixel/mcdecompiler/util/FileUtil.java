@@ -143,6 +143,14 @@ public final class FileUtil {
         }
     }
 
+    /**
+     * Verify the file with given hash and size
+     * @param path File to verify. Directory is not supported
+     * @param hash Expected SHA-1 hash
+     * @param size Expected size in bytes. Use negative size to skip size-checking
+     * @throws IllegalArgumentException If {@code path} is a directory
+     * @return true if the file is valid. Otherwise false
+     */
     public static boolean verify(@NotNull Path path, String hash, long size) {
         if(Files.notExists(path)) return false;
         if(Files.isDirectory(path)) throw new IllegalArgumentException("Verify a directory is not supported");

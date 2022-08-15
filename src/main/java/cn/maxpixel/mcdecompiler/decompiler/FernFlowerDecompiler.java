@@ -59,6 +59,7 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
                     .getConstructor(File.class, File.class).newInstance(source.toFile(), target.toFile());
             thread.start();
             while(thread.isAlive()) Thread.onSpinWait();
+            cl.close();
         } catch(ReflectiveOperationException e) {
             Logging.getLogger().log(Level.SEVERE, "Failed to load FernFlower", e);
             throw Utils.wrapInRuntime(e);

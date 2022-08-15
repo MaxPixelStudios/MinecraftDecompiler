@@ -24,6 +24,9 @@ import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
 import cn.maxpixel.mcdecompiler.util.DownloadUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -34,10 +37,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 
-public class CFRDecompiler extends AbstractLibRecommendedDecompiler implements IExternalResourcesDecompiler {
+public class CFRDecompiler implements IExternalResourcesDecompiler, ILibRecommendedDecompiler {
     private static final String VERSION = Properties.getProperty("CFR-Version", "cfr.version");
     private static final URI RESOURCE = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/" + VERSION + "/cfr-" + VERSION + ".jar");
     private static final URI RESOURCE_HASH = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/" + VERSION + "/cfr-" + VERSION + ".jar.sha1");
+    private ObjectSet<String> libs = ObjectSets.emptySet();
     private Path decompilerJarPath;
     private ExternalJarClassLoader cl;
 
@@ -55,9 +59,10 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler implements I
             if(cl == null) cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()}, getClass().getClassLoader());
             Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.CFRDecompileThread")
                     .getConstructor(String.class, String.class, String.class)
-                    .newInstance(source.toString(), target.toString(), String.join(Info.PATH_SEPARATOR, listLibs()));
+                    .newInstance(source.toString(), target.toString(), String.join(Info.PATH_SEPARATOR, libs));
             thread.start();
             while(thread.isAlive()) Thread.onSpinWait();
+            cl.close();
         } catch(ReflectiveOperationException e) {
             Logging.getLogger().log(Level.SEVERE, "Failed to load CFR", e);
             throw Utils.wrapInRuntime(e);
@@ -69,5 +74,11 @@ public class CFRDecompiler extends AbstractLibRecommendedDecompiler implements I
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");
         Files.copy(DownloadUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.CFR), RESOURCE, RESOURCE_HASH),
                 decompilerJarPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Override
+    public void receiveLibs(@NotNull ObjectSet<Path> libs) {
+        this.libs = libs.stream().map(p -> p.toAbsolutePath().normalize().toString())
+                .collect(ObjectOpenHashSet.toSetWithExpectedSize(libs.size()));
     }
 }

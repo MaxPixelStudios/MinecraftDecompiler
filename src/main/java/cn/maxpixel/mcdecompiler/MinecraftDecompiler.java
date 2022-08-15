@@ -50,7 +50,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -62,7 +61,6 @@ public class MinecraftDecompiler {
     private static final Logger LOGGER = Logging.getLogger();
     public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .proxy(ProxySelector.of((InetSocketAddress) MinecraftDecompilerCommandLine.INTERNAL_PROXY.address()))
-            .executor(ForkJoinPool.commonPool())
             .connectTimeout(Duration.ofSeconds(10L))
             .build();
 
@@ -102,13 +100,13 @@ public class MinecraftDecompiler {
         try(FileSystem jarFs = JarUtil.createZipFs(inputJar, false)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
-            Path libDownloadPath = Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize();
-            Files.createDirectories(libDownloadPath);
+            Path libDownloadPath = Files.createDirectories(Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize());
             if(decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler lrd) {
                 options.bundledLibs().ifPresentOrElse(lrd::receiveLibs, LambdaUtil.unwrap(() -> {
-                    if(options.version() != null) lrd.downloadLib(libDownloadPath, options.version());
+                    if(options.version() != null)
+                        lrd.receiveLibs(DownloadUtil.downloadLibraries(options.version(), libDownloadPath));
                 }));
             }
             switch (decompiler.getSourceType()) {

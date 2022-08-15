@@ -21,6 +21,9 @@ package cn.maxpixel.mcdecompiler.util;
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.Properties;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,6 +36,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.StreamSupport;
 
 import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 import static java.nio.file.StandardOpenOption.*;
@@ -87,5 +91,45 @@ public class DownloadUtil {
             throw Utils.wrapInRuntime(e);
         }
         return Files.newInputStream(localPath, READ);
+    }
+
+    /**
+     * Download the libraries of Minecraft with the given version to the given directory
+     * @param version version of Minecraft
+     * @param libDir Directory to download the libraries to
+     * @return All the libs path
+     */
+    public static ObjectSet<Path> downloadLibraries(String version, Path libDir) {
+        if(version == null || version.isBlank()) {
+            LOGGER.fine("Invalid version, skipping downloading libs");
+            return ObjectSets.emptySet();
+        }
+        ObjectOpenHashSet<Path> libs = new ObjectOpenHashSet<>();
+        LOGGER.log(Level.INFO, "Downloading libs of version {0}", version);
+        StreamSupport.stream(VersionManifest.get(version).getAsJsonArray("libraries").spliterator(), true)
+                .map(ele -> ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
+                .forEach(artifact -> {
+                    String url = artifact.get("url").getAsString();
+                    Path file = libDir.resolve(url.substring(url.lastIndexOf('/') + 1)); // libDir.resolve(lib file name)
+                    synchronized (libs) {
+                        libs.add(file);
+                    }
+                    if(!FileUtil.verify(file, artifact.get("sha1").getAsString(), artifact.get("size").getAsLong())) {
+                        FileUtil.deleteIfExists(file);
+                        LOGGER.log(Level.FINER, "Downloading {0}", url);
+                        try {
+                            HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(),
+                                    HttpResponse.BodyHandlers.ofFile(file, CREATE, WRITE, TRUNCATE_EXISTING)
+                            ).body();
+                        } catch(IOException e) {
+                            LOGGER.log(Level.SEVERE, "Error downloading files", e);
+                            throw Utils.wrapInRuntime(e);
+                        } catch(InterruptedException e) {
+                            LOGGER.log(Level.SEVERE, "Download process interrupted", e);
+                            throw Utils.wrapInRuntime(e);
+                        }
+                    }
+                });
+        return libs;
     }
 }

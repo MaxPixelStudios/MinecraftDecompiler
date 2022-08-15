@@ -34,18 +34,19 @@ public final class UniqueMapping<T extends Mapping> {
 
     public final ObjectArrayList<T> methods = new ObjectArrayList<>();
 
+    public final ObjectArrayList<T> params = new ObjectArrayList<>();
+
     /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UniqueMapping)) return false;
-        UniqueMapping<?> that = (UniqueMapping<?>) o;
-        return classes.equals(that.classes) && fields.equals(that.fields) && methods.equals(that.methods);
+        if (!(o instanceof UniqueMapping<?> that)) return false;
+        return classes.equals(that.classes) && fields.equals(that.fields) && methods.equals(that.methods) && params.equals(that.params);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(classes, fields, methods);
+        return Objects.hash(classes, fields, methods, params);
     }
 
     @Override
@@ -54,6 +55,7 @@ public final class UniqueMapping<T extends Mapping> {
                 "classes=" + classes +
                 ", fields=" + fields +
                 ", methods=" + methods +
+                ", params=" + params +
                 '}';
     }
 }

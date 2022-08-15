@@ -57,11 +57,10 @@ public class Decompilers {
                         "decompiler-file is a required property");
                 String sourceType = Objects.requireNonNull(decompilerProperties.getProperty("source-type"),
                         "source-type is a required property").toUpperCase(Locale.ROOT);
-                String libRecommended = decompilerProperties.getProperty("lib-recommended", "false");
                 String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required property")
                         .split(" ");
                 return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Path.of("decompiler", decompilerPath).
-                        toAbsolutePath().normalize(), ObjectImmutableList.of(args), Boolean.parseBoolean(libRecommended));
+                        toAbsolutePath().normalize(), ObjectImmutableList.of(args));
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Error occurred when constructing the user-defined decompiler", e);
             }

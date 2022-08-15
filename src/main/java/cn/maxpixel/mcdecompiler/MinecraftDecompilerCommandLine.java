@@ -36,7 +36,7 @@ import static java.util.List.of;
 
 public class MinecraftDecompilerCommandLine {
     static {
-        System.setProperty("org.openjdk.java.util.stream.tripwire", "true");
+        System.setProperty("org.openjdk.java.util.stream.tripwire", Boolean.toString(Info.IS_DEV));
     }
     private static final Logger LOGGER = Logging.getLogger("CommandLine");
     public static final Proxy INTERNAL_PROXY = Info.IS_DEV ?
