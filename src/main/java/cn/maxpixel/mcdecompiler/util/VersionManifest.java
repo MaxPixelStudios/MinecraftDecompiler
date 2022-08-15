@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -50,40 +51,13 @@ public class VersionManifest {
     private static final CompletableFuture<Object2ObjectOpenHashMap<String, URI>> VERSIONS;
     private static final Object2ObjectOpenHashMap<String, CompletableFuture<JsonObject>> CACHE = new Object2ObjectOpenHashMap<>();
 
-    public static JsonObject get(String versionId) {
-        return getAsync(versionId).join();
-    }
-
-    public static CompletableFuture<JsonObject> getAsync(@NotNull String versionId) {
-        Objects.requireNonNull(versionId, "versionId cannot be null!");
-        return CACHE.computeIfAbsent(versionId, id -> VERSIONS.thenCompose(versions -> {
-            if (!versions.containsKey(id)) throw new IllegalArgumentException("Game ID \"" + id + "\" does not exists!");
-            return HTTP_CLIENT.sendAsync(HttpRequest.newBuilder(versions.get(id)).build(),
-                    HttpResponse.BodyHandlers.ofInputStream());
-        }).thenApplyAsync(response -> {
-            try(InputStreamReader isr = new InputStreamReader(response.body(), StandardCharsets.UTF_8)) {
-                return JsonParser.parseReader(isr).getAsJsonObject();
-            } catch (IOException e) {
-                throw new CompletionException(e);
-            }
-        }).whenComplete((o, t) -> {
-            if (t != null) LOGGER.log(Level.SEVERE, "Error fetching Minecraft version JSON", t);
-        }));
-    }
-
     static {
         CompletableFuture<JsonObject> versionManifest = HTTP_CLIENT.sendAsync(
                 HttpRequest.newBuilder(
                         URI.create("https://launchermeta.mojang.com/mc/game/version_manifest.json")
                 ).build(),
                 HttpResponse.BodyHandlers.ofInputStream()
-        ).thenApplyAsync(response -> {
-            try(InputStreamReader isr = new InputStreamReader(response.body(), StandardCharsets.UTF_8)) {
-                return JsonParser.parseReader(isr).getAsJsonObject();
-            } catch (IOException e) {
-                throw new CompletionException(e);
-            }
-        }).whenComplete((o, t) -> {
+        ).thenApplyAsync(VersionManifest::parse).whenComplete((o, t) -> {
             if (t != null) LOGGER.log(Level.SEVERE, "Error fetching Minecraft version manifest", t);
         });
         CompletableFuture<JsonObject> latest = versionManifest.thenApply(obj -> obj.getAsJsonObject("latest"));
@@ -99,5 +73,31 @@ public class VersionManifest {
                     Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new
             ));
         });
+    }
+
+    public static JsonObject get(String versionId) {
+        return getAsync(versionId).join();
+    }
+
+    public static CompletableFuture<JsonObject> getAsync(@NotNull String versionId) {
+        return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
+            case "latest_release" -> LATEST_RELEASE.thenCompose(VersionManifest::getAsync);
+            case "latest_snapshot" -> LATEST_SNAPSHOT.thenCompose(VersionManifest::getAsync);
+            default -> CACHE.computeIfAbsent(versionId, id -> VERSIONS.thenCompose(versions -> {
+                if (!versions.containsKey(id)) throw new IllegalArgumentException("Game ID \"" + id + "\" does not exists!");
+                return HTTP_CLIENT.sendAsync(HttpRequest.newBuilder(versions.get(id)).build(),
+                        HttpResponse.BodyHandlers.ofInputStream());
+            }).thenApplyAsync(VersionManifest::parse).whenComplete((o, t) -> {
+                if (t != null) LOGGER.log(Level.SEVERE, "Error fetching Minecraft version JSON", t);
+            }));
+        };
+    }
+
+    private static JsonObject parse(HttpResponse<InputStream> response) {
+        try (InputStreamReader isr = new InputStreamReader(response.body(), StandardCharsets.UTF_8)) {
+            return JsonParser.parseReader(isr).getAsJsonObject();
+        } catch (IOException e) {
+            throw new CompletionException(e);
+        }
     }
 }
