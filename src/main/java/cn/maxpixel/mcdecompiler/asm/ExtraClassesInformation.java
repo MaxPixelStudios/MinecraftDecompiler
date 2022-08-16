@@ -112,9 +112,9 @@ public class ExtraClassesInformation implements Consumer<Path> {
         return superClassMap.get(name);
     }
 
-    public int getAccessFlags(String className, String composedMemberName) {
+    public int getAccessFlags(String className, String combinedMemberName) {
         Object2IntMap<String> map = accessMap.get(className);
         if(map == null) return Opcodes.ACC_PUBLIC;
-        return map.getInt(composedMemberName);
+        return map.getInt(combinedMemberName);
     }
 }

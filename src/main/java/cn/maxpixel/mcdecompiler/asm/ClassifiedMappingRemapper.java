@@ -36,6 +36,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
+import java.lang.reflect.Modifier;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -176,21 +177,20 @@ public class ClassifiedMappingRemapper extends Remapper {
     private PairedMapping reduceMethod(@NotNull PairedMapping left, @NotNull PairedMapping right) {
         if(left == right || nameAndDescEquals(left, right)) return left;
         int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().getOwner().mapping.unmappedName,
-                left.unmappedName.concat(getUnmappedDesc(left))) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
+                left.unmappedName.concat(getUnmappedDesc(left)));
         int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().getOwner().mapping.unmappedName,
-                right.unmappedName.concat(getUnmappedDesc(right))) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
+                right.unmappedName.concat(getUnmappedDesc(right)));
         if((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {
             if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) throw new IllegalArgumentException("This can't happen!");
             return left;
         } else if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) return right;
-        else if(leftAcc == Opcodes.ACC_PRIVATE || rightAcc == Opcodes.ACC_PRIVATE)
-            throw new IllegalArgumentException("This can't happen!");
+        else if(Modifier.isPrivate(leftAcc) || Modifier.isPrivate(rightAcc)) throw new IllegalArgumentException("This can't happen!");
         else throw new IllegalArgumentException("Method duplicated... This should not happen!");
     }
 
     private static boolean nameAndDescEquals(@NotNull PairedMapping left, @NotNull PairedMapping right) {
         if(left.unmappedName.equals(right.unmappedName) && left.mappedName.equals(right.mappedName)) {
-            // Will return false if they either have no descriptor components
+            // Will return false if they have no descriptor components
             boolean leftD = left.hasComponent(Descriptor.class), leftDM = left.hasComponent(Descriptor.Mapped.class),
                     rightD = right.hasComponent(Descriptor.class), rightDM = right.hasComponent(Descriptor.Mapped.class);
             if(leftD && rightD) {
@@ -248,7 +248,7 @@ public class ClassifiedMappingRemapper extends Remapper {
             if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) throw new IllegalArgumentException("This can't happen!");
             return left;
         } else if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) return right;
-        else if(leftAcc == Opcodes.ACC_PRIVATE || rightAcc == Opcodes.ACC_PRIVATE)
+        else if(Modifier.isPrivate(leftAcc) || Modifier.isPrivate(rightAcc))
             throw new IllegalArgumentException("This can't happen!");
         throw new IllegalArgumentException("Field duplicated... This should not happen!");
     }

@@ -59,7 +59,7 @@ public final class ClassProcessor {
 
     public static void registerCommandLineOptions(OptionParser parser) {
         CoreProcess.INSTANCE.registerCommandLineOptions(parser::accepts, parser::accepts);
-        for(Process process : LOADER) {
+        for (Process process : LOADER) {
             process.registerCommandLineOptions((option) -> parser.accepts(process.getName() + '.' + option),
                     (option, description) -> parser.accepts(process.getName() + '.' + option, description));
         }
@@ -67,13 +67,13 @@ public final class ClassProcessor {
 
     public static void acceptCommandLineValues(OptionSet options) {
         CoreProcess.INSTANCE.acceptCommandLineValues(options::has, options::hasArgument, options::valueOf, options::valuesOf);
-        for(Process process : LOADER) {
+        for (Process process : LOADER) {
             process.acceptCommandLineValues(options::has, options::hasArgument, options::valueOf, options::valuesOf);
         }
     }
 
     public static void fetchOptions() {
-        for(Process process : LOADER) {
+        for (Process process : LOADER) {
             process.fetchOptions();
         }
     }
@@ -81,7 +81,7 @@ public final class ClassProcessor {
     public static void beforeRunning(ClassifiedDeobfuscator.DeobfuscateOptions options, @Nullable String targetNamespace,
                                      ClassifiedMappingRemapper mappingRemapper) throws IOException {
         CoreProcess.INSTANCE.beforeRunning(options, targetNamespace, mappingRemapper);
-        for(Process process : LOADER) {
+        for (Process process : LOADER) {
             process.beforeRunning(options, targetNamespace, mappingRemapper);
         }
     }
@@ -89,7 +89,7 @@ public final class ClassProcessor {
     public static void afterRunning(ClassifiedDeobfuscator.DeobfuscateOptions options, @Nullable String targetNamespace,
                                      ClassifiedMappingRemapper mappingRemapper) throws IOException {
         CoreProcess.INSTANCE.afterRunning(options, targetNamespace, mappingRemapper);
-        for(Process process : LOADER) {
+        for (Process process : LOADER) {
             process.afterRunning(options, targetNamespace, mappingRemapper);
         }
     }
@@ -98,11 +98,11 @@ public final class ClassProcessor {
                                    @Nullable ClassMapping<? extends Mapping> mapping, String targetNamespace,
                                    ClassifiedMappingRemapper mappingRemapper) {
         ClassVisitor cv = writer;
-        for(Process process : AFTER) {
+        for (Process process : AFTER) {
             cv = process.getVisitor(options, reader, mapping, targetNamespace, mappingRemapper).apply(cv);
         }
         cv = CoreProcess.INSTANCE.getVisitor(options, reader, mapping, targetNamespace, mappingRemapper).apply(cv);
-        for(Process process : BEFORE) {
+        for (Process process : BEFORE) {
             cv = process.getVisitor(options, reader, mapping, targetNamespace, mappingRemapper).apply(cv);
         }
         return cv;
@@ -173,13 +173,13 @@ public final class ClassProcessor {
         @Override
         public void beforeRunning(ClassifiedDeobfuscator.DeobfuscateOptions options, String targetNamespace,
                                   ClassifiedMappingRemapper mappingRemapper) {
-            if(options.rvn()) VariableNameGenerator.startRecord();
+            if (options.rvn()) VariableNameGenerator.startRecord();
         }
 
         @Override
         public void afterRunning(ClassifiedDeobfuscator.DeobfuscateOptions options, String targetNamespace,
                                  ClassifiedMappingRemapper mappingRemapper) throws IOException {
-            if(options.rvn()) VariableNameGenerator.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
+            if (options.rvn()) VariableNameGenerator.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         }
 
         @Override
@@ -188,13 +188,15 @@ public final class ClassProcessor {
                                                                ClassifiedMappingRemapper mappingRemapper) {
             return parent -> {
                 ClassVisitor cv = parent;
-                if(options.rvn()) cv = new VariableNameGenerator(cv);
-                if((reader.getAccess() & Opcodes.ACC_RECORD) != 0) cv = new RecordNameRemapper(cv);
-                if(mapping != null && mapping.mapping instanceof NameGetter.Namespaced ngn) {
+                if (options.rvn()) cv = new VariableNameGenerator(cv);
+                if ((reader.getAccess() & Opcodes.ACC_RECORD) != 0) cv = new RecordNameRemapper(cv);
+                if (mapping != null && mapping.mapping instanceof NameGetter.Namespaced ngn) {
                     ngn.setMappedNamespace(targetNamespace);
                     cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
                 }
-                return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
+                return new RuntimeParameterAnnotationFixer(
+                        new MixinClassRemapper(
+                                new ClassRemapper(cv, mappingRemapper), mappingRemapper));
             };
         }
     }

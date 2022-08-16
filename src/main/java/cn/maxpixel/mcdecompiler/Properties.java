@@ -27,10 +27,6 @@ public class Properties {
     public static Path TEMP_DIR = Path.of("temp");
     public static Path DOWNLOAD_DIR = Path.of("downloads");
 
-    public static Path getDownloadedProguardMappingPath(String version, Info.SideType type) {
-        return DOWNLOAD_DIR.resolve(version).resolve(type + "_mappings.txt");
-    }
-
     public static Path getDownloadedDecompilerPath(@NotNull Info.DecompilerType type) {
         if(type == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
         return DOWNLOAD_DIR.resolve("decompiler").resolve(Objects.requireNonNull(type) + ".jar");
