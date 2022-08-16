@@ -44,16 +44,38 @@ import static java.nio.file.StandardOpenOption.*;
 public class DownloadUtil {
     private static final Logger LOGGER = Logging.getLogger("Download Utility");
 
+    public static Path downloadJar(String version, Info.SideType type) {
+        Path p = Properties.DOWNLOAD_DIR.resolve(VersionManifest.mapVersionId(version)).resolve(type + ".jar");
+        if(Files.notExists(p)) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder(
+                        URI.create(VersionManifest.get(version)
+                                .getAsJsonObject("downloads")
+                                .getAsJsonObject(type.toString())
+                                .get("url")
+                                .getAsString()
+                        )).build();
+                LOGGER.info("Downloading jar...");
+                HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
+            } catch(IOException | InterruptedException e) {
+                LOGGER.severe("Error downloading Minecraft jar");
+                throw Utils.wrapInRuntime(e);
+            }
+        }
+        return p;
+    }
+
     public static BufferedReader downloadMapping(String version, Info.SideType type) {
-        JsonObject versionDownloads = VersionManifest.get(version).get("downloads").getAsJsonObject();
-        if(!versionDownloads.has(type + "_mappings"))
+        JsonObject versionDownloads = VersionManifest.get(version).getAsJsonObject("downloads");
+        String id = type + "_mappings";
+        if(!versionDownloads.has(id))
             throw new IllegalArgumentException("Version \"" + version + "\" doesn't contain Proguard mappings. Please use 1.14.4 or above");
-        Path p = Properties.getDownloadedProguardMappingPath(version, type);
+        Path p = Properties.DOWNLOAD_DIR.resolve(VersionManifest.mapVersionId(version)).resolve(id + ".txt");
         if(Files.notExists(p)) {
             try {
                 LOGGER.info("Downloading mapping...");
                 HttpRequest request = HttpRequest
-                        .newBuilder(URI.create(versionDownloads.get(type + "_mappings").getAsJsonObject().get("url").getAsString()))
+                        .newBuilder(URI.create(versionDownloads.getAsJsonObject(id).get("url").getAsString()))
                         .build();
                 HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
             } catch(IOException | InterruptedException e) {

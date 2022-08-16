@@ -79,6 +79,14 @@ public class VersionManifest {
         return getAsync(versionId).join();
     }
 
+    public static String mapVersionId(@NotNull String versionId) {
+        return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
+            case "latest_release" -> LATEST_RELEASE.join();
+            case "latest_snapshot" -> LATEST_SNAPSHOT.join();
+            default -> versionId;
+        };
+    }
+
     public static CompletableFuture<JsonObject> getAsync(@NotNull String versionId) {
         return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
             case "latest_release" -> LATEST_RELEASE.thenCompose(VersionManifest::getAsync);

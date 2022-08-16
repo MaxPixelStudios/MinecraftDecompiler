@@ -28,7 +28,6 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -38,8 +37,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSets;
 import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,9 +49,6 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
 
 public class MinecraftDecompiler {
     private static final Logger LOGGER = Logging.getLogger();
@@ -156,7 +151,7 @@ public class MinecraftDecompiler {
         public OptionBuilder(String version, Info.SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
             this.type = Objects.requireNonNull(type, "type cannot be null!");
-            preprocess(downloadJar(version, type));
+            preprocess(DownloadUtil.downloadJar(version, type));
             this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar").toAbsolutePath().normalize();
             this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled").toAbsolutePath().normalize();
         }
@@ -197,8 +192,10 @@ public class MinecraftDecompiler {
                 } else this.inputJar = inputJar;
                 Path versionJson = jarFs.getPath("/version.json");
                 if(version == null && Files.exists(versionJson)) {
-                    JsonObject object = JsonParser.parseString(Files.readString(versionJson)).getAsJsonObject();
-                    this.version = object.get("id").getAsString();
+                    try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(versionJson),
+                            StandardCharsets.UTF_8)) {
+                        this.version = JsonParser.parseReader(isr).getAsJsonObject().get("id").getAsString();
+                    }
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Error preprocessing jar file {0}", new Object[] {inputJar, e});
@@ -206,31 +203,8 @@ public class MinecraftDecompiler {
             }
         }
 
-        private static Path downloadJar(String version, Info.SideType type) {
-            Path p = Properties.DOWNLOAD_DIR.resolve(version).resolve(type + ".jar");
-            if(Files.notExists(p)) {
-                try {
-                    HttpRequest request = HttpRequest.newBuilder(
-                            URI.create(VersionManifest.get(version)
-                                    .get("downloads")
-                                    .getAsJsonObject()
-                                    .get(type.toString())
-                                    .getAsJsonObject()
-                                    .get("url")
-                                    .getAsString()
-                            )).build();
-                    LOGGER.info("Downloading jar...");
-                    HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING));
-                } catch(IOException | InterruptedException e) {
-                    LOGGER.severe("Error downloading Minecraft jar");
-                    throw Utils.wrapInRuntime(e);
-                }
-            }
-            return p;
-        }
-
         public OptionBuilder libsUsing(String version) {
-            if(this.version != null) throw new IllegalArgumentException("version already defined, do not define it twice");
+            if (this.version != null) throw new IllegalArgumentException("Version already defined, do not define it twice");
             this.version = Objects.requireNonNull(version, "version cannot be null!");
             return this;
         }
