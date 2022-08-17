@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler.asm;
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.*;
@@ -108,10 +107,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
                                         @Override
                                         public void visit(String name, Object value) {
                                             if (value instanceof String s) {
-                                                list.add(refMap.map(obj -> obj.getAsJsonObject(className))
-                                                        .map(obj -> obj.get(s))
-                                                        .map(JsonElement::getAsString)
-                                                        .orElse(name));
+                                                list.add(refMap.map(obj -> obj.getAsJsonObject(className)
+                                                        .get(s).getAsString()).orElse(name));
                                             }
                                         }
                                     };

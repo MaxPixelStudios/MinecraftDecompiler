@@ -213,7 +213,8 @@ public class MinecraftDecompiler {
                                 if (Files.exists(refMapPath)) {
                                     try (InputStreamReader refMapReader = new InputStreamReader(
                                             Files.newInputStream(refMapPath), StandardCharsets.UTF_8)) {
-                                        this.refMap = Optional.of(JsonParser.parseReader(refMapReader).getAsJsonObject());
+                                        this.refMap = Optional.of(JsonParser.parseReader(refMapReader).getAsJsonObject()
+                                                .getAsJsonObject("mappings"));
                                     }
                                 }
                             }
