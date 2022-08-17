@@ -118,8 +118,13 @@ public class ClassifiedDeobfuscator {
         try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
             FileSystem targetFs = JarUtil.createZipFs(target);
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
+            ObjectSet<String> extraClasses = options.extraClasses();
+            boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(fs.getPath(""))
-                    .filter(p -> mappings.containsKey(NamingUtil.asNativeName0(p.toString()))), true);
+                    .filter(p -> {
+                        String k = NamingUtil.asNativeName0(p.toString());
+                        return mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
+                    }), true);
             options.extraJars().forEach(jar -> {
                 try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
                     FileUtil.iterateFiles(jarFs.getPath("")).filter(p -> p.toString().endsWith(".class")).forEach(info);
@@ -130,8 +135,6 @@ public class ClassifiedDeobfuscator {
             mappingRemapper.setExtraClassesInformation(info);
             ClassProcessor.beforeRunning(options, targetNamespace, mappingRemapper);
             toDecompile.clear();
-            ObjectSet<String> extraClasses = options.extraClasses();
-            boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             paths.forEach(path -> {
                 try {
                     String pathString = path.toString();

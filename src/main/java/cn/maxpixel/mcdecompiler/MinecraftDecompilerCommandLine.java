@@ -56,7 +56,7 @@ public class MinecraftDecompilerCommandLine {
                 .withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(of("m", "map", "mapping-path"), "Mapping file that " +
                 "is used to deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.accepts("target-namespace", "Namespace to " +
+        ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.acceptsAll(of("t", "target-namespace"), "Namespace to " +
                 "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(of("o", "output"), "Mapped output file. Including the suffix.")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
@@ -70,9 +70,9 @@ public class MinecraftDecompilerCommandLine {
                 ", do NOT pass any arg to --decompile when you use this option").withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("temp", "Temp directory for saving unzipped and remapped " +
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.accepts("extra-jars", "Extra jars used to get class " +
+        ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.acceptsAll(of("e", "extra-jars"), "Extra jars used to get class " +
                 "information").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
-        ArgumentAcceptingOptionSpec<String> extraClassesO = parser.accepts("extra-class", "Extra classes/packages that " +
+        ArgumentAcceptingOptionSpec<String> extraClassesO = parser.acceptsAll(of("c", "extra-class"), "Extra classes/packages that " +
                 "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names").withRequiredArg();
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
         ClassProcessor.registerCommandLineOptions(parser);

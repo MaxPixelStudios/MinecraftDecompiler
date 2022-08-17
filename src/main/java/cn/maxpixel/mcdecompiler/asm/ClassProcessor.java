@@ -194,9 +194,7 @@ public final class ClassProcessor {
                     ngn.setMappedNamespace(targetNamespace);
                     cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
                 }
-                return new RuntimeParameterAnnotationFixer(
-                        new MixinClassRemapper(
-                                new ClassRemapper(cv, mappingRemapper), mappingRemapper));
+                return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
             };
         }
     }

@@ -33,8 +33,8 @@ import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
-    private final Object2ObjectOpenHashMap<String, ObjectList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<String, Object2IntMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
 
     public ExtraClassesInformation() {}
 
@@ -77,32 +77,55 @@ public class ExtraClassesInformation implements Consumer<Path> {
                     superClassMap.put(className, list);
                 }
             }
-            if(needToRecord) {
-                reader.accept(new ClassVisitor(Info.ASM_VERSION) {
-                    private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
-                    @Override
-                    public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                        if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
-                        return null;
-                    }
+            reader.accept(new ClassVisitor(Info.ASM_VERSION) {
+                private final Object2IntOpenHashMap<String> map = needToRecord ? new Object2IntOpenHashMap<>() : null;
 
-                    @Override
-                    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                        if((access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
-                        return null;
-                    }
-
-                    @Override
-                    public void visitEnd() {
-                        if(!map.isEmpty()) {
-                            map.defaultReturnValue(Opcodes.ACC_PUBLIC);
-                            synchronized(accessMap) {
-                                accessMap.put(className, map);
+                @Override
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    if ("Lorg/spongepowered/asm/mixin/Mixin;".equals(descriptor)) {
+                        ObjectArrayList<String> list = superClassMap.computeIfAbsent(className, s -> new ObjectArrayList<>());
+                        return new AnnotationVisitor(api) {
+                            @Override
+                            public AnnotationVisitor visitArray(String name) {
+                                if ("value".equals(name)) {
+                                    return new AnnotationVisitor(api) {
+                                        @Override
+                                        public void visit(String name, Object value) {
+                                            if (value instanceof Type t && t.getSort() == Type.OBJECT) {
+                                                list.add(t.getInternalName());
+                                            }
+                                        }
+                                    };
+                                }
+                                return null;
                             }
+                        };
+                    }
+                    return null;
+                }
+
+                @Override
+                public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                    if(needToRecord && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
+                    return null;
+                }
+
+                @Override
+                public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                    if(needToRecord && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
+                    return null;
+                }
+
+                @Override
+                public void visitEnd() {
+                    if(needToRecord && !map.isEmpty()) {
+                        map.defaultReturnValue(Opcodes.ACC_PUBLIC);
+                        synchronized(accessMap) {
+                            accessMap.put(className, map);
                         }
                     }
-                }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-            }
+                }
+            }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         } catch(IOException e) {
             LOGGER.log(Level.WARNING, "Error when creating super class mapping", e);
         }
