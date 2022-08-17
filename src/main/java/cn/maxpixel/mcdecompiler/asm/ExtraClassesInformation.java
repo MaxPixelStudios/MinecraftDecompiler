@@ -21,11 +21,13 @@ package cn.maxpixel.mcdecompiler.asm;
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,14 +37,18 @@ public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
+    private final Optional<JsonObject> refMap;
 
-    public ExtraClassesInformation() {}
-
-    public ExtraClassesInformation(Stream<Path> classes) {
-        this(classes, false);
+    public ExtraClassesInformation(Optional<JsonObject> refMap) {
+        this.refMap = refMap;
     }
 
-    public ExtraClassesInformation(Stream<Path> classes, boolean close) {
+    public ExtraClassesInformation(Optional<JsonObject> refMap, Stream<Path> classes) {
+        this(refMap, classes, false);
+    }
+
+    public ExtraClassesInformation(Optional<JsonObject> refMap, Stream<Path> classes, boolean close) {
+        this.refMap = refMap;
         if(close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -93,6 +99,16 @@ public class ExtraClassesInformation implements Consumer<Path> {
                                         public void visit(String name, Object value) {
                                             if (value instanceof Type t && t.getSort() == Type.OBJECT) {
                                                 list.add(t.getInternalName());
+                                            }
+                                        }
+                                    };
+                                } else if ("targets".equals(name)) {
+                                    return new AnnotationVisitor(api) {
+                                        @Override
+                                        public void visit(String name, Object value) {
+                                            if (value instanceof String s) {
+                                                list.add(refMap.map(obj -> obj.getAsJsonObject(className)
+                                                        .get(s).getAsString()).orElse(name));
                                             }
                                         }
                                     };

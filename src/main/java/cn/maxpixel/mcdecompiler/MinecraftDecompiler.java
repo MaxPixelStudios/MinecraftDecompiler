@@ -28,6 +28,7 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -46,6 +47,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -142,6 +144,7 @@ public class MinecraftDecompiler {
         private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
         private final ObjectSet<String> extraClasses = new ObjectOpenHashSet<>();
         private Optional<ObjectSet<Path>> bundledLibs = Optional.empty();
+        private Optional<JsonObject> refMap = Optional.empty();
 
         private Path inputJar;
         private boolean reverse;
@@ -169,19 +172,19 @@ public class MinecraftDecompiler {
 
         private void preprocess(Path inputJar) {
             FileUtil.deleteIfExists(Properties.TEMP_DIR);
-            try(FileSystem jarFs = JarUtil.createZipFs(FileUtil.requireExist(inputJar))) {
+            try (FileSystem jarFs = JarUtil.createZipFs(FileUtil.requireExist(inputJar))) {
                 Files.createDirectories(Properties.TEMP_DIR);
-                if(Files.exists(jarFs.getPath("/net/minecraft/bundler/Main.class"))) {
-                    Path metaInf = jarFs.getPath("META-INF");
+                Path metaInf = jarFs.getPath("META-INF");
+                if (Files.exists(jarFs.getPath("/net/minecraft/bundler/Main.class"))) {
                     Path extractDir = Files.createDirectories(Properties.TEMP_DIR.resolve("bundleExtract"));
                     List<String> jar = Files.readAllLines(metaInf.resolve("versions.list"));
-                    if(jar.size() == 1) {
+                    if (jar.size() == 1) {
                         Path versionPath = metaInf.resolve("versions").resolve(jar.get(0).split("\t")[2]);
                         FileUtil.copyFile(versionPath, extractDir);
                         this.inputJar = extractDir.resolve(versionPath.getFileName().toString());
                     } else throw new IllegalArgumentException("Why multiple versions in a bundle?");
                     ObjectOpenHashSet<Path> libs = new ObjectOpenHashSet<>();
-                    try(Stream<String> lines = Files.lines(metaInf.resolve("libraries.list"))) {
+                    try (Stream<String> lines = Files.lines(metaInf.resolve("libraries.list"))) {
                         lines.forEach(line -> {
                             Path lib = metaInf.resolve("libraries").resolve(line.split("\t")[2]);
                             FileUtil.copyFile(lib, extractDir);
@@ -191,10 +194,30 @@ public class MinecraftDecompiler {
                     this.bundledLibs = Optional.of(ObjectSets.unmodifiable(libs));
                 } else this.inputJar = inputJar;
                 Path versionJson = jarFs.getPath("/version.json");
-                if(version == null && Files.exists(versionJson)) {
+                if (version == null && Files.exists(versionJson)) {
                     try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(versionJson),
                             StandardCharsets.UTF_8)) {
                         this.version = JsonParser.parseReader(isr).getAsJsonObject().get("id").getAsString();
+                    }
+                }
+                try (InputStream is = Files.newInputStream(metaInf.resolve("MANIFEST.MF"))) {
+                    Manifest man = new Manifest(is);
+                    String config = man.getMainAttributes().getValue("MixinConfigs");
+                    if (config != null) {
+                        Path configPath = jarFs.getPath(config);
+                        if (Files.exists(configPath)) {
+                            try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(configPath),
+                                    StandardCharsets.UTF_8)) {
+                                Path refMapPath = jarFs.getPath(JsonParser.parseReader(isr).getAsJsonObject()
+                                        .get("refmap").getAsString());
+                                if (Files.exists(refMapPath)) {
+                                    try (InputStreamReader refMapReader = new InputStreamReader(
+                                            Files.newInputStream(refMapPath), StandardCharsets.UTF_8)) {
+                                        this.refMap = Optional.of(JsonParser.parseReader(refMapReader).getAsJsonObject());
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -357,6 +380,11 @@ public class MinecraftDecompiler {
                 public Optional<ObjectSet<Path>> bundledLibs() {
                     return bundledLibs;
                 }
+
+                @Override
+                public Optional<JsonObject> refMap() {
+                    return refMap;
+                }
             };
         }
     }
@@ -406,5 +434,8 @@ public class MinecraftDecompiler {
         ObjectSet<String> extraClasses();
 
         Optional<ObjectSet<Path>> bundledLibs();
+
+        @Override
+        Optional<JsonObject> refMap();
     }
 }
