@@ -28,7 +28,6 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -47,7 +46,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -144,7 +142,7 @@ public class MinecraftDecompiler {
         private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
         private final ObjectSet<String> extraClasses = new ObjectOpenHashSet<>();
         private Optional<ObjectSet<Path>> bundledLibs = Optional.empty();
-        private Optional<JsonObject> refMap = Optional.empty();
+//        private Optional<JsonObject> refMap = Optional.empty();
 
         private Path inputJar;
         private boolean reverse;
@@ -200,27 +198,27 @@ public class MinecraftDecompiler {
                         this.version = JsonParser.parseReader(isr).getAsJsonObject().get("id").getAsString();
                     }
                 }
-                try (InputStream is = Files.newInputStream(metaInf.resolve("MANIFEST.MF"))) {
-                    Manifest man = new Manifest(is);
-                    String config = man.getMainAttributes().getValue("MixinConfigs");
-                    if (config != null) {
-                        Path configPath = jarFs.getPath(config);
-                        if (Files.exists(configPath)) {
-                            try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(configPath),
-                                    StandardCharsets.UTF_8)) {
-                                Path refMapPath = jarFs.getPath(JsonParser.parseReader(isr).getAsJsonObject()
-                                        .get("refmap").getAsString());
-                                if (Files.exists(refMapPath)) {
-                                    try (InputStreamReader refMapReader = new InputStreamReader(
-                                            Files.newInputStream(refMapPath), StandardCharsets.UTF_8)) {
-                                        this.refMap = Optional.of(JsonParser.parseReader(refMapReader).getAsJsonObject()
-                                                .getAsJsonObject("mappings"));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+//                try (InputStream is = Files.newInputStream(metaInf.resolve("MANIFEST.MF"))) {
+//                    Manifest man = new Manifest(is);
+//                    String config = man.getMainAttributes().getValue("MixinConfigs");
+//                    if (config != null) {
+//                        Path configPath = jarFs.getPath(config);
+//                        if (Files.exists(configPath)) {
+//                            try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(configPath),
+//                                    StandardCharsets.UTF_8)) {
+//                                Path refMapPath = jarFs.getPath(JsonParser.parseReader(isr).getAsJsonObject()
+//                                        .get("refmap").getAsString());
+//                                if (Files.exists(refMapPath)) {
+//                                    try (InputStreamReader refMapReader = new InputStreamReader(
+//                                            Files.newInputStream(refMapPath), StandardCharsets.UTF_8)) {
+//                                        this.refMap = Optional.of(JsonParser.parseReader(refMapReader).getAsJsonObject()
+//                                                .getAsJsonObject("mappings"));
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Error preprocessing jar file {0}", new Object[] {inputJar, e});
                 throw Utils.wrapInRuntime(e);
@@ -382,10 +380,10 @@ public class MinecraftDecompiler {
                     return bundledLibs;
                 }
 
-                @Override
-                public Optional<JsonObject> refMap() {
-                    return refMap;
-                }
+//                @Override
+//                public Optional<JsonObject> refMap() {
+//                    return refMap;
+//                }
             };
         }
     }
@@ -436,7 +434,7 @@ public class MinecraftDecompiler {
 
         Optional<ObjectSet<Path>> bundledLibs();
 
-        @Override
-        Optional<JsonObject> refMap();
+//        @Override
+//        Optional<JsonObject> refMap();
     }
 }

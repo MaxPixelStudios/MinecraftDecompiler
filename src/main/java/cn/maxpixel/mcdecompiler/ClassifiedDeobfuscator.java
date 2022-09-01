@@ -28,7 +28,6 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
-import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -43,7 +42,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,11 +63,6 @@ public class ClassifiedDeobfuscator {
         @Override
         public boolean reverse() {
             return false;
-        }
-
-        @Override
-        public Optional<JsonObject> refMap() {
-            return Optional.empty();
         }
     };
 
@@ -127,7 +120,7 @@ public class ClassifiedDeobfuscator {
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             ObjectSet<String> extraClasses = options.extraClasses();
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
-            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(fs.getPath(""))
+            ExtraClassesInformation info = new ExtraClassesInformation(mappingRemapper::map, FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
                         String k = NamingUtil.asNativeName0(p.toString());
                         return mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
@@ -195,7 +188,5 @@ public class ClassifiedDeobfuscator {
         default ObjectSet<String> extraClasses() {
             return ObjectSets.emptySet();
         }
-
-        Optional<JsonObject> refMap();
     }
 }

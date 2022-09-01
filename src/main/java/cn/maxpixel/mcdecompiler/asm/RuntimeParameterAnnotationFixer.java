@@ -31,22 +31,17 @@ import java.util.logging.Logger;
 public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     private static final Logger LOGGER = Logging.getLogger("Runtime(In)visibleParameterAnnotations Attribute Fixer");
     private int removeCount;// = isEnum ? 2 : 1
-    private String className;
+    private final String className;
     private String toProcess;
 
-    public RuntimeParameterAnnotationFixer(ClassVisitor classVisitor) {
+    public RuntimeParameterAnnotationFixer(ClassVisitor classVisitor, String className, int access) {
         super(Info.ASM_VERSION, classVisitor);
-    }
-
-    @Override
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        this.className = name;
+        this.className = className;
         if((access & Opcodes.ACC_ENUM) != 0) {
             this.removeCount = 2;
             this.toProcess = "(Ljava/lang/String;I";
-            LOGGER.log(Level.FINER, "Fixing class {0} because it is an enum", name);
+            LOGGER.log(Level.FINER, "Fixing class {0} because it is an enum", className);
         }
-        super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override

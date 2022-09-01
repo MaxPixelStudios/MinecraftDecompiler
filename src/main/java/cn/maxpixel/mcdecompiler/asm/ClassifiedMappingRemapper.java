@@ -79,6 +79,14 @@ public class ClassifiedMappingRemapper extends Remapper {
         return this;
     }
 
+    public ExtraClassesInformation getExtraClassesInformation() {
+        return extraClassesInformation;
+    }
+
+    public ClassMapping<PairedMapping> getClassByUnmappedName(String unmappedName) {
+        return mappingByUnm.get(unmappedName);
+    }
+
     @Override
     public String map(String internalName) {
         ClassMapping<PairedMapping> classMapping = mappingByUnm.get(internalName);
@@ -153,8 +161,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     private Optional<PairedMapping> processSuperMethod(String owner, String name, String descriptor) {
-        if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor ClassifiedMappingRemapper(AbstractMappingReader) is only " +
-                "for reversing mapping. For remapping, please use ClassifiedMappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
+        if(extraClassesInformation == null) throw new UnsupportedOperationException("ExtraClassesInformation not present");
         return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
                 .flatMap(superNames -> {
                     ObjectArrayList<ClassMapping<PairedMapping>> cms = superNames.stream()
@@ -219,8 +226,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     private Optional<PairedMapping> processSuperField(String owner, String name) {
-        if(extraClassesInformation == null) throw new UnsupportedOperationException("Constructor ClassifiedMappingRemapper(AbstractMappingReader) is only " +
-                "for reversing mapping. For remapping, please use ClassifiedMappingRemapper(AbstractMappingReader, ExtraClassesInformation)");
+        if(extraClassesInformation == null) throw new UnsupportedOperationException("ExtraClassesInformation not present");
         return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
                 .flatMap(superNames -> superNames.parallelStream()
                         .map(fieldByUnm::get)

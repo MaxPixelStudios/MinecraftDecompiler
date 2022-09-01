@@ -23,6 +23,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.Blocking;
+import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -75,10 +78,12 @@ public class VersionManifest {
         });
     }
 
+    @Blocking
     public static JsonObject get(String versionId) {
         return getAsync(versionId).join();
     }
 
+    @Blocking
     public static String mapVersionId(@NotNull String versionId) {
         return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
             case "latest_release" -> LATEST_RELEASE.join();
@@ -87,7 +92,8 @@ public class VersionManifest {
         };
     }
 
-    public static CompletableFuture<JsonObject> getAsync(@NotNull String versionId) {
+    @NonBlocking
+    public static CompletableFuture<JsonObject> getAsync(@Async.Schedule @NotNull String versionId) {
         return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
             case "latest_release" -> LATEST_RELEASE.thenCompose(VersionManifest::getAsync);
             case "latest_snapshot" -> LATEST_SNAPSHOT.thenCompose(VersionManifest::getAsync);

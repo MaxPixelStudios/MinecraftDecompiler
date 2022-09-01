@@ -187,14 +187,17 @@ public final class ClassProcessor {
                                                                ClassMapping<? extends Mapping> mapping, String targetNamespace,
                                                                ClassifiedMappingRemapper mappingRemapper) {
             return parent -> {
+                String className = reader.getClassName();
+                int access = reader.getAccess();
                 ClassVisitor cv = parent;
-                if (options.rvn()) cv = new VariableNameGenerator(cv);
+                if (options.rvn()) cv = new VariableNameGenerator(cv, mappingRemapper.map(className));
                 if ((reader.getAccess() & Opcodes.ACC_RECORD) != 0) cv = new RecordNameRemapper(cv);
                 if (mapping != null && mapping.mapping instanceof NameGetter.Namespaced ngn) {
                     ngn.setMappedNamespace(targetNamespace);
                     cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
                 }
-                return new RuntimeParameterAnnotationFixer(new ClassRemapper(cv, mappingRemapper));
+                return new RuntimeParameterAnnotationFixer(new MixinClassRemapper(new ClassRemapper(cv, mappingRemapper),
+                        mappingRemapper, mappingRemapper.getExtraClassesInformation(), className), className, access);
             };
         }
     }

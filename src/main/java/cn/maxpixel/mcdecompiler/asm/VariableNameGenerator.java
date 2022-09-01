@@ -59,16 +59,11 @@ public class VariableNameGenerator extends ClassVisitor {
     }
 
     private final Object2ObjectOpenHashMap<String, Renamer> sharedRenamers = new Object2ObjectOpenHashMap<>();
-    private String className;
+    private final String className;
 
-    public VariableNameGenerator(ClassVisitor classVisitor) {
+    public VariableNameGenerator(ClassVisitor classVisitor, String className) {
         super(Info.ASM_VERSION, classVisitor);
-    }
-
-    @Override
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        this.className = name;
-        super.visit(version, access, name, signature, superName, interfaces);
+        this.className = className;
     }
 
     @Override

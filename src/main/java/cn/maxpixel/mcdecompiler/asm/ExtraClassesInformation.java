@@ -21,14 +21,13 @@ package cn.maxpixel.mcdecompiler.asm;
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
-import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -37,18 +36,30 @@ public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
-    private final Optional<JsonObject> refMap;
+    private final UnaryOperator<String> mixinTargetsRemapper;
 
-    public ExtraClassesInformation(Optional<JsonObject> refMap) {
-        this.refMap = refMap;
+    public ExtraClassesInformation() {
+        this(UnaryOperator.identity());
     }
 
-    public ExtraClassesInformation(Optional<JsonObject> refMap, Stream<Path> classes) {
-        this(refMap, classes, false);
+    public ExtraClassesInformation(Stream<Path> classes) {
+        this(classes, false);
     }
 
-    public ExtraClassesInformation(Optional<JsonObject> refMap, Stream<Path> classes, boolean close) {
-        this.refMap = refMap;
+    public ExtraClassesInformation(Stream<Path> classes, boolean close) {
+        this(UnaryOperator.identity(), classes, close);
+    }
+
+    public ExtraClassesInformation(UnaryOperator<String> mixinTargetsRemapper) {
+        this.mixinTargetsRemapper = mixinTargetsRemapper;
+    }
+
+    public ExtraClassesInformation(UnaryOperator<String> mixinTargetsRemapper, Stream<Path> classes) {
+        this(mixinTargetsRemapper, classes, false);
+    }
+
+    public ExtraClassesInformation(UnaryOperator<String> mixinTargetsRemapper, Stream<Path> classes, boolean close) {
+        this.mixinTargetsRemapper = mixinTargetsRemapper;
         if(close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -93,27 +104,25 @@ public class ExtraClassesInformation implements Consumer<Path> {
                         return new AnnotationVisitor(api) {
                             @Override
                             public AnnotationVisitor visitArray(String name) {
-                                if ("value".equals(name)) {
-                                    return new AnnotationVisitor(api) {
+                                return switch (name) {
+                                    case "value" -> new AnnotationVisitor(api) {
                                         @Override
                                         public void visit(String name, Object value) {
                                             if (value instanceof Type t && t.getSort() == Type.OBJECT) {
                                                 list.add(t.getInternalName());
-                                            }
+                                            } else throw new IllegalArgumentException();
                                         }
                                     };
-                                } else if ("targets".equals(name)) {
-                                    return new AnnotationVisitor(api) {
+                                    case "targets" -> new AnnotationVisitor(api) {
                                         @Override
                                         public void visit(String name, Object value) {
                                             if (value instanceof String s) {
-                                                list.add(refMap.map(obj -> obj.getAsJsonObject(className)
-                                                        .get(s).getAsString()).orElse(name));
-                                            }
+                                                list.add(mixinTargetsRemapper.apply(s));
+                                            } else throw new IllegalArgumentException();
                                         }
                                     };
-                                }
-                                return null;
+                                    default -> null;
+                                };
                             }
                         };
                     }
