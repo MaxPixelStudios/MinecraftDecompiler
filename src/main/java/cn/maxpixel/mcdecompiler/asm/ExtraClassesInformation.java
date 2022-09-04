@@ -26,8 +26,9 @@ import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -36,10 +37,10 @@ public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
-    private final UnaryOperator<String> mixinTargetsRemapper;
+    private final Optional<Map<String, Map<String, String>>> refMap;
 
     public ExtraClassesInformation() {
-        this(UnaryOperator.identity());
+        this(Optional.empty());
     }
 
     public ExtraClassesInformation(Stream<Path> classes) {
@@ -47,19 +48,19 @@ public class ExtraClassesInformation implements Consumer<Path> {
     }
 
     public ExtraClassesInformation(Stream<Path> classes, boolean close) {
-        this(UnaryOperator.identity(), classes, close);
+        this(Optional.empty(), classes, close);
     }
 
-    public ExtraClassesInformation(UnaryOperator<String> mixinTargetsRemapper) {
-        this.mixinTargetsRemapper = mixinTargetsRemapper;
+    public ExtraClassesInformation(Optional<Map<String, Map<String, String>>> refMap) {
+        this.refMap = refMap;
     }
 
-    public ExtraClassesInformation(UnaryOperator<String> mixinTargetsRemapper, Stream<Path> classes) {
-        this(mixinTargetsRemapper, classes, false);
+    public ExtraClassesInformation(Optional<Map<String, Map<String, String>>> refMap, Stream<Path> classes) {
+        this(refMap, classes, false);
     }
 
-    public ExtraClassesInformation(UnaryOperator<String> mixinTargetsRemapper, Stream<Path> classes, boolean close) {
-        this.mixinTargetsRemapper = mixinTargetsRemapper;
+    public ExtraClassesInformation(Optional<Map<String, Map<String, String>>> refMap, Stream<Path> classes, boolean close) {
+        this.refMap = refMap;
         if(close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -117,7 +118,10 @@ public class ExtraClassesInformation implements Consumer<Path> {
                                         @Override
                                         public void visit(String name, Object value) {
                                             if (value instanceof String s) {
-                                                list.add(mixinTargetsRemapper.apply(s));
+                                                list.add(refMap.map(m -> m.get(className))
+                                                        .map(m -> m.get(s))
+                                                        .orElse(s)
+                                                );
                                             } else throw new IllegalArgumentException();
                                         }
                                     };

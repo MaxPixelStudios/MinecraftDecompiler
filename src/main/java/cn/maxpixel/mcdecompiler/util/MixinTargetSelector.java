@@ -25,7 +25,7 @@ import org.objectweb.asm.Type;
 import java.util.StringJoiner;
 
 public record MixinTargetSelector(@Nullable Type owner, @Nullable String name, @Nullable String quantifier, @Nullable String descriptor, boolean field) {
-    public static MixinTargetSelector parseMethod(String pattern) {
+    public static MixinTargetSelector parse(String pattern) {
         String p = pattern;
         Type owner = null;
         if (p.charAt(0) == 'L') {
@@ -46,6 +46,7 @@ public record MixinTargetSelector(@Nullable Type owner, @Nullable String name, @
         }
 
         String name = null, quantifier = null, descriptor = null;
+        boolean field = false;
         int i = 0;
 
         if ((i = p.indexOf('*')) != -1) {
@@ -66,6 +67,10 @@ public record MixinTargetSelector(@Nullable Type owner, @Nullable String name, @
             if (i != -1) {
                 name = p.substring(0, i);
                 p = p.substring(i);
+            } else if ((i = p.indexOf(':')) != -1) {
+                field = true;
+                name = p.substring(0, i);
+                p = p.substring(i + 1);
             } else {
                 name = p;
                 p = "";
@@ -73,16 +78,17 @@ public record MixinTargetSelector(@Nullable Type owner, @Nullable String name, @
         }
 
         if (!p.isEmpty()) {
-            if (p.charAt(0) == '(') {
+            if (p.charAt(0) == '(' || field) {
                 descriptor = p;
             } else throw new IllegalArgumentException("Cannot parse pattern: " + pattern);
         }
-        return new MixinTargetSelector(owner, name, quantifier, descriptor, false);
+        return new MixinTargetSelector(owner, name, quantifier, descriptor, field);
     }
 
     public MixinTargetSelector remap(ClassifiedMappingRemapper remapper, String mappedName) {
         return new MixinTargetSelector(owner == null ? null : Type.getType(remapper.mapToMapped(owner)), mappedName, quantifier,
-                descriptor == null ? null : remapper.getMappedDescByUnmappedDesc(descriptor), field);
+                descriptor == null ? null : (field ? remapper.mapToMapped(Type.getType(descriptor)) :
+                        remapper.getMappedDescByUnmappedDesc(descriptor)), field);
     }
 
     public String toSelectorString() {

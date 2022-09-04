@@ -41,7 +41,9 @@ import java.io.OutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -120,7 +122,7 @@ public class ClassifiedDeobfuscator {
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             ObjectSet<String> extraClasses = options.extraClasses();
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
-            ExtraClassesInformation info = new ExtraClassesInformation(mappingRemapper::map, FileUtil.iterateFiles(fs.getPath(""))
+            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
                         String k = NamingUtil.asNativeName0(p.toString());
                         return mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
@@ -187,6 +189,10 @@ public class ClassifiedDeobfuscator {
 
         default ObjectSet<String> extraClasses() {
             return ObjectSets.emptySet();
+        }
+
+        default Optional<Map<String, Map<String, String>>> refMap() {
+            return Optional.empty();
         }
     }
 }

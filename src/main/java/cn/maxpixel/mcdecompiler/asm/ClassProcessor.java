@@ -197,7 +197,7 @@ public final class ClassProcessor {
                     cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
                 }
                 return new RuntimeParameterAnnotationFixer(new MixinClassRemapper(new ClassRemapper(cv, mappingRemapper),
-                        mappingRemapper, mappingRemapper.getExtraClassesInformation(), className), className, access);
+                        mappingRemapper, mappingRemapper.getExtraClassesInformation(), options.refMap(), className), className, access);
             };
         }
     }
