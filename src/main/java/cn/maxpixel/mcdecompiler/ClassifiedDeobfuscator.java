@@ -140,15 +140,17 @@ public class ClassifiedDeobfuscator {
                     if(mappings.containsKey(classKeyName) ||
                             (extraClassesNotEmpty && extraClasses.stream().anyMatch(classKeyName::startsWith))) {
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
-                        ClassWriter writer = new ClassWriter(0);
-                        ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
-                        reader.accept(ClassProcessor.getVisitor(writer, options, reader, cm, targetNamespace, mappingRemapper), 0);
-                        String mapped = cm != null ? cm.mapping.getMappedName().concat(".class") : pathString;
-                        synchronized(toDecompile) {
-                            toDecompile.add(mapped);
-                        }
-                        try(OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(mapped)))) {
-                            os.write(writer.toByteArray());
+                        if (!ExtraClassesInformation.noRefmapClasses.contains(reader.getClassName())) {
+                            ClassWriter writer = new ClassWriter(0);
+                            ClassMapping<? extends Mapping> cm = mappings.get(classKeyName);
+                            reader.accept(ClassProcessor.getVisitor(writer, options, reader, cm, targetNamespace, mappingRemapper), 0);
+                            String mapped = cm != null ? cm.mapping.getMappedName().concat(".class") : pathString;
+                            synchronized (toDecompile) {
+                                toDecompile.add(mapped);
+                            }
+                            try (OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(mapped)))) {
+                                os.write(writer.toByteArray());
+                            }
                         }
                     } else if(options.includeOthers()) {
                         if(pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;

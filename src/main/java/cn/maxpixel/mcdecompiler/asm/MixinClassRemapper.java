@@ -107,6 +107,7 @@ public class MixinClassRemapper extends ClassVisitor {
     }
 
     private String remapMethodSelector(String s) {// TODO: full-support of target selector
+        if (ExtraClassesInformation.noRefmapMethods.contains(s)) return s;
         if (s.charAt(s.length() - 1) != '/' && s.charAt(0) != '@' && !s.contains("<")) {
             String s1 = refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
                     .getOrDefault(s, s);
