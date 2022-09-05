@@ -26,7 +26,10 @@ import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,6 +40,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
     private final Map<String, Map<String, String>> refMap;
+    public static final List<String> noRefmapMethods = new ArrayList<>();
+    public static final List<String> noRefmapClasses = new ArrayList<>();
 
     public ExtraClassesInformation() {
         this(Object2ObjectMaps.emptyMap());
@@ -125,6 +130,13 @@ public class ExtraClassesInformation implements Consumer<Path> {
                                     default -> null;
                                 };
                             }
+
+                            @Override
+                            public void visit(String name, Object value) {
+                                if ("remap".equals(name) && value instanceof Boolean b && !b) {
+                                    noRefmapClasses.add(className);
+                                }
+                            }
                         };
                     }
                     return null;
@@ -139,7 +151,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 @Override
                 public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                     if(needToRecord && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
-                    return null;
+                    return new RemapSettingMethodVisitor();
                 }
 
                 @Override
@@ -165,5 +177,60 @@ public class ExtraClassesInformation implements Consumer<Path> {
         Object2IntMap<String> map = accessMap.get(className);
         if(map == null) return Opcodes.ACC_PUBLIC;
         return map.getInt(combinedMemberName);
+    }
+
+    private static class RemapSettingMethodVisitor extends MethodVisitor{
+
+        protected RemapSettingMethodVisitor() {
+            super(Info.ASM_VERSION);
+        }
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+            return this.new RemapSettingAnnotationVisitor();
+        }
+
+        private class RemapSettingAnnotationVisitor extends AnnotationVisitor{
+
+            public boolean noNeedRemap = false;
+            protected List<String> methods = new ArrayList<>();
+
+            protected RemapSettingAnnotationVisitor() {
+                super(Info.ASM_VERSION);
+            }
+            @Override
+            public void visit(String name, Object value) {
+                if ("remap".equals(name) && value instanceof Boolean b && !b){
+                    noNeedRemap = true;
+                }
+            }
+
+            @Override
+            public AnnotationVisitor visitArray(String name) {
+                return name.equals("method") ? new RemapSettingAnnotationArrayVisitor() : null;
+            }
+
+            @Override
+            public void visitEnd() {
+                if (noNeedRemap){
+                    noRefmapMethods.addAll(methods);
+                }
+            }
+
+            private class RemapSettingAnnotationArrayVisitor extends AnnotationVisitor{
+                protected RemapSettingAnnotationArrayVisitor() {
+                    super(Info.ASM_VERSION);
+                }
+
+                @Override
+                public void visit(String name, Object value) {
+                    if (value instanceof String str){
+                        RemapSettingAnnotationVisitor.this.methods.add(str);
+                    }
+                }
+            }
+
+        }
+
     }
 }
