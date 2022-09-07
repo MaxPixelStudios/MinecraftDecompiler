@@ -23,6 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.util.MixinTargetSelector;
 import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.objectweb.asm.AnnotationVisitor;
@@ -41,11 +42,12 @@ public class MixinClassRemapper extends ClassVisitor {
     private final ClassifiedMappingRemapper remapper;
     private final ExtraClassesInformation info;
 
-    private final Optional<Map<String, Map<String, String>>> refMap;
+    private final Map<String, Map<String, String>> refMap;
     private final String className;
     private boolean mixin;
 
-    public MixinClassRemapper(ClassVisitor classVisitor, ClassifiedMappingRemapper remapper, ExtraClassesInformation info, Optional<Map<String, Map<String, String>>> refMap, String className) {
+    public MixinClassRemapper(ClassVisitor classVisitor, ClassifiedMappingRemapper remapper, ExtraClassesInformation info,
+                              Map<String, Map<String, String>> refMap, String className) {
         super(Info.ASM_VERSION, classVisitor);
         this.remapper = remapper;
         this.info = info;
@@ -71,9 +73,8 @@ public class MixinClassRemapper extends ClassVisitor {
                             public void visit(String name, Object value) {
                                 if (value instanceof String s) {
                                     super.visit(name, remapper.map(
-                                            refMap.map(m -> m.get(className))
-                                                    .map(m -> m.get(s))
-                                                    .orElse(s)
+                                            refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
+                                                    .getOrDefault(s, s)
                                     ));
                                 } else throw new IllegalArgumentException();
                             }
@@ -107,9 +108,8 @@ public class MixinClassRemapper extends ClassVisitor {
 
     private String remapMethodSelector(String s) {// TODO: full-support of target selector
         if (s.charAt(s.length() - 1) != '/' && s.charAt(0) != '@' && !s.contains("<")) {
-            String s1 = refMap.map(m -> m.get(className))
-                    .map(m -> m.get(s))
-                    .orElse(s);
+            String s1 = refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
+                    .getOrDefault(s, s);
             MixinTargetSelector selector = MixinTargetSelector.parse(s1);
             return Optional.ofNullable(selector.owner())
                     .map(Type::getInternalName)

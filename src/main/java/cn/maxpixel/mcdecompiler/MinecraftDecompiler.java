@@ -28,6 +28,7 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.*;
@@ -138,7 +139,7 @@ public class MinecraftDecompiler {
         private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
         private final ObjectSet<String> extraClasses = new ObjectOpenHashSet<>();
         private Optional<ObjectSet<Path>> bundledLibs = Optional.empty();
-        private Optional<Map<String, Map<String, String>>> refMap = Optional.empty();
+        private Map<String, Map<String, String>> refMap = Object2ObjectMaps.emptyMap();
 
         private Path inputJar;
         private boolean reverse;
@@ -195,35 +196,43 @@ public class MinecraftDecompiler {
                     }
                 }
                 try (InputStream is = Files.newInputStream(metaInf.resolve("MANIFEST.MF"))) {
-                    Manifest man = new Manifest(is);
-                    String config = man.getMainAttributes().getValue("MixinConfigs");
-                    if (config != null) {
-                        Path configPath = jarFs.getPath(config);
-                        if (Files.exists(configPath)) {
-                            try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(configPath),
-                                    StandardCharsets.UTF_8)) {
-                                Path refMapPath = jarFs.getPath(JsonParser.parseReader(isr).getAsJsonObject()
-                                        .get("refmap").getAsString());
-                                if (Files.exists(refMapPath)) {
-                                    try (InputStreamReader refMapReader = new InputStreamReader(
-                                            Files.newInputStream(refMapPath), StandardCharsets.UTF_8)) {
-                                        Map<String, Map<String, String>> refMap = new Object2ObjectOpenHashMap<>();
-                                        JsonObject mappings = JsonParser.parseReader(refMapReader)
-                                                .getAsJsonObject()
-                                                .getAsJsonObject("mappings");
-                                        mappings.keySet()
-                                                .forEach(key -> {
-                                                    JsonObject value = mappings.getAsJsonObject(key);
-                                                    Map<String, String> mapping = new Object2ObjectOpenHashMap<>();
-                                                    value.keySet().forEach(k -> mapping.put(k, value.get(k).getAsString()));
-                                                    refMap.put(key, mapping);
-                                                });
-                                        this.refMap = Optional.of(refMap);
-                                    }
+                    this.refMap = Optional.of(new Manifest(is))
+                            .map(man -> man.getMainAttributes().getValue("MixinConfigs"))
+                            .map(jarFs::getPath)
+                            .filter(Files::exists)
+                            .map(LambdaUtil.unwrap(Files::newInputStream))
+                            .map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                            .flatMap(isr -> {
+                                try (isr) {
+                                    return Optional.of(JsonParser.parseReader(isr).getAsJsonObject());
+                                } catch (IOException e) {
+                                    return Optional.empty();
                                 }
-                            }
-                        }
-                    }
+                            }).map(obj -> obj.getAsJsonObject("refmap"))
+                            .map(JsonElement::getAsString)
+                            .map(jarFs::getPath)
+                            .filter(Files::exists)
+                            .map(LambdaUtil.unwrap(Files::newInputStream))
+                            .map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                            .flatMap(isr -> {
+                                try (isr) {
+                                    return Optional.of(JsonParser.parseReader(isr).getAsJsonObject());
+                                } catch (IOException e) {
+                                    return Optional.empty();
+                                }
+                            }).map(obj -> obj.getAsJsonObject("mappings"))
+                            .<Map<String, Map<String, String>>>map(mappings -> {
+                                var refMap = new Object2ObjectOpenHashMap<String, Map<String, String>>();
+                                refMap.defaultReturnValue(Object2ObjectMaps.emptyMap());
+                                mappings.keySet()
+                                        .forEach(key -> {
+                                            JsonObject value = mappings.getAsJsonObject(key);
+                                            Map<String, String> mapping = new Object2ObjectOpenHashMap<>();
+                                            value.keySet().forEach(k -> mapping.put(k, value.get(k).getAsString()));
+                                            refMap.put(key, mapping);
+                                        });
+                                return refMap;
+                            }).orElse(Object2ObjectMaps.emptyMap());
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Error preprocessing jar file {0}", new Object[] {inputJar, e});
@@ -387,7 +396,7 @@ public class MinecraftDecompiler {
                 }
 
                 @Override
-                public Optional<Map<String, Map<String, String>>> refMap() {
+                public Map<String, Map<String, String>> refMap() {
                     return refMap;
                 }
             };
@@ -441,6 +450,6 @@ public class MinecraftDecompiler {
         Optional<ObjectSet<Path>> bundledLibs();
 
         @Override
-        Optional<Map<String, Map<String, String>>> refMap();
+        Map<String, Map<String, String>> refMap();
     }
 }

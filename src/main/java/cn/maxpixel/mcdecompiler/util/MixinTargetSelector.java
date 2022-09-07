@@ -31,7 +31,8 @@ public record MixinTargetSelector(@Nullable Type owner, @Nullable String name, @
         if (p.charAt(0) == 'L') {
             int i = p.indexOf(';');
             int j = p.indexOf('(');
-            if (i != -1 && (j == -1 || i < j)) {
+            int k = p.indexOf(':');
+            if (i != -1 && (j == -1 || i < j) && (j == -1 || i < k)) {
                 owner = Type.getType(p.substring(0, i + 1));
                 p = p.substring(i + 1);
             }

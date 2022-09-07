@@ -27,7 +27,6 @@ import org.objectweb.asm.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,10 +36,10 @@ public class ExtraClassesInformation implements Consumer<Path> {
     private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
-    private final Optional<Map<String, Map<String, String>>> refMap;
+    private final Map<String, Map<String, String>> refMap;
 
     public ExtraClassesInformation() {
-        this(Optional.empty());
+        this(Object2ObjectMaps.emptyMap());
     }
 
     public ExtraClassesInformation(Stream<Path> classes) {
@@ -48,18 +47,18 @@ public class ExtraClassesInformation implements Consumer<Path> {
     }
 
     public ExtraClassesInformation(Stream<Path> classes, boolean close) {
-        this(Optional.empty(), classes, close);
+        this(Object2ObjectMaps.emptyMap(), classes, close);
     }
 
-    public ExtraClassesInformation(Optional<Map<String, Map<String, String>>> refMap) {
+    public ExtraClassesInformation(Map<String, Map<String, String>> refMap) {
         this.refMap = refMap;
     }
 
-    public ExtraClassesInformation(Optional<Map<String, Map<String, String>>> refMap, Stream<Path> classes) {
+    public ExtraClassesInformation(Map<String, Map<String, String>> refMap, Stream<Path> classes) {
         this(refMap, classes, false);
     }
 
-    public ExtraClassesInformation(Optional<Map<String, Map<String, String>>> refMap, Stream<Path> classes, boolean close) {
+    public ExtraClassesInformation(Map<String, Map<String, String>> refMap, Stream<Path> classes, boolean close) {
         this.refMap = refMap;
         if(close) try(classes) {
             classes.forEach(this);
@@ -118,10 +117,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
                                         @Override
                                         public void visit(String name, Object value) {
                                             if (value instanceof String s) {
-                                                list.add(refMap.map(m -> m.get(className))
-                                                        .map(m -> m.get(s))
-                                                        .orElse(s)
-                                                );
+                                                list.add(refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
+                                                        .getOrDefault(s, s));
                                             } else throw new IllegalArgumentException();
                                         }
                                     };
