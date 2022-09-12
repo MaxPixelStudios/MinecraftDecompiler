@@ -24,6 +24,8 @@ import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -196,8 +198,17 @@ public final class ClassProcessor {
                     ngn.setMappedNamespace(targetNamespace);
                     cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
                 }
-                return new RuntimeParameterAnnotationFixer(new MixinClassRemapper(new ClassRemapper(cv, mappingRemapper),
-                        mappingRemapper, mappingRemapper.getExtraClassesInformation(), options.refMap(), className), className, access);
+                cv = new ClassRemapper(cv, mappingRemapper);
+                ExtraClassesInformation eci = mappingRemapper.getExtraClassesInformation();
+                if (eci.dontRemap.containsKey(className)) {
+                    ObjectSet<String> skipped = eci.dontRemap.get(className);
+                    if (!skipped.isEmpty()) {
+                        cv = new MixinClassRemapper(cv, mappingRemapper, eci, options.refMap(), skipped, className);
+                    }
+                } else {
+                    cv = new MixinClassRemapper(cv, mappingRemapper, eci, options.refMap(), ObjectSets.emptySet(), className);
+                }
+                return new RuntimeParameterAnnotationFixer(cv, className, access);
             };
         }
     }
