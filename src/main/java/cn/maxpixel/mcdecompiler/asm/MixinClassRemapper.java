@@ -26,6 +26,7 @@ import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -43,15 +44,17 @@ public class MixinClassRemapper extends ClassVisitor {
     private final ExtraClassesInformation info;
 
     private final Map<String, Map<String, String>> refMap;
+    private final ObjectSet<String> skipped;
     private final String className;
     private boolean mixin;
 
     public MixinClassRemapper(ClassVisitor classVisitor, ClassifiedMappingRemapper remapper, ExtraClassesInformation info,
-                              Map<String, Map<String, String>> refMap, String className) {
+                              Map<String, Map<String, String>> refMap, ObjectSet<String> skipped, String className) {
         super(Info.ASM_VERSION, classVisitor);
         this.remapper = remapper;
         this.info = info;
         this.refMap = refMap;
+        this.skipped = skipped;
         this.className = className;
     }
 
@@ -89,7 +92,7 @@ public class MixinClassRemapper extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        if (mixin) {
+        if (mixin && !skipped.contains(name.concat(descriptor))) {
             return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {
                 @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -107,7 +110,6 @@ public class MixinClassRemapper extends ClassVisitor {
     }
 
     private String remapMethodSelector(String s) {// TODO: full-support of target selector
-        if (ExtraClassesInformation.noRefmapMethods.contains(s)) return s;
         if (s.charAt(s.length() - 1) != '/' && s.charAt(0) != '@' && !s.contains("<")) {
             String s1 = refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
                     .getOrDefault(s, s);
