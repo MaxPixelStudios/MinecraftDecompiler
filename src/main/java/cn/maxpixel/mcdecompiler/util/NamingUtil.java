@@ -25,12 +25,14 @@ import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public class NamingUtil {
     public static int getDimension(@NotNull String javaName) {
         int arrDimension = 0;
@@ -80,11 +82,11 @@ public class NamingUtil {
         return javaName.replace('.', '/');
     }
 
-    public static String asNativeName0(@NotNull String fileName) {
+    public static String file2Native(@NotNull String fileName) {
         return fileName.replace('\\', '/').replace(".class", "");
     }
 
-    public static String asDescriptor(@NotNull String javaName) {
+    public static String java2Descriptor(@NotNull String javaName) {
         if(javaName.isBlank()) return "";
         if(!javaName.contains("[]")) {
             return switch(javaName) {

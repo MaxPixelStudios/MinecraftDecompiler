@@ -120,7 +120,7 @@ public class ClassifiedDeobfuscator {
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
-                        String k = NamingUtil.asNativeName0(p.toString());
+                        String k = NamingUtil.file2Native(p.toString());
                         return mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
             options.extraJars().forEach(jar -> {
@@ -136,7 +136,7 @@ public class ClassifiedDeobfuscator {
             paths.forEach(path -> {
                 try {
                     String pathString = path.toString();
-                    String classKeyName = NamingUtil.asNativeName0(pathString);
+                    String classKeyName = NamingUtil.file2Native(pathString);
                     if(mappings.containsKey(classKeyName) ||
                             (extraClassesNotEmpty && extraClasses.stream().anyMatch(classKeyName::startsWith))) {
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));

@@ -311,19 +311,19 @@ public final class MappingProcessors {
                         String[] sa = split(s.substring(4), methodMatcher, 6, false);
                         if(sa.length == 6) {
                             StringBuilder descriptor = new StringBuilder("(");
-                            for(String arg : sa[4].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
-                            descriptor.append(')').append(NamingUtil.asDescriptor(sa[2]));
+                            for(String arg : sa[4].split(",")) descriptor.append(NamingUtil.java2Descriptor(arg));
+                            descriptor.append(')').append(NamingUtil.java2Descriptor(sa[2]));
                             classMapping.addMethod(MappingUtil.Paired.ldmo(sa[5], sa[3],
                                     descriptor.toString(), Integer.parseInt(sa[0]), Integer.parseInt(sa[1])));
                         } else if(sa.length == 4) {
                             StringBuilder descriptor = new StringBuilder("(");
-                            for(String arg : sa[2].split(",")) descriptor.append(NamingUtil.asDescriptor(arg));
-                            descriptor.append(')').append(NamingUtil.asDescriptor(sa[0]));
+                            for(String arg : sa[2].split(",")) descriptor.append(NamingUtil.java2Descriptor(arg));
+                            descriptor.append(')').append(NamingUtil.java2Descriptor(sa[0]));
                             classMapping.addMethod(MappingUtil.Paired.dmo(sa[3], sa[1], descriptor.toString()));
                         } else error();
                     } else {
                         String[] sa = split(s.substring(4), fieldMatcher, 3, true);
-                        classMapping.addField(MappingUtil.Paired.dmo(sa[2], sa[1], NamingUtil.asDescriptor(sa[0])));
+                        classMapping.addField(MappingUtil.Paired.dmo(sa[2], sa[1], NamingUtil.java2Descriptor(sa[0])));
                     }
                 } else break;
             }

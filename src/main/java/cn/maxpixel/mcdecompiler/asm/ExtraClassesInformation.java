@@ -71,7 +71,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
         try {
             ClassReader reader = new ClassReader(IOUtil.readAllBytes(classFilePath));
             String className = reader.getClassName();
-            boolean needToRecord = (reader.getAccess() & (Opcodes.ACC_INTERFACE | Opcodes.ACC_ENUM | Opcodes.ACC_RECORD)) == 0;
+            boolean needToRecord = (reader.getAccess() & (Opcodes.ACC_INTERFACE | Opcodes.ACC_RECORD)) == 0;
+            boolean notEnum = (reader.getAccess() & Opcodes.ACC_ENUM) == 0;
             String superName = reader.getSuperName();
             String[] interfaces = reader.getInterfaces();
             int itfLen = interfaces.length;
@@ -96,7 +97,8 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 }
             }
             reader.accept(new ClassVisitor(Info.ASM_VERSION) {
-                private final Object2IntOpenHashMap<String> map = needToRecord ? new Object2IntOpenHashMap<>() : null;
+                private final boolean recordAccess = needToRecord && notEnum;
+                private final Object2IntOpenHashMap<String> map = recordAccess ? new Object2IntOpenHashMap<>() : null;
                 private boolean isMixin;
 
                 @Override
@@ -142,7 +144,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
 
                 @Override
                 public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                    if(needToRecord && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
+                    if(recordAccess && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
                     return !isMixin || dontRemap.get(className) == ObjectSets.<String>emptySet() ? null : new FieldVisitor(api) {
                         @Override
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -161,7 +163,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
 
                 @Override
                 public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                    if(needToRecord && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
+                    if(recordAccess && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
                     return !isMixin || dontRemap.get(className) == ObjectSets.<String>emptySet() ? null : new MethodVisitor(api) {
                         @Override
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -180,7 +182,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
 
                 @Override
                 public void visitEnd() {
-                    if(needToRecord && !map.isEmpty()) {
+                    if(needToRecord && notEnum && !map.isEmpty()) {
                         map.defaultReturnValue(Opcodes.ACC_PUBLIC);
                         synchronized(accessMap) {
                             accessMap.put(className, map);

@@ -28,7 +28,6 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.*;
@@ -200,39 +199,38 @@ public class MinecraftDecompiler {
                             .map(man -> man.getMainAttributes().getValue("MixinConfigs"))
                             .map(jarFs::getPath)
                             .filter(Files::exists)
-                            .map(LambdaUtil.unwrap(Files::newInputStream))
-                            .map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8))
-                            .flatMap(isr -> {
-                                try (isr) {
-                                    return Optional.of(JsonParser.parseReader(isr).getAsJsonObject());
-                                } catch (IOException e) {
-                                    return Optional.empty();
-                                }
-                            }).map(obj -> obj.getAsJsonObject("refmap"))
-                            .map(JsonElement::getAsString)
-                            .map(jarFs::getPath)
-                            .filter(Files::exists)
-                            .map(LambdaUtil.unwrap(Files::newInputStream))
-                            .map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8))
-                            .flatMap(isr -> {
-                                try (isr) {
-                                    return Optional.of(JsonParser.parseReader(isr).getAsJsonObject());
-                                } catch (IOException e) {
-                                    return Optional.empty();
-                                }
-                            }).map(obj -> obj.getAsJsonObject("mappings"))
-                            .<Map<String, Map<String, String>>>map(mappings -> {
-                                var refMap = new Object2ObjectOpenHashMap<String, Map<String, String>>();
-                                refMap.defaultReturnValue(Object2ObjectMaps.emptyMap());
-                                mappings.keySet()
-                                        .forEach(key -> {
+                            .flatMap(path -> Optional.of(path)
+                                    .map(LambdaUtil.unwrap(Files::newInputStream))
+                                    .map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                                    .flatMap(isr -> {
+                                        try (isr) {
+                                            return Optional.of(JsonParser.parseReader(isr).getAsJsonObject());
+                                        } catch (IOException e) {
+                                            return Optional.empty();
+                                        }
+                                    }).map(obj -> jarFs.getPath(obj.get("refmap").getAsString()))
+                                    .filter(Files::exists)
+                                    .map(LambdaUtil.unwrap(Files::newInputStream))
+                                    .map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                                    .flatMap(isr -> {
+                                        try (isr) {
+                                            return Optional.of(JsonParser.parseReader(isr).getAsJsonObject());
+                                        } catch (IOException e) {
+                                            return Optional.empty();
+                                        }
+                                    }).map(obj -> obj.getAsJsonObject("mappings"))
+                                    .map(mappings -> {
+                                        Object2ObjectMap<String, Map<String, String>> refMap = new Object2ObjectOpenHashMap<>();
+                                        refMap.defaultReturnValue(Object2ObjectMaps.emptyMap());
+                                        mappings.keySet().forEach(key -> {
                                             JsonObject value = mappings.getAsJsonObject(key);
                                             Map<String, String> mapping = new Object2ObjectOpenHashMap<>();
                                             value.keySet().forEach(k -> mapping.put(k, value.get(k).getAsString()));
                                             refMap.put(key, mapping);
                                         });
-                                return refMap;
-                            }).orElse(Object2ObjectMaps.emptyMap());
+                                        return refMap;
+                                    })
+                            ).orElse(Object2ObjectMaps.emptyMap());
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Error preprocessing jar file {0}", new Object[] {inputJar, e});

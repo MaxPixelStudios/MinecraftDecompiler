@@ -23,6 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
+import cn.maxpixel.mcdecompiler.util.DescriptorUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
@@ -107,14 +108,15 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     public String getUnmappedDescByMappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
-        if(mappedDescriptor.startsWith("()") && mappedDescriptor.charAt(2) != 'L' && mappedDescriptor.charAt(2) != '[') {
-            return mappedDescriptor;
+        if (mappedDescriptor.charAt(1) == ')') {
+            if (mappedDescriptor.charAt(2) != 'L' && mappedDescriptor.charAt(2) != '[') return mappedDescriptor;
+            return "()".concat(mapToMapped(Type.getType(DescriptorUtil.getMethodReturnDescriptor(mappedDescriptor))));
         }
         StringBuilder stringBuilder = new StringBuilder("(");
-        if(mappedDescriptor.charAt(1) != ')') for(Type argumentType : Type.getArgumentTypes(mappedDescriptor)) {
+        for (Type argumentType : Type.getArgumentTypes(mappedDescriptor)) {
             stringBuilder.append(mapToUnmapped(argumentType));
         }
-        return stringBuilder.append(')').append(mapToUnmapped(Type.getReturnType(mappedDescriptor))).toString();
+        return stringBuilder.append(')').append(mapToUnmapped(Type.getType(DescriptorUtil.getMethodReturnDescriptor(mappedDescriptor)))).toString();
     }
 
     public String mapToMapped(@NotNull final Type unmappedType) {
