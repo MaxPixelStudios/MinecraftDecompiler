@@ -23,10 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import cn.maxpixel.mcdecompiler.util.DescriptorUtil;
-import cn.maxpixel.mcdecompiler.util.Logging;
-import cn.maxpixel.mcdecompiler.util.MappingUtil;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -41,11 +38,14 @@ import java.lang.reflect.Modifier;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ClassifiedMappingRemapper extends Remapper {
     private static final Logger LOGGER = Logging.getLogger("Remapper");
     private ExtraClassesInformation extraClassesInformation;
     private final Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> fieldByUnm;
+    private final Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String,
+            Object2ObjectOpenHashMap<String, PairedMapping>>> methodsByUnm;
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByMap;
 
@@ -53,6 +53,18 @@ public class ClassifiedMappingRemapper extends Remapper {
         this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(mappings);
         this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(mappings);
         this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(mappings);
+        this.methodsByUnm = mappings.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName, cm -> {
+            Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> map =
+                    new Object2ObjectOpenHashMap<>();
+            cm.getMethods().forEach(mm -> {
+                Object2ObjectOpenHashMap<String, PairedMapping> m = map.computeIfAbsent(mm.unmappedName,
+                        k -> new Object2ObjectOpenHashMap<>());
+                if (m.putIfAbsent(getUnmappedDesc(mm), mm) != null) {
+                    throw new IllegalArgumentException("Method duplicated... This should not happen!");
+                }
+            });
+            return map;
+        }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String targetNamespace) {
@@ -110,7 +122,7 @@ public class ClassifiedMappingRemapper extends Remapper {
     public String getUnmappedDescByMappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
         if (mappedDescriptor.charAt(1) == ')') {
             if (mappedDescriptor.charAt(2) != 'L' && mappedDescriptor.charAt(2) != '[') return mappedDescriptor;
-            return "()".concat(mapToMapped(Type.getType(DescriptorUtil.getMethodReturnDescriptor(mappedDescriptor))));
+            return "()".concat(mapToUnmapped(Type.getType(DescriptorUtil.getMethodReturnDescriptor(mappedDescriptor))));
         }
         StringBuilder stringBuilder = new StringBuilder("(");
         for (Type argumentType : Type.getArgumentTypes(mappedDescriptor)) {
@@ -152,11 +164,10 @@ public class ClassifiedMappingRemapper extends Remapper {
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if(name.charAt(0) != '<') { // equivalent to !(name.equals("<init>") || name.equals("<clinit>"))
-            return Optional.ofNullable(mappingByUnm.get(owner))
-                    .flatMap(cm -> cm.getMethods().parallelStream()
-                            .filter(m -> m.unmappedName.equals(name) && getUnmappedDesc(m).equals(descriptor))
-                            .reduce((left, right) -> {throw new IllegalArgumentException("Method duplicated... This should not happen!");})
-                    ).or(() -> processSuperMethod(owner, name, descriptor))
+            return Optional.ofNullable(methodsByUnm.get(owner))
+                    .map(map -> map.get(name))
+                    .map(map -> map.get(descriptor))
+                    .or(() -> processSuperMethod(owner, name, descriptor))
                     .map(m -> m.mappedName).orElse(name);
         }
         return name;
@@ -165,22 +176,21 @@ public class ClassifiedMappingRemapper extends Remapper {
     private Optional<PairedMapping> processSuperMethod(String owner, String name, String descriptor) {
         if(extraClassesInformation == null) throw new UnsupportedOperationException("ExtraClassesInformation not present");
         return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
-                .flatMap(superNames -> {
-                    ObjectArrayList<ClassMapping<PairedMapping>> cms = superNames.stream()
-                            .map(mappingByUnm::get)
-                            .filter(Objects::nonNull)
-                            .collect(ObjectArrayList.toList());
-                    return cms.parallelStream()
-                            .flatMap(cm -> cm.getMethods().stream())
-                            .filter(m -> m.unmappedName.equals(name) && getUnmappedDesc(m).equals(descriptor))
-                            .reduce(this::reduceMethod)
-                            .or(() -> cms.parallelStream()
-                                    .map(cm -> processSuperMethod(cm.mapping.unmappedName, name, descriptor))
-                                    .filter(Optional::isPresent)
-                                    .map(Optional::get)
-                                    .reduce(this::reduceMethod)
-                            );
-                });
+                .flatMap(superNames -> superNames.parallelStream()
+                        .map(methodsByUnm::get)
+                        .filter(Objects::nonNull)
+                        .map(map -> map.get(name))
+                        .filter(Objects::nonNull)
+                        .map(map -> map.get(descriptor))
+                        .filter(Objects::nonNull)
+                        .reduce(this::reduceMethod)
+                        .or(() -> superNames.parallelStream()
+                                .map(n -> processSuperMethod(n, name, descriptor))
+                                .filter(Optional::isPresent)
+                                .map(Optional::get)
+                                .reduce(this::reduceMethod)
+                        )
+                );
     }
 
     private PairedMapping reduceMethod(@NotNull PairedMapping left, @NotNull PairedMapping right) {
