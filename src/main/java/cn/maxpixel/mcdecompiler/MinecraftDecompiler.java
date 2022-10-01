@@ -160,8 +160,10 @@ public class MinecraftDecompiler {
         public OptionBuilder(Path inputJar, boolean reverse) {
             preprocess(inputJar);
             this.reverse = reverse;
-            this.outputJar = Path.of("output", "deobfuscated.jar").toAbsolutePath().normalize();
-            this.outputDecompDir = Path.of("output", "decompiled").toAbsolutePath().normalize();
+            String outputName = inputJar.getFileName().toString();
+            outputName = outputName.substring(0, outputName.lastIndexOf('.'));
+            this.outputJar = Path.of("output", outputName + "_deobfuscated.jar").toAbsolutePath().normalize();
+            this.outputDecompDir = Path.of("output", outputName + "_decompiled").toAbsolutePath().normalize();
         }
 
         private void preprocess(Path inputJar) {
