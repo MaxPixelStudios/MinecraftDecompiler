@@ -26,20 +26,28 @@ public class FunctionTest {
     private static final Logger LOGGER = Logging.getLogger();
 
 //    public void test() throws Throwable {
-//        ClassifiedMappingReader<PairedMapping> srg = new ClassifiedMappingReader<>(MappingTypes.SRG, "downloads/1.8.9/joined.srg");
-//        UniqueMappingReader<PairedMapping> mcp = new UniqueMappingReader<>(new MCP(), "downloads/1.8.9/methods.csv",
-//                "downloads/1.8.9/fields.csv");
+//        ClassifiedMappingReader<PairedMapping> srg = new ClassifiedMappingReader<>(MappingTypes.SRG, "downloads/1.12.2/joined.srg");
+//        UniqueMappingReader<PairedMapping> mcp = new UniqueMappingReader<>(new MCP(), "downloads/1.12.2/mcp_stable-39-1.12/methods.csv",
+//                "downloads/1.12.2/mcp_stable-39-1.12/fields.csv");
 //        Map<String, String> fields = mcp.mappings.fields.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
 //        Map<String, String> methods = mcp.mappings.methods.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
-//        ClassifiedMappingWriter<PairedMapping> writer = new ClassifiedMappingWriter<>(MappingTypes.SRG);
+//        ClassifiedMappingWriter<PairedMapping> writer = new ClassifiedMappingWriter<>(MappingTypes.TSRG_V1);
 //        srg.mappings.forEach(mapping -> {
-//            mapping.getMethods().forEach(m -> m.mappedName = methods.getOrDefault(m.mappedName, m.mappedName));
-//            mapping.getFields().forEach(m -> m.mappedName = fields.getOrDefault(m.mappedName, m.mappedName));
+//            mapping.mapping.unmappedName = mapping.mapping.mappedName;
+//            mapping.getMethods().forEach(m -> {
+//                m.unmappedName = m.mappedName;
+//                m.getComponent(Descriptor.class).setUnmappedDescriptor(m.getComponent(Descriptor.Mapped.class).mappedDescriptor);
+//                m.mappedName = methods.getOrDefault(m.mappedName, m.mappedName);
+//            });
+//            mapping.getFields().forEach(m -> {
+//                m.unmappedName = m.mappedName;
+//                m.mappedName = fields.getOrDefault(m.mappedName, m.mappedName);
+//            });
 //            writer.addMapping(mapping);
 //        });
-//        writer.writeTo(Files.newOutputStream(Path.of("output/1.8.9-off2mcp.srg"), StandardOpenOption.CREATE));
+//        writer.writeTo(Files.newOutputStream(Path.of("output/1.12.2-srg2mcp.tsrg"), StandardOpenOption.CREATE));
 //    }
-
+//
 //    private static class MCP implements MappingType.Unique<PairedMapping> {
 //        @Override
 //        public MappingProcessor.Unique<PairedMapping> getProcessor() {
