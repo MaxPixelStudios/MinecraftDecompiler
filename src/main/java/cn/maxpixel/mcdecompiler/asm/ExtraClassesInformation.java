@@ -182,7 +182,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
 
                 @Override
                 public void visitEnd() {
-                    if(needToRecord && notEnum && !map.isEmpty()) {
+                    if(recordAccess && !map.isEmpty()) {
                         map.defaultReturnValue(Opcodes.ACC_PUBLIC);
                         synchronized(accessMap) {
                             accessMap.put(className, map);
