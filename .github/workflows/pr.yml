@@ -6,12 +6,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v2.5.0
+        uses: actions/setup-java@v3
         with:
-          java-version: 17.0.1
+          java-version: 17
           distribution: temurin
+          check-latest: true
           cache: 'maven'
       - name: Build with Maven
         run: mvn -B clean package
+      - name: Upload target
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: MinecraftDecompiler
+          path: MinecraftDecompiler.jar

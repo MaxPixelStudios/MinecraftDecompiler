@@ -129,7 +129,9 @@ public class DownloadUtil {
         ObjectOpenHashSet<Path> libs = new ObjectOpenHashSet<>();
         LOGGER.log(Level.INFO, "Downloading libs of version {0}", version);
         StreamSupport.stream(VersionManifest.get(version).getAsJsonArray("libraries").spliterator(), true)
-                .map(ele -> ele.getAsJsonObject().get("downloads").getAsJsonObject().get("artifact").getAsJsonObject())
+                .map(ele -> ele.getAsJsonObject().getAsJsonObject("downloads"))
+                .filter(obj -> obj.has("artifact"))
+                .map(obj -> obj.getAsJsonObject("artifact"))
                 .forEach(artifact -> {
                     String url = artifact.get("url").getAsString();
                     Path file = libDir.resolve(url.substring(url.lastIndexOf('/') + 1)); // libDir.resolve(lib file name)
