@@ -18,7 +18,8 @@ For usage and more information, visit [the wiki](https://github.com/MaxPixelStud
 ## Community
 **Discord: https://discord.gg/pjQd8PVk3t**  
 **GH Discussions: https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions**  
-**KOOK/开黑啦(仅中文): https://kook.top/WI8xyn**
+**KOOK/开黑啦: https://kook.top/WI8xyn**
+**QQ群(加群请注明理由: MinecraftDecompiler): 814722661**
 
 ## Special Thanks
 ### JetBrains - Provide awesome IDEs and free licence codes
