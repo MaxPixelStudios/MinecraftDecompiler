@@ -4,6 +4,7 @@
 /downloads/
 /output/
 /.idea/
+/.fleet/
 /temp/
 
 *.iml

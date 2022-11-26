@@ -56,14 +56,15 @@ public interface Info {
     private static Manifest getManifest() {
         try {
             URL location = Info.class.getProtectionDomain().getCodeSource().getLocation();
-            if(location != null) {
-                URLClassLoader loader = new URLClassLoader(new URL[] {location}, null);
-                URL url = loader.findResource(JarFile.MANIFEST_NAME);
-                if(url != null) {
-                    return new Manifest(url.openStream());
+            if (location != null) {
+                try (URLClassLoader loader = new URLClassLoader(new URL[] {location}, null)) {
+                    URL url = loader.findResource(JarFile.MANIFEST_NAME);
+                    if (url != null) {
+                        return new Manifest(url.openStream());
+                    }
                 }
             }
-        } catch(IOException ignored) {
+        } catch (IOException ignored) {
         }
         return null;
     }

@@ -45,13 +45,13 @@ jobs:
         echo "MVN_PROJECT_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.3.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
       env:
         GITHUB_TOKEN: ${{ github.token }}
-    - name: Pre-release
-      if: ${{ success() && !startsWith(github.event.head_commit.head_commit.message, 'Bump version to ') && !endsWith(github.event.head_commit.head_commit.message, ' Release') }}
-      uses: softprops/action-gh-release@v1
-      with:
-        name: MinecraftDecompiler v${{ env.MVN_PROJECT_VERSION }}+${{ github.sha }} Pre-released
-        tag_name: v${{ env.MVN_PROJECT_VERSION }}+${{ github.sha }}
-        target_commitish: ${{ github.sha }}
-        body: ${{ github.event.head_commit.head_commit.message }}
-        files: MinecraftDecompiler.jar
-        prerelease: true
+#    - name: Pre-release
+#      if: ${{ success() && !startsWith(github.event.head_commit.head_commit.message, 'Bump version to ') && !endsWith(github.event.head_commit.head_commit.message, ' Release') }}
+#      uses: softprops/action-gh-release@v1
+#      with:
+#        name: MinecraftDecompiler v${{ env.MVN_PROJECT_VERSION }}+${{ github.sha }} Pre-released
+#        tag_name: v${{ env.MVN_PROJECT_VERSION }}+${{ github.sha }}
+#        target_commitish: ${{ github.sha }}
+#        body: ${{ github.event.head_commit.head_commit.message }}
+#        files: MinecraftDecompiler.jar
+#        prerelease: true
