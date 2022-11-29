@@ -63,7 +63,7 @@ public class CFRDecompileThread extends Thread {
 
             @Override
             public void write(byte[] b, int off, int len) {
-                LOGGER.fine(new String(b, off, len).stripTrailing());
+                LOGGER.fine(() -> new String(b, off, len - 1));
             }
         }));
         cfr.analyse(ObjectLists.singleton(source));

@@ -20,15 +20,14 @@ package cn.maxpixel.mcdecompiler.decompiler.thread;
 
 import cn.maxpixel.mcdecompiler.util.Logging;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.decompiler.ThreadedPrintStreamLogger;
 
 import java.io.File;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class ForgeFlowerDecompileThread extends Thread {
+    private static final Logger LOGGER = Logging.getLogger("ForgeFlower");
+
     private final File[] sources;
     private final File[] libraries;
     private final File target;
@@ -50,20 +49,7 @@ public class ForgeFlowerDecompileThread extends Thread {
                 "bsm", "1",
                 "iec", "1"
         );
-        ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target, options,
-                new ThreadedPrintStreamLogger(new PrintStream(new OutputStream() {
-                    private static final Logger LOGGER = Logging.getLogger("ForgeFlower");
-
-                    @Override
-                    public void write(int b) {
-                        throw new UnsupportedOperationException();
-                    }
-
-                    @Override
-                    public void write(byte[] b, int off, int len) {
-                        LOGGER.fine(new String(b, off, len).stripTrailing());
-                    }
-                })));
+        ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target, options, LOGGER);
         for(File source : sources) decompiler.addSource(source);
         for(File library : libraries) decompiler.addLibrary(library);
         decompiler.decompileContext();
