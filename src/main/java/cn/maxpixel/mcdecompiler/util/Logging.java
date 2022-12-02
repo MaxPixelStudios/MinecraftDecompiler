@@ -39,18 +39,22 @@ public final class Logging {
     private static final StackWalker WALKER = StackWalker.getInstance();
     private static final LogConfiguration CONFIG = LogConfiguration.fromInputStream(
             Logging.class.getClassLoader().getResourceAsStream("logging.json"));
+    private static final Level LEVEL;
 
     static {
-        if(!Info.IS_DEV) {
+        Level l = CONFIG.globalLevel;
+        if(!Info.IS_DEV && System.console() != null) {
+            l = Level.OFF;
             AnsiConsole.systemInstall();
             Runtime.getRuntime().addShutdownHook(new Thread(AnsiConsole::systemUninstall));
         }
         PARENT = Logger.getLogger("cn.maxpixel.mcdecompiler");
         PARENT.setUseParentHandlers(false);
-        PARENT.setLevel(CONFIG.globalLevel);
+        PARENT.setLevel(l);
         StdoutHandler handler = new StdoutHandler();
-        handler.setLevel(CONFIG.globalLevel);
+        handler.setLevel(l);
         PARENT.addHandler(handler);
+        LEVEL = l;
     }
 
     private Logging() {}
@@ -64,17 +68,7 @@ public final class Logging {
         if(name == null) return getLogger();
         Logger logger = Logger.getLogger(name);
         logger.setParent(PARENT);
-        logger.setLevel(Level.ALL);
-        return logger;
-    }
-
-    public static Logger setFilter(Logger logger, Filter filter) {
-        logger.setFilter(filter);
-        return logger;
-    }
-
-    public static Logger setLevel(Logger logger, Level level) {
-        logger.setLevel(level);
+        logger.setLevel(LEVEL);
         return logger;
     }
 
@@ -195,7 +189,7 @@ public final class Logging {
                     int paramLength = params.length;
                     if(params[paramLength - 1] instanceof Throwable) thrown = (Throwable) params[--paramLength];
                     for(int i = 0; i < paramLength; i++) {
-                        if(params[i] instanceof Supplier s) params[i] = s.get();
+                        if(params[i] instanceof Supplier<?> s) params[i] = s.get();
                     }
                     message = String.format(MessageFormat.format(message, params), params);
                 }
