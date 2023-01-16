@@ -10,7 +10,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <depend.asm.ver>9.4</depend.asm.ver>
-        <depend.gson.ver>2.10</depend.gson.ver>
+        <depend.gson.ver>2.10.1</depend.gson.ver>
         <depend.jansi.ver>2.4.0</depend.jansi.ver>
         <depend.fastutil.ver>8.5.11</depend.fastutil.ver>
         <depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
