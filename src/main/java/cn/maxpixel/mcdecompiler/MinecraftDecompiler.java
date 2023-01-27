@@ -101,7 +101,7 @@ public class MinecraftDecompiler {
     }
 
     private void decompile0(IDecompiler decompiler, ObjectSet<String> paths, Path inputJar, Path outputDir) {
-        try(FileSystem jarFs = JarUtil.createZipFs(inputJar, false)) {
+        try(FileSystem jarFs = JarUtil.createZipFs(inputJar)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
             Path libDownloadPath = Files.createDirectories(Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize());

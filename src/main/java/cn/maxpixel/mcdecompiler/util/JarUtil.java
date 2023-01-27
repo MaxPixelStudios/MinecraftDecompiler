@@ -31,7 +31,7 @@ public class JarUtil {
     private static final FileSystemProvider JAR_FSP;
 
     public static FileSystem createZipFs(Path zipPath) throws IOException {
-        return createZipFs(zipPath, true);
+        return createZipFs(zipPath, false);
     }
 
     public static FileSystem createZipFs(Path zipPath, boolean create) throws IOException {

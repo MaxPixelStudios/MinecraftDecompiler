@@ -73,7 +73,8 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.acceptsAll(of("e", "extra-jars"), "Extra jars used to get class " +
                 "information").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> extraClassesO = parser.acceptsAll(of("c", "extra-class"), "Extra classes/packages that " +
-                "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names").withRequiredArg();
+                "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names. Use \"*\" to " +
+                "deobfuscate all").withRequiredArg();
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
         ClassProcessor.registerCommandLineOptions(parser);
 

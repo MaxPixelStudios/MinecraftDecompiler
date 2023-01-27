@@ -114,14 +114,15 @@ public class ClassifiedDeobfuscator {
         Files.deleteIfExists(target);
         Files.createDirectories(target.getParent());
         try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
-            FileSystem targetFs = JarUtil.createZipFs(target);
+            FileSystem targetFs = JarUtil.createZipFs(target, true);
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             ObjectSet<String> extraClasses = options.extraClasses();
+            boolean deobfAll = extraClasses.contains("*");
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
                         String k = NamingUtil.file2Native(p.toString());
-                        return mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
+                        return (deobfAll && k.endsWith(".class")) || mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
             options.extraJars().forEach(jar -> {
                 try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
@@ -137,7 +138,7 @@ public class ClassifiedDeobfuscator {
                 try {
                     String pathString = path.toString();
                     String classKeyName = NamingUtil.file2Native(pathString);
-                    if(mappings.containsKey(classKeyName) ||
+                    if((deobfAll && pathString.endsWith(".class")) || mappings.containsKey(classKeyName) ||
                             (extraClassesNotEmpty && extraClasses.stream().anyMatch(classKeyName::startsWith))) {
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
                         ClassWriter writer = new ClassWriter(0);
