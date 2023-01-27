@@ -18,7 +18,7 @@
         <depend.fernflower.ver>403</depend.fernflower.ver>
         <depend.forgeflower.ver>2.0.605.4</depend.forgeflower.ver>
         <depend.jbannos.ver>23.1.0</depend.jbannos.ver>
-        <depend.jmh.ver>1.35</depend.jmh.ver>
+        <depend.jmh.ver>1.36</depend.jmh.ver>
     </properties>
     <pluginRepositories>
         <pluginRepository>
