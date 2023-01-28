@@ -97,6 +97,31 @@
                             </excludes>
                         </filter>
                     </filters>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.objectweb.asm</pattern>
+                            <shadedPattern>cn.maxpixel.mcdecompiler.deps.asm</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.google.gson</pattern>
+                            <shadedPattern>cn.maxpixel.mcdecompiler.deps.gson</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>it.unimi.dsi.fastutil</pattern>
+                            <shadedPattern>cn.maxpixel.mcdecompiler.deps.fastutil</shadedPattern>
+                        </relocation>
+<!--                        <relocation>--><!--FIXME-->
+<!--                            <pattern>joptsimple</pattern>-->
+<!--                            <shadedPattern>cn.maxpixel.mcdecompiler.deps.joptsimple</shadedPattern>-->
+<!--                            <excludes>-->
+<!--                                <exclude>joptsimple.BuiltinHelpFormatter</exclude>-->
+<!--                            </excludes>-->
+<!--                        </relocation>-->
+                        <relocation>
+                            <pattern>org.fusesource.jansi</pattern>
+                            <shadedPattern>cn.maxpixel.mcdecompiler.deps.jansi</shadedPattern>
+                        </relocation>
+                    </relocations>
                 </configuration>
                 <executions>
                     <execution>

@@ -44,7 +44,6 @@ public final class Logging {
     static {
         Level l = CONFIG.globalLevel;
         if(!Info.IS_DEV && System.console() != null) {
-            l = Level.OFF;
             AnsiConsole.systemInstall();
             Runtime.getRuntime().addShutdownHook(new Thread(AnsiConsole::systemUninstall));
         }
