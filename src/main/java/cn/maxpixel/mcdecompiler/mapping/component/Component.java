@@ -19,7 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping.component;
 
 /**
- * Base component class. Every component must extend this class
+ * Base component class. Every component must implement this interface
  */
 public interface Component {
 }

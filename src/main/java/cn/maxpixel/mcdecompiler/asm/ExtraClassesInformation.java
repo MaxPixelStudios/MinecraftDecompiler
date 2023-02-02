@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {
-    private static final Logger LOGGER = Logging.getLogger("Class Info Collector");
+    private static final Logger LOGGER = Logging.getLogger();
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
     private final Map<String, Map<String, String>> refMap;
@@ -191,7 +191,7 @@ public class ExtraClassesInformation implements Consumer<Path> {
                 }
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         } catch(IOException e) {
-            LOGGER.log(Level.WARNING, "Error when creating super class mapping", e);
+            LOGGER.log(Level.WARNING, "Error when generating extra classes information", e);
         }
     }
 

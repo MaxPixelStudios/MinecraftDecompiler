@@ -54,7 +54,7 @@ public class LVTRemapper extends ClassVisitor {
             m.setMappedNamespace(mapping.mapping.getMappedNamespace());
             synchronized(methodByMapped) {
                 if(methodByMapped.put(m.getMappedName().concat(remapper.getMappedDescByUnmappedDesc(
-                        desc.getDescriptorNamespace())), m) != null) {
+                        desc.getUnmappedDescriptor())), m) != null) {
                     throw new IllegalArgumentException("Method duplicated");
                 }
             }
@@ -70,8 +70,8 @@ public class LVTRemapper extends ClassVisitor {
             boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
             LocalVariableTable.Namespaced lvt = methodMapping.getComponent(LocalVariableTable.Namespaced.class);
             if(lvt != null) return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-                private final Optional<VariableNameGenerator.Skippable> skippable = mv instanceof VariableNameGenerator.Skippable s ?
-                        Optional.of(s) : Optional.empty();
+                private final Optional<VariableNameGenerator.Skippable> skippable = mv instanceof VariableNameGenerator.Skippable ?
+                        Optional.of((VariableNameGenerator.Skippable) mv) : Optional.empty();
 
                 @Override
                 public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {

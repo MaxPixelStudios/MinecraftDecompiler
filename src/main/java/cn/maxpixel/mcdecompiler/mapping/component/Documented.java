@@ -20,15 +20,17 @@ package cn.maxpixel.mcdecompiler.mapping.component;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
+import java.util.Objects;
+
 public class Documented implements Component {
-    public String doc;
+    private String doc;
 
     public String getDoc() {
         return doc;
     }
 
     public void setDoc(String doc) {
-        this.doc = doc;
+        this.doc = Objects.requireNonNull(doc, "null documentation isn't meaningful huh?");
     }
 
     public static class LocalVariable implements Component {
@@ -36,7 +38,7 @@ public class Documented implements Component {
 
         public void setLocalVariableDoc(int index, String doc) {
             if(index < 0) throw new IndexOutOfBoundsException();
-            lvtDoc.put(index, doc);
+            lvtDoc.put(index, Objects.requireNonNull(doc, "null documentation isn't meaningful huh?"));
         }
 
         public String getLocalVariableDoc(int index) {

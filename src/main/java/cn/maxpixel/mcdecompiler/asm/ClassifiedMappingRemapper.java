@@ -41,7 +41,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class ClassifiedMappingRemapper extends Remapper {
-    private static final Logger LOGGER = Logging.getLogger("Remapper");
+    private static final Logger LOGGER = Logging.getLogger();
     private ExtraClassesInformation extraClassesInformation;
     private final Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> fieldByUnm;
     private final Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String,
@@ -107,16 +107,15 @@ public class ClassifiedMappingRemapper extends Remapper {
         return internalName;
     }
 
-    public String mapToUnmapped(@NotNull final Type mappedType) {
-        switch(mappedType.getSort()) {
-            case Type.ARRAY:
-                return "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
-            case Type.OBJECT:
-                ClassMapping<PairedMapping> cm = mappingByMap.get(mappedType.getInternalName());
-                return cm != null ? Type.getObjectType(cm.mapping.unmappedName).getDescriptor() : mappedType.getDescriptor();
-            default:
-                return mappedType.getDescriptor();
-        }
+    public String mapToUnmapped(@NotNull Type mappedType) {
+        return switch (mappedType.getSort()) {
+            case Type.ARRAY -> "[".repeat(mappedType.getDimensions()) + mapToUnmapped(mappedType.getElementType());
+            case Type.OBJECT -> Optional.ofNullable(mappingByMap.get(mappedType.getInternalName()))
+                    .map(cm -> Type.getObjectType(cm.mapping.unmappedName))
+                    .orElse(mappedType)
+                    .getDescriptor();
+            default -> mappedType.getDescriptor();
+        };
     }
 
     public String getUnmappedDescByMappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String mappedDescriptor) {
@@ -131,16 +130,15 @@ public class ClassifiedMappingRemapper extends Remapper {
         return stringBuilder.append(')').append(mapToUnmapped(Type.getType(DescriptorUtil.getMethodReturnDescriptor(mappedDescriptor)))).toString();
     }
 
-    public String mapToMapped(@NotNull final Type unmappedType) {
-        switch(unmappedType.getSort()) {
-            case Type.ARRAY:
-                return "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToMapped(unmappedType.getElementType());
-            case Type.OBJECT:
-                ClassMapping<PairedMapping> cm = mappingByUnm.get(unmappedType.getInternalName());
-                return cm != null ? Type.getObjectType(cm.mapping.mappedName).getDescriptor() : unmappedType.getDescriptor();
-            default:
-                return unmappedType.getDescriptor();
-        }
+    public String mapToMapped(@NotNull Type unmappedType) {
+        return switch (unmappedType.getSort()) {
+            case Type.ARRAY -> "[".repeat(Math.max(0, unmappedType.getDimensions())) + mapToMapped(unmappedType.getElementType());
+            case Type.OBJECT -> Optional.ofNullable(mappingByUnm.get(unmappedType.getInternalName()))
+                    .map(cm -> Type.getObjectType(cm.mapping.mappedName))
+                    .orElse(unmappedType)
+                    .getDescriptor();
+            default -> unmappedType.getDescriptor();
+        };
     }
 
     public String getMappedDescByUnmappedDesc(@Subst("()V") @NotNull @Pattern(Info.METHOD_DESC_PATTERN) String unmappedDescriptor) {

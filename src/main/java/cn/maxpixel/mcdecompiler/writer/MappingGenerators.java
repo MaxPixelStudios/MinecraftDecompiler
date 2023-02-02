@@ -360,7 +360,7 @@ public final class MappingGenerators {
                     synchronized(lines) {
                         lines.add("\tf\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
                         if(field.hasComponent(Documented.class)) {
-                            String doc = field.getComponent(Documented.class).doc;
+                            String doc = field.getComponent(Documented.class).getDoc();
                             if(doc != null && !doc.isBlank()) lines.add("\t\tc\t" + doc);
                         }
                     }
@@ -370,7 +370,7 @@ public final class MappingGenerators {
                     synchronized(lines) {
                         lines.add("\tm\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));
                         if(method.hasComponent(Documented.class)) {
-                            String doc = method.getComponent(Documented.class).doc;
+                            String doc = method.getComponent(Documented.class).getDoc();
                             if(doc != null && !doc.isBlank()) lines.add("\t\tc\t" + doc);
                         }
                         if(method.hasComponent(LocalVariableTable.Namespaced.class)) {
