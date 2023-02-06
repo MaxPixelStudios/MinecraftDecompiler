@@ -47,7 +47,20 @@ public class FunctionTest {
 //        });
 //        writer.writeTo(Files.newOutputStream(Path.of("output/1.8.9-srg2mcp.tsrg"), StandardOpenOption.CREATE));
 //    }
-//
+
+//    public static void main(String[] args) throws Throwable {
+//        ClassifiedMappingReader<NamespacedMapping> mcpconfig = new ClassifiedMappingReader<>(MappingTypes.TSRG_V2, "downloads/1.19.3/joined.tsrg");
+//        ClassifiedMappingReader<PairedMapping> official = new ClassifiedMappingReader<>(MappingTypes.PROGUARD, "downloads/1.19.3/client_mappings.txt");
+//        var mappings = ClassMapping.genMappingsByUnmappedNameMap(official.mappings);
+//        mcpconfig.mappings.forEach(cm -> {
+//            NamespacedMapping mapping = cm.mapping;
+//            mapping.setName("srg", mappings.get(mapping.getName("obf")).mapping.mappedName);
+//        });
+//        ClassifiedMappingWriter<NamespacedMapping> writer = new ClassifiedMappingWriter<>(MappingTypes.TSRG_V2);
+//        writer.addMappings(mcpconfig.mappings);
+//        writer.writeTo(Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
+//    }
+
 //    private static class MCP implements MappingType.Unique<PairedMapping> {
 //        @Override
 //        public MappingProcessor.Unique<PairedMapping> getProcessor() {

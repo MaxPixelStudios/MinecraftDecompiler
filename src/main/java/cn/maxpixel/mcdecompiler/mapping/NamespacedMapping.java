@@ -21,7 +21,7 @@ package cn.maxpixel.mcdecompiler.mapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Map;
@@ -42,7 +42,7 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
 
     private String unmappedNamespace;
     private String mappedNamespace;
-    private final Object2ObjectOpenHashMap<String, String> names = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectLinkedOpenHashMap<String, String> names = new Object2ObjectLinkedOpenHashMap<>();
 
     /**
      * Constructor

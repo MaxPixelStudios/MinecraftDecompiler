@@ -69,7 +69,7 @@ public abstract class AbstractMappingWriter<M extends Mapping, C, T extends Mapp
 
     private ObjectList<String> generate() {
         ObjectList<String> output = type.getGenerator().generate(getCollection());
-        if(type.supportPackage()) output.addAll(type.getGenerator().generatePackages(packages));
+        if(type.supportPackage() && !packages.isEmpty()) output.addAll(type.getGenerator().generatePackages(packages));
         clearCollection();
         packages.clear();
         return output;

@@ -30,6 +30,7 @@ import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.objectweb.asm.Type;
 
@@ -45,6 +46,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             mappings.parallelStream().forEach(cls -> {
                 PairedMapping classMapping = cls.mapping;
                 synchronized(lines) {
@@ -84,6 +86,7 @@ public final class MappingGenerators {
 
         @Override
         public ObjectList<String> generatePackages(ObjectList<PairedMapping> packages) {
+            if (packages.isEmpty()) return ObjectLists.emptyList();
             ObjectArrayList<String> lines = new ObjectArrayList<>();
             packages.parallelStream().forEach(pkg -> {
                 synchronized(lines) {
@@ -103,6 +106,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             mappings.parallelStream().forEach(cls -> {
                 PairedMapping classMapping = cls.mapping;
                 synchronized(lines) {
@@ -128,6 +132,7 @@ public final class MappingGenerators {
 
         @Override
         public ObjectList<String> generatePackages(ObjectList<PairedMapping> packages) {
+            if (packages.isEmpty()) return ObjectLists.emptyList();
             ObjectArrayList<String> lines = new ObjectArrayList<>();
             packages.parallelStream().forEach(pkg -> {
                 synchronized(lines) {
@@ -147,6 +152,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             mappings.forEach(cls -> {
                 lines.add(cls.mapping.getUnmappedName() + ' ' + cls.mapping.getMappedName());
                 cls.getFields().parallelStream().forEach(field -> {
@@ -168,6 +174,7 @@ public final class MappingGenerators {
 
         @Override
         public ObjectList<String> generatePackages(ObjectList<PairedMapping> packages) {
+            if (packages.isEmpty()) return ObjectLists.emptyList();
             ObjectArrayList<String> lines = new ObjectArrayList<>();
             packages.parallelStream().forEach(pkg -> {
                 synchronized(lines) {
@@ -187,6 +194,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<NamespacedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             ObjectSet<String> namespaces = mappings.get(0).mapping.getNamespaces();
             String namespace0 = namespaces.iterator().next();
             lines.add("tsrg2 " + String.join(" ", namespaces));
@@ -237,6 +245,7 @@ public final class MappingGenerators {
 
         @Override
         public ObjectList<String> generatePackages(ObjectList<NamespacedMapping> packages) {
+            if (packages.isEmpty()) return ObjectLists.emptyList();
             ObjectArrayList<String> lines = new ObjectArrayList<>();
             ObjectSet<String> namespaces = packages.get(0).getNamespaces();
             packages.parallelStream().forEach(pkg -> {
@@ -257,6 +266,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             mappings.forEach(cls -> {
                 PairedMapping mapping = cls.mapping;
                 lines.add(NamingUtil.asJavaName(mapping.getMappedName()) + " -> " +
@@ -314,6 +324,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<NamespacedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             ObjectSet<String> namespaces = mappings.get(0).mapping.getNamespaces();
             String namespace0 = namespaces.iterator().next();
             lines.add("v1\t" + String.join("\t", namespaces));
@@ -350,6 +361,7 @@ public final class MappingGenerators {
         @Override
         public ObjectList<String> generate(ObjectList<ClassMapping<NamespacedMapping>> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
+            if (mappings.isEmpty()) return lines;
             ObjectSet<String> namespaces = mappings.get(0).mapping.getNamespaces();
             String namespace0 = namespaces.iterator().next();
             lines.add("tiny\t2\t0\t" + String.join("\t", namespaces));
