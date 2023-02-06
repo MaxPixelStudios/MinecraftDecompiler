@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class NamingUtil {
     public static int getDimension(@NotNull String javaName) {
         int arrDimension = 0;
-        for(int i = javaName.indexOf("[]"); i != -1; i = javaName.indexOf("[]", i + 2)) {
+        for (int i = javaName.indexOf("[]"); i != -1; i = javaName.indexOf("[]", i + 2)) {
             arrDimension++;
         }
         return arrDimension;
@@ -54,18 +54,20 @@ public class NamingUtil {
                 ).orElseThrow(NullPointerException::new);
     }
 
-    public static int getArgumentLength(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String descriptor) {
-        int length = 0;
+    public static int getArgumentCount(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String descriptor) {
+        int count = 0;
         for(int i = 1, max = descriptor.lastIndexOf(')'); i < max; i++) {
             switch(descriptor.charAt(i)) {
-                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> length++;
+                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> count++;
                 case 'L' -> {
-                    length++;
+                    count++;
                     if((i = descriptor.indexOf(';', i)) == -1) throw new IllegalArgumentException("Invalid method descriptor");
                 }
+                case '[' -> {} // no op
+                default -> throw new IllegalArgumentException("Invalid method descriptor");
             }
         }
-        return length;
+        return count;
     }
 
     public static String concatNamespaces(@NotNull ObjectSet<String> namespaces, @NotNull Function<String, String> namespaceMapper, @NotNull String delimiter) {

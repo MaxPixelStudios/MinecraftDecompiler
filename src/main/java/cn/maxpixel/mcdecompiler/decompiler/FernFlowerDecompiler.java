@@ -21,7 +21,7 @@ package cn.maxpixel.mcdecompiler.decompiler;
 import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
-import cn.maxpixel.mcdecompiler.util.DownloadUtil;
+import cn.maxpixel.mcdecompiler.util.DownloadingUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
     private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar");
     private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar.sha1");
     private Path decompilerJarPath;
-    private ExternalJarClassLoader cl;
 
     FernFlowerDecompiler() {}
 
@@ -53,13 +52,11 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
     @Override
     public void decompile(@NotNull Path source, @NotNull Path target) throws IOException {
         checkArgs(source, target);
-        try {
-            if(cl == null) cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()}, getClass().getClassLoader());
+        try (ExternalJarClassLoader cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()})) {
             Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.FernFlowerDecompileThread")
                     .getConstructor(File.class, File.class).newInstance(source.toFile(), target.toFile());
             thread.start();
             while(thread.isAlive()) Thread.onSpinWait();
-            cl.close();
         } catch(ReflectiveOperationException e) {
             Logging.getLogger().log(Level.SEVERE, "Failed to load FernFlower", e);
             throw Utils.wrapInRuntime(e);
@@ -69,7 +66,7 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
     @Override
     public void extractTo(Path extractPath) throws IOException {
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");
-        Files.copy(DownloadUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.FERNFLOWER), RESOURCE, RESOURCE_HASH),
+        Files.copy(DownloadingUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.FERNFLOWER), RESOURCE, RESOURCE_HASH),
                 decompilerJarPath, StandardCopyOption.REPLACE_EXISTING);
     }
 }

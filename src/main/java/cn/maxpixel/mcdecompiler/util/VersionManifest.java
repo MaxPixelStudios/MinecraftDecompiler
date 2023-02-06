@@ -49,8 +49,8 @@ import static cn.maxpixel.mcdecompiler.MinecraftDecompiler.HTTP_CLIENT;
 
 public class VersionManifest {
     private static final Logger LOGGER = Logging.getLogger();
-    private static final CompletableFuture<String> LATEST_RELEASE;
-    private static final CompletableFuture<String> LATEST_SNAPSHOT;
+    public static final CompletableFuture<String> LATEST_RELEASE;
+    public static final CompletableFuture<String> LATEST_SNAPSHOT;
     private static final CompletableFuture<Object2ObjectOpenHashMap<String, URI>> VERSIONS;
     private static final Object2ObjectOpenHashMap<String, CompletableFuture<JsonObject>> CACHE = new Object2ObjectOpenHashMap<>();
 
@@ -71,32 +71,22 @@ public class VersionManifest {
             return StreamSupport.stream(Spliterators.spliterator(versions.iterator(), versions.size(),
                     Spliterator.DISTINCT + Spliterator.NONNULL + Spliterator.IMMUTABLE), true
             ).map(JsonElement::getAsJsonObject).collect(Collectors.toMap(
-                    obj -> obj.get("id").getAsString(),
-                    LambdaUtil.unwrap(obj -> new URI(obj.get("url").getAsString()), LambdaUtil::rethrowAsCompletion),
+                    obj -> obj.get("id").getAsString(), obj -> URI.create(obj.get("url").getAsString()),
                     Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new
             ));
         });
     }
 
     @Blocking
-    public static JsonObject get(String versionId) {
-        return getAsync(versionId).join();
-    }
-
-    @Blocking
-    public static String mapVersionId(@NotNull String versionId) {
-        return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
-            case "latest_release" -> LATEST_RELEASE.join();
-            case "latest_snapshot" -> LATEST_SNAPSHOT.join();
-            default -> versionId;
-        };
+    public static JsonObject getSync(String versionId) {
+        return get(versionId).join();
     }
 
     @NonBlocking
-    public static CompletableFuture<JsonObject> getAsync(@Async.Schedule @NotNull String versionId) {
+    public static CompletableFuture<JsonObject> get(@Async.Schedule @NotNull String versionId) {
         return switch (Objects.requireNonNull(versionId, "versionId cannot be null!")) {
-            case "latest_release" -> LATEST_RELEASE.thenCompose(VersionManifest::getAsync);
-            case "latest_snapshot" -> LATEST_SNAPSHOT.thenCompose(VersionManifest::getAsync);
+            case "latest_release" -> LATEST_RELEASE.thenCompose(VersionManifest::get);
+            case "latest_snapshot" -> LATEST_SNAPSHOT.thenCompose(VersionManifest::get);
             default -> CACHE.computeIfAbsent(versionId, id -> VERSIONS.thenCompose(versions -> {
                 if (!versions.containsKey(id)) throw new IllegalArgumentException("Game ID \"" + id + "\" does not exists!");
                 return HTTP_CLIENT.sendAsync(HttpRequest.newBuilder(versions.get(id)).build(),

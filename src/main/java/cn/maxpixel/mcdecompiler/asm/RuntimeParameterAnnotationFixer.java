@@ -68,7 +68,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     public MethodVisitor visitMethod(int access, String name, @Subst("(Ljava/lang/String;I)V") String descriptor, String signature, String[] exceptions) {
         if(toProcess != null && name.equals("<init>") && descriptor.startsWith(toProcess)) {
             return new MethodVisitor(Info.ASM_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-                private final int params = NamingUtil.getArgumentLength(descriptor);
+                private final int params = NamingUtil.getArgumentCount(descriptor);
                 private boolean processVisible;
                 private boolean processInvisible;
                 @Override

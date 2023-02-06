@@ -33,8 +33,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.logging.Logger;
 
+/**
+ * The parent class of {@code MappingReader}s
+ * @param <M> Mapping form(paired, namespaced, etc.)
+ * @param <R> Read result
+ * @param <T> Mapping type
+ */
 public abstract class AbstractMappingReader<M extends Mapping, R, T extends MappingType<M, R>> {
-    protected static final Logger LOGGER = Logging.getLogger("Mapping Reader");
+    protected static final Logger LOGGER = Logging.getLogger();
     public final R mappings;
     public final ObjectList<M> packages;
 

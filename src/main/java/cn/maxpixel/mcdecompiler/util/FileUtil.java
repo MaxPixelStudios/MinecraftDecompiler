@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -93,14 +94,11 @@ public final class FileUtil {
     }
 
     public static void deleteIfExists(@NotNull Path path) {
-        if(Files.notExists(path)) {
-            LOGGER.log(Level.FINER, "\"{0}\" does not exist, skipping this operation...", path);
-            return;
-        }
+        if (Files.notExists(path)) return;
         try {
             LOGGER.log(Level.FINER, "Deleting \"{0}\"...", path);
-            if(Files.isDirectory(path)) {
-                try(DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
+            if (Files.isDirectory(path)) {
+                try (DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
                     StreamSupport.stream(ds.spliterator(), true)
                             .forEach(FileUtil::deleteIfExists);
                 }
@@ -144,22 +142,37 @@ public final class FileUtil {
     }
 
     /**
-     * Verify the file with given hash and size
+     * Verify the file with given SHA-1 hash
      * @param path File to verify. Directory is not supported
-     * @param hash Expected SHA-1 hash
-     * @param size Expected size in bytes. Use negative size to skip size-checking
+     * @param hash Expected SHA-1 hash. Use null or blank string to skip the hash check
      * @throws IllegalArgumentException If {@code path} is a directory
      * @return true if the file is valid. Otherwise false
      */
-    public static boolean verify(@NotNull Path path, String hash, long size) {
-        if(Files.notExists(path)) return false;
-        if(Files.isDirectory(path)) throw new IllegalArgumentException("Verify a directory is not supported");
+    public static boolean verify(@NotNull Path path, @NotNull String hash) {
+        return verify(path, hash, -1);
+    }
+
+    /**
+     * Verify the file with given SHA-1 hash and size
+     * @param path File to verify. Directory is not supported
+     * @param hash Expected SHA-1 hash. Use null or blank string to skip the hash check
+     * @param size Expected size in bytes. Use negative size to skip the size check
+     * @throws IllegalArgumentException If {@code path} is null or a directory
+     * @throws IllegalArgumentException If {@code hash} is blank
+     * @throws NullPointerException If {@code hash} is null
+     * @return true if the file is valid. Otherwise false
+     */
+    public static boolean verify(@NotNull Path path, @NotNull String hash, long size) {
+        if (Files.notExists(path)) return false;
+        if (Files.isDirectory(path)) throw new IllegalArgumentException("Verify a directory is not supported");
+        if (Objects.requireNonNull(hash, "Why do you want to verify a file with null hash?").isBlank()) {
+            throw new IllegalArgumentException("Why do you want to verify a file with no hash?");
+        }
         try(FileChannel fc = FileChannel.open(path, READ)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             ByteBuffer buf = ByteBuffer.allocateDirect(65536);
             while(fc.read(buf) != -1) {
-                buf.flip();
-                md.update(buf);
+                md.update(buf.flip());
                 buf.clear();
             }
             StringBuilder out = new StringBuilder();
@@ -168,7 +181,7 @@ public final class FileUtil {
                 if(hex.length() < 2) out.append('0');
                 out.append(hex);
             }
-            return (size < 0 || fc.size() == size) && (hash == null || hash.isBlank() || hash.contentEquals(out));
+            return (size < 0 || fc.size() == size) && hash.contentEquals(out);
         } catch(IOException e) {
             LOGGER.log(Level.SEVERE, "Error reading files", e);
             throw Utils.wrapInRuntime(e);

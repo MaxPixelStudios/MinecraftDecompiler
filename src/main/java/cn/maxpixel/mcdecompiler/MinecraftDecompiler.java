@@ -108,10 +108,9 @@ public class MinecraftDecompiler {
             if(decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
             if(decompiler instanceof ILibRecommendedDecompiler lrd) {
-                options.bundledLibs().ifPresentOrElse(lrd::receiveLibs, LambdaUtil.unwrap(() -> {
-                    if(options.version() != null)
-                        lrd.receiveLibs(DownloadUtil.downloadLibraries(options.version(), libDownloadPath));
-                }));
+                ObjectSet<Path> libs = options.bundledLibs().orElseGet(() ->
+                        DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
+                if (!libs.isEmpty()) lrd.receiveLibs(libs);
             }
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
@@ -148,7 +147,7 @@ public class MinecraftDecompiler {
         public OptionBuilder(String version, Info.SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
             this.type = Objects.requireNonNull(type, "type cannot be null!");
-            preprocess(DownloadUtil.downloadJar(version, type));
+            preprocess(DownloadingUtil.downloadJarSync(version, type));
             this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar").toAbsolutePath().normalize();
             this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled").toAbsolutePath().normalize();
         }

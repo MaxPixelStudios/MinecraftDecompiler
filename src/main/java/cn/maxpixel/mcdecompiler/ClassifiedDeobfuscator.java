@@ -79,7 +79,7 @@ public class ClassifiedDeobfuscator {
     }
 
     public ClassifiedDeobfuscator(String version, Info.SideType side, DeobfuscateOptions options) {
-        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD, DownloadUtil.downloadMapping(version, side)), options);
+        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD, DownloadingUtil.downloadMappingSync(version, side)), options);
     }
 
     public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader) {

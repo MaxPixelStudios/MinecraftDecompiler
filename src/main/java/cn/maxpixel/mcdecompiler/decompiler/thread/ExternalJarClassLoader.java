@@ -18,32 +18,40 @@
 
 package cn.maxpixel.mcdecompiler.decompiler.thread;
 
-import cn.maxpixel.mcdecompiler.util.Utils;
-
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 
 public class ExternalJarClassLoader extends URLClassLoader {
-    public ExternalJarClassLoader(URL[] urls, ClassLoader parent) throws ReflectiveOperationException {
-        super(concatUrls(urls, Utils.getClassPath()), parent);
-    }
-
-    private static URL[] concatUrls(URL[] urls1, URL[] urls2) {
-        URL[] ret = new URL[urls1.length + urls2.length];
-        System.arraycopy(urls1, 0, ret, 0, urls1.length);
-        System.arraycopy(urls2, 0, ret, urls1.length, urls2.length);
-        return ret;
+    public ExternalJarClassLoader(URL[] urls) {
+        super(urls, ClassLoader.getSystemClassLoader());
     }
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         if(name.startsWith("cn.maxpixel.mcdecompiler.decompiler.thread")) {
-            synchronized(getClassLoadingLock(name)) {
+            synchronized (getClassLoadingLock(name)) {
                 Class<?> c = findLoadedClass(name);
-                if(c == null) {
-                    c = findClass(name);
+                if (c == null) {
+                    URL resource = getParent().getResource(name.replace('.', '/').concat(".class"));
+                    try (InputStream in = resource.openStream()) {
+                        byte[] bytes = new byte[4096];
+                        int len = 0;
+                        while (true) {
+                            int read = in.read(bytes, len, bytes.length - len);
+                            if (read < 0) break;
+                            if ((len += read) >= bytes.length) {
+                                bytes = Arrays.copyOf(bytes, bytes.length * 2);
+                            }
+                        }
+                        c = defineClass(name, bytes, 0, len);
+                    } catch (IOException e) {
+                        throw new ClassNotFoundException(e.getMessage(), e);
+                    }
                 }
-                if(resolve) resolveClass(c);
+                if (resolve) resolveClass(c);
                 return c;
             }
         }
