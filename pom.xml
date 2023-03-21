@@ -16,7 +16,7 @@
         <depend.jopt.ver>6.0-alpha-3</depend.jopt.ver>
         <depend.cfr.ver>0.152</depend.cfr.ver>
         <depend.fernflower.ver>403</depend.fernflower.ver>
-        <depend.forgeflower.ver>2.0.627.0</depend.forgeflower.ver>
+        <depend.forgeflower.ver>2.0.627.2</depend.forgeflower.ver>
         <depend.jbannos.ver>23.1.0</depend.jbannos.ver>
         <depend.jmh.ver>1.36</depend.jmh.ver>
     </properties>
