@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Every mapping's base class
+ * Base class of all mappings
  * <p>This class should only be extended, so it is abstract</p>
  */
 public abstract class Mapping implements NameGetter {

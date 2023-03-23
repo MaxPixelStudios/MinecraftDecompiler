@@ -61,7 +61,8 @@ public class NamingUtil {
                 case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> count++;
                 case 'L' -> {
                     count++;
-                    if((i = descriptor.indexOf(';', i)) == -1) throw new IllegalArgumentException("Invalid method descriptor");
+                    if ((i = descriptor.indexOf(';', i)) == -1)
+                        throw new IllegalArgumentException("Invalid method descriptor");
                 }
                 case '[' -> {} // no op
                 default -> throw new IllegalArgumentException("Invalid method descriptor");

@@ -27,7 +27,7 @@ import java.util.Objects;
  * A mapping with classes, fields and methods.
  * @param <T> The type of this mapping
  */
-public final class UniqueMapping<T extends Mapping> {
+public class UniqueMapping<T extends Mapping> {
     public final ObjectArrayList<T> classes = new ObjectArrayList<>();
 
     public final ObjectArrayList<T> fields = new ObjectArrayList<>();

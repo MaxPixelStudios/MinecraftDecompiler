@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 // Visitor version of https://github.com/MinecraftForge/ForgeAutoRenamingTool/blob/master/src/main/java/net/minecraftforge/fart/internal/ParameterAnnotationFixer.java
 public class RuntimeParameterAnnotationFixer extends ClassVisitor {
-    private static final Logger LOGGER = Logging.getLogger("Runtime(In)visibleParameterAnnotations Attribute Fixer");
+    private static final Logger LOGGER = Logging.getLogger();
     private int removeCount;// = isEnum ? 2 : 1
     private final String className;
     private String toProcess;

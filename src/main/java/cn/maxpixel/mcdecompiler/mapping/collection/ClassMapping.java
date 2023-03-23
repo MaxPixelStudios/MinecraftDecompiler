@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * A mapping could contain members. Represents a class and its members' mappings
  * @param <T> The type of this class mapping
  */
-public final class ClassMapping<T extends Mapping> {
+public class ClassMapping<T extends Mapping> {
     /**
      * The mapping for this class
      */

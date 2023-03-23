@@ -110,13 +110,6 @@
                             <pattern>it.unimi.dsi.fastutil</pattern>
                             <shadedPattern>cn.maxpixel.mcdecompiler.deps.fastutil</shadedPattern>
                         </relocation>
-<!--                        <relocation>--><!--FIXME-->
-<!--                            <pattern>joptsimple</pattern>-->
-<!--                            <shadedPattern>cn.maxpixel.mcdecompiler.deps.joptsimple</shadedPattern>-->
-<!--                            <excludes>-->
-<!--                                <exclude>joptsimple.BuiltinHelpFormatter</exclude>-->
-<!--                            </excludes>-->
-<!--                        </relocation>-->
                         <relocation>
                             <pattern>org.fusesource.jansi</pattern>
                             <shadedPattern>cn.maxpixel.mcdecompiler.deps.jansi</shadedPattern>

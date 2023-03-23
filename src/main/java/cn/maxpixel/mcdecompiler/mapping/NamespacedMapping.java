@@ -30,7 +30,7 @@ import java.util.Objects;
 /**
  * A mapping with names under namespaces
  */
-public final class NamespacedMapping extends Mapping implements NameGetter.Namespaced {
+public class NamespacedMapping extends Mapping implements NameGetter.Namespaced {
     // Forge
     public static final String OBF = "obf";
     public static final String SRG = "srg";
@@ -49,7 +49,7 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
      * @param names A map keyed with namespace and valued with name
      */
     public NamespacedMapping(Map<String, String> names) {
-        if(names.containsKey(null)) throw new IllegalArgumentException();
+        if (names.containsKey(null)) throw new IllegalArgumentException();
         this.names.putAll(names);
     }
 
@@ -68,8 +68,8 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
      * @param names The names
      */
     public NamespacedMapping(String[] namespaces, String[] names) {
-        if(namespaces.length != names.length) throw new IllegalArgumentException();
-        for(int i = 0; i < namespaces.length; i++) {
+        if (namespaces.length != names.length) throw new IllegalArgumentException();
+        for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i]);
         }
     }
@@ -86,8 +86,9 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
      * @param nameStart To put the names start from the index
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart) {
-        if(nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart)) throw new IllegalArgumentException();
-        for(int i = 0; i < namespaces.length; i++) {
+        if (nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart))
+            throw new IllegalArgumentException();
+        for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
         }
     }
@@ -99,7 +100,7 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
      */
     public NamespacedMapping(Map<String, String> names, Component... components) {
         super(components);
-        if(names.containsKey(null)) throw new IllegalArgumentException();
+        if (names.containsKey(null)) throw new IllegalArgumentException();
         this.names.putAll(names);
     }
 
@@ -122,8 +123,8 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
      */
     public NamespacedMapping(String[] namespaces, String[] names, Component... components) {
         super(components);
-        if(namespaces.length != names.length) throw new IllegalArgumentException();
-        for(int i = 0; i < namespaces.length; i++) {
+        if (namespaces.length != names.length) throw new IllegalArgumentException();
+        for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i]);
         }
     }
@@ -145,7 +146,8 @@ public final class NamespacedMapping extends Mapping implements NameGetter.Names
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart, Component... components) {
         super(components);
-        if(nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart)) throw new IllegalArgumentException();
+        if (nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart))
+            throw new IllegalArgumentException();
         for(int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
         }

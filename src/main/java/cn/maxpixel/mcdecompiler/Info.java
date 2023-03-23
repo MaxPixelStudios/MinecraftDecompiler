@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import org.intellij.lang.annotations.Language;
 import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public interface Info {
+    @Language("RegExp")
     String METHOD_DESC_PATTERN = "^\\((\\[*([ZBCDFIJS]|L([A-Za-z_]+\\w*[/$]?)+;))*\\)\\[*([ZBCDFIJSV]|L([A-Za-z_]+\\w*[/$]?)+;)$";
     boolean IS_DEV = System.console() == null && Boolean.getBoolean("mcd.isDevEnv");
     int ASM_VERSION = Opcodes.ASM9;
