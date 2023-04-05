@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public class DescriptorUtil {
     public static String getMethodReturnDescriptor(@NotNull String methodDescriptor) {
-        int index = methodDescriptor.indexOf(')', 1);
+        int index = methodDescriptor.lastIndexOf(')');
         if (index == -1) throw new IllegalArgumentException("Invalid descriptor");
         return methodDescriptor.substring(index + 1);
     }
