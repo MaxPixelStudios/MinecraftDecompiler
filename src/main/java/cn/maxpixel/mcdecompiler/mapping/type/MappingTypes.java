@@ -25,10 +25,8 @@ import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
 import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
 import cn.maxpixel.mcdecompiler.writer.MappingGenerators;
 
-public final class MappingTypes {
-    private MappingTypes() {}
-
-    public static final MappingType.Classified<PairedMapping> SRG = new MappingType.Classified<>() {
+public interface MappingTypes {
+    MappingType.Classified<PairedMapping> SRG = new MappingType.Classified<>() {
         @Override
         public boolean supportPackage() {
             return true;
@@ -45,7 +43,7 @@ public final class MappingTypes {
         }
     };
 
-    public static final MappingType.Classified<PairedMapping> CSRG = new MappingType.Classified<>() {
+    MappingType.Classified<PairedMapping> CSRG = new MappingType.Classified<>() {
         @Override
         public boolean supportPackage() {
             return true;
@@ -62,7 +60,7 @@ public final class MappingTypes {
         }
     };
 
-    public static final MappingType.Classified<PairedMapping> TSRG_V1 = new MappingType.Classified<>() {
+    MappingType.Classified<PairedMapping> TSRG_V1 = new MappingType.Classified<>() {
         @Override
         public boolean supportPackage() {
             return true;
@@ -79,7 +77,7 @@ public final class MappingTypes {
         }
     };
 
-    public static final MappingType.Classified<NamespacedMapping> TSRG_V2 = new MappingType.Classified<>() {
+    MappingType.Classified<NamespacedMapping> TSRG_V2 = new MappingType.Classified<>() {
         @Override
         public boolean isNamespaced() {
             return true;
@@ -101,7 +99,7 @@ public final class MappingTypes {
         }
     };
 
-    public static final MappingType.Classified<PairedMapping> PROGUARD = new MappingType.Classified<>() {
+    MappingType.Classified<PairedMapping> PROGUARD = new MappingType.Classified<>() {
         @Override
         public MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.PROGUARD;
@@ -113,7 +111,7 @@ public final class MappingTypes {
         }
     };
 
-    public static final MappingType.Classified<NamespacedMapping> TINY_V1 = new MappingType.Classified<>() {
+    MappingType.Classified<NamespacedMapping> TINY_V1 = new MappingType.Classified<>() {
         @Override
         public boolean isNamespaced() {
             return true;
@@ -130,7 +128,7 @@ public final class MappingTypes {
         }
     };
 
-    public static final MappingType.Classified<NamespacedMapping> TINY_V2 = new MappingType.Classified<>() {
+    MappingType.Classified<NamespacedMapping> TINY_V2 = new MappingType.Classified<>() {
         @Override
         public boolean isNamespaced() {
             return true;

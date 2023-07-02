@@ -56,8 +56,8 @@ public class NamingUtil {
 
     public static int getArgumentCount(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String descriptor) {
         int count = 0;
-        for(int i = 1, max = descriptor.lastIndexOf(')'); i < max; i++) {
-            switch(descriptor.charAt(i)) {
+        for (int i = 1, max = descriptor.lastIndexOf(')'); i < max; i++) {
+            switch (descriptor.charAt(i)) {
                 case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> count++;
                 case 'L' -> {
                     count++;
@@ -73,7 +73,7 @@ public class NamingUtil {
 
     public static String concatNamespaces(@NotNull ObjectSet<String> namespaces, @NotNull Function<String, String> namespaceMapper, @NotNull String delimiter) {
         return namespaces.stream().map(namespaceMapper).peek(name -> {
-            if(name == null) throw new IllegalArgumentException("Namespace mismatch");
+            if (name == null) throw new IllegalArgumentException("Namespace mismatch");
         }).collect(Collectors.joining(delimiter));
     }
 
@@ -90,9 +90,9 @@ public class NamingUtil {
     }
 
     public static String java2Descriptor(@NotNull String javaName) {
-        if(javaName.isBlank()) return "";
-        if(!javaName.contains("[]")) {
-            return switch(javaName) {
+        if (javaName.isBlank()) return "";
+        if (!javaName.contains("[]")) {
+            return switch (javaName) {
                 case "boolean" -> "Z";
                 case "byte" -> "B";
                 case "char" -> "C";
@@ -107,7 +107,7 @@ public class NamingUtil {
         } else {
             String dim = "[".repeat(getDimension(javaName));
             javaName = javaName.replace("[]", "");
-            return switch(javaName) {
+            return switch (javaName) {
                 case "boolean" -> dim + 'Z';
                 case "byte" -> dim + 'B';
                 case "char" -> dim + 'C';

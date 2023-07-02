@@ -72,9 +72,8 @@ public class PairedMapping extends Mapping {
      */
     public PairedMapping() {}
 
-    @SuppressWarnings("unchecked")
     public Owned<PairedMapping> getOwned() {
-        return (Owned<PairedMapping>) super.getOwned();
+        return getComponent(Owned.class);
     }
 
     /**

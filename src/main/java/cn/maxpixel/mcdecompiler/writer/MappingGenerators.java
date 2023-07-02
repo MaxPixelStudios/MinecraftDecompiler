@@ -34,10 +34,8 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.objectweb.asm.Type;
 
-public final class MappingGenerators {
-    private MappingGenerators() {}
-
-    public static final MappingGenerator.Classified<PairedMapping> SRG = new MappingGenerator.Classified<>() {
+public interface MappingGenerators {
+    MappingGenerator.Classified<PairedMapping> SRG = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.SRG;
@@ -97,7 +95,7 @@ public final class MappingGenerators {
         }
     };
 
-    public static final MappingGenerator.Classified<PairedMapping> CSRG = new MappingGenerator.Classified<>() {
+    MappingGenerator.Classified<PairedMapping> CSRG = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.CSRG;
@@ -143,7 +141,7 @@ public final class MappingGenerators {
         }
     };
 
-    public static final MappingGenerator.Classified<PairedMapping> TSRG_V1 = new MappingGenerator.Classified<>() {
+    MappingGenerator.Classified<PairedMapping> TSRG_V1 = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.TSRG_V1;
@@ -185,7 +183,7 @@ public final class MappingGenerators {
         }
     };
 
-    public static final MappingGenerator.Classified<NamespacedMapping> TSRG_V2 = new MappingGenerator.Classified<>() {
+    MappingGenerator.Classified<NamespacedMapping> TSRG_V2 = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
             return MappingTypes.TSRG_V2;
@@ -257,7 +255,7 @@ public final class MappingGenerators {
         }
     };
 
-    public static final MappingGenerator.Classified<PairedMapping> PROGUARD = new MappingGenerator.Classified<>() {
+    MappingGenerator.Classified<PairedMapping> PROGUARD = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.PROGUARD;
@@ -315,7 +313,7 @@ public final class MappingGenerators {
         }
     };
 
-    public static final MappingGenerator.Classified<NamespacedMapping> TINY_V1 = new MappingGenerator.Classified<>() {
+    MappingGenerator.Classified<NamespacedMapping> TINY_V1 = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
             return MappingTypes.TINY_V1;
@@ -352,7 +350,7 @@ public final class MappingGenerators {
         }
     };
 
-    public static final MappingGenerator.Classified<NamespacedMapping> TINY_V2 = new MappingGenerator.Classified<>() {
+    MappingGenerator.Classified<NamespacedMapping> TINY_V2 = new MappingGenerator.Classified<>() {
         @Override
         public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
             return MappingTypes.TINY_V2;

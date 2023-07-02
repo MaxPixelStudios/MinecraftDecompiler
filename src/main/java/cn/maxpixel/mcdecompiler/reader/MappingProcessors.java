@@ -33,12 +33,12 @@ import it.unimi.dsi.fastutil.objects.*;
 
 import java.util.function.Function;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public final class MappingProcessors {
-    private MappingProcessors() {}
+public interface MappingProcessors {
+    MappingProcessor.Classified<PairedMapping> SRG = new MappingProcessor.Classified<>() {
+        private static final Function<String, Function<String, ClassMapping<PairedMapping>>> MAPPING_FUNC = s ->
+                k -> new ClassMapping<>(new PairedMapping(k, getClassName(s)));
 
-    public static final MappingProcessor.Classified<PairedMapping> SRG = new MappingProcessor.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.SRG;
@@ -62,7 +62,7 @@ public final class MappingProcessors {
                         PairedMapping fieldMapping = MappingUtil.Paired.o(getName(strings[1]), getName(strings[2]));
                         String unmClassName = getClassName(strings[1]);
                         synchronized(classes) {
-                            classes.computeIfAbsent(unmClassName, k -> new ClassMapping<>(new PairedMapping(unmClassName, getClassName(strings[2]))))
+                            classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[2]))
                                     .addField(fieldMapping);
                         }
                         break;
@@ -70,7 +70,7 @@ public final class MappingProcessors {
                         PairedMapping methodMapping = MappingUtil.Paired.d2o(getName(strings[1]), getName(strings[3]), strings[2], strings[4]);
                         unmClassName = getClassName(strings[1]);
                         synchronized(classes) {
-                            classes.computeIfAbsent(unmClassName, k -> new ClassMapping<>(new PairedMapping(unmClassName, getClassName(strings[3]))))
+                            classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[3]))
                                     .addMethod(methodMapping);
                         }
                         break;
@@ -86,16 +86,16 @@ public final class MappingProcessors {
             return mappings;
         }
 
-        private String getClassName(String s) {
+        private static String getClassName(String s) {
             return s.substring(0, s.lastIndexOf('/'));
         }
 
-        private String getName(String s) {
+        private static String getName(String s) {
             return s.substring(s.lastIndexOf('/') + 1);
         }
     };
 
-    public static final MappingProcessor.Classified<PairedMapping> CSRG = new MappingProcessor.Classified<>() {
+    MappingProcessor.Classified<PairedMapping> CSRG = new MappingProcessor.Classified<>() {
         private static final Function<String, ClassMapping<PairedMapping>> COMPUTE_FUNC = name ->
                 new ClassMapping<>(new PairedMapping(name, name));
 
@@ -111,7 +111,7 @@ public final class MappingProcessors {
             Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             content.parallelStream().forEach(s -> {
                 String[] sa = s.split(" ", 5);
-                switch(sa.length) {
+                switch (sa.length) {
                     case 2: // Class / Package
                         if(sa[0].charAt(sa[0].length() - 1) == '/') synchronized(mappings.right()) {
                             mappings.right().add(new PairedMapping(sa[0].substring(0, sa[0].length() - 1),
@@ -147,7 +147,7 @@ public final class MappingProcessors {
         }
     };
 
-    public static final MappingProcessor.Classified<PairedMapping> TSRG_V1 = new MappingProcessor.Classified<>() {
+    MappingProcessor.Classified<PairedMapping> TSRG_V1 = new MappingProcessor.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.TSRG_V1;
@@ -194,7 +194,7 @@ public final class MappingProcessors {
         }
     };
 
-    public static final MappingProcessor.Classified<NamespacedMapping> TSRG_V2 = new MappingProcessor.Classified<>() {
+    MappingProcessor.Classified<NamespacedMapping> TSRG_V2 = new MappingProcessor.Classified<>() {
         @Override
         public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
             return MappingTypes.TSRG_V2;
@@ -272,11 +272,7 @@ public final class MappingProcessors {
         }
     };
 
-    public static final MappingProcessor.Classified<PairedMapping> PROGUARD = new MappingProcessor.Classified<>() {
-        private static final Pattern CLASS_PATTERN = Pattern.compile(" -> |:");
-        private static final Pattern METHOD_PATTERN = Pattern.compile("[: (]|\\) -> ");
-        private static final Pattern FIELD_PATTERN = Pattern.compile(" (-> )?");
-
+    MappingProcessor.Classified<PairedMapping> PROGUARD = new MappingProcessor.Classified<>() {
         @Override
         public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
             return MappingTypes.PROGUARD;
@@ -286,44 +282,58 @@ public final class MappingProcessors {
         public Pair<ObjectList<ClassMapping<PairedMapping>>, ObjectList<PairedMapping>> process(ObjectList<String> content) {
             ObjectObjectImmutablePair<ObjectList<ClassMapping<PairedMapping>>, ObjectList<PairedMapping>> mappings =
                     new ObjectObjectImmutablePair<>(new ObjectArrayList<>(), ObjectLists.emptyList());
-            Matcher classMatcher = CLASS_PATTERN.matcher("");
-            Matcher fieldMatcher = FIELD_PATTERN.matcher("");
-            Matcher methodMatcher = METHOD_PATTERN.matcher("");
             for(int i = 0, len = content.size(); i < len; ) {
                 String s = content.get(i);
                 if (!s.startsWith("    ")) {
-                    String[] sa = split(s, classMatcher, 2, true);
+                    int splitIndex = s.indexOf(" -> ");
+                    if (splitIndex <= 0) error();
                     ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(
-                            NamingUtil.asNativeName(sa[1]), NamingUtil.asNativeName(sa[0])));
-                    i = processTree(i, len, content, classMapping, fieldMatcher, methodMatcher);
+                            NamingUtil.asNativeName(s.substring(0, splitIndex)),
+                            NamingUtil.asNativeName(s.substring(splitIndex + 4, s.length() - 1))
+                    ));
+                    i = processTree(i, len, content, classMapping);
                     mappings.left().add(classMapping);
                 } else error();
             }
             return mappings;
         }
 
-        private static int processTree(int index, int size, ObjectList<String> content, ClassMapping<PairedMapping> classMapping,
-                                       Matcher fieldMatcher, Matcher methodMatcher) {
-            for(index = index + 1; index < size; index++) {
+        private static int processTree(int index, int size, ObjectList<String> content, ClassMapping<PairedMapping> classMapping) {
+            for (index = index + 1; index < size; index++) {
                 String s = content.get(index);
-                if(s.startsWith("    ")) {
-                    if(s.contains("(") && s.contains(")")) {
-                        String[] sa = split(s.substring(4), methodMatcher, 6, false);
-                        if(sa.length == 6) {
-                            StringBuilder descriptor = new StringBuilder("(");
-                            for(String arg : sa[4].split(",")) descriptor.append(NamingUtil.java2Descriptor(arg));
-                            descriptor.append(')').append(NamingUtil.java2Descriptor(sa[2]));
-                            classMapping.addMethod(MappingUtil.Paired.ldmo(sa[5], sa[3],
-                                    descriptor.toString(), Integer.parseInt(sa[0]), Integer.parseInt(sa[1])));
-                        } else if(sa.length == 4) {
-                            StringBuilder descriptor = new StringBuilder("(");
-                            for(String arg : sa[2].split(",")) descriptor.append(NamingUtil.java2Descriptor(arg));
-                            descriptor.append(')').append(NamingUtil.java2Descriptor(sa[0]));
-                            classMapping.addMethod(MappingUtil.Paired.dmo(sa[3], sa[1], descriptor.toString()));
-                        } else error();
+                if (s.startsWith("    ")) {
+                    if (s.contains("(") && s.contains(")")) {
+                        int lineNum = s.indexOf(':');
+                        int leftBracket = s.indexOf('(');
+                        int rightBracket = s.lastIndexOf(')');
+                        StringBuilder descriptor = new StringBuilder("(");
+                        int prev = leftBracket;
+                        for (int next = s.indexOf(',', prev + 1); next > 0;
+                             prev = next, next = s.indexOf(',', prev + 1)) {
+                            descriptor.append(NamingUtil.java2Descriptor(s.substring(prev + 1, next)));
+                        }
+                        if (prev != leftBracket) descriptor.append(NamingUtil.java2Descriptor(s.substring(prev + 1, rightBracket)));
+                        if (lineNum > 0) {
+                            int split1 = s.indexOf(' ', 11);// skip leading 4 spaces, descriptor name(at least 3 chars), and line number(at least 4 chars)
+                            if (split1 < 0) error();
+                            int lineNum1 = s.indexOf(':', lineNum + 2);
+                            if (lineNum1 < 0) error();
+                            classMapping.addMethod(MappingUtil.Paired.ldmo(s.substring(rightBracket + 5), s.substring(split1 + 1, leftBracket),
+                                    descriptor.append('(').append(NamingUtil.java2Descriptor(s.substring(lineNum1 + 1, split1))).toString(),
+                                    Integer.parseInt(s.substring(4, lineNum)), Integer.parseInt(s.substring(lineNum + 1, lineNum1))));
+                        } else { // no line number
+                            int split1 = s.indexOf(' ', 7);// skip leading 4 spaces and descriptor name/line number(at least 3 chars)
+                            if (split1 < 0) error();
+                            classMapping.addMethod(MappingUtil.Paired.dmo(s.substring(rightBracket + 5), s.substring(split1 + 1, leftBracket),
+                                    descriptor.append(')').append(NamingUtil.java2Descriptor(s.substring(4, split1))).toString()));
+                        }
                     } else {
-                        String[] sa = split(s.substring(4), fieldMatcher, 3, true);
-                        classMapping.addField(MappingUtil.Paired.dmo(sa[2], sa[1], NamingUtil.java2Descriptor(sa[0])));
+                        int split1 = s.indexOf(' ', 7);// skip leading 4 spaces and descriptor name(at least 3 chars)
+                        if (split1 < 0) error();
+                        int split2 = s.indexOf(" -> ", split1 + 2);// skip split1(1 char) and mapped name(at least 1 char)
+                        if (split2 < 0) error();
+                        classMapping.addField(MappingUtil.Paired.dmo(s.substring(split2 + 4),
+                                s.substring(split1 + 1, split2), NamingUtil.java2Descriptor(s.substring(4, split1))));
                     }
                 } else break;
             }
@@ -359,7 +369,10 @@ public final class MappingProcessors {
         }
     };
 
-    public static final MappingProcessor.Classified<NamespacedMapping> TINY_V1 = new MappingProcessor.Classified<>() {
+    MappingProcessor.Classified<NamespacedMapping> TINY_V1 = new MappingProcessor.Classified<>() {
+        private static final Function<String, Function<String, ClassMapping<NamespacedMapping>>> MAPPING_FUNC = k ->
+                key -> new ClassMapping<>(new NamespacedMapping(k, key).setUnmappedNamespace(k));
+
         @Override
         public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
             return MappingTypes.TINY_V1;
@@ -384,13 +397,13 @@ public final class MappingProcessors {
                 } else if(s.startsWith("FIELD")) {
                     NamespacedMapping fieldMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
                     synchronized(classes) {
-                        classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1]).setUnmappedNamespace(k)))
+                        classes.computeIfAbsent(sa[1], MAPPING_FUNC.apply(k))
                                 .addField(fieldMapping);
                     }
                 } else if(s.startsWith("METHOD")) {
                     NamespacedMapping methodMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
                     synchronized(classes) {
-                        classes.computeIfAbsent(sa[1], key -> new ClassMapping<>(new NamespacedMapping(k, sa[1]).setUnmappedNamespace(k)))
+                        classes.computeIfAbsent(sa[1], MAPPING_FUNC.apply(k))
                                 .addMethod(methodMapping);
                     }
                 } else error();
@@ -403,7 +416,7 @@ public final class MappingProcessors {
         }
     };
 
-    public static final MappingProcessor.Classified<NamespacedMapping> TINY_V2 = new MappingProcessor.Classified<>() {
+    MappingProcessor.Classified<NamespacedMapping> TINY_V2 = new MappingProcessor.Classified<>() {
         @Override
         public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
             return MappingTypes.TINY_V2;

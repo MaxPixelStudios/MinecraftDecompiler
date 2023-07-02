@@ -41,16 +41,17 @@ import java.util.logging.Logger;
  */
 public abstract class AbstractMappingReader<M extends Mapping, R, T extends MappingType<M, R>> {
     protected static final Logger LOGGER = Logging.getLogger();
+    public final T type;
     public final R mappings;
     public final ObjectList<M> packages;
 
     public AbstractMappingReader(T type, BufferedReader reader) {
-        Objects.requireNonNull(type);
+        this.type = Objects.requireNonNull(type);
         Objects.requireNonNull(reader);
         try(reader) {
             LOGGER.finer("Reading file");
             ObjectArrayList<String> lines = reader.lines().map(s -> {
-                if(s.startsWith("#") || s.isBlank()) return null;
+                if(s.charAt(0) == '#' || s.isBlank()) return null;
 
                 int index = s.indexOf('#');
                 if(index > 0) return s.substring(0, index);
@@ -82,12 +83,13 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
     }
 
     public AbstractMappingReader(T type, BufferedReader... readers) {
+        this.type = Objects.requireNonNull(type);
         LOGGER.finer("Reading files");
         @SuppressWarnings("unchecked")
         ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
             try(reader) {
                 return reader.lines().map(s -> {
-                    if(s.startsWith("#") || s.isBlank()) return null;
+                    if(s.charAt(0) == '#' || s.isBlank()) return null;
 
                     int index = s.indexOf('#');
                     if(index > 0) return s.substring(0, index);
@@ -117,5 +119,13 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
 
     public AbstractMappingReader(T type, String... path) throws FileNotFoundException {
         this(type, Utils.mapArray(path, FileInputStream[]::new, FileInputStream::new));
+    }
+
+    public boolean isNamespaced() {
+        return type.isNamespaced();
+    }
+
+    public boolean supportPackage() {
+        return type.supportPackage();
     }
 }

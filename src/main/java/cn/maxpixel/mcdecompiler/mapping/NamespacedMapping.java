@@ -155,7 +155,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     @Override
     public Owned<NamespacedMapping> getOwned() {
-        return (Owned<NamespacedMapping>) super.getOwned();
+        return getComponent(Owned.class);
     }
 
     /**

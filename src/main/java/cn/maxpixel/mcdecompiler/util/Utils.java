@@ -21,17 +21,13 @@ package cn.maxpixel.mcdecompiler.util;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
-import sun.misc.Unsafe;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
@@ -87,29 +83,6 @@ public class Utils {
 
     public static <T> T onKeyDuplicate(T t, T u) {
         throw new IllegalArgumentException("Key \"" + t + "\" and \"" + u + "\" duplicated!");
-    }
-
-    public static URL[] getClassPath() throws ReflectiveOperationException {
-        ClassLoader cl = Utils.class.getClassLoader();
-        Class<?> classLoaderClass = Class.forName("jdk.internal.loader.BuiltinClassLoader");
-        Unsafe unsafe = getUnsafe();
-
-        // jdk.internal.loader.BuiltinClassLoader.ucp
-        Field ucpField = classLoaderClass.getDeclaredField("ucp");
-        long ucpFieldOffset = unsafe.objectFieldOffset(ucpField);
-        Object ucpObject = unsafe.getObject(cl, ucpFieldOffset);
-
-        // jdk.internal.loader.URLClassPath.path
-        Field pathField = ucpField.getType().getDeclaredField("path");
-        long pathFieldOffset = unsafe.objectFieldOffset(pathField);
-        ArrayList<URL> path = (ArrayList<URL>) unsafe.getObject(ucpObject, pathFieldOffset);
-        return path.toArray(new URL[0]);
-    }
-
-    private static Unsafe getUnsafe() throws ReflectiveOperationException {
-        Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
-        theUnsafeField.setAccessible(true);
-        return (Unsafe) theUnsafeField.get(null);
     }
 
     public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(String mappingPath) {

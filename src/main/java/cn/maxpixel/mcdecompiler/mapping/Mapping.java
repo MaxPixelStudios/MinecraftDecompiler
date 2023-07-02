@@ -55,7 +55,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> @Nullable C getComponent(@NotNull Class<? extends C> component) {
+    public final <C extends Component> @Nullable C getComponent(@NotNull Class<? super C> component) {
         return (C) components.get(component);
     }
 
@@ -64,7 +64,7 @@ public abstract class Mapping implements NameGetter {
      * @return The {@link Owned} component if it exists, or null
      */
     protected @Nullable Owned<? extends Mapping> getOwned() {
-        return (Owned<? extends Mapping>) components.get(Owned.class);
+        return getComponent(Owned.class);
     }
 
     public final boolean hasComponent(@NotNull Class<? extends Component> component) {
