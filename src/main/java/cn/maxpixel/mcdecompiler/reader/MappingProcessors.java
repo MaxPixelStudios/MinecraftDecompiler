@@ -32,7 +32,6 @@ import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.*;
 
 import java.util.function.Function;
-import java.util.regex.Matcher;
 
 public interface MappingProcessors {
     MappingProcessor.Classified<PairedMapping> SRG = new MappingProcessor.Classified<>() {
@@ -260,7 +259,7 @@ public interface MappingProcessors {
                     else {
                         String[] sa = s.substring(2).split(" ");
                         methodMapping.getComponent(LocalVariableTable.Namespaced.class)
-                                .setLocalVariableName(Integer.parseInt(sa[0]), namespaces, sa, 1);
+                                .setLocalVariable(Integer.parseInt(sa[0]), new NamespacedMapping(namespaces, sa, 1));
                     }
                 } else break;
             }
@@ -338,30 +337,6 @@ public interface MappingProcessors {
                 } else break;
             }
             return index;
-        }
-
-        private static String[] split(String s, Matcher matcher, int count, boolean force) {
-            matcher.reset(s);
-            String[] sa = new String[count];
-            int index = 0;
-            for(int i = 0; i < count; i++) {
-                if(!matcher.find()) {
-                    if(index < s.length()) {
-                        sa[i] = s.substring(index);
-                        if(i < count - 1) {
-                            if(force) error();
-                            String[] ret = new String[i + 1];
-                            System.arraycopy(sa, 0, ret, 0, ret.length);
-                            return ret;
-                        }
-                        break;
-                    } else error();
-                }
-                sa[i] = s.substring(index, matcher.start());
-                index = matcher.end();
-            }
-            if(matcher.find()) error();
-            return sa;
         }
 
         private static void error() {
@@ -453,7 +428,7 @@ public interface MappingProcessors {
                             classMapping.addField(fieldMapping);
                         }
                         case 'm' -> {
-                            NamespacedMapping methodMapping = MappingUtil.Namespaced.dllduo(namespaces, sa, 1, namespaces[0], sa[0]);
+                            NamespacedMapping methodMapping = MappingUtil.Namespaced.dlduo(namespaces, sa, 1, namespaces[0], sa[0]);
                             index = processTree1(index, size, namespaces, content, methodMapping);
                             classMapping.addMethod(methodMapping);
                         }
@@ -473,9 +448,10 @@ public interface MappingProcessors {
                         case 'c' -> mapping.getComponent(Documented.class).setDoc(s.substring(4));
                         case 'p' -> {
                             String[] sa = s.substring(4).split("\t");
-                            int i = Integer.parseInt(sa[0]);
-                            mapping.getComponent(LocalVariableTable.Namespaced.class).setLocalVariableName(i, namespaces, sa, 1);
-                            index = processTree2(index, size, i, content, mapping);
+                            NamespacedMapping localVariable = MappingUtil.Namespaced.d(namespaces, sa, 1);
+                            mapping.getComponent(LocalVariableTable.Namespaced.class)
+                                    .setLocalVariable(Integer.parseInt(sa[0]), localVariable);
+                            index = processTree2(index, size, content, localVariable);
                         }
                         default -> error();
                     }
@@ -484,11 +460,11 @@ public interface MappingProcessors {
             return index - 1;
         }
 
-        private static int processTree2(int index, int size, int i, ObjectList<String> content, NamespacedMapping methodMapping) {
+        private static int processTree2(int index, int size, ObjectList<String> content, NamespacedMapping localVariable) {
             if(++index < size) {
                 String s = content.get(index);
                 if(s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
-                    if(s.charAt(3) == 'c') methodMapping.getComponent(Documented.LocalVariable.class).setLocalVariableDoc(i, s.substring(5));
+                    if(s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setDoc(s.substring(5));
                     else error();
                     return index;
                 }

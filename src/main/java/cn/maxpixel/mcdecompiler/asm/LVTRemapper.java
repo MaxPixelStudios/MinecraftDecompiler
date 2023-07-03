@@ -76,7 +76,7 @@ public class LVTRemapper extends ClassVisitor {
                 @Override
                 public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
                     if(index != 0 || isStatic) {
-                        String s = lvt.getMappedLocalVariableName(!isStatic && omitThis ? index - 1 : index);
+                        String s = lvt.getLocalVariable(!isStatic && omitThis ? index - 1 : index).getMappedName();
                         if(s != null && !s.isBlank() && !placeholderMatcher.reset(s).matches()) {
                             skippable.ifPresent(VariableNameGenerator.Skippable::skip);
                             super.visitLocalVariable(s, descriptor, signature, start, end, index);

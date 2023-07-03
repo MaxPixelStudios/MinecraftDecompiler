@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface NameGetter {
     String getUnmappedName();
 
@@ -28,6 +30,6 @@ public interface NameGetter {
 
         String getMappedNamespace();
 
-        void setMappedNamespace(String namespace);
+        void setMappedNamespace(@NotNull String namespace);
     }
 }

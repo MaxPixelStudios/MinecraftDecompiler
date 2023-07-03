@@ -221,7 +221,7 @@ public interface MappingGenerators {
                             LocalVariableTable.Namespaced lvt = method.getComponent(LocalVariableTable.Namespaced.class);
                             lvt.getLocalVariableIndexes().forEach(index -> {
                                 String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
-                                    String name = lvt.getLocalVariableName(index, namespace);
+                                    String name = lvt.getLocalVariable(index).getName(namespace);
                                     if(name != null && name.isBlank()) return "o";
                                     return name;
                                 }, " ");
@@ -388,14 +388,15 @@ public interface MappingGenerators {
                             boolean omittedThis = method.hasComponent(StaticIdentifiable.class) &&
                                     !method.getComponent(StaticIdentifiable.class).isStatic;
                             lvt.getLocalVariableIndexes().forEach(index -> {
+                                NamespacedMapping localVariable = lvt.getLocalVariable(omittedThis ? index + 1 : index);
                                 String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
-                                    String name = lvt.getLocalVariableName(omittedThis ? index + 1 : index, namespace);
-                                    if(name != null && name.isBlank()) return "";
+                                    String name = localVariable.getName(namespace);
+                                    if(name == null || name.isBlank()) return "";
                                     return name;
                                 }, "\t");
                                 lines.add("\t\tp\t" + index + '\t' + names);
-                                if(method.hasComponent(Documented.LocalVariable.class)) {
-                                    String doc = method.getComponent(Documented.LocalVariable.class).getLocalVariableDoc(index);
+                                if(localVariable.hasComponent(Documented.class)) {
+                                    String doc = localVariable.getComponent(Documented.class).getDoc();
                                     if(doc != null && !doc.isBlank()) lines.add("\t\t\tc\t" + doc);
                                 }
                             });

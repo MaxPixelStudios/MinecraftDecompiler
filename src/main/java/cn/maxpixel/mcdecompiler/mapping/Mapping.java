@@ -55,7 +55,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> @Nullable C getComponent(@NotNull Class<? super C> component) {
+    public final <C extends Component> C getComponent(@NotNull Class<? super C> component) {
         return (C) components.get(component);
     }
 

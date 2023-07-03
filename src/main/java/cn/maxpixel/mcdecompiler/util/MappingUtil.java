@@ -97,9 +97,9 @@ public final class MappingUtil {
                     .setUnmappedNamespace(namespaces[0]);
         }
 
-        public static NamespacedMapping dllduo(String[] namespaces, String[] names, int start, String descNamespace, String desc) {
+        public static NamespacedMapping dlduo(String[] namespaces, String[] names, int start, String descNamespace, String desc) {
             return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace),
-                    new Documented(), new Documented.LocalVariable(), new LocalVariableTable.Namespaced().setUnmappedNamespace(namespaces[0]))
+                    new Documented(), new LocalVariableTable.Namespaced().setUnmappedNamespace(namespaces[0]))
                     .setUnmappedNamespace(namespaces[0]);
         }
     }

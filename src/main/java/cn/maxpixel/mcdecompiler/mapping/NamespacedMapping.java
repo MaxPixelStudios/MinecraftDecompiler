@@ -23,6 +23,8 @@ import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -163,7 +165,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * <p>Note: Removing values or clearing would also change the names map</p>
      * @return The namespaces this mapping currently has
      */
-    public ObjectSet<String> getNamespaces() {
+    public @NotNull ObjectSet<String> getNamespaces() {
         return names.keySet();
     }
 
@@ -172,7 +174,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * @param namespace The namespace the name is under
      * @param name The name to set
      */
-    public void setName(String namespace, String name) {
+    public void setName(@NotNull String namespace, @Nullable String name) {
         names.put(Objects.requireNonNull(namespace), name);
     }
 
@@ -181,7 +183,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * @param namespace The namespace the name is under
      * @return The name under the given namespace
      */
-    public String getName(String namespace) {
+    public String getName(@NotNull String namespace) {
         return names.get(Objects.requireNonNull(namespace));
     }
 
@@ -191,7 +193,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * @param defaultValue Return this value if there is no name under the given namespace
      * @return The name under the given namespace if exists, otherwise the given default value
      */
-    public String getName(String namespace, String defaultValue) {
+    public String getName(@NotNull String namespace, @Nullable String defaultValue) {
         return names.getOrDefault(Objects.requireNonNull(namespace), defaultValue);
     }
 
@@ -201,7 +203,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * @param toNamespace The second namespace
      * @return this mapping
      */
-    public NamespacedMapping swap(String fromNamespace, String toNamespace) {
+    public NamespacedMapping swap(@NotNull String fromNamespace, @NotNull String toNamespace) {
         names.put(Objects.requireNonNull(toNamespace), names.put(Objects.requireNonNull(fromNamespace), names.get(toNamespace)));
         return this;
     }
@@ -211,7 +213,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * @param namespace the namespace to determine
      * @return if this mapping contains the given namespace
      */
-    public boolean contains(String namespace) {
+    public boolean contains(@NotNull String namespace) {
         return names.containsKey(Objects.requireNonNull(namespace));
     }
 
@@ -237,13 +239,13 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
         return mappedNamespace;
     }
 
-    public NamespacedMapping setUnmappedNamespace(String namespace) {
+    public NamespacedMapping setUnmappedNamespace(@NotNull String namespace) {
         this.unmappedNamespace = Objects.requireNonNull(namespace);
         return this;
     }
 
     @Override
-    public void setMappedNamespace(String namespace) {
+    public void setMappedNamespace(@NotNull String namespace) {
         this.mappedNamespace = Objects.requireNonNull(namespace);
         LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
         if(n != null) n.setMappedNamespace(namespace);

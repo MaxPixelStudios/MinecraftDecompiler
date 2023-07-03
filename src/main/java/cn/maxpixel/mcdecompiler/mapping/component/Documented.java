@@ -18,8 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import java.util.Objects;
 
 public class Documented implements Component {
@@ -31,19 +29,5 @@ public class Documented implements Component {
 
     public void setDoc(String doc) {
         this.doc = Objects.requireNonNull(doc, "null documentation isn't meaningful huh?");
-    }
-
-    public static class LocalVariable implements Component {
-        private final Int2ObjectOpenHashMap<String> lvtDoc = new Int2ObjectOpenHashMap<>();
-
-        public void setLocalVariableDoc(int index, String doc) {
-            if(index < 0) throw new IndexOutOfBoundsException();
-            lvtDoc.put(index, Objects.requireNonNull(doc, "null documentation isn't meaningful huh?"));
-        }
-
-        public String getLocalVariableDoc(int index) {
-            if(index < 0) throw new IndexOutOfBoundsException();
-            return lvtDoc.get(index);
-        }
     }
 }

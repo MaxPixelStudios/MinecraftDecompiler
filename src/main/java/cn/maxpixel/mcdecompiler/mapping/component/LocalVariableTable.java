@@ -19,83 +19,59 @@
 package cn.maxpixel.mcdecompiler.mapping.component;
 
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
+import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
+import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
-import java.util.Map;
 import java.util.Objects;
 
-public interface LocalVariableTable {
-    class Namespaced implements Component, NameGetter.Namespaced {
+public class LocalVariableTable implements Component {
+    private final @NotNull Int2ObjectOpenHashMap<PairedMapping> lvt = new Int2ObjectOpenHashMap<>();
+    private final @NotNull IntSet keys = lvt.keySet();
+    private final @NotNull ObjectCollection<@NotNull PairedMapping> values = lvt.values();
+
+    public PairedMapping getLocalVariable(@Range(from = 0, to = 255) int index) {
+        return lvt.get(index);
+    }
+
+    public void setLocalVariable(@Range(from = 0, to = 255) int index, @Nullable("To remove the previous mapping") PairedMapping mapping) {
+        lvt.put(index, mapping);
+    }
+
+    public @NotNull IntSet getLocalVariableIndexes() {
+        return keys;
+    }
+
+    public void reverseAll() {
+        values.forEach(PairedMapping::reverse);
+    }
+
+    public static class Namespaced implements Component, NameGetter.Namespaced {
         private String unmappedNamespace;
         private String mappedNamespace;
-        private final Int2ObjectOpenHashMap<Object2ObjectMap<String, String>> lvt = new Int2ObjectOpenHashMap<>();
+        private final @NotNull Int2ObjectOpenHashMap<NamespacedMapping> lvt = new Int2ObjectOpenHashMap<>();
+        private final @NotNull IntSet keys = lvt.keySet();
+        private final @NotNull ObjectCollection<@NotNull NamespacedMapping> values = lvt.values();
 
-        public String getUnmappedLocalVariableName(int index) {
-            if(unmappedNamespace == null) throw new IllegalStateException("Set a namespace for unmapped name first");
-            return lvt.getOrDefault(index, Object2ObjectMaps.emptyMap()).get(unmappedNamespace);
+        public NamespacedMapping getLocalVariable(@Range(from = 0, to = 255) int index) {
+            return lvt.get(index);
         }
 
-        public String getMappedLocalVariableName(int index) {
-            if(mappedNamespace == null) throw new IllegalStateException("Set a namespace for mapped name first");
-            return lvt.getOrDefault(index, Object2ObjectMaps.emptyMap()).get(mappedNamespace);
+        public void setLocalVariable(@Range(from = 0, to = 255) int index, @Nullable("To remove the previous mapping") NamespacedMapping mapping) {
+            lvt.put(index, mapping);
         }
 
-        public String getLocalVariableName(int index, String namespace) {
-            return lvt.getOrDefault(index, Object2ObjectMaps.emptyMap()).get(namespace);
+        public @NotNull IntSet getLocalVariableIndexes() {
+            return keys;
         }
 
-        public Object2ObjectMap<String, String> getLocalVariableNames(int index) {
-            return Object2ObjectMaps.unmodifiable(lvt.get(index));
-        }
-
-        public void setLocalVariableName(int index, Map<String, String> names) {
-            if(Objects.requireNonNull(names).containsKey(null)) throw new IllegalArgumentException();
-            lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new).putAll(names);
-        }
-
-        public void setLocalVariableName(int index, String namespace, String name) {
-            lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new).put(Objects.requireNonNull(namespace), name);
-        }
-
-        public void setLocalVariableName(int index, String[] namespaces, String[] names) {
-            if(namespaces.length != names.length) throw new IllegalArgumentException();
-            Object2ObjectMap<String, String> map = lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new);
-            for(int i = 0; i < namespaces.length; i++) {
-                map.put(Objects.requireNonNull(namespaces[i]), names[i]);
-            }
-        }
-
-        public void setLocalVariableName(int index, String[] namespaces, String[] names, int nameStart) {
-            if(nameStart < 0 || nameStart > names.length || namespaces.length != names.length - nameStart) throw new IllegalArgumentException();
-            Object2ObjectMap<String, String> map = lvt.computeIfAbsent(index, Object2ObjectOpenHashMap::new);
-            for(int i = 0; i < namespaces.length; i++) {
-                map.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
-            }
-        }
-
-        public IntSet getLocalVariableIndexes() {
-            return lvt.keySet();
-        }
-
-        public void swapAll(String fromNamespace, String toNamespace) {
-            Objects.requireNonNull(fromNamespace);
-            Objects.requireNonNull(toNamespace);
-            lvt.keySet().forEach(index -> {
-                Object2ObjectMap<String, String> map = lvt.get(index);
-                map.put(toNamespace, map.put(fromNamespace, map.get(toNamespace)));
-            });
-        }
-
-        public void swap(int index, String fromNamespace, String toNamespace) {
-            if(index < 0) throw new IndexOutOfBoundsException();
-            Objects.requireNonNull(fromNamespace);
-            Objects.requireNonNull(toNamespace);
-            Object2ObjectMap<String, String> map = lvt.get(index);
-            map.put(toNamespace, map.put(fromNamespace, map.get(toNamespace)));
+        public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace) {
+            values.forEach(value -> value.swap(fromNamespace, toNamespace));
         }
 
         @Override
@@ -108,13 +84,13 @@ public interface LocalVariableTable {
             return mappedNamespace;
         }
 
-        public Namespaced setUnmappedNamespace(String namespace) {
+        public Namespaced setUnmappedNamespace(@NotNull String namespace) {
             this.unmappedNamespace = Objects.requireNonNull(namespace);
             return this;
         }
 
         @Override
-        public void setMappedNamespace(String namespace) {
+        public void setMappedNamespace(@NotNull String namespace) {
             this.mappedNamespace = Objects.requireNonNull(namespace);
         }
     }
