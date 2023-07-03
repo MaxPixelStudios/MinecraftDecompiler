@@ -24,7 +24,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectCollections;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Base class of all mappings
@@ -63,7 +62,7 @@ public abstract class Mapping implements NameGetter {
      * Gets the {@link Owned} component if it is present
      * @return The {@link Owned} component if it exists, or null
      */
-    protected @Nullable Owned<? extends Mapping> getOwned() {
+    protected Owned<? extends Mapping> getOwned() {
         return getComponent(Owned.class);
     }
 

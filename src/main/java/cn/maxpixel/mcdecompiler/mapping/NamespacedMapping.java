@@ -18,11 +18,14 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
+import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,6 +209,25 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
     public NamespacedMapping swap(@NotNull String fromNamespace, @NotNull String toNamespace) {
         names.put(Objects.requireNonNull(toNamespace), names.put(Objects.requireNonNull(fromNamespace), names.get(toNamespace)));
         return this;
+    }
+
+    /**
+     * Swap the given namespaced mapping<br>
+     * <b>INTERNAL METHOD. DO NOT CALL</b>
+     * @param remapper Remapper to remap descriptors
+     * @param fromNamespace Namespace to swap from
+     * @param toNamespace Namespace to swap to
+     */
+    @ApiStatus.Internal
+    public void swap(ClassifiedMappingRemapper remapper, String fromNamespace, String toNamespace) {
+        swap(fromNamespace, toNamespace);
+        if (hasComponent(Descriptor.Namespaced.class)) {
+            Descriptor.Namespaced n = getComponent(Descriptor.Namespaced.class);
+            if (!n.getDescriptorNamespace().equals(fromNamespace)) throw new IllegalArgumentException();
+            n.reverseUnmapped(remapper);
+        }
+        if (hasComponent(LocalVariableTable.Namespaced.class))
+            getComponent(LocalVariableTable.Namespaced.class).swapAll(fromNamespace, toNamespace, remapper);
     }
 
     /**

@@ -23,7 +23,6 @@ import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
@@ -31,6 +30,7 @@ import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -167,24 +167,9 @@ public class ClassMapping<T extends Mapping> {
      * @see ClassifiedMappingReader#reverse(ClassifiedMappingReader)
      */
     public static void reverse(ClassMapping<PairedMapping> mapping, ClassifiedMappingRemapper remapper) {
-        mapping.mapping.reverse();
-        mapping.getMethods().forEach(m -> reverse(m, remapper));
-        mapping.getFields().forEach(m -> reverse(m, remapper));
-    }
-
-    private static void reverse(PairedMapping m, ClassifiedMappingRemapper remapper) {
-        m.reverse();
-        boolean supportDesc = m.hasComponent(Descriptor.class);
-        boolean supportDescMapped = m.hasComponent(Descriptor.Mapped.class);
-        if(supportDesc) {
-            Descriptor unmapped = m.getComponent(Descriptor.class);
-            if(supportDescMapped) {
-                Descriptor.Mapped mapped = m.getComponent(Descriptor.Mapped.class);
-                String desc = unmapped.unmappedDescriptor;
-                unmapped.setUnmappedDescriptor(mapped.mappedDescriptor);
-                mapped.setMappedDescriptor(desc);
-            } else unmapped.reverseUnmapped(remapper);
-        } else if(supportDescMapped) m.getComponent(Descriptor.Mapped.class).reverseMapped(remapper);
+        mapping.mapping.reverse(remapper);
+        mapping.getMethods().forEach(m -> m.reverse(remapper));
+        mapping.getFields().forEach(m -> m.reverse(remapper));
     }
 
     public static void swap(ObjectList<ClassMapping<NamespacedMapping>> mappings, String targetNamespace) {
@@ -224,23 +209,13 @@ public class ClassMapping<T extends Mapping> {
      * @see ClassifiedMappingReader#swap(ClassifiedMappingReader, String, String)
      * @return The given class mapping
      */
+    @ApiStatus.Internal
     public static ClassMapping<NamespacedMapping> swap(ClassMapping<NamespacedMapping> mapping, ClassifiedMappingRemapper remapper,
                                                        String sourceNamespace, String targetNamespace) {
-        mapping.mapping.swap(sourceNamespace, targetNamespace);
-        mapping.getFields().forEach(m -> swap(m, remapper, sourceNamespace, targetNamespace));
-        mapping.getMethods().forEach(m -> swap(m, remapper, sourceNamespace, targetNamespace));
+        mapping.mapping.swap(remapper, sourceNamespace, targetNamespace);
+        mapping.getFields().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
+        mapping.getMethods().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
         return mapping;
-    }
-
-    private static void swap(NamespacedMapping m, ClassifiedMappingRemapper remapper, String fromNamespace, String toNamespace) {
-        m.swap(fromNamespace, toNamespace);
-        if(m.hasComponent(Descriptor.Namespaced.class)) {
-            Descriptor.Namespaced n = m.getComponent(Descriptor.Namespaced.class);
-            if(!n.getDescriptorNamespace().equals(fromNamespace)) throw new IllegalArgumentException();
-            n.reverseUnmapped(remapper);
-        }
-        if(m.hasComponent(LocalVariableTable.Namespaced.class))
-            m.getComponent(LocalVariableTable.Namespaced.class).swapAll(fromNamespace, toNamespace);
     }
 
     public static Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> genFieldsByUnmappedNameMap(

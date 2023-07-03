@@ -18,8 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
+import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
+import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Objects;
 
@@ -85,6 +89,23 @@ public class PairedMapping extends Mapping {
         unmappedName = mappedName;
         mappedName = temp;
         return this;
+    }
+
+    @ApiStatus.Internal
+    public void reverse(ClassifiedMappingRemapper remapper) {
+        reverse();
+        boolean supportDesc = hasComponent(Descriptor.class);
+        boolean supportDescMapped = hasComponent(Descriptor.Mapped.class);
+        if (supportDesc) {
+            Descriptor unmapped = getComponent(Descriptor.class);
+            if (supportDescMapped) {
+                Descriptor.Mapped mapped = getComponent(Descriptor.Mapped.class);
+                String desc = unmapped.unmappedDescriptor;
+                unmapped.unmappedDescriptor = mapped.mappedDescriptor;
+                mapped.mappedDescriptor = desc;
+            } else unmapped.reverseUnmapped(remapper);
+        } else if (supportDescMapped) getComponent(Descriptor.Mapped.class).reverseMapped(remapper);
+        if (hasComponent(LocalVariableTable.class)) getComponent(LocalVariableTable.class).reverseAll(remapper);
     }
 
     @Override

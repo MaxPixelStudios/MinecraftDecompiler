@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
@@ -47,8 +48,8 @@ public class LocalVariableTable implements Component {
         return keys;
     }
 
-    public void reverseAll() {
-        values.forEach(PairedMapping::reverse);
+    public void reverseAll(ClassifiedMappingRemapper remapper) {
+        values.forEach(v -> v.reverse(remapper));
     }
 
     public static class Namespaced implements Component, NameGetter.Namespaced {
@@ -70,8 +71,8 @@ public class LocalVariableTable implements Component {
             return keys;
         }
 
-        public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace) {
-            values.forEach(value -> value.swap(fromNamespace, toNamespace));
+        public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace, ClassifiedMappingRemapper remapper) {
+            values.forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
         }
 
         @Override
