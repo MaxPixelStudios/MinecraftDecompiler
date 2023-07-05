@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler.mapping.collection;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
@@ -243,6 +244,12 @@ public class ClassMapping<T extends Mapping> {
             ObjectList<ClassMapping<NamespacedMapping>> mapping, String namespace) {
         return mapping.parallelStream().collect(Collectors.toMap(m -> m.mapping.getName(namespace),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static void setMappedNamespace(ClassMapping<? extends NameGetter.Namespaced> cm, String namespace) {
+        cm.mapping.setMappedNamespace(namespace);
+        cm.fields.forEach(m -> m.setMappedNamespace(namespace));
+        cm.methods.forEach(m -> m.setMappedNamespace(namespace));
     }
 
     /* Auto-generated equals, hashCode and toString methods */

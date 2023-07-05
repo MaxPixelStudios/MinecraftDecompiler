@@ -287,8 +287,8 @@ public interface MappingProcessors {
                     int splitIndex = s.indexOf(" -> ");
                     if (splitIndex <= 0) error();
                     ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(
-                            NamingUtil.asNativeName(s.substring(0, splitIndex)),
-                            NamingUtil.asNativeName(s.substring(splitIndex + 4, s.length() - 1))
+                            NamingUtil.asNativeName(s.substring(splitIndex + 4, s.length() - 1)),
+                            NamingUtil.asNativeName(s.substring(0, splitIndex))
                     ));
                     i = processTree(i, len, content, classMapping);
                     mappings.left().add(classMapping);
@@ -311,14 +311,14 @@ public interface MappingProcessors {
                              prev = next, next = s.indexOf(',', prev + 1)) {
                             descriptor.append(NamingUtil.java2Descriptor(s.substring(prev + 1, next)));
                         }
-                        if (prev != leftBracket) descriptor.append(NamingUtil.java2Descriptor(s.substring(prev + 1, rightBracket)));
+                        if (rightBracket - 1 != leftBracket) descriptor.append(NamingUtil.java2Descriptor(s.substring(prev + 1, rightBracket)));
                         if (lineNum > 0) {
                             int split1 = s.indexOf(' ', 11);// skip leading 4 spaces, descriptor name(at least 3 chars), and line number(at least 4 chars)
                             if (split1 < 0) error();
                             int lineNum1 = s.indexOf(':', lineNum + 2);
                             if (lineNum1 < 0) error();
                             classMapping.addMethod(MappingUtil.Paired.ldmo(s.substring(rightBracket + 5), s.substring(split1 + 1, leftBracket),
-                                    descriptor.append('(').append(NamingUtil.java2Descriptor(s.substring(lineNum1 + 1, split1))).toString(),
+                                    descriptor.append(')').append(NamingUtil.java2Descriptor(s.substring(lineNum1 + 1, split1))).toString(),
                                     Integer.parseInt(s.substring(4, lineNum)), Integer.parseInt(s.substring(lineNum + 1, lineNum1))));
                         } else { // no line number
                             int split1 = s.indexOf(' ', 7);// skip leading 4 spaces and descriptor name/line number(at least 3 chars)

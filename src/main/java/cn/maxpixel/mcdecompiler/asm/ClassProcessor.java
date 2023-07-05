@@ -20,9 +20,9 @@ package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.ClassifiedDeobfuscator;
 import cn.maxpixel.mcdecompiler.Properties;
+import cn.maxpixel.mcdecompiler.asm.variable.*;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
@@ -161,6 +161,7 @@ public final class ClassProcessor {
 
     private enum CoreProcess implements Process {
         INSTANCE;
+        private final ForgeFlowerAbstractParametersRecorder recorder = new ForgeFlowerAbstractParametersRecorder();
 
         @Override
         public String getName() {
@@ -175,13 +176,13 @@ public final class ClassProcessor {
         @Override
         public void beforeRunning(ClassifiedDeobfuscator.DeobfuscateOptions options, String targetNamespace,
                                   ClassifiedMappingRemapper mappingRemapper) {
-            if (options.rvn()) VariableNameGenerator.startRecord();
+            if (options.rvn()) recorder.startRecord();
         }
 
         @Override
         public void afterRunning(ClassifiedDeobfuscator.DeobfuscateOptions options, String targetNamespace,
                                  ClassifiedMappingRemapper mappingRemapper) throws IOException {
-            if (options.rvn()) VariableNameGenerator.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
+            if (options.rvn()) recorder.endRecord(Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         }
 
         @Override
@@ -192,12 +193,21 @@ public final class ClassProcessor {
                 String className = reader.getClassName();
                 int access = reader.getAccess();
                 ClassVisitor cv = parent;
-                if (options.rvn()) cv = new VariableNameGenerator(cv, mappingRemapper.map(className));
-                if ((reader.getAccess() & Opcodes.ACC_RECORD) != 0) cv = new RecordNameRemapper(cv);
-                if (mapping != null && mapping.mapping instanceof NameGetter.Namespaced ngn) {
-                    ngn.setMappedNamespace(targetNamespace);
-                    cv = new LVTRemapper(cv, (ClassMapping<NamespacedMapping>) mapping, mappingRemapper);
+                VariableNameHandler handler = new VariableNameHandler();
+                if (mapping != null) {
+                    if (mapping.mapping instanceof NameGetter.Namespaced) {
+                        ClassMapping.setMappedNamespace((ClassMapping<? extends NameGetter.Namespaced>) mapping, targetNamespace);
+                    }
+                    MappingVariableNameProvider<? extends Mapping> provider = new MappingVariableNameProvider<>(mapping, mappingRemapper);
+                    if (provider.omitThis()) handler.setOmitThis();
+                    handler.addProvider(provider);
                 }
+                if ((access & Opcodes.ACC_RECORD) != 0) {
+                    RecordNameRemapper r = new RecordNameRemapper(cv);
+                    cv = r;
+                    handler.addProvider(r);
+                }
+                cv = new VariableNameProcessor(cv, recorder, handler, mappingRemapper.map(className), options.rvn());
                 cv = new ClassRemapper(cv, mappingRemapper);
                 ExtraClassesInformation eci = mappingRemapper.getExtraClassesInformation();
                 if (eci.dontRemap.containsKey(className)) {

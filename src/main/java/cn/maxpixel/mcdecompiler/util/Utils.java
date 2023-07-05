@@ -82,7 +82,7 @@ public class Utils {
     }
 
     public static <T> T onKeyDuplicate(T t, T u) {
-        throw new IllegalArgumentException("Key \"" + t + "\" and \"" + u + "\" duplicated!");
+        throw new IllegalArgumentException("Key duplicated for \"" + t + "\" and \"" + u + "\"");
     }
 
     public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(String mappingPath) {
