@@ -22,17 +22,18 @@ import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
 import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
-import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
+import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.*;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
@@ -131,7 +132,7 @@ public class MinecraftDecompiler {
         private Info.SideType type;
         private boolean includeOthers = true;
         private boolean rvn;
-        private BufferedReader inputMappings;
+        private AbstractMappingReader<?, ?, ?> mappingReader;
         private Path outputJar;
         private Path outputDecompDir;
         private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
@@ -245,25 +246,8 @@ public class MinecraftDecompiler {
             return this;
         }
 
-        public OptionBuilder withMapping(String inputMappings) {
-            try {
-                return withMapping(Files.newInputStream(Path.of(inputMappings)));
-            } catch (IOException e) {
-                LOGGER.severe("Error opening mapping file");
-                throw Utils.wrapInRuntime(e);
-            }
-        }
-
-        public OptionBuilder withMapping(InputStream inputMappings) {
-            return withMapping(new InputStreamReader(inputMappings));
-        }
-
-        public OptionBuilder withMapping(Reader inputMappings) {
-            return withMapping(IOUtil.asBufferedReader(inputMappings, "inputMappings"));
-        }
-
-        public OptionBuilder withMapping(BufferedReader inputMappings) {
-            this.inputMappings = Objects.requireNonNull(inputMappings, "inputMappings cannot be null");
+        public OptionBuilder withMapping(AbstractMappingReader<?, ?, ?> mappingReader) {
+            this.mappingReader = Objects.requireNonNull(mappingReader, "mappingReader cannot be null");
             return this;
         }
 
@@ -350,8 +334,8 @@ public class MinecraftDecompiler {
                 }
 
                 @Override
-                public BufferedReader inputMappings() {
-                    return inputMappings;
+                public AbstractMappingReader<?, ?, ?> mappingReader() {
+                    return mappingReader;
                 }
 
                 @Override
@@ -409,13 +393,12 @@ public class MinecraftDecompiler {
 
         @SuppressWarnings("unchecked")
         private ClassifiedDeobfuscator buildDeobfuscator() {
-            if(inputMappings() != null) {
-                MappingType<? extends Mapping, ?> type = Utils.tryIdentifyingMappingType(inputMappings());
-                if(type instanceof MappingType.Classified mtc) {
-                    if(type.isNamespaced()) {
-                        return new ClassifiedDeobfuscator(new ClassifiedMappingReader<NamespacedMapping>(mtc, inputMappings()),
+            if(mappingReader() != null) {
+                if(mappingReader() instanceof ClassifiedMappingReader<?> reader) {
+                    if(reader.isNamespaced()) {
+                        return new ClassifiedDeobfuscator((ClassifiedMappingReader<NamespacedMapping>) reader,
                                 Objects.requireNonNull(targetNamespace(), "You are using a namespaced mapping but no target namespace is specified"), this);
-                    } else return new ClassifiedDeobfuscator(new ClassifiedMappingReader<PairedMapping>(mtc, inputMappings()), this);
+                    } else return new ClassifiedDeobfuscator((ClassifiedMappingReader<PairedMapping>) reader, this);
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
             return new ClassifiedDeobfuscator(version(), type(), this);
@@ -427,7 +410,7 @@ public class MinecraftDecompiler {
         @Override
         boolean rvn();
 
-        BufferedReader inputMappings();
+        AbstractMappingReader<?, ?, ?> mappingReader();
 
         Path inputJar();
 

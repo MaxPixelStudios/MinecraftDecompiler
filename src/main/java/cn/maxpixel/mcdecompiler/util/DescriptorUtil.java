@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
+import cn.maxpixel.mcdecompiler.Info;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,5 +29,22 @@ public class DescriptorUtil {
         int index = methodDescriptor.lastIndexOf(')');
         if (index == -1) throw new IllegalArgumentException("Invalid descriptor");
         return methodDescriptor.substring(index + 1);
+    }
+
+    public static int getArgumentCount(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String descriptor) {
+        int count = 0;
+        for (int i = 1, max = descriptor.lastIndexOf(')'); i < max; i++) {
+            switch (descriptor.charAt(i)) {
+                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> count++;
+                case 'L' -> {
+                    count++;
+                    if ((i = descriptor.indexOf(';', i)) == -1)
+                        throw new IllegalArgumentException("Invalid method descriptor");
+                }
+                case '[' -> {} // no op
+                default -> throw new IllegalArgumentException("Invalid method descriptor");
+            }
+        }
+        return count;
     }
 }

@@ -85,7 +85,7 @@ public class Utils {
         throw new IllegalArgumentException("Key duplicated for \"" + t + "\" and \"" + u + "\"");
     }
 
-    public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(String mappingPath) {
+    public static MappingType.Classified<? extends Mapping> tryIdentifyingMappingType(String mappingPath) {
         try(Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#"))) {
             return tryIdentifyingMappingType(lines);
         } catch (IOException e) {
@@ -93,10 +93,10 @@ public class Utils {
         }
     }
 
-    public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(BufferedReader reader) {
+    public static MappingType.Classified<? extends Mapping> tryIdentifyingMappingType(BufferedReader reader) {
         try {
             reader.mark(512);
-            MappingType<? extends Mapping, ?> result = tryIdentifyingMappingType(reader.lines().filter(s -> !s.startsWith("#")));
+            MappingType.Classified<? extends Mapping> result = tryIdentifyingMappingType(reader.lines().filter(s -> !s.startsWith("#")));
             reader.reset();
             return result;
         } catch (IOException e) {
@@ -104,7 +104,7 @@ public class Utils {
         }
     }
 
-    public static MappingType<? extends Mapping, ?> tryIdentifyingMappingType(Stream<String> lines) {
+    public static MappingType.Classified<? extends Mapping> tryIdentifyingMappingType(Stream<String> lines) {
         List<String> list = lines.limit(2).toList();
         String s = list.get(0);
         if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingTypes.SRG;

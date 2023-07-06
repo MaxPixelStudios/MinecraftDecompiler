@@ -18,13 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.util;
 
-import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,23 +50,6 @@ public class NamingUtil {
                         .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class).descriptorNamespace)
                         .findAny()
                 ).orElseThrow(NullPointerException::new);
-    }
-
-    public static int getArgumentCount(@NotNull @Pattern(Info.METHOD_DESC_PATTERN) String descriptor) {
-        int count = 0;
-        for (int i = 1, max = descriptor.lastIndexOf(')'); i < max; i++) {
-            switch (descriptor.charAt(i)) {
-                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S' -> count++;
-                case 'L' -> {
-                    count++;
-                    if ((i = descriptor.indexOf(';', i)) == -1)
-                        throw new IllegalArgumentException("Invalid method descriptor");
-                }
-                case '[' -> {} // no op
-                default -> throw new IllegalArgumentException("Invalid method descriptor");
-            }
-        }
-        return count;
     }
 
     public static String concatNamespaces(@NotNull ObjectSet<String> namespaces, @NotNull Function<String, String> namespaceMapper, @NotNull String delimiter) {

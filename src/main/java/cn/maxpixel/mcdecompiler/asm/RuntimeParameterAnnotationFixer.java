@@ -19,10 +19,13 @@
 package cn.maxpixel.mcdecompiler.asm;
 
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.util.DescriptorUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import org.intellij.lang.annotations.Subst;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +40,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     public RuntimeParameterAnnotationFixer(ClassVisitor classVisitor, String className, int access) {
         super(Info.ASM_VERSION, classVisitor);
         this.className = className;
-        if((access & Opcodes.ACC_ENUM) != 0) {
+        if ((access & Opcodes.ACC_ENUM) != 0) {
             this.removeCount = 2;
             this.toProcess = "(Ljava/lang/String;I";
             LOGGER.log(Level.FINER, "Fixing class {0} because it is an enum", className);
@@ -46,18 +49,18 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-        if(toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && innerName != null) {
-            if(outerName == null) {
+        if (toProcess == null && name.equals(className) && (access & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) == 0 && innerName != null) {
+            if (outerName == null) {
                 int i = className.lastIndexOf('$');
-                if(i != -1) {
+                if (i != -1) {
                     this.removeCount = 1;
                     String s = className.substring(0, i);
-                    this.toProcess = '(' + Type.getObjectType(s).getDescriptor();
+                    this.toProcess = "(L" + s + ';';
                     LOGGER.log(Level.FINER, "Fixing class {0} as its name appears to be an inner class of {1}", new Object[] {name, s});
                 }
             } else {
                 this.removeCount = 1;
-                this.toProcess = '(' + Type.getObjectType(outerName).getDescriptor();
+                this.toProcess = "(L" + outerName + ';';
                 LOGGER.log(Level.FINER, "Fixing class {0} as its an inner class of {1}", new Object[] {name, outerName});
             }
         }
@@ -66,9 +69,9 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, @Subst("(Ljava/lang/String;I)V") String descriptor, String signature, String[] exceptions) {
-        if(toProcess != null && name.equals("<init>") && descriptor.startsWith(toProcess)) {
+        if(toProcess != null && "<init>".equals(name) && descriptor.startsWith(toProcess)) {
             return new MethodVisitor(Info.ASM_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-                private final int params = NamingUtil.getArgumentCount(descriptor);
+                private final int params = DescriptorUtil.getArgumentCount(descriptor);
                 private boolean processVisible;
                 private boolean processInvisible;
                 @Override

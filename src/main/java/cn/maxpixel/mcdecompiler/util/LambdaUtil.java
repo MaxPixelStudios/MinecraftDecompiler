@@ -33,6 +33,11 @@ public class LambdaUtil {
         R apply(T t) throws E;
     }
 
+    @FunctionalInterface
+    public interface Consumer_WithThrowable<T, E extends Throwable> {
+        void accept(T t) throws E;
+    }
+
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
         throw Utils.wrapInRuntime(throwable);
     }
@@ -68,6 +73,21 @@ public class LambdaUtil {
             } catch(Throwable e) {
                 exceptionHandler.accept((E) e);
                 return null;
+            }
+        };
+    }
+
+    public static <T, E extends Throwable> Consumer<T> unwrapConsumer(Consumer_WithThrowable<T, E> consumerWithThrowable) {
+        return unwrapConsumer(consumerWithThrowable, LambdaUtil::rethrowAsRuntime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T, E extends Throwable> Consumer<T> unwrapConsumer(Consumer_WithThrowable<T, E> consumerWithThrowable, Consumer<E> exceptionHandler) {
+        return t -> {
+            try {
+                consumerWithThrowable.accept(t);
+            } catch(Throwable e) {
+                exceptionHandler.accept((E) e);
             }
         };
     }

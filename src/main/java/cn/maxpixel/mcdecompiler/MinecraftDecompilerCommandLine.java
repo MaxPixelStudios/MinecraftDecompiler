@@ -19,6 +19,8 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
+import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import joptsimple.*;
@@ -101,10 +103,12 @@ public class MinecraftDecompilerCommandLine {
         MinecraftDecompiler.OptionBuilder builder;
         if(options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
-            options.valueOfOptional(mappingPathO).ifPresent(builder::withMapping);
+            options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
+                    .withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(m), m))));
         } else {
-            builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO))
-                    .withMapping(options.valueOf(mappingPathO));
+            builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO));
+            String mappingPath = options.valueOf(mappingPathO);
+            builder.withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(mappingPath), mappingPath));
             options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
         }
         if(options.has(regenVarNameO)) builder.regenerateVariableNames();
