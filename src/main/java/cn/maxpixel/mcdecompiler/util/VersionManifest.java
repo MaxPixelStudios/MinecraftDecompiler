@@ -56,9 +56,7 @@ public class VersionManifest {
 
     static {
         CompletableFuture<JsonObject> versionManifest = HTTP_CLIENT.sendAsync(
-                HttpRequest.newBuilder(
-                        URI.create("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-                ).build(),
+                HttpRequest.newBuilder(URI.create("https://piston-meta.mojang.com/mc/game/version_manifest.json")).build(),
                 HttpResponse.BodyHandlers.ofInputStream()
         ).thenApplyAsync(VersionManifest::parse).whenComplete((o, t) -> {
             if (t != null) LOGGER.log(Level.SEVERE, "Error fetching Minecraft version manifest", t);

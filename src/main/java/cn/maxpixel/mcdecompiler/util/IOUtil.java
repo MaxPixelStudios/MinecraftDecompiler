@@ -45,7 +45,7 @@ public class IOUtil {
         InputStream is = Files.newInputStream(file); // Caller will close this stream
         byte[] bytes = new byte[is.available()];
         if(is instanceof InflaterInputStream) {
-            if(bytes.length > 65536) for(int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
+            if(bytes.length > 65536) for (int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
             else is.read(bytes);
             return bytes;
         }
