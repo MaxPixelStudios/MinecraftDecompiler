@@ -122,7 +122,7 @@ public class ClassifiedDeobfuscator {
             ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
                         String k = NamingUtil.file2Native(p.toString());
-                        return (deobfAll && k.endsWith(".class")) || mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
+                        return (deobfAll && p.toString().endsWith(".class")) || mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
             options.extraJars().forEach(jar -> {
                 try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
