@@ -209,6 +209,7 @@ public final class ClassProcessor {
                 }
                 cv = new VariableNameProcessor(cv, recorder, handler, mappingRemapper.map(className), options.rvn());
                 cv = new ClassRemapper(cv, mappingRemapper);
+                cv = new IndyRemapper(cv, mappingRemapper);
                 ExtraClassesInformation eci = mappingRemapper.getExtraClassesInformation();
                 if (eci.dontRemap.containsKey(className)) {
                     ObjectSet<String> skipped = eci.dontRemap.get(className);
