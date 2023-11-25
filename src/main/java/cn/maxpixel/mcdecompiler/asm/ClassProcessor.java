@@ -136,8 +136,8 @@ public final class ClassProcessor {
                                                 BiFunction<String, String, OptionSpecBuilder> acceptWithDescription) {
         }
 
-        default <V> void acceptCommandLineValues(Predicate<OptionSpec<?>> has, Predicate<OptionSpec<?>> hasArgument,
-                                                 Function<OptionSpec<V>, V> valueOf, Function<OptionSpec<V>, List<V>> valuesOf) {
+        default void acceptCommandLineValues(Predicate<OptionSpec<?>> has, Predicate<OptionSpec<?>> hasArgument,
+                                                 Function<OptionSpec<?>, ?> valueOf, Function<OptionSpec<?>, List<?>> valuesOf) {
         }
 
         /**
