@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
@@ -28,23 +27,21 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Decompilers {
     private static final Logger LOGGER = Logging.getLogger("Decompiler Manager");
-    private static final EnumMap<Info.DecompilerType, IDecompiler> decompilers = new EnumMap<>(Info.DecompilerType.class);
-    private static final Object2ObjectOpenHashMap<String, ICustomDecompiler> customDecompilers = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectOpenHashMap<String, IDecompiler> decompilers = new Object2ObjectOpenHashMap<>();
     static {
-        decompilers.put(Info.DecompilerType.FERNFLOWER, new FernFlowerDecompiler());
-        decompilers.put(Info.DecompilerType.CFR, new CFRDecompiler());
-        decompilers.put(Info.DecompilerType.FORGEFLOWER, new ForgeFlowerDecompiler());
-        decompilers.put(Info.DecompilerType.USER_DEFINED, findUserDefined());
-
-        for(ICustomDecompiler icd : ServiceLoader.load(ICustomDecompiler.class)) {
-            customDecompilers.put(icd.name(), icd);
+        for(IDecompiler d : ServiceLoader.load(IDecompiler.class)) {
+            decompilers.put(d.name(), d);
         }
+        decompilers.put(UserDefinedDecompiler.NAME, findUserDefined());
     }
 
     private static UserDefinedDecompiler findUserDefined() {
@@ -68,11 +65,7 @@ public class Decompilers {
         return UserDefinedDecompiler.NONE;
     }
 
-    public static IDecompiler get(Info.DecompilerType type) {
-        return decompilers.getOrDefault(type, decompilers.get(Info.DecompilerType.FORGEFLOWER));
-    }
-
-    public static ICustomDecompiler getCustom(String name) {
-        return customDecompilers.get(name);
+    public static IDecompiler get(String name) {
+        return decompilers.get(name);
     }
 }

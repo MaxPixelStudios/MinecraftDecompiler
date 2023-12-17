@@ -41,8 +41,12 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
     private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar");
     private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar.sha1");
     private Path decompilerJarPath;
+    public static final String NAME = "fernflower";
 
-    FernFlowerDecompiler() {}
+    @Override
+    public String name() {
+        return NAME;
+    }
 
     @Override
     public SourceType getSourceType() {

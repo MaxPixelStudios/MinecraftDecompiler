@@ -41,10 +41,14 @@ public class ForgeFlowerDecompiler implements IExternalResourcesDecompiler, ILib
     private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/" + VERSION + "/forgeflower-" + VERSION + ".jar");
     private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/forgeflower/" + VERSION + "/forgeflower-" + VERSION + ".jar.sha1");
     public static final String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
+    public static final String NAME = "forgeflower";
     private File[] libs = new File[0];
     private Path decompilerJarPath;
 
-    ForgeFlowerDecompiler() {}
+    @Override
+    public String name() {
+        return NAME;
+    }
 
     @Override
     public SourceType getSourceType() {

@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.Info;
+import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -28,10 +29,14 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
+
 public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
+    public static final String NAME = "user-defined";
     public static final UserDefinedDecompiler NONE = new UserDefinedDecompiler() {
         @Override
         public void decompile(@NotNull Path source, @NotNull Path target) {
@@ -52,6 +57,11 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
     }
 
     @Override
+    public String name() {
+        return NAME;
+    }
+
+    @Override
     public @NotNull SourceType getSourceType() {
         return sourceType;
     }
@@ -69,14 +79,18 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
 
     private ObjectArrayList<String> resolveArgs(@NotNull Path source, @NotNull Path target, @NotNull List<String> options) {
         ObjectArrayList<String> resolvedOptions = new ObjectArrayList<>();
-        for(int i = 0; i < options.size(); i++) {
+        for (int i = 0; i < options.size(); i++) {
             String s = options.get(i);
-            if(s.contains("%source%")) s = s.replace("%source%", source.toString());
-            if(s.contains("%target%")) s = s.replace("%target%", target.toString());
-            if(s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(Info.PATH_SEPARATOR, libs));
-            if(s.contains("%lib_repeat%")) {
-                for(int j = 0; j < libs.size(); j++) {
-                    if(s.equals("%lib_repeat%")) {
+            if (s.contains("%source%")) s = s.replace("%source%", source.toString());
+            if (s.contains("%target%")) s = s.replace("%target%", target.toString());
+            if (s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(Info.PATH_SEPARATOR, libs));
+            if (s.contains("%abstract_params%")) {
+                Path p = Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES).toAbsolutePath().normalize();
+                s = s.replace("%abstract_params%", Files.exists(p) ? p.toString() : "");
+            }
+            if (s.contains("%lib_repeat%")) {
+                for (int j = 0; j < libs.size(); j++) {
+                    if (s.equals("%lib_repeat%")) {
                         resolvedOptions.add(options.get(i - 1));
                         resolvedOptions.add(libs.get(j));
                     } else resolvedOptions.add(s.replace("%lib_repeat%", libs.get(j)));

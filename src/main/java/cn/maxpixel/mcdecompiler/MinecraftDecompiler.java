@@ -19,7 +19,6 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
-import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
@@ -89,26 +88,20 @@ public class MinecraftDecompiler {
         }
     }
 
-    public void decompile(Info.DecompilerType decompilerType) {
-        if(Files.notExists(options.outputJar())) deobfuscate();
-        LOGGER.log(Level.INFO, "Decompiling using \"{0}\"", decompilerType);
-        decompile0(Decompilers.get(decompilerType), deobfuscator.toDecompile, options.outputJar(), options.outputDecompDir());
-    }
-
-    public void decompileCustomized(String customizedDecompilerName) {
-        if(Files.notExists(options.outputJar())) deobfuscate();
-        LOGGER.log(Level.INFO, "Decompiling using customized decompiler \"{0}\"", customizedDecompilerName);
-        decompile0(Decompilers.getCustom(customizedDecompilerName), deobfuscator.toDecompile, options.outputJar(), options.outputDecompDir());
-    }
-
-    private void decompile0(IDecompiler decompiler, ObjectSet<String> paths, Path inputJar, Path outputDir) {
-        try(FileSystem jarFs = JarUtil.createZipFs(inputJar)) {
+    public void decompile(String decompilerName) {
+        var decompiler = Decompilers.get(decompilerName);
+        if (decompiler == null) throw new IllegalArgumentException("Decompiler \"" + decompilerName + "\" does not exist");
+        if (Files.notExists(options.outputJar())) deobfuscate();
+        LOGGER.log(Level.INFO, "Decompiling using \"{0}\"", decompiler.name());
+        var inputJar = options.outputJar();
+        var outputDir = options.outputDecompDir();
+        try (FileSystem jarFs = JarUtil.createZipFs(inputJar)) {
             FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
             Path libDownloadPath = Files.createDirectories(Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize());
-            if(decompiler instanceof IExternalResourcesDecompiler erd)
+            if (decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
-            if(decompiler instanceof ILibRecommendedDecompiler lrd) {
+            if (decompiler instanceof ILibRecommendedDecompiler lrd) {
                 ObjectSet<Path> libs = options.bundledLibs().orElseGet(() ->
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
                 if (!libs.isEmpty()) lrd.receiveLibs(libs);
@@ -116,7 +109,7 @@ public class MinecraftDecompiler {
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
                     Path decompileClasses = Properties.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
-                    paths.parallelStream().forEach(path -> FileUtil.copyFile(jarFs.getPath(path), decompileClasses.resolve(path)));
+                    deobfuscator.toDecompile.parallelStream().forEach(path -> FileUtil.copyFile(jarFs.getPath(path), decompileClasses.resolve(path)));
                     decompiler.decompile(decompileClasses, outputDir);
                 }
                 case FILE -> decompiler.decompile(inputJar, outputDir);

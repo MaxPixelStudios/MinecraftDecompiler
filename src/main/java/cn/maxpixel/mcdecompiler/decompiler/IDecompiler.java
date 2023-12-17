@@ -24,7 +24,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Represents a decompiler.<br>
+ *
+ * To make the program can find your custom decompiler,
+ * you need to create a file named cn.maxpixel.mcdecompiler.decompiler.IDecompiler in META-INF/services.
+ * Then write the FQCN of your custom decompiler class that implements this interface in it.
+ */
 public interface IDecompiler {
+    /**
+     * Returns the unique name of your decompiler. The value is needed to identify which decompiler this is.<br>
+     * @return the unique name of your decompiler.
+     */
+    String name();
+
     /**
      * @return The type of the input.
      */

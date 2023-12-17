@@ -43,9 +43,12 @@ public class CFRDecompiler implements IExternalResourcesDecompiler, ILibRecommen
     private static final URI RESOURCE_HASH = URI.create("https://repo1.maven.org/maven2/org/benf/cfr/" + VERSION + "/cfr-" + VERSION + ".jar.sha1");
     private ObjectSet<String> libs = ObjectSets.emptySet();
     private Path decompilerJarPath;
-    private ExternalJarClassLoader cl;
+    public static final String NAME = "cfr";
 
-    CFRDecompiler() {}
+    @Override
+    public String name() {
+        return NAME;
+    }
 
     @Override
     public SourceType getSourceType() {

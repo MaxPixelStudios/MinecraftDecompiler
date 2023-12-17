@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
+import cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
@@ -64,12 +65,10 @@ public class MinecraftDecompilerCommandLine {
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("decompiled-output", "Decompiled output directory. " +
                 "Will be deleted before decompiling if it exists").withRequiredArg().withValuesConvertedBy(new PathConverter());
-        ArgumentAcceptingOptionSpec<Info.DecompilerType> decompileO = parser.acceptsAll(of("d", "decompile"), "Decompile the " +
-                "deobfuscated jar. Values are \"FERNFLOWER\", \"FORGEFLOWER\", \"CFR\" and \"USER_DEFINED\". Defaults to FORGEFLOWER. If a value " +
-                "other than above is used, will use the default decompiler to decompile. Do NOT pass any arg to this option when " +
-                "--custom-decompiler is specified.").withOptionalArg().ofType(Info.DecompilerType.class).defaultsTo(Info.DecompilerType.FORGEFLOWER);
-        ArgumentAcceptingOptionSpec<String> customDecompilerO = parser.accepts("custom-decompiler", "FQCN of your custom decompiler" +
-                ", do NOT pass any arg to --decompile when you use this option").withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> decompileO = parser.acceptsAll(of("d", "decompile"), "Decompile the " +
+                "deobfuscated jar. Values are \"fernflower\", \"forgeflower\", \"cfr\" and \"user-defined\" or the custom decompiler name. " +
+                "Defaults to forgeflower. If the decompiler does not exist, the program will crash.").withRequiredArg()
+                .defaultsTo(ForgeFlowerDecompiler.NAME);
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("temp", "Temp directory for saving unzipped and remapped " +
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.acceptsAll(of("e", "extra-jars"), "Extra jars used to get class " +
@@ -89,9 +88,6 @@ public class MinecraftDecompilerCommandLine {
         if(!options.hasOptions() || options.has(help)) {
             printHelp(parser);
             return;
-        }
-        if(options.has(customDecompilerO) && options.hasArgument(decompileO)) {
-            throw new IllegalArgumentException("Do NOT pass args to --decompile when --custom-decompiler is specified");
         }
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Properties.TEMP_DIR = p);
@@ -124,10 +120,8 @@ public class MinecraftDecompilerCommandLine {
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();
 
-        if(options.has(decompileO)) {
-            if(options.has(customDecompilerO)) md.decompileCustomized(options.valueOf(customDecompilerO));
-            else md.decompile(options.valueOf(decompileO));
-        }
+        if (options.has(decompileO)) md.decompile(options.valueOf(decompileO));
+
         LOGGER.log(Level.INFO, "Done. Thanks for using Minecraft Decompiler {0}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
     }
 
