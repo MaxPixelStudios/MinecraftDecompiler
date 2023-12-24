@@ -175,13 +175,7 @@ public final class FileUtil {
                 md.update(buf.flip());
                 buf.clear();
             }
-            StringBuilder out = new StringBuilder();
-            for(byte b : md.digest()) {
-                String hex = Integer.toHexString(Byte.toUnsignedInt(b));
-                if(hex.length() < 2) out.append('0');
-                out.append(hex);
-            }
-            return (size < 0 || fc.size() == size) && hash.contentEquals(out);
+            return (size < 0 || fc.size() == size) && hash.contentEquals(Utils.createHashString(md));
         } catch(IOException e) {
             LOGGER.log(Level.SEVERE, "Error reading files", e);
             throw Utils.wrapInRuntime(e);

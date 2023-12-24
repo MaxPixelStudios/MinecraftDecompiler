@@ -23,7 +23,6 @@ import cn.maxpixel.mcdecompiler.Properties;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +130,7 @@ public class DownloadingUtil {
     public static @NotNull ObjectSet<Path> downloadLibraries(@Nullable String version, @NotNull Path libDir) {
         if(version == null || version.isBlank()) {
             LOGGER.fine("Invalid version, skipping downloading libs");
-            return ObjectSets.emptySet();
+            return ObjectOpenHashSet.of();
         }
         LOGGER.log(Level.INFO, "Downloading libs of version {0}", version);
         return StreamSupport.stream(VersionManifest.getSync(version).getAsJsonArray("libraries").spliterator(), true)

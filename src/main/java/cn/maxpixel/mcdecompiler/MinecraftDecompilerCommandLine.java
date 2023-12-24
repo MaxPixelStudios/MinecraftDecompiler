@@ -76,6 +76,9 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<String> extraClassesO = parser.acceptsAll(of("c", "extra-class"), "Extra classes/packages that " +
                 "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names. Use \"*\" to " +
                 "deobfuscate all").withRequiredArg();
+        ArgumentAcceptingOptionSpec<Path> incrementalDecompilationO = parser.accepts("incremental-decompilation", "Try to decompile" +
+                "incrementally. Input a jar to compare the difference. Only works with decompilers of source type \"DIRECTORY\"")
+                .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
         ClassProcessor.registerCommandLineOptions(parser);
 
@@ -120,7 +123,7 @@ public class MinecraftDecompilerCommandLine {
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();
 
-        if (options.has(decompileO)) md.decompile(options.valueOf(decompileO));
+        if (options.has(decompileO)) md.decompile(options.valueOf(decompileO), options.valueOf(incrementalDecompilationO));
 
         LOGGER.log(Level.INFO, "Done. Thanks for using Minecraft Decompiler {0}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
     }

@@ -28,6 +28,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
@@ -115,5 +116,15 @@ public class Utils {
         if(s.startsWith("    ")) return MappingTypes.PROGUARD;
         else if(s.startsWith("\t")) return MappingTypes.TSRG_V1;
         else return MappingTypes.CSRG;
+    }
+
+    public static StringBuilder createHashString(MessageDigest md) {
+        StringBuilder out = new StringBuilder();
+        for(byte b : md.digest()) {
+            String hex = Integer.toHexString(Byte.toUnsignedInt(b));
+            if(hex.length() < 2) out.append('0');
+            out.append(hex);
+        }
+        return out;
     }
 }

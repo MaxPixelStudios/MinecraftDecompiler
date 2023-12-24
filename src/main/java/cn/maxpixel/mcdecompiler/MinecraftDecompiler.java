@@ -29,6 +29,7 @@ import cn.maxpixel.mcdecompiler.util.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.*;
 import java.util.jar.Manifest;
@@ -89,6 +92,10 @@ public class MinecraftDecompiler {
     }
 
     public void decompile(String decompilerName) {
+        decompile(decompilerName, null);
+    }
+
+    public void decompile(String decompilerName, @Nullable Path incrementalJar) {
         var decompiler = Decompilers.get(decompilerName);
         if (decompiler == null) throw new IllegalArgumentException("Decompiler \"" + decompilerName + "\" does not exist");
         if (Files.notExists(options.outputJar())) deobfuscate();
@@ -96,14 +103,54 @@ public class MinecraftDecompiler {
         var inputJar = options.outputJar();
         var outputDir = options.outputDecompDir();
         try (FileSystem jarFs = JarUtil.createZipFs(inputJar)) {
-            FileUtil.deleteIfExists(outputDir);
+            if (incrementalJar == null) FileUtil.deleteIfExists(outputDir);
             Files.createDirectories(outputDir);
             Path libDownloadPath = Files.createDirectories(Properties.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize());
             if (decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Properties.TEMP_DIR.toAbsolutePath().normalize());
             if (decompiler instanceof ILibRecommendedDecompiler lrd) {
-                ObjectSet<Path> libs = options.bundledLibs().orElseGet(() ->
+                ObjectSet<Path> libs = options.bundledLibs().<ObjectSet<Path>>map(ObjectOpenHashSet::new).orElseGet(() ->
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
+                if (incrementalJar != null) {
+                    try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar)) {
+                        var toDecompile = deobfuscator.toDecompile;
+                        ObjectOpenHashSet<String> possibleInnerClasses = new ObjectOpenHashSet<>();
+                        ObjectOpenHashSet<String> maybeRemoved = new ObjectOpenHashSet<>();
+                        FileUtil.iterateFiles(incrementalFs.getPath("")).forEach(p -> {
+                            String path = p.toString();
+                            if (path.endsWith(".class")) {
+                                String fileName = p.getFileName().toString();
+                                if (toDecompile.contains(path)) {
+                                    try {
+                                        MessageDigest md = MessageDigest.getInstance("SHA-1");
+                                        md.update(IOUtil.readAllBytes(p));
+                                        StringBuilder hashA = Utils.createHashString(md);
+
+                                        md.update(IOUtil.readAllBytes(jarFs.getPath(path)));
+                                        StringBuilder hashB = Utils.createHashString(md);
+                                        if (hashA.compareTo(hashB) == 0) {
+                                            maybeRemoved.add(path);
+                                        } else if (fileName.lastIndexOf('$') > 0) {
+                                            possibleInnerClasses.add(fileName.substring(0, fileName.indexOf('$')));
+                                        }
+                                    } catch (IOException | NoSuchAlgorithmException e) {
+                                        throw Utils.wrapInRuntime(e);
+                                    }
+                                } else { // deleted classes(delete java files here)
+                                    FileUtil.deleteIfExists(outputDir.resolve(path.replace(".class", ".java")));
+                                }
+                            }
+                        });
+                        for (String entry : maybeRemoved) {
+                            int i = entry.indexOf('$');
+                            String key = i >= 0 ? entry.substring(0, i) : entry.substring(0, entry.length() - 6);// Remove ".class"
+                            if (!possibleInnerClasses.contains(key) && (i < 0 || maybeRemoved.contains(key + ".class"))) {
+                                toDecompile.remove(entry);
+                            }
+                        }
+                    }
+                    libs.add(inputJar);
+                }
                 if (!libs.isEmpty()) lrd.receiveLibs(libs);
             }
             switch (decompiler.getSourceType()) {
