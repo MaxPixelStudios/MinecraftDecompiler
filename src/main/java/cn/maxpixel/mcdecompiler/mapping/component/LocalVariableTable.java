@@ -87,12 +87,14 @@ public class LocalVariableTable implements Component {
 
         public Namespaced setUnmappedNamespace(@NotNull String namespace) {
             this.unmappedNamespace = Objects.requireNonNull(namespace);
+            values.forEach(v -> v.setMappedNamespace(unmappedNamespace));
             return this;
         }
 
         @Override
         public void setMappedNamespace(@NotNull String namespace) {
             this.mappedNamespace = Objects.requireNonNull(namespace);
+            values.forEach(v -> v.setMappedNamespace(mappedNamespace));
         }
     }
 }
