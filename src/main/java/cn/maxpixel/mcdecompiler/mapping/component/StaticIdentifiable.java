@@ -28,4 +28,16 @@ public class StaticIdentifiable implements Component {
     public void setStatic(boolean isStatic) {
         this.isStatic = isStatic;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StaticIdentifiable that)) return false;
+        return isStatic == that.isStatic;
+    }
+
+    @Override
+    public int hashCode() {
+        return Boolean.hashCode(isStatic);
+    }
 }

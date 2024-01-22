@@ -52,6 +52,18 @@ public class LocalVariableTable implements Component {
         values.forEach(v -> v.reverse(remapper));
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LocalVariableTable that)) return false;
+        return Objects.equals(lvt, that.lvt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(lvt);
+    }
+
     public static class Namespaced implements Component, NameGetter.Namespaced {
         private String unmappedNamespace;
         private String mappedNamespace;
@@ -95,6 +107,18 @@ public class LocalVariableTable implements Component {
         public void setMappedNamespace(@NotNull String namespace) {
             this.mappedNamespace = Objects.requireNonNull(namespace);
             values.forEach(v -> v.setMappedNamespace(mappedNamespace));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Namespaced that)) return false;
+            return Objects.equals(unmappedNamespace, that.unmappedNamespace) && Objects.equals(mappedNamespace, that.mappedNamespace) && Objects.equals(lvt, that.lvt);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(unmappedNamespace, mappedNamespace, lvt);
         }
     }
 }

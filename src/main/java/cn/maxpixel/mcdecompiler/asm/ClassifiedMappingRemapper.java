@@ -254,12 +254,14 @@ public class ClassifiedMappingRemapper extends Remapper {
     }
 
     private PairedMapping reduceField(PairedMapping left, PairedMapping right) {
+        if (left == right) return left;
         int leftAcc = extraClassesInformation.getAccessFlags(left.getOwned().owner.mapping.unmappedName,
                 left.unmappedName) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
         int rightAcc = extraClassesInformation.getAccessFlags(right.getOwned().owner.mapping.unmappedName,
                 right.unmappedName) & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE);
         if((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {
-            if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) throw new IllegalArgumentException("This can't happen!");
+            if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0)
+                throw new IllegalArgumentException("This can't happen!");
             return left;
         } else if((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) return right;
         else if(Modifier.isPrivate(leftAcc) || Modifier.isPrivate(rightAcc))

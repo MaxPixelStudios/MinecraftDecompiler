@@ -30,4 +30,16 @@ public class Documented implements Component {
     public void setDoc(String doc) {
         this.doc = Objects.requireNonNull(doc, "null documentation isn't meaningful huh?");
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Documented that)) return false;
+        return Objects.equals(doc, that.doc);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(doc);
+    }
 }

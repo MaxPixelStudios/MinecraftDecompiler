@@ -21,6 +21,8 @@ package cn.maxpixel.mcdecompiler.mapping.component;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 
+import java.util.Objects;
+
 public class Owned<T extends Mapping> implements Component {
     public ClassMapping<T> owner;
 
@@ -30,5 +32,17 @@ public class Owned<T extends Mapping> implements Component {
 
     public void setOwner(ClassMapping<T> owner) {
         this.owner = owner;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Owned<?> owned)) return false;
+        return Objects.equals(owner.mapping, owned.owner.mapping);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(owner.mapping);
     }
 }

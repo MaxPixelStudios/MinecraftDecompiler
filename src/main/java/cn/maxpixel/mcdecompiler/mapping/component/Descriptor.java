@@ -22,6 +22,8 @@ import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Descriptor component for paired mappings
  */
@@ -30,7 +32,7 @@ public class Descriptor implements Component {
     public @NotNull String unmappedDescriptor;
 
     public Descriptor(@NotNull String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
+        this.unmappedDescriptor = Objects.requireNonNull(unmappedDescriptor);
     }
 
     public void reverseUnmapped(ClassifiedMappingRemapper remapper) {
@@ -42,7 +44,7 @@ public class Descriptor implements Component {
     }
 
     public void setUnmappedDescriptor(@NotNull String unmappedDescriptor) {
-        this.unmappedDescriptor = unmappedDescriptor;
+        this.unmappedDescriptor = Objects.requireNonNull(unmappedDescriptor);
     }
 
     @Override
@@ -65,7 +67,7 @@ public class Descriptor implements Component {
         public @NotNull String mappedDescriptor;
 
         public Mapped(@NotNull String mappedDescriptor) {
-            this.mappedDescriptor = mappedDescriptor;
+            this.mappedDescriptor = Objects.requireNonNull(mappedDescriptor);
         }
 
         public void reverseMapped(ClassifiedMappingRemapper remapper) {
@@ -77,7 +79,7 @@ public class Descriptor implements Component {
         }
 
         public void setMappedDescriptor(@NotNull String mappedDescriptor) {
-            this.mappedDescriptor = mappedDescriptor;
+            this.mappedDescriptor = Objects.requireNonNull(mappedDescriptor);
         }
 
         @Override
@@ -102,7 +104,7 @@ public class Descriptor implements Component {
 
         public Namespaced(@NotNull String unmappedDescriptor, @NotNull String descriptorNamespace) {
             super(unmappedDescriptor);
-            this.descriptorNamespace = descriptorNamespace;
+            this.descriptorNamespace = Objects.requireNonNull(descriptorNamespace);
         }
 
         public @NotNull String getDescriptorNamespace() {
@@ -110,7 +112,7 @@ public class Descriptor implements Component {
         }
 
         public void setDescriptorNamespace(@NotNull String descriptorNamespace) {
-            this.descriptorNamespace = descriptorNamespace;
+            this.descriptorNamespace = Objects.requireNonNull(descriptorNamespace);
         }
 
         @Override

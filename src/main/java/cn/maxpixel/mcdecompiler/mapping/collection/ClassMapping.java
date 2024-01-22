@@ -256,8 +256,7 @@ public class ClassMapping<T extends Mapping> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ClassMapping)) return false;
-        ClassMapping<?> that = (ClassMapping<?>) o;
+        if (!(o instanceof ClassMapping<?> that)) return false;
         return mapping.equals(that.mapping) && methods.equals(that.methods) && fields.equals(that.fields);
     }
 

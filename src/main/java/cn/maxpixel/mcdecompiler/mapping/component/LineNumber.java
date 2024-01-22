@@ -45,4 +45,16 @@ public class LineNumber implements Component {
     public void setEndLineNumber(int endLineNumber) {
         this.endLineNumber = endLineNumber;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LineNumber that)) return false;
+        return startLineNumber == that.startLineNumber && endLineNumber == that.endLineNumber;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * startLineNumber + endLineNumber;
+    }
 }
