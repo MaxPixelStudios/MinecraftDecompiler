@@ -74,7 +74,7 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.acceptsAll(of("e", "extra-jars"), "Extra jars used to get class " +
                 "information").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> extraClassesO = parser.acceptsAll(of("c", "extra-class"), "Extra classes/packages that " +
-                "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names. Use \"*\" to " +
+                "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names. Use \"*\" or \"*all*\" to " +
                 "deobfuscate all").withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> incrementalDecompilationO = parser.accepts("incremental-decompilation", "Try to decompile" +
                 "incrementally. Input a jar to compare the difference. Only works with decompilers of source type \"DIRECTORY\"")

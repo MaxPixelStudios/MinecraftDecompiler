@@ -117,7 +117,7 @@ public class ClassifiedDeobfuscator {
             FileSystem targetFs = JarUtil.createZipFs(target, true);
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             ObjectSet<String> extraClasses = options.extraClasses();
-            boolean deobfAll = extraClasses.contains("*");
+            boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
