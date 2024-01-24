@@ -35,11 +35,13 @@ public class FernFlowerDecompileThread extends Thread {
 
     private final File source;
     private final File target;
+    private final File[] libs;
 
-    public FernFlowerDecompileThread(File source, File target) {
+    public FernFlowerDecompileThread(File source, File target, File[] libs) {
         super("FernFlower-Decompile");
         this.source = source;
         this.target = target;
+        this.libs = libs;
     }
 
     @Override
@@ -52,8 +54,7 @@ public class FernFlowerDecompileThread extends Thread {
         );
         ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target, options, LOGGER);
         decompiler.addSource(source);
-//        ObjectList<String> libs = listLibs();
-//        for(int index = 0; index < libs.size(); index++) decompiler.addLibrary(new File(libs.get(index)));
+        for (File lib : libs) decompiler.addLibrary(lib);
         decompiler.decompileContext();
     }
 }

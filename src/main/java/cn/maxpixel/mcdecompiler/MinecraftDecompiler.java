@@ -69,6 +69,7 @@ public class MinecraftDecompiler {
                 }
             })
             .connectTimeout(Duration.ofSeconds(10L))
+            .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
 
     private final Options options;

@@ -24,6 +24,7 @@ import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
 import cn.maxpixel.mcdecompiler.util.DownloadingUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,11 +38,13 @@ import java.util.logging.Level;
 
 // Do not extend AbstractLibRecommendedDecompiler because this decompiler cannot read some of the libraries successfully
 // TODO: Make FernFlowerDecompiler read all libraries successfully
-public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ implements IExternalResourcesDecompiler {
-    private static final URI RESOURCE = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar");
-    private static final URI RESOURCE_HASH = URI.create("https://maven.minecraftforge.net/net/minecraftforge/fernflower/403/fernflower-403.jar.sha1");
-    private Path decompilerJarPath;
+public class FernFlowerDecompiler implements IExternalResourcesDecompiler, ILibRecommendedDecompiler {
+    private static final String VERSION = Properties.getProperty("FernFlower-Version", "fernflower.version");
+    private static final URI RESOURCE = URI.create("https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/java/java-decompiler-engine/" + VERSION + "/java-decompiler-engine-" + VERSION + ".jar");
+    private static final URI RESOURCE_HASH = URI.create("https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/java/java-decompiler-engine/" + VERSION + "/java-decompiler-engine-" + VERSION + ".jar.sha1");
     public static final String NAME = "fernflower";
+    private Path decompilerJarPath;
+    private File[] libs = new File[0];
 
     @Override
     public String name() {
@@ -58,9 +61,9 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
         checkArgs(source, target);
         try (ExternalJarClassLoader cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()})) {
             Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.FernFlowerDecompileThread")
-                    .getConstructor(File.class, File.class).newInstance(source.toFile(), target.toFile());
+                    .getConstructor(File.class, File.class, File[].class).newInstance(source.toFile(), target.toFile(), libs);
             thread.start();
-            while(thread.isAlive()) Thread.onSpinWait();
+            while (thread.isAlive()) Thread.onSpinWait();
         } catch(ReflectiveOperationException e) {
             Logging.getLogger().log(Level.SEVERE, "Failed to load FernFlower", e);
             throw Utils.wrapInRuntime(e);
@@ -72,5 +75,10 @@ public class FernFlowerDecompiler/* extends AbstractLibRecommendedDecompiler */ 
         this.decompilerJarPath = extractPath.resolve("decompiler.jar");
         Files.copy(DownloadingUtil.getRemoteResource(Properties.getDownloadedDecompilerPath(Info.DecompilerType.FERNFLOWER), RESOURCE, RESOURCE_HASH),
                 decompilerJarPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Override
+    public void receiveLibs(@NotNull ObjectSet<Path> libs) {
+        this.libs = libs.stream().map(Path::toFile).toArray(File[]::new);
     }
 }

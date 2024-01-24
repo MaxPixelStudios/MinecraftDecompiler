@@ -67,7 +67,7 @@ public class MinecraftDecompilerCommandLine {
                 "Will be deleted before decompiling if it exists").withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<String> decompileO = parser.acceptsAll(of("d", "decompile"), "Decompile the " +
                 "deobfuscated jar. Values are \"fernflower\", \"forgeflower\", \"cfr\" and \"user-defined\" or the custom decompiler name. " +
-                "Defaults to forgeflower. If the decompiler does not exist, the program will crash.").withRequiredArg()
+                "Defaults to forgeflower. If the decompiler does not exist, the program will crash.").withOptionalArg()
                 .defaultsTo(ForgeFlowerDecompiler.NAME);
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("temp", "Temp directory for saving unzipped and remapped " +
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());

@@ -68,14 +68,14 @@ public class ForgeFlowerDecompiler implements IExternalResourcesDecompiler, ILib
         try (ExternalJarClassLoader cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()})) {
             File[] sources;
             Path abstractMethodParameterNames = Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES);
-            if(Files.exists(abstractMethodParameterNames))
+            if (Files.exists(abstractMethodParameterNames))
                 sources = new File[] {source.toFile(), abstractMethodParameterNames.toAbsolutePath().normalize().toFile()};
             else sources = new File[] {source.toFile()};
             Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.ForgeFlowerDecompileThread")
                     .getConstructor(File[].class, File[].class, File.class)
                     .newInstance(sources, libs, target.toFile());
             thread.start();
-            while(thread.isAlive()) Thread.onSpinWait();
+            while (thread.isAlive()) Thread.onSpinWait();
         } catch(ReflectiveOperationException e) {
             Logging.getLogger().log(Level.SEVERE, "Failed to load ForgeFlower", e);
             throw Utils.wrapInRuntime(e);
