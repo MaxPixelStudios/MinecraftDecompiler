@@ -6,7 +6,7 @@
     <groupId>cn.maxpixel</groupId>
     <artifactId>minecraft-decompiler</artifactId>
     <name>MinecraftDecompiler</name>
-    <version>3.3</version>
+    <version>3.3.1</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <depend.asm.ver>9.5</depend.asm.ver>
@@ -71,6 +71,7 @@
                                 <CFR-Version>${depend.cfr.ver}</CFR-Version>
                                 <ForgeFlower-Version>${depend.forgeflower.ver}</ForgeFlower-Version>
                                 <FernFlower-Version>${depend.fernflower.ver}</FernFlower-Version>
+                                <VineFlower-Version>${depend.vineflower.ver}</VineFlower-Version>
                             </manifestEntries>
                         </transformer>
                     </transformers>
