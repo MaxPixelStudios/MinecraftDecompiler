@@ -47,10 +47,11 @@ public class FernFlowerDecompileThread extends Thread {
     @Override
     public void run() {
         Map<String, Object> options = Map.of(
-                "log", "TRACE",
+//                "log", "TRACE",
                 "dgs", "1",
                 "asc", "1",
-                "rsy", "1"
+                "rsy", "1",
+                "bsm", "1"
         );
         ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target, options, LOGGER);
         decompiler.addSource(source);
@@ -85,7 +86,6 @@ class ThreadedLogger extends IFernflowerLogger {
     public void writeMessage(String message, Severity severity) {
         Level l = LEVEL_MAP.get(severity);
         if (accepts(severity) && logger.isLoggable(l)) {
-            Thread th = Thread.currentThread();
             logger.log(l, "{0}: {1}{2}{3}", new Object[] {Thread.currentThread().getName(), severity.prefix,
                     TextUtil.getIndentString(indent.get().get()), message});
         }

@@ -42,12 +42,11 @@ public class ForgeFlowerDecompileThread extends Thread {
     @Override
     public void run() {
         Map<String, Object> options = Map.of(
-                "log", "TRACE",
+//                "log", "TRACE",
                 "rsy", "1",
                 "dgs", "1",
                 "asc", "1",
-                "bsm", "1",
-                "iec", "1"
+                "bsm", "1"
         );
         ConsoleDecompiler decompiler = new AccessibleConsoleDecompiler(target, options, LOGGER);
         for(File source : sources) decompiler.addSource(source);

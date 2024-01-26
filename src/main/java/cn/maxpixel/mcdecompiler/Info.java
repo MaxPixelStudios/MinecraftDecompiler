@@ -47,6 +47,7 @@ public interface Info {
     enum DecompilerType {
         FERNFLOWER,
         FORGEFLOWER,
+        VINEFLOWER,
         CFR,
         USER_DEFINED;
         @Override

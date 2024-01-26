@@ -19,7 +19,7 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
-import cn.maxpixel.mcdecompiler.decompiler.ForgeFlowerDecompiler;
+import cn.maxpixel.mcdecompiler.decompiler.VineflowerDecompiler;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
@@ -68,7 +68,7 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<String> decompileO = parser.acceptsAll(of("d", "decompile"), "Decompile the " +
                 "deobfuscated jar. Values are \"fernflower\", \"forgeflower\", \"cfr\" and \"user-defined\" or the custom decompiler name. " +
                 "Defaults to forgeflower. If the decompiler does not exist, the program will crash.").withOptionalArg()
-                .defaultsTo(ForgeFlowerDecompiler.NAME);
+                .defaultsTo(VineflowerDecompiler.NAME);
         ArgumentAcceptingOptionSpec<Path> tempDirO = parser.accepts("temp", "Temp directory for saving unzipped and remapped " +
                 "files.").withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> extraJarsO = parser.acceptsAll(of("e", "extra-jars"), "Extra jars used to get class " +

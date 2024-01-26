@@ -36,6 +36,7 @@ public class ExternalJarClassLoader extends URLClassLoader {
                 Class<?> c = findLoadedClass(name);
                 if (c == null) {
                     URL resource = getParent().getResource(name.replace('.', '/').concat(".class"));
+                    if (resource == null) throw new ClassNotFoundException(name);
                     try (InputStream in = resource.openStream()) {
                         byte[] bytes = new byte[4096];
                         int len = 0;
@@ -48,7 +49,7 @@ public class ExternalJarClassLoader extends URLClassLoader {
                         }
                         c = defineClass(name, bytes, 0, len);
                     } catch (IOException e) {
-                        throw new ClassNotFoundException(e.getMessage(), e);
+                        throw new ClassNotFoundException(name, e);
                     }
                 }
                 if (resolve) resolveClass(c);
