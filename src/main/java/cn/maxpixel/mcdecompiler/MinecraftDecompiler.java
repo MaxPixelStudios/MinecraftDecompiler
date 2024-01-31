@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
+import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
@@ -112,7 +113,7 @@ public class MinecraftDecompiler {
             if (decompiler instanceof ILibRecommendedDecompiler lrd) {
                 ObjectSet<Path> libs = options.bundledLibs().<ObjectSet<Path>>map(ObjectOpenHashSet::new).orElseGet(() ->
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
-                if (incrementalJar != null) {
+                if (incrementalJar != null && decompiler.getSourceType() == IDecompiler.SourceType.DIRECTORY) {
                     try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar)) {
                         var toDecompile = deobfuscator.toDecompile;
                         ObjectOpenHashSet<String> possibleInnerClasses = new ObjectOpenHashSet<>();
