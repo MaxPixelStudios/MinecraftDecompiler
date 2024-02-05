@@ -383,6 +383,7 @@ public interface MappingProcessors {
                     }
                 } else error();
             });
+            mappings.left().addAll(classes.values());
             return mappings;
         }
 
