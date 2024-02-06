@@ -32,7 +32,6 @@ public interface Info {
     String METHOD_DESC_PATTERN = "^\\((\\[*([ZBCDFIJS]|L([A-Za-z_]+\\w*[/$]?)+;))*\\)\\[*([ZBCDFIJSV]|L([A-Za-z_]+\\w*[/$]?)+;)$";
     boolean IS_DEV = System.console() == null && Boolean.getBoolean("mcd.isDevEnv");
     int ASM_VERSION = Opcodes.ASM9;
-    String PATH_SEPARATOR = System.getProperty("path.separator"); // ;
     Manifest MANIFEST = getManifest();
 
     enum SideType {

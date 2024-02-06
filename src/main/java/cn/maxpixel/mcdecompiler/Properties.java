@@ -28,12 +28,12 @@ public class Properties {
     public static Path DOWNLOAD_DIR = Path.of("downloads");
 
     public static Path getDownloadedDecompilerPath(@NotNull Info.DecompilerType type) {
-        if(type == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
+        if (type == Info.DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
         return DOWNLOAD_DIR.resolve("decompiler").resolve(Objects.requireNonNull(type) + ".jar");
     }
 
     public static String getProperty(String name, String prop) {
-        if(Info.IS_DEV || Info.MANIFEST == null)
+        if (Info.IS_DEV || Info.MANIFEST == null)
             return Objects.requireNonNull(System.getProperty(prop), "System property \"" + prop + "\" is not set");
         return Objects.requireNonNull(Info.MANIFEST.getMainAttributes().getValue(name),
                 "Guess you forgot to add the " + name + " property to the manifest!");

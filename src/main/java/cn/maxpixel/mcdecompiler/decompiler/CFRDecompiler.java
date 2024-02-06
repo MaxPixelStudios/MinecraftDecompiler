@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -61,7 +62,7 @@ public class CFRDecompiler implements IExternalResourcesDecompiler, ILibRecommen
         try (ExternalJarClassLoader cl = new ExternalJarClassLoader(new URL[] {decompilerJarPath.toUri().toURL()})) {
             Thread thread = (Thread) cl.loadClass("cn.maxpixel.mcdecompiler.decompiler.thread.CFRDecompileThread")
                     .getConstructor(String.class, String.class, String.class)
-                    .newInstance(source.toString(), target.toString(), String.join(Info.PATH_SEPARATOR, libs));
+                    .newInstance(source.toString(), target.toString(), String.join(File.pathSeparator, libs));
             thread.start();
             while(thread.isAlive()) Thread.onSpinWait();
         } catch(ReflectiveOperationException e) {

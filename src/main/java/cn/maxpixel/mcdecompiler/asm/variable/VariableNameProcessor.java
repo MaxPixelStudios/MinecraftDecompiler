@@ -50,7 +50,7 @@ public class VariableNameProcessor extends ClassVisitor {
         private boolean skip;
 
         public MethodProcessor(MethodVisitor methodVisitor, VariableNameProvider.RenameFunction renameFunction, Renamer renamer, String method, boolean notStatic) {
-            super(VariableNameProcessor.this.api, methodVisitor);
+            super(Info.ASM_VERSION, methodVisitor);
             this.renameFunction = renameFunction;
             this.renamer = renamer;
             this.method = method;

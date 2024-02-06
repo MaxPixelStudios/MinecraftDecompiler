@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.Properties;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
@@ -28,6 +27,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,7 +83,7 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
             String s = options.get(i);
             if (s.contains("%source%")) s = s.replace("%source%", source.toString());
             if (s.contains("%target%")) s = s.replace("%target%", target.toString());
-            if (s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(Info.PATH_SEPARATOR, libs));
+            if (s.contains("%lib_all%")) s = s.replace("%lib_all%", String.join(File.pathSeparator, libs));
             if (s.contains("%abstract_params%")) {
                 Path p = Properties.TEMP_DIR.resolve(FERNFLOWER_ABSTRACT_PARAMETER_NAMES).toAbsolutePath().normalize();
                 s = s.replace("%abstract_params%", Files.exists(p) ? p.toString() : "");

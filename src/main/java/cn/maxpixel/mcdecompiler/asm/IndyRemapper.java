@@ -21,7 +21,7 @@ public class IndyRemapper extends ClassVisitor {
 
     public class Remapper extends MethodVisitor {
         public Remapper(MethodVisitor methodVisitor) {
-            super(IndyRemapper.this.api, methodVisitor);
+            super(Info.ASM_VERSION, methodVisitor);
         }
 
         @Override
