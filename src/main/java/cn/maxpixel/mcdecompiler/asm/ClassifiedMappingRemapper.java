@@ -27,6 +27,7 @@ import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,12 @@ public class ClassifiedMappingRemapper extends Remapper {
     public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String sourceNamespace, String targetNamespace) {
         this(mappings.parallelStream()
                 .map(old -> {
+                    if (!old.mapping.contains(targetNamespace)) {
+                        var availableNamespaces = new ObjectOpenHashSet<>(old.mapping.getNamespaces());
+                        availableNamespaces.remove(sourceNamespace);
+                        throw new IllegalArgumentException(String.format("Target namespace \"%s\" does not exist. Available namespaces: %s",
+                                targetNamespace, availableNamespaces));
+                    }
                     ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
                             old.mapping.getName(targetNamespace)));
                     old.getFields().forEach(m -> cm.addField(MappingUtil.Paired.o(m.getName(sourceNamespace), m.getName(targetNamespace))));

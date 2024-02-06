@@ -49,7 +49,7 @@ public class NamingUtil {
                         .filter(mapping -> mapping.hasComponent(Descriptor.Namespaced.class))
                         .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class).descriptorNamespace)
                         .findAny()
-                ).orElseThrow(NullPointerException::new);
+                ).orElseThrow(() -> new NullPointerException("No source namespace found"));
     }
 
     public static String concatNamespaces(@NotNull ObjectSet<String> namespaces, @NotNull Function<String, String> namespaceMapper, @NotNull String delimiter) {
