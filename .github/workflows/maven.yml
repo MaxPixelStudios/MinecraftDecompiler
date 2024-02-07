@@ -5,10 +5,9 @@ on:
     paths-ignore:
       - README.md
       - LICENSE
+      - LICENSE.LESSER
       - .gitignore
       - CODE_OF_CONDUCT.md
-      - src/main/resources/**
-      - src/test/resources/**
       - decompiler/**
       - .github/**
     branches:
@@ -22,9 +21,9 @@ jobs:
       packages: write
       contents: write
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
     - name: Set up JDK
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4.0.0
       with:
         java-version: 17
         distribution: temurin
@@ -34,7 +33,7 @@ jobs:
       run: mvn -B clean package
     - name: Upload target
       if: success()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.1
       with:
         name: MinecraftDecompiler
         path: MinecraftDecompiler.jar
