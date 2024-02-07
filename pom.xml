@@ -6,7 +6,8 @@
     <groupId>cn.maxpixel</groupId>
     <artifactId>minecraft-decompiler</artifactId>
     <name>MinecraftDecompiler</name>
-    <version>3.4-SNAPSHOT</version>
+    <version>3.3.2</version>
+    <inceptionYear>2019</inceptionYear>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <depend.asm.ver>9.6</depend.asm.ver>
@@ -21,6 +22,18 @@
         <depend.jbannos.ver>24.0.1</depend.jbannos.ver>
         <depend.jmh.ver>1.36</depend.jmh.ver>
     </properties>
+    <licenses>
+        <license>
+            <name>LGPLv3</name>
+            <distribution>repo</distribution>
+            <url>https://www.gnu.org/licenses/lgpl-3.0.txt</url>
+        </license>
+        <license>
+            <name>GPLv3</name>
+            <distribution>repo</distribution>
+            <url>https://www.gnu.org/licenses/lgpl-3.0.txt</url>
+        </license>
+    </licenses>
     <build>
         <plugins>
             <plugin>
