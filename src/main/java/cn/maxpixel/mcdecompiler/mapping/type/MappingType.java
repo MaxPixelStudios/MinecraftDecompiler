@@ -28,7 +28,7 @@ import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
 /**
  * Represents a type of mapping.<br>
  *
- * @implNote You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new kind of mapping</b>
+ * @implNote You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new kind of mapping
  * @param <M> Mapping type
  * @param <C> Collection type
  */

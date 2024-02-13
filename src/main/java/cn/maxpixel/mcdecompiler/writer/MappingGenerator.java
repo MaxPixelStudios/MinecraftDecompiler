@@ -28,8 +28,8 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
  * A generator which generates mappings to strings.<br>
- * <b>NOTE: You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new type of mapping</b>
  *
+ * @implNote You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new type of mapping
  * @param <T> Mapping type
  * @param <C> Collection type
  */
