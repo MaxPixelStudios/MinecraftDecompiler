@@ -19,14 +19,13 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.util.IOUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -39,61 +38,68 @@ import java.util.logging.Logger;
  * @param <R> Read result
  * @param <T> Mapping type
  */
-public abstract class AbstractMappingReader<M extends Mapping, R, T extends MappingType<M, R>> {
+public abstract class AbstractMappingReader<M extends Mapping, R extends MappingCollection<M>, T extends MappingType<M, R>> {
     protected static final Logger LOGGER = Logging.getLogger();
     public final T type;
-    public final R mappings;
-    public final ObjectList<M> packages;
 
-    public AbstractMappingReader(T type, BufferedReader reader) {
+    public AbstractMappingReader(T type) {
         this.type = Objects.requireNonNull(type);
+    }
+
+    public final @NotNull R read(@NotNull BufferedReader reader) {
         Objects.requireNonNull(reader);
-        try(reader) {
+        try (reader) {
             LOGGER.finer("Reading file");
             ObjectArrayList<String> lines = reader.lines().map(s -> {
-                if(s.charAt(0) == '#' || s.isBlank()) return null;
+                if (s.isBlank()) return null;
 
-                int index = s.indexOf('#');
-                if(index > 0) return s.substring(0, index);
-                else if(index == 0) return null;
+                char comment = this.type.getCommentChar();
+                if (comment != '\0') {
+                    if (s.charAt(0) == comment) return null;
+                    int index = s.indexOf(comment);
+                    if (index > 0) return s.substring(0, index);
+                    else if (index == 0) return null;
+                }
 
                 return s;
             }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
             LOGGER.finest("Read file");
             LOGGER.fine("Processing content");
-            Pair<R, ObjectList<M>> result = type.getProcessor().process(lines);
-            LOGGER.finest("Processed content");
-            mappings = result.left();
-            packages = type.supportPackage() ? result.right() : ObjectLists.emptyList();
-        } catch(IOException e) {
+            return type.getProcessor().process(lines);
+        } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
+        } finally {
+            LOGGER.finest("Processed content");
         }
     }
 
-    public AbstractMappingReader(T type, Reader rd) {
-        this(type, IOUtil.asBufferedReader(rd));
+    public final @NotNull R read(@NotNull Reader reader) {
+        return read(IOUtil.asBufferedReader(reader));
     }
 
-    public AbstractMappingReader(T type, InputStream is) {
-        this(type, new InputStreamReader(is, StandardCharsets.UTF_8));
+    public final @NotNull R read(@NotNull InputStream is) {
+        return read(new InputStreamReader(is, StandardCharsets.UTF_8));
     }
 
-    public AbstractMappingReader(T type, String path) throws FileNotFoundException {
-        this(type, new FileInputStream(path));
+    public final @NotNull R read(@NotNull String path) throws FileNotFoundException {
+        return read(new FileInputStream(path));
     }
 
-    public AbstractMappingReader(T type, BufferedReader... readers) {
-        this.type = Objects.requireNonNull(type);
+    public final @NotNull R read(@NotNull BufferedReader @NotNull ... readers) {
         LOGGER.finer("Reading files");
         @SuppressWarnings("unchecked")
         ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
-            try(reader) {
+            try (reader) {
                 return reader.lines().map(s -> {
-                    if(s.charAt(0) == '#' || s.isBlank()) return null;
+                    if (s.isBlank()) return null;
 
-                    int index = s.indexOf('#');
-                    if(index > 0) return s.substring(0, index);
-                    else if(index == 0) return null;
+                    char comment = this.type.getCommentChar();
+                    if (comment != '\0') {
+                        if (s.charAt(0) == comment) return null;
+                        int index = s.indexOf(comment);
+                        if (index > 0) return s.substring(0, index);
+                        else if (index == 0) return null;
+                    }
 
                     return s;
                 }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
@@ -103,29 +109,22 @@ public abstract class AbstractMappingReader<M extends Mapping, R, T extends Mapp
         });
         LOGGER.finest("Read files");
         LOGGER.fine("Processing contents");
-        Pair<R, ObjectList<M>> result = type.getProcessor().process(contents);
-        LOGGER.finest("Processed contents");
-        mappings = result.left();
-        packages = type.supportPackage() ? result.right() : ObjectLists.emptyList();
+        try {
+            return type.getProcessor().process(contents);
+        } finally {
+            LOGGER.finest("Processed contents");
+        }
     }
 
-    public AbstractMappingReader(T type, Reader... rd) {
-        this(type, Utils.mapArray(rd, BufferedReader[]::new, IOUtil::asBufferedReader));
+    public final @NotNull R read(@NotNull Reader @NotNull ... reader) {
+        return read(Utils.mapArray(reader, BufferedReader[]::new, IOUtil::asBufferedReader));
     }
 
-    public AbstractMappingReader(T type, InputStream... is) {
-        this(type, Utils.mapArray(is, InputStreamReader[]::new, i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
+    public final @NotNull R read(@NotNull InputStream @NotNull ... is) {
+        return read(Utils.mapArray(is, InputStreamReader[]::new, i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
     }
 
-    public AbstractMappingReader(T type, String... path) throws FileNotFoundException {
-        this(type, Utils.mapArray(path, FileInputStream[]::new, FileInputStream::new));
-    }
-
-    public boolean isNamespaced() {
-        return type.isNamespaced();
-    }
-
-    public boolean supportPackage() {
-        return type.supportPackage();
+    public final @NotNull R read(@NotNull String @NotNull ... path) throws FileNotFoundException {
+        return read(Utils.mapArray(path, FileInputStream[]::new, FileInputStream::new));
     }
 }

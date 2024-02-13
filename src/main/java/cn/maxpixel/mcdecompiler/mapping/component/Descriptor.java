@@ -39,6 +39,7 @@ public class Descriptor implements Component {
         unmappedDescriptor = remapper.getMappedDescByUnmappedDesc(unmappedDescriptor);
     }
 
+    @Subst("()V")
     public @NotNull String getUnmappedDescriptor() {
         return unmappedDescriptor;
     }
@@ -74,6 +75,7 @@ public class Descriptor implements Component {
             mappedDescriptor = remapper.getUnmappedDescByMappedDesc(mappedDescriptor);
         }
 
+        @Subst("()V")
         public @NotNull String getMappedDescriptor() {
             return mappedDescriptor;
         }

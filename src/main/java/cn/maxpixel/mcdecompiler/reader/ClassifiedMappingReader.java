@@ -19,62 +19,11 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.Reader;
-
-public final class ClassifiedMappingReader<M extends Mapping> extends AbstractMappingReader<M, ObjectList<ClassMapping<M>>, MappingType.Classified<M>> {
-    public ClassifiedMappingReader(MappingType.Classified<M> type, BufferedReader reader) {
-        super(type, reader);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, Reader rd) {
-        super(type, rd);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, InputStream is) {
-        super(type, is);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, String path) throws FileNotFoundException {
-        super(type, path);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, BufferedReader... readers) {
-        super(type, readers);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, Reader... rd) {
-        super(type, rd);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, InputStream... is) {
-        super(type, is);
-    }
-
-    public ClassifiedMappingReader(MappingType.Classified<M> type, String... path) throws FileNotFoundException {
-        super(type, path);
-    }
-
-    public static ClassifiedMappingReader<PairedMapping> reverse(ClassifiedMappingReader<PairedMapping> reader) {
-        ClassMapping.reverse(reader.mappings, reader.packages);
-        return reader;
-    }
-
-    public static ClassifiedMappingReader<NamespacedMapping> swap(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace) {
-        return swap(reader, NamingUtil.findSourceNamespace(reader.mappings), targetNamespace);
-    }
-
-    public static ClassifiedMappingReader<NamespacedMapping> swap(ClassifiedMappingReader<NamespacedMapping> reader, String sourceNamespace, String targetNamespace) {
-        ClassMapping.swap(reader.mappings, reader.packages, sourceNamespace, targetNamespace);
-        return reader;
+public final class ClassifiedMappingReader<M extends Mapping> extends AbstractMappingReader<M, ClassifiedMapping<M>, MappingType.Classified<M>> {
+    public ClassifiedMappingReader(MappingType.Classified<M> type) {
+        super(type);
     }
 }

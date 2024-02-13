@@ -110,6 +110,7 @@ public final class ClassProcessor {
         return cv;
     }
 
+    @ApiStatus.OverrideOnly
     public interface Process {
         enum State {
             /**

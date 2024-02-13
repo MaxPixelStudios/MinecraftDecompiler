@@ -19,26 +19,51 @@
 package cn.maxpixel.mcdecompiler.mapping.type;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.reader.MappingProcessor;
 import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 
-public interface MappingType<M extends Mapping, C> {
-    default boolean isNamespaced() {
-        return false;
+/**
+ * Represents a type of mapping.<br>
+ *
+ * @implNote You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new kind of mapping</b>
+ * @param <M> Mapping type
+ * @param <C> Collection type
+ */
+public interface MappingType<M extends Mapping, C extends MappingCollection<M>> {
+    /**
+     * Gets the name of this mapping type.
+     *
+     * @return The name of this mapping type
+     */
+    String getName();
+
+    /**
+     * Gets the comment char of this mapping type.
+     *
+     * @return The comment char of this mapping type. '\0' if this mapping type does not support comments
+     */
+    default char getCommentChar() {
+        return '#';
     }
 
-    default boolean supportPackage() {
-        return false;
-    }
-
+    /**
+     * Gets the processor of this mapping type.
+     *
+     * @return The processor of this mapping type
+     */
     MappingProcessor<M, C> getProcessor();
 
+    /**
+     * Gets the generator of this mapping type.
+     *
+     * @return The generator of this mapping type
+     */
     MappingGenerator<M, C> getGenerator();
 
-    interface Classified<M extends Mapping> extends MappingType<M, ObjectList<ClassMapping<M>>> {
+    interface Classified<M extends Mapping> extends MappingType<M, ClassifiedMapping<M>> {
         @Override
         MappingProcessor.Classified<M> getProcessor();
 

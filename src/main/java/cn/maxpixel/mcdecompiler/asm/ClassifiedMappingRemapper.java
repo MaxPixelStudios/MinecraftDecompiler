@@ -22,12 +22,16 @@ import cn.maxpixel.mcdecompiler.Info;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import cn.maxpixel.mcdecompiler.util.*;
+import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.util.DescriptorUtil;
+import cn.maxpixel.mcdecompiler.util.Logging;
+import cn.maxpixel.mcdecompiler.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +40,10 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -50,11 +56,11 @@ public class ClassifiedMappingRemapper extends Remapper {
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> mappingByMap;
 
-    public ClassifiedMappingRemapper(ObjectList<ClassMapping<PairedMapping>> mappings) {
-        this.fieldByUnm = ClassMapping.genFieldsByUnmappedNameMap(mappings);
-        this.mappingByUnm = ClassMapping.genMappingsByUnmappedNameMap(mappings);
-        this.mappingByMap = ClassMapping.genMappingsByMappedNameMap(mappings);
-        this.methodsByUnm = mappings.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName, cm -> {
+    public ClassifiedMappingRemapper(ClassifiedMapping<PairedMapping> mappings) {
+        this.fieldByUnm = genFieldsByUnmappedNameMap(mappings.classes);
+        this.mappingByUnm = genMappingsByUnmappedNameMap(mappings.classes);
+        this.mappingByMap = genMappingsByMappedNameMap(mappings.classes);
+        this.methodsByUnm = mappings.classes.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName, cm -> {
             Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> map =
                     new Object2ObjectOpenHashMap<>();
             cm.getMethods().forEach(mm -> {
@@ -68,30 +74,8 @@ public class ClassifiedMappingRemapper extends Remapper {
         }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
-    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String targetNamespace) {
-        this(mappings, NamingUtil.findSourceNamespace(mappings), targetNamespace);
-    }
-
-    public ClassifiedMappingRemapper(ObjectList<ClassMapping<NamespacedMapping>> mappings, String sourceNamespace, String targetNamespace) {
-        this(mappings.parallelStream()
-                .map(old -> {
-                    if (!old.mapping.contains(targetNamespace)) {
-                        var availableNamespaces = new ObjectOpenHashSet<>(old.mapping.getNamespaces());
-                        availableNamespaces.remove(sourceNamespace);
-                        throw new IllegalArgumentException(String.format("Target namespace \"%s\" does not exist. Available namespaces: %s",
-                                targetNamespace, availableNamespaces));
-                    }
-                    ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
-                            old.mapping.getName(targetNamespace)));
-                    old.getFields().forEach(m -> cm.addField(MappingUtil.Paired.o(m.getName(sourceNamespace), m.getName(targetNamespace))));
-                    old.getMethods().forEach(m -> {
-                        if(!m.getComponent(Descriptor.Namespaced.class).getDescriptorNamespace().equals(sourceNamespace))
-                            throw new IllegalArgumentException();
-                        cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), m.getName(targetNamespace),
-                                m.getComponent(Descriptor.Namespaced.class).getUnmappedDescriptor()));
-                    });
-                    return cm;
-                }).collect(ObjectArrayList.toList()));
+    public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {
+        this(toPaired(mappings, targetNamespace));
     }
 
     public ClassifiedMappingRemapper setExtraClassesInformation(ExtraClassesInformation extraClassesInformation) {
@@ -274,5 +258,62 @@ public class ClassifiedMappingRemapper extends Remapper {
         else if(Modifier.isPrivate(leftAcc) || Modifier.isPrivate(rightAcc))
             throw new IllegalArgumentException("This can't happen!");
         throw new IllegalArgumentException("Field duplicated... This should not happen!");
+    }
+
+    public static Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> genFieldsByUnmappedNameMap(
+            ObjectList<ClassMapping<PairedMapping>> mapping) {
+        return mapping.parallelStream().collect(Collectors.toMap(
+                cm -> cm.mapping.unmappedName,
+                cm -> cm.getFields().parallelStream().collect(Collectors.toMap(m -> m.unmappedName, Function.identity(),
+                        Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new)),
+                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByUnmappedNameMap(
+            ObjectList<ClassMapping<PairedMapping>> mapping) {
+        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName,
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByMappedNameMap(
+            ObjectList<ClassMapping<PairedMapping>> mapping) {
+        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.mappedName,
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    public static Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> genMappingsByNamespaceMap(
+            ObjectList<ClassMapping<NamespacedMapping>> mapping, String namespace) {
+        return mapping.parallelStream().collect(Collectors.toMap(m -> m.mapping.getName(namespace),
+                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+    }
+
+    private static ClassifiedMapping<PairedMapping> toPaired(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {
+        ClassifiedMapping<PairedMapping> paired = new ClassifiedMapping<>();
+        paired.classes.ensureCapacity(mappings.classes.size());
+        var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
+        String sourceNamespace = namespaces.first();
+        if (!namespaces.contains(targetNamespace)) {
+            var it = namespaces.iterator();
+            it.next();
+            throw new IllegalArgumentException(String.format("Target namespace \"%s\" does not exist. Available namespaces: %s",
+                    targetNamespace, Arrays.toString(ObjectIterators.unwrap(it))));
+        }
+        mappings.classes.parallelStream().forEach(old -> {
+            ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
+                    old.mapping.getName(targetNamespace)));
+            for (NamespacedMapping f : old.getFields()) {
+                cm.addField(MappingUtil.Paired.o(f.getName(sourceNamespace), f.getName(targetNamespace)));
+            }
+            for (NamespacedMapping m : old.getMethods()) {
+                var desc = m.getComponent(Descriptor.Namespaced.class);
+                if (!sourceNamespace.equals(desc.descriptorNamespace)) throw new IllegalArgumentException();
+                cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), m.getName(targetNamespace),
+                        desc.unmappedDescriptor));
+            }
+            synchronized (paired.classes) {
+                paired.classes.add(cm);
+            }
+        });
+        return paired;
     }
 }

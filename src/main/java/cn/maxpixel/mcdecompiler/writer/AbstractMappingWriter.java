@@ -19,11 +19,10 @@
 package cn.maxpixel.mcdecompiler.writer;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.util.Logging;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -32,101 +31,55 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
+import java.util.Objects;
 import java.util.logging.Logger;
 
-public abstract class AbstractMappingWriter<M extends Mapping, C, T extends MappingType<M, C>> {
+public abstract class AbstractMappingWriter<M extends Mapping, C extends MappingCollection<M>, T extends MappingType<M, C>> {
     protected static final Logger LOGGER = Logging.getLogger("Mapping Writer");
 
-    protected final T type;
-    private final ObjectList<M> packages;
+    public final T type;
 
     public AbstractMappingWriter(@NotNull T type) {
-        this.type = type;
-        this.packages = type.getGenerator().supportPackage() ? new ObjectArrayList<>() : ObjectLists.emptyList();
+        this.type = Objects.requireNonNull(type);
     }
 
-    public abstract void addMappings(@NotNull C mappings);
-
-    public final void addPackage(@NotNull M pkg) {
-        if(!type.getGenerator().supportPackage()) throw new UnsupportedOperationException();
-        packages.add(pkg);
+    public final void write(@NotNull C collection, @NotNull OutputStream os) throws IOException {
+        if (type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(OutputStream...) instead.");
+        os.write(String.join("\n", type.getGenerator().generate(collection)).getBytes(StandardCharsets.UTF_8));
     }
 
-    public final void addPackages(@NotNull Collection<M> packages) {
-        if(!type.getGenerator().supportPackage()) throw new UnsupportedOperationException();
-        this.packages.addAll(packages);
+    public final void write(@NotNull C collection, @NotNull Writer writer) throws IOException {
+        if (type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(Writer...) instead.");
+        writer.write(String.join("\n", type.getGenerator().generate(collection)));
     }
 
-    public final void addPackages(@NotNull ObjectList<M> packages) {
-        if(!type.getGenerator().supportPackage()) throw new UnsupportedOperationException();
-        this.packages.addAll(packages);
+    public final void write(@NotNull C collection, @NotNull WritableByteChannel ch) throws IOException {
+        if (type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(WritableByteChannel...) instead.");
+        ch.write(ByteBuffer.wrap(String.join("\n", type.getGenerator().generate(collection)).getBytes(StandardCharsets.UTF_8)));
     }
 
-    protected abstract C getCollection();
-
-    protected abstract void clearCollection();
-
-    private ObjectList<String> generate() {
-        ObjectList<String> output = type.getGenerator().generate(getCollection());
-        if(type.supportPackage() && !packages.isEmpty()) output.addAll(type.getGenerator().generatePackages(packages));
-        clearCollection();
-        packages.clear();
-        return output;
-    }
-
-    private ObjectList<String>[] generateMulti() {
-        ObjectList<String>[] output = type.getGenerator().generateMulti(getCollection());
-        if(type.supportPackage()) {
-            ObjectList<String>[] outputPackages = type.getGenerator().generatePackagesMulti(packages);
-            if(output.length != outputPackages.length) throw new UnsupportedOperationException(
-                    "The length of the generated mappings array and the generated packages array must be the same.");
-            for(int i = 0; i < output.length; i++) {
-                output[i].addAll(outputPackages[i]);
-            }
-        }
-        clearCollection();
-        packages.clear();
-        return output;
-    }
-
-    public final void writeTo(@NotNull OutputStream os) throws IOException {
-        if(type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(OutputStream...) instead.");
-        os.write(String.join("\n", generate()).getBytes(StandardCharsets.UTF_8));
-    }
-
-    public final void writeTo(@NotNull Writer writer) throws IOException {
-        if(type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(Writer...) instead.");
-        writer.write(String.join("\n", generate()));
-    }
-
-    public final void writeTo(@NotNull WritableByteChannel ch) throws IOException {
-        if(type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(WritableByteChannel...) instead.");
-        ch.write(ByteBuffer.wrap(String.join("\n", generate()).getBytes(StandardCharsets.UTF_8)));
-    }
-
-    public final void writeTo(@NotNull OutputStream... os) throws IOException {
-        if(!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(OutputStream) instead.");
-        ObjectList<String>[] output = generateMulti();
+    public final void write(@NotNull C collection, @NotNull OutputStream... os) throws IOException {
+        if (!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(OutputStream) instead.");
+        ObjectList<String>[] output = type.getGenerator().generateMulti(collection);
         if(output.length != os.length) throw new UnsupportedOperationException();
         for(int i = 0; i < output.length; i++) {
             os[i].write(String.join("\n", output[i]).getBytes(StandardCharsets.UTF_8));
         }
     }
 
-    public final void writeTo(@NotNull Writer... writer) throws IOException {
-        if(!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(Writer) instead.");
-        ObjectList<String>[] output = generateMulti();
+    public final void write(@NotNull C collection, @NotNull Writer... writer) throws IOException {
+        if (!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(Writer) instead.");
+        ObjectList<String>[] output = type.getGenerator().generateMulti(collection);
         if(output.length != writer.length) throw new UnsupportedOperationException();
         for(int i = 0; i < output.length; i++) {
             writer[i].write(String.join("\n", output[i]));
         }
     }
 
-    public final void writeTo(@NotNull WritableByteChannel... ch) throws IOException {
-        if(!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(WritableByteChannel) instead.");
-        ObjectList<String>[] output = generateMulti();
-        if(output.length != ch.length) throw new UnsupportedOperationException();
+    public final void write(@NotNull C collection, @NotNull WritableByteChannel... ch) throws IOException {
+        if (!type.getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use writeTo(WritableByteChannel) instead.");
+        ObjectList<String>[] output = type.getGenerator().generateMulti(collection);
+        if (output.length != ch.length) throw new UnsupportedOperationException();
         for(int i = 0; i < output.length; i++) {
             ch[i].write(ByteBuffer.wrap(String.join("\n", output[i]).getBytes(StandardCharsets.UTF_8)));
         }

@@ -25,33 +25,31 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
-import cn.maxpixel.mcdecompiler.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.util.Utils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
- * A mapping could contain members. Represents a class and its members' mappings
+ * A {@link ClassMapping} represents a hierarchical mapping structure of a class,
+ * including fields, methods, parameters, etc.
+ *
  * @param <T> The type of this class mapping
  */
 public class ClassMapping<T extends Mapping> {
     /**
      * The mapping for this class
      */
-    public T mapping;
-    private final ObjectArrayList<T> methods = new ObjectArrayList<>();
-    private final ObjectArrayList<T> fields = new ObjectArrayList<>();
+    public @NotNull T mapping;
+    private final ObjectArrayList<@NotNull T> methods = new ObjectArrayList<>();
+    private final ObjectArrayList<@NotNull T> fields = new ObjectArrayList<>();
 
     /**
      * Constructor
+     *
      * @param mapping The mapping for this class
      */
     public ClassMapping(T mapping) {
@@ -60,16 +58,18 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Add fields to this class mapping
+     *
      * @param fields Fields to add
      * @return this class mapping
      */
     public ClassMapping<T> addFields(T... fields) {
-        for(T field : fields) addField(field);
+        for (T field : fields) addField(field);
         return this;
     }
 
     /**
      * Add fields to this class mapping
+     *
      * @param fields Fields to add
      * @return this class mapping
      */
@@ -80,6 +80,7 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Add methods to this class mapping
+     *
      * @param methods Methods to add
      * @return this class mapping
      */
@@ -90,6 +91,7 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Add methods to this class mapping
+     *
      * @param methods Methods to add
      * @return this class mapping
      */
@@ -100,6 +102,7 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Add a field to this class mapping
+     *
      * @param field Field to add
      * @return this class mapping
      */
@@ -113,6 +116,7 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Add a method to this class mapping
+     *
      * @param method Method to add
      * @return this class mapping
      */
@@ -128,7 +132,8 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Gets the methods this class mapping currently has<br>
-     * <b>NOTE: Adding methods through this list is unsafe</b>
+     *
+     * @apiNote You shouldn't add methods through this list
      * @return The methods
      */
     public ObjectList<T> getMethods() {
@@ -137,113 +142,49 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Gets the fields this class mapping currently has<br>
-     * <b>NOTE: Adding fields through this list is unsafe</b>
+     *
+     * @apiNote You shouldn't add methods through this list
      * @return The fields
      */
     public ObjectList<T> getFields() {
         return fields;
     }
 
-    public static void reverse(ObjectList<ClassMapping<PairedMapping>> mappings) {
-        reverse(mappings, null);
-    }
-
-    public static void reverse(ObjectList<ClassMapping<PairedMapping>> mappings, ObjectList<PairedMapping> packages) {
-        if(mappings != null && !mappings.isEmpty()) {
-            ClassifiedMappingRemapper remapper = new ClassifiedMappingRemapper(mappings);
-            mappings.parallelStream().forEach(cm -> ClassMapping.reverse(cm, remapper));
-        }
-        if(packages != null && !packages.isEmpty()) {
-            packages.parallelStream().forEach(PairedMapping::reverse);
-        }
-    }
-
     /**
      * Reverse the given class mapping<br>
      * <b>INTERNAL METHOD. DO NOT CALL. USE USE METHODS LISTED BELOW</b>
+     *
      * @param mapping Mapping to reverse
      * @param remapper Remapper to remap descriptors
-     * @see #reverse(ObjectList)
-     * @see #reverse(ObjectList, ObjectList)
-     * @see ClassifiedMappingReader#reverse(ClassifiedMappingReader)
+     * @see ClassifiedMapping#reverse()
+     * @see ClassifiedMapping#reverse(ClassifiedMapping)
      */
+    @ApiStatus.Internal
     public static void reverse(ClassMapping<PairedMapping> mapping, ClassifiedMappingRemapper remapper) {
         mapping.mapping.reverse(remapper);
         mapping.getMethods().forEach(m -> m.reverse(remapper));
         mapping.getFields().forEach(m -> m.reverse(remapper));
     }
 
-    public static void swap(ObjectList<ClassMapping<NamespacedMapping>> mappings, String targetNamespace) {
-        swap(Objects.requireNonNull(mappings), (ObjectList<NamespacedMapping>) null, targetNamespace);
-    }
-
-    public static void swap(ObjectList<ClassMapping<NamespacedMapping>> mappings, String sourceNamespace, String targetNamespace) {
-        swap(mappings, null, sourceNamespace, targetNamespace);
-    }
-
-    public static void swap(ObjectList<ClassMapping<NamespacedMapping>> mappings, ObjectList<NamespacedMapping> packages, String targetNamespace) {
-        swap(Objects.requireNonNull(mappings), packages, NamingUtil.findSourceNamespace(mappings), targetNamespace);
-    }
-
-    public static void swap(ObjectList<ClassMapping<NamespacedMapping>> mappings, ObjectList<NamespacedMapping> packages, String sourceNamespace, String targetNamespace) {
-        if(mappings != null && !mappings.isEmpty()) {
-            ClassifiedMappingRemapper remapper = new ClassifiedMappingRemapper(mappings, sourceNamespace, targetNamespace);
-            mappings.parallelStream().forEach(cm -> ClassMapping.swap(cm, remapper, sourceNamespace, targetNamespace));
-        }
-        if(packages != null && !packages.isEmpty()) {
-            packages.parallelStream().forEach(nm -> nm.swap(sourceNamespace, targetNamespace));
-        }
-    }
-
     /**
      * Swap the given class mapping<br>
      * <b>INTERNAL METHOD. DO NOT CALL. USE METHODS LISTED BELOW</b>
-     * @param mapping Mapping to swap
-     * @param remapper Remapper to remap descriptors
+     *
+     * @param mapping         Mapping to swap
+     * @param remapper        Remapper to remap descriptors
      * @param sourceNamespace Namespace to swap from
      * @param targetNamespace Namespace to swap to
-     * @see #swap(ObjectList, String)
-     * @see #swap(ObjectList, String, String)
-     * @see #swap(ObjectList, ObjectList, String)
-     * @see #swap(ObjectList, ObjectList, String, String)
-     * @see ClassifiedMappingReader#swap(ClassifiedMappingReader, String)
-     * @see ClassifiedMappingReader#swap(ClassifiedMappingReader, String, String)
-     * @return The given class mapping
+     * @see ClassifiedMapping#swap(ClassifiedMapping, String)
+     * @see ClassifiedMapping#swap(ClassifiedMapping, String, String)
+     * @see ClassifiedMapping#swap(String)
+     * @see ClassifiedMapping#swap(String, String)
      */
     @ApiStatus.Internal
-    public static ClassMapping<NamespacedMapping> swap(ClassMapping<NamespacedMapping> mapping, ClassifiedMappingRemapper remapper,
-                                                       String sourceNamespace, String targetNamespace) {
+    public static void swap(ClassMapping<NamespacedMapping> mapping, ClassifiedMappingRemapper remapper,
+                            String sourceNamespace, String targetNamespace) {
         mapping.mapping.swap(remapper, sourceNamespace, targetNamespace);
         mapping.getFields().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
         mapping.getMethods().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
-        return mapping;
-    }
-
-    public static Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> genFieldsByUnmappedNameMap(
-            ObjectList<ClassMapping<PairedMapping>> mapping) {
-        return mapping.parallelStream().collect(Collectors.toMap(
-                cm -> cm.mapping.unmappedName,
-                cm -> cm.getFields().parallelStream().collect(Collectors.toMap(m -> m.unmappedName, Function.identity(),
-                        Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new)),
-                Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-    }
-
-    public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByUnmappedNameMap(
-            ObjectList<ClassMapping<PairedMapping>> mapping) {
-        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName,
-                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-    }
-
-    public static Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> genMappingsByMappedNameMap(
-            ObjectList<ClassMapping<PairedMapping>> mapping) {
-        return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.mappedName,
-                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-    }
-
-    public static Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> genMappingsByNamespaceMap(
-            ObjectList<ClassMapping<NamespacedMapping>> mapping, String namespace) {
-        return mapping.parallelStream().collect(Collectors.toMap(m -> m.mapping.getName(namespace),
-                Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public static void setMappedNamespace(ClassMapping<? extends NameGetter.Namespaced> cm, String namespace) {

@@ -24,8 +24,9 @@ import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.reader.AbstractMappingReader;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
+import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.util.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -174,7 +175,7 @@ public class MinecraftDecompiler {
         private Info.SideType type;
         private boolean includeOthers = true;
         private boolean rvn;
-        private AbstractMappingReader<?, ?, ?> mappingReader;
+        private MappingCollection<?> mappingCollection;
         private Path outputJar;
         private Path outputDecompDir;
         private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
@@ -288,8 +289,8 @@ public class MinecraftDecompiler {
             return this;
         }
 
-        public OptionBuilder withMapping(AbstractMappingReader<?, ?, ?> mappingReader) {
-            this.mappingReader = Objects.requireNonNull(mappingReader, "mappingReader cannot be null");
+        public OptionBuilder withMapping(MappingCollection<?> mappingCollection) {
+            this.mappingCollection = Objects.requireNonNull(mappingCollection, "mappingCollection cannot be null");
             return this;
         }
 
@@ -303,8 +304,8 @@ public class MinecraftDecompiler {
             return this;
         }
 
-        public OptionBuilder targetNamespace(String targetNamespace) {
-            this.targetNamespace = Objects.requireNonNull(targetNamespace, "targetNamespace cannot be null");
+        public OptionBuilder targetNamespace(@Nullable String targetNamespace) {
+            this.targetNamespace = targetNamespace;
             return this;
         }
 
@@ -376,8 +377,8 @@ public class MinecraftDecompiler {
                 }
 
                 @Override
-                public AbstractMappingReader<?, ?, ?> mappingReader() {
-                    return mappingReader;
+                public MappingCollection<?> mappings() {
+                    return mappingCollection;
                 }
 
                 @Override
@@ -435,12 +436,11 @@ public class MinecraftDecompiler {
 
         @SuppressWarnings("unchecked")
         private ClassifiedDeobfuscator buildDeobfuscator() {
-            if(mappingReader() != null) {
-                if(mappingReader() instanceof ClassifiedMappingReader<?> reader) {
-                    if(reader.isNamespaced()) {
-                        return new ClassifiedDeobfuscator((ClassifiedMappingReader<NamespacedMapping>) reader,
-                                Objects.requireNonNull(targetNamespace(), "You are using a namespaced mapping but no target namespace is specified"), this);
-                    } else return new ClassifiedDeobfuscator((ClassifiedMappingReader<PairedMapping>) reader, this);
+            if (mappings() != null) {
+                if (mappings() instanceof ClassifiedMapping<?> mappings) {
+                    if (mappings.hasTrait(NamespacedTrait.class)) {
+                        return new ClassifiedDeobfuscator((ClassifiedMapping<NamespacedMapping>) mappings, targetNamespace(), this);
+                    } else return new ClassifiedDeobfuscator((ClassifiedMapping<PairedMapping>) mappings, this);
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
             return new ClassifiedDeobfuscator(version(), type(), this);
@@ -452,7 +452,7 @@ public class MinecraftDecompiler {
         @Override
         boolean rvn();
 
-        AbstractMappingReader<?, ?, ?> mappingReader();
+        MappingCollection<?> mappings();
 
         Path inputJar();
 

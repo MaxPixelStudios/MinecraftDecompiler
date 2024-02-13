@@ -16,14 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.reader;
+package cn.maxpixel.mcdecompiler.mapping.trait;
 
-import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-
-public final class UniqueMappingReader<M extends Mapping> extends AbstractMappingReader<M, UniqueMapping<M>, MappingType.Unique<M>> {
-    public UniqueMappingReader(MappingType.Unique<M> type) {
-        super(type);
-    }
+/**
+ * A mapping trait is a mark that indicates the all entries of a mapping collection has a common feature.
+ *
+ * @apiNote The assumption is that mapping traits should apply to all the entries in the collection.
+ *          Otherwise, you may get unexpected behavior.
+ */
+public interface MappingTrait {
+    /**
+     * Gets the name of this trait.
+     *
+     * @return The name of this trait.
+     */
+    String getName();
 }

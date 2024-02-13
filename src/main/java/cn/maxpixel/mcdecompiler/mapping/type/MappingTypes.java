@@ -28,8 +28,8 @@ import cn.maxpixel.mcdecompiler.writer.MappingGenerators;
 public interface MappingTypes {
     MappingType.Classified<PairedMapping> SRG = new MappingType.Classified<>() {
         @Override
-        public boolean supportPackage() {
-            return true;
+        public String getName() {
+            return "srg";
         }
 
         @Override
@@ -45,8 +45,8 @@ public interface MappingTypes {
 
     MappingType.Classified<PairedMapping> CSRG = new MappingType.Classified<>() {
         @Override
-        public boolean supportPackage() {
-            return true;
+        public String getName() {
+            return "csrg";
         }
 
         @Override
@@ -62,8 +62,8 @@ public interface MappingTypes {
 
     MappingType.Classified<PairedMapping> TSRG_V1 = new MappingType.Classified<>() {
         @Override
-        public boolean supportPackage() {
-            return true;
+        public String getName() {
+            return "tsrg_v1";
         }
 
         @Override
@@ -79,13 +79,8 @@ public interface MappingTypes {
 
     MappingType.Classified<NamespacedMapping> TSRG_V2 = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return true;
-        }
-
-        @Override
-        public boolean supportPackage() {
-            return true;
+        public String getName() {
+            return "tsrg_v2";
         }
 
         @Override
@@ -101,6 +96,11 @@ public interface MappingTypes {
 
     MappingType.Classified<PairedMapping> PROGUARD = new MappingType.Classified<>() {
         @Override
+        public String getName() {
+            return "proguard";
+        }
+
+        @Override
         public MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.PROGUARD;
         }
@@ -113,8 +113,13 @@ public interface MappingTypes {
 
     MappingType.Classified<NamespacedMapping> TINY_V1 = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return true;
+        public String getName() {
+            return "tiny_v1";
+        }
+
+        @Override
+        public char getCommentChar() {
+            return '\0';
         }
 
         @Override
@@ -130,8 +135,13 @@ public interface MappingTypes {
 
     MappingType.Classified<NamespacedMapping> TINY_V2 = new MappingType.Classified<>() {
         @Override
-        public boolean isNamespaced() {
-            return true;
+        public String getName() {
+            return "tiny_v2";
+        }
+
+        @Override
+        public char getCommentChar() {
+            return '\0';
         }
 
         @Override

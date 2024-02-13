@@ -22,7 +22,9 @@ import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.*;
+import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.util.MappingUtil;
@@ -30,63 +32,52 @@ import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.objectweb.asm.Type;
 
 public interface MappingGenerators {
     MappingGenerator.Classified<PairedMapping> SRG = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
+        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
             return MappingTypes.SRG;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            mappings.parallelStream().forEach(cls -> {
+            if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
+            mappings.classes.parallelStream().forEach(cls -> {
                 PairedMapping classMapping = cls.mapping;
-                synchronized(lines) {
+                synchronized (lines) {
                     lines.add("CL: " + classMapping.getUnmappedName() + " " + classMapping.getMappedName());
                 }
                 cls.getFields().parallelStream().forEach(field -> {
-                    if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(field.getOwned(), cls);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add("FD: " + classMapping.getUnmappedName() + '/' + field.getUnmappedName() + ' ' +
                                 classMapping.getMappedName() + '/' + field.getMappedName());
                     }
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
-                    if(!method.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(method.getOwned(), cls);
                     String unmappedDesc, mappedDesc;
-                    if(method.hasComponent(Descriptor.class)) {
+                    if (method.hasComponent(Descriptor.class)) {
                         unmappedDesc = method.getComponent(Descriptor.class).getUnmappedDescriptor();
-                        if(method.hasComponent(Descriptor.Mapped.class))
+                        if (method.hasComponent(Descriptor.Mapped.class))
                             mappedDesc = method.getComponent(Descriptor.Mapped.class).getMappedDescriptor();
-                        else if(remapper != null) mappedDesc = remapper.getMappedDescByUnmappedDesc(unmappedDesc);
+                        else if (remapper != null) mappedDesc = remapper.getMappedDescByUnmappedDesc(unmappedDesc);
                         else throw new UnsupportedOperationException();
-                    } else if(method.hasComponent(Descriptor.Mapped.class)) {
+                    } else if (method.hasComponent(Descriptor.Mapped.class)) {
                         mappedDesc = method.getComponent(Descriptor.Mapped.class).getMappedDescriptor();
-                        if(remapper != null) unmappedDesc = remapper.getUnmappedDescByMappedDesc(mappedDesc);
+                        if (remapper != null) unmappedDesc = remapper.getUnmappedDescByMappedDesc(mappedDesc);
                         else throw new UnsupportedOperationException();
                     } else throw new UnsupportedOperationException();
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add("MD: " + classMapping.getUnmappedName() + '/' + method.getUnmappedName() + ' ' + unmappedDesc + ' ' +
                                 classMapping.getMappedName() + '/' + method.getMappedName() + ' ' + mappedDesc);
                     }
                 });
             });
-            return lines;
-        }
-
-        @Override
-        public ObjectList<String> generatePackages(ObjectList<PairedMapping> packages) {
-            if (packages.isEmpty()) return ObjectLists.emptyList();
-            ObjectArrayList<String> lines = new ObjectArrayList<>();
-            packages.parallelStream().forEach(pkg -> {
+            mappings.packages.parallelStream().forEach(pkg -> {
                 synchronized(lines) {
                     lines.add("PK: " + pkg.getUnmappedName() + ' ' + pkg.getMappedName());
                 }
@@ -97,43 +88,35 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<PairedMapping> CSRG = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
+        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
             return MappingTypes.CSRG;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            mappings.parallelStream().forEach(cls -> {
+            if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
+            mappings.classes.parallelStream().forEach(cls -> {
                 PairedMapping classMapping = cls.mapping;
-                synchronized(lines) {
+                synchronized (lines) {
                     lines.add(classMapping.getUnmappedName() + ' ' + classMapping.getMappedName());
                 }
                 cls.getFields().parallelStream().forEach(field -> {
-                    if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(field.getOwned(), cls);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add(classMapping.getUnmappedName() + ' ' + field.getUnmappedName() + ' ' + field.getMappedName());
                     }
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
                     String unmappedDesc = MappingUtil.Paired.checkSlimSrgMethod(cls, method, remapper);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add(classMapping.getUnmappedName() + ' ' + method.getUnmappedName() + ' ' +
                                 unmappedDesc + ' ' + method.getMappedName());
                     }
                 });
             });
-            return lines;
-        }
-
-        @Override
-        public ObjectList<String> generatePackages(ObjectList<PairedMapping> packages) {
-            if (packages.isEmpty()) return ObjectLists.emptyList();
-            ObjectArrayList<String> lines = new ObjectArrayList<>();
-            packages.parallelStream().forEach(pkg -> {
-                synchronized(lines) {
+            mappings.packages.parallelStream().forEach(pkg -> {
+                synchronized (lines) {
                     lines.add(pkg.getUnmappedName() + "/ " + pkg.getMappedName() + '/');
                 }
             });
@@ -143,81 +126,72 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<PairedMapping> TSRG_V1 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
+        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
             return MappingTypes.TSRG_V1;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            mappings.forEach(cls -> {
+            if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
+            for (ClassMapping<PairedMapping> cls : mappings.classes) {
                 lines.add(cls.mapping.getUnmappedName() + ' ' + cls.mapping.getMappedName());
                 cls.getFields().parallelStream().forEach(field -> {
-                    if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(field.getOwned(), cls);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add('\t' + field.getUnmappedName() + ' ' + field.getMappedName());
                     }
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
                     String unmappedDesc = MappingUtil.Paired.checkSlimSrgMethod(cls, method, remapper);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add('\t' + method.getUnmappedName() + ' ' + unmappedDesc + ' ' + method.getMappedName());
                     }
                 });
-            });
-            return lines;
-        }
-
-        @Override
-        public ObjectList<String> generatePackages(ObjectList<PairedMapping> packages) {
-            if (packages.isEmpty()) return ObjectLists.emptyList();
-            ObjectArrayList<String> lines = new ObjectArrayList<>();
-            packages.parallelStream().forEach(pkg -> {
-                synchronized(lines) {
+            }
+            mappings.packages.parallelStream().forEach(pkg -> {
+                synchronized (lines) {
                     lines.add(pkg.getUnmappedName() + "/ " + pkg.getMappedName() + '/');
                 }
             });
             return lines;
         }
+
     };
 
     MappingGenerator.Classified<NamespacedMapping> TSRG_V2 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
+        public MappingType<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getType() {
             return MappingTypes.TSRG_V2;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<NamespacedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<NamespacedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            ObjectSet<String> namespaces = mappings.get(0).mapping.getNamespaces();
-            String namespace0 = namespaces.iterator().next();
+            if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
+            var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
+            String namespace0 = namespaces.first();
             lines.add("tsrg2 " + String.join(" ", namespaces));
-            mappings.forEach(cls -> {
+            for (ClassMapping<NamespacedMapping> cls : mappings.classes) {
                 lines.add(NamingUtil.concatNamespaces(namespaces, cls.mapping::getName, " "));
                 cls.getFields().parallelStream().forEach(field -> {
-                    if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(field.getOwned(), cls);
                     String names = NamingUtil.concatNamespaces(namespaces, field::getName, " ");
-                    if(field.hasComponent(Descriptor.Namespaced.class)) synchronized(lines) {
+                    if (field.hasComponent(Descriptor.Namespaced.class)) synchronized (lines) {
                         genDescriptorLine(lines, namespace0, field, names);
-                    } else synchronized(lines) {
+                    } else synchronized (lines) {
                         lines.add('\t' + names);
                     }
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
-                    if(!method.hasComponent(Owned.class) || !method.hasComponent(Descriptor.Namespaced.class) ||
-                            !method.hasComponent(StaticIdentifiable.class))
-                        throw new UnsupportedOperationException();
+                    if (!method.hasComponent(Descriptor.Namespaced.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(method.getOwned(), cls);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         genDescriptorLine(lines, namespace0, method, NamingUtil.concatNamespaces(namespaces,
                                 method::getName, " "));
-                        if(method.getComponent(StaticIdentifiable.class).isStatic) lines.add("\t\tstatic");
-                        if(method.hasComponent(LocalVariableTable.Namespaced.class)) {
+                        var si = method.getComponent(StaticIdentifiable.class);
+                        if (si != null && si.isStatic) lines.add("\t\tstatic");
+                        if (method.hasComponent(LocalVariableTable.Namespaced.class)) {
                             LocalVariableTable.Namespaced lvt = method.getComponent(LocalVariableTable.Namespaced.class);
                             lvt.getLocalVariableIndexes().forEach(index -> {
                                 String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
@@ -230,6 +204,11 @@ public interface MappingGenerators {
                         }
                     }
                 });
+            }
+            mappings.packages.parallelStream().forEach(pkg -> {
+                synchronized (lines) {
+                    lines.add(NamingUtil.concatNamespaces(namespaces, pkg::getName, " "));
+                }
             });
             return lines;
         }
@@ -240,37 +219,23 @@ public interface MappingGenerators {
             int i = names.indexOf(' ');
             lines.add('\t' + names.substring(0, i + 1) + desc.getUnmappedDescriptor() + names.substring(i));
         }
-
-        @Override
-        public ObjectList<String> generatePackages(ObjectList<NamespacedMapping> packages) {
-            if (packages.isEmpty()) return ObjectLists.emptyList();
-            ObjectArrayList<String> lines = new ObjectArrayList<>();
-            ObjectSet<String> namespaces = packages.get(0).getNamespaces();
-            packages.parallelStream().forEach(pkg -> {
-                synchronized(lines) {
-                    lines.add(NamingUtil.concatNamespaces(namespaces, pkg::getName, " "));
-                }
-            });
-            return lines;
-        }
     };
 
     MappingGenerator.Classified<PairedMapping> PROGUARD = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ObjectList<ClassMapping<PairedMapping>>> getType() {
+        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
             return MappingTypes.PROGUARD;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<PairedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            mappings.forEach(cls -> {
+            if (mappings.classes.isEmpty()) return lines;
+            for (ClassMapping<PairedMapping> cls : mappings.classes) {
                 PairedMapping mapping = cls.mapping;
                 lines.add(NamingUtil.asJavaName(mapping.getMappedName()) + " -> " +
                         NamingUtil.asJavaName(mapping.getUnmappedName()) + ':');
                 cls.getFields().parallelStream().forEach(field -> {
-                    if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(field.getOwned(), cls);
                     String mappedDesc;
                     if(field.hasComponent(Descriptor.Mapped.class)) {
@@ -285,7 +250,6 @@ public interface MappingGenerators {
                     }
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
-                    if(!method.hasComponent(Owned.class)) throw new UnsupportedOperationException();
                     MappingUtil.checkOwner(method.getOwned(), cls);
                     String mappedDesc;
                     if(method.hasComponent(Descriptor.Mapped.class)) {
@@ -308,39 +272,39 @@ public interface MappingGenerators {
                                 '(' + args + ") -> " + method.getUnmappedName());
                     }
                 });
-            });
+            }
             return lines;
         }
     };
 
     MappingGenerator.Classified<NamespacedMapping> TINY_V1 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
+        public MappingType<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getType() {
             return MappingTypes.TINY_V1;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<NamespacedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<NamespacedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            ObjectSet<String> namespaces = mappings.get(0).mapping.getNamespaces();
-            String namespace0 = namespaces.iterator().next();
+            if (mappings.classes.isEmpty()) return lines;
+            var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
+            String namespace0 = namespaces.first();
             lines.add("v1\t" + String.join("\t", namespaces));
-            mappings.parallelStream().forEach(cls -> {
+            mappings.classes.parallelStream().forEach(cls -> {
                 NamespacedMapping classMapping = cls.mapping;
-                synchronized(lines) {
+                synchronized (lines) {
                     lines.add("CLASS\t" + NamingUtil.concatNamespaces(namespaces, classMapping::getName, "\t"));
                 }
                 cls.getFields().parallelStream().forEach(field -> {
                     String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, field);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add("FIELD\t" + classMapping.getName(namespace0) + '\t' + desc + '\t' +
                                 NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
                     }
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
                     String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, method);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add("METHOD\t" + classMapping.getName(namespace0) + '\t' + desc + '\t' +
                                 NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));
                     }
@@ -352,24 +316,24 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<NamespacedMapping> TINY_V2 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<NamespacedMapping, ObjectList<ClassMapping<NamespacedMapping>>> getType() {
+        public MappingType<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getType() {
             return MappingTypes.TINY_V2;
         }
 
         @Override
-        public ObjectList<String> generate(ObjectList<ClassMapping<NamespacedMapping>> mappings, ClassifiedMappingRemapper remapper) {
+        public ObjectList<String> generate(ClassifiedMapping<NamespacedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
-            if (mappings.isEmpty()) return lines;
-            ObjectSet<String> namespaces = mappings.get(0).mapping.getNamespaces();
-            String namespace0 = namespaces.iterator().next();
+            if (mappings.classes.isEmpty()) return lines;
+            var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
+            String namespace0 = namespaces.first();
             lines.add("tiny\t2\t0\t" + String.join("\t", namespaces));
-            mappings.forEach(cls -> {
+            for (ClassMapping<NamespacedMapping> cls : mappings.classes) {
                 lines.add("c\t" + NamingUtil.concatNamespaces(namespaces, cls.mapping::getName, "\t"));
                 cls.getFields().parallelStream().forEach(field -> {
                     String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, field);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add("\tf\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
-                        if(field.hasComponent(Documented.class)) {
+                        if (field.hasComponent(Documented.class)) {
                             String doc = field.getComponent(Documented.class).getDoc();
                             if(doc != null && !doc.isBlank()) lines.add("\t\tc\t" + doc);
                         }
@@ -377,13 +341,13 @@ public interface MappingGenerators {
                 });
                 cls.getMethods().parallelStream().forEach(method -> {
                     String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, method);
-                    synchronized(lines) {
+                    synchronized (lines) {
                         lines.add("\tm\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));
-                        if(method.hasComponent(Documented.class)) {
+                        if (method.hasComponent(Documented.class)) {
                             String doc = method.getComponent(Documented.class).getDoc();
                             if(doc != null && !doc.isBlank()) lines.add("\t\tc\t" + doc);
                         }
-                        if(method.hasComponent(LocalVariableTable.Namespaced.class)) {
+                        if (method.hasComponent(LocalVariableTable.Namespaced.class)) {
                             LocalVariableTable.Namespaced lvt = method.getComponent(LocalVariableTable.Namespaced.class);
                             boolean omittedThis = method.hasComponent(StaticIdentifiable.class) &&
                                     !method.getComponent(StaticIdentifiable.class).isStatic;
@@ -403,7 +367,7 @@ public interface MappingGenerators {
                         }
                     }
                 });
-            });
+            }
             return lines;
         }
     };

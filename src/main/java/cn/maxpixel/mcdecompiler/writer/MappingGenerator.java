@@ -20,37 +20,23 @@ package cn.maxpixel.mcdecompiler.writer;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-import cn.maxpixel.mcdecompiler.util.Logging;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
 
 /**
  * A generator which generates mappings to strings.<br>
  * <b>NOTE: You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new type of mapping</b>
+ *
  * @param <T> Mapping type
  * @param <C> Collection type
  */
-public interface MappingGenerator<T extends Mapping, C> {
+public interface MappingGenerator<T extends Mapping, C extends MappingCollection<T>> {
     MappingType<T, C> getType();
 
-    default boolean supportPackage() {
-        return getType().supportPackage();
-    }
-
-    default boolean isNamespaced() {
-        return getType().isNamespaced();
-    }
-
     ObjectList<String> generate(C mappings);
-
-    default ObjectList<String> generatePackages(ObjectList<T> packages) {
-        if(supportPackage()) throw new UnsupportedOperationException("Why this method isn't been overridden?");
-        else Logging.getLogger().warning("This type of mapping doesn't support package mappings. Returning empty list");
-        return ObjectLists.emptyList();
-    }
 
     // Just in case that maybe some types of mapping need to generate multiple files
 
@@ -62,27 +48,23 @@ public interface MappingGenerator<T extends Mapping, C> {
         throw new UnsupportedOperationException();
     }
 
-    default ObjectList<String>[] generatePackagesMulti(ObjectList<T> packages) {
-        throw new UnsupportedOperationException();
-    }
-
     interface Unique<T extends Mapping> extends MappingGenerator<T, UniqueMapping<T>> {
     }
 
-    interface Classified<T extends Mapping> extends MappingGenerator<T, ObjectList<ClassMapping<T>>> {
+    interface Classified<T extends Mapping> extends MappingGenerator<T, ClassifiedMapping<T>> {
         @Override
-        default ObjectList<String> generate(ObjectList<ClassMapping<T>> mappings) {
+        default ObjectList<String> generate(ClassifiedMapping<T> mappings) {
             return generate(mappings, null);
         }
 
-        ObjectList<String> generate(ObjectList<ClassMapping<T>> mappings, ClassifiedMappingRemapper remapper);
+        ObjectList<String> generate(ClassifiedMapping<T> mappings, ClassifiedMappingRemapper remapper);
 
         @Override
-        default ObjectList<String>[] generateMulti(ObjectList<ClassMapping<T>> mappings) {
+        default ObjectList<String>[] generateMulti(ClassifiedMapping<T> mappings) {
             return generateMulti(mappings, null);
         }
 
-        default ObjectList<String>[] generateMulti(ObjectList<ClassMapping<T>> mappings, ClassifiedMappingRemapper remapper) {
+        default ObjectList<String>[] generateMulti(ClassifiedMapping<T> mappings, ClassifiedMappingRemapper remapper) {
             throw new UnsupportedOperationException();
         }
     }

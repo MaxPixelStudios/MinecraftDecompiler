@@ -19,14 +19,12 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
+import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,16 +38,14 @@ public class NamingUtil {
         return arrDimension;
     }
 
-    public static String findSourceNamespace(@NotNull ObjectList<ClassMapping<NamespacedMapping>> mappings) {
-        return mappings.parallelStream()
-                .map(mapping -> mapping.mapping.getUnmappedNamespace())
-                .filter(Objects::nonNull).findAny()
-                .or(() -> mappings.parallelStream()
-                        .flatMap(cm -> cm.getMethods().parallelStream())
-                        .filter(mapping -> mapping.hasComponent(Descriptor.Namespaced.class))
-                        .map(mapping -> mapping.getComponent(Descriptor.Namespaced.class).descriptorNamespace)
-                        .findAny()
-                ).orElseThrow(() -> new NullPointerException("No source namespace found"));
+    public static String getSourceNamespace(@NotNull ClassifiedMapping<NamespacedMapping> mappings) {
+        return mappings.getTrait(NamespacedTrait.class).namespaces.first();
+    }
+
+    public static String inferTargetNamespace(@NotNull ClassifiedMapping<NamespacedMapping> mappings) {
+        var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
+        if (namespaces.size() > 2) throw new IllegalArgumentException("Cannot infer a target namespace. You must manually specify a target namespace.");
+        return namespaces.last();
     }
 
     public static String concatNamespaces(@NotNull ObjectSet<String> namespaces, @NotNull Function<String, String> namespaceMapper, @NotNull String delimiter) {

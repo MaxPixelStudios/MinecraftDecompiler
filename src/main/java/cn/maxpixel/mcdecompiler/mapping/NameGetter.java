@@ -20,11 +20,19 @@ package cn.maxpixel.mcdecompiler.mapping;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Intended to be a universal interface for getting names
+ */
 public interface NameGetter {
     String getUnmappedName();
 
     String getMappedName();
 
+    /**
+     * For {@link NamespacedMapping} to implement.
+     *
+     * @implNote unmapped namespace should be set by mapping processors
+     */
     interface Namespaced {
         String getUnmappedNamespace();
 

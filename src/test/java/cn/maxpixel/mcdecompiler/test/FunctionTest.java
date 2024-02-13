@@ -18,9 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
+import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.FileUtil;
@@ -58,16 +60,15 @@ public class FunctionTest {
 //    }
 
     public static void main(String[] args) throws Throwable {
-        ClassifiedMappingReader<NamespacedMapping> mcpconfig = new ClassifiedMappingReader<>(MappingTypes.TSRG_V2, "downloads/1.19.3/joined.tsrg");
-        ClassifiedMappingReader<PairedMapping> official = new ClassifiedMappingReader<>(MappingTypes.PROGUARD, "downloads/1.19.3/client_mappings.txt");
-        var mappings = ClassMapping.genMappingsByUnmappedNameMap(official.mappings);
-        mcpconfig.mappings.forEach(cm -> {
+        ClassifiedMapping<NamespacedMapping> mcpconfig = new ClassifiedMappingReader<>(MappingTypes.TSRG_V2).read("downloads/1.19.3/joined.tsrg");
+        ClassifiedMapping<PairedMapping> official = new ClassifiedMappingReader<>(MappingTypes.PROGUARD).read("downloads/1.19.3/client_mappings.txt");
+        var mappings = ClassifiedMappingRemapper.genMappingsByUnmappedNameMap(official.classes);
+        for (ClassMapping<NamespacedMapping> cm : mcpconfig.classes) {
             NamespacedMapping mapping = cm.mapping;
             mapping.setName("srg", mappings.get(mapping.getName("obf")).mapping.mappedName);
-        });
+        }
         ClassifiedMappingWriter<NamespacedMapping> writer = new ClassifiedMappingWriter<>(MappingTypes.TSRG_V2);
-        writer.addMappings(mcpconfig.mappings);
-        writer.writeTo(Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
+        writer.write(mcpconfig, Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
     }
 
 //    private static class MCP implements MappingType.Unique<PairedMapping> {

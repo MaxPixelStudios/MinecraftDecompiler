@@ -43,6 +43,7 @@ public class PairedMapping extends Mapping {
 
     /**
      * Constructor
+     *
      * @param unmappedName The unmapped name
      * @param mappedName The mapped name
      * @param components Components add to this mapping
@@ -55,6 +56,7 @@ public class PairedMapping extends Mapping {
 
     /**
      * Constructor
+     *
      * @param unmappedName The unmapped name
      * @param mappedName The mapped name
      */
@@ -65,6 +67,7 @@ public class PairedMapping extends Mapping {
 
     /**
      * Constructor
+     *
      * @param components Components add to this mapping
      */
     public PairedMapping(Component... components) {
@@ -82,6 +85,7 @@ public class PairedMapping extends Mapping {
 
     /**
      * Reverse this mapping
+     *
      * @return this mapping
      */
     public PairedMapping reverse() {

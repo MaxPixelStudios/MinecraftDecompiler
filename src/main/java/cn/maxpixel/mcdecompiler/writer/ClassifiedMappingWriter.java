@@ -19,41 +19,11 @@
 package cn.maxpixel.mcdecompiler.writer;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
-public final class ClassifiedMappingWriter<M extends Mapping> extends AbstractMappingWriter<M, ObjectList<ClassMapping<M>>, MappingType.Classified<M>> {
-    private final ObjectArrayList<ClassMapping<M>> mappings = new ObjectArrayList<>();
-
+public final class ClassifiedMappingWriter<M extends Mapping> extends AbstractMappingWriter<M, ClassifiedMapping<M>, MappingType.Classified<M>> {
     public ClassifiedMappingWriter(MappingType.Classified<M> type) {
         super(type);
-    }
-
-    public void addMapping(@NotNull ClassMapping<M> mapping) {
-        this.mappings.add(mapping);
-    }
-
-    public void addMappings(@NotNull Collection<ClassMapping<M>> mappings) {
-        this.mappings.addAll(mappings);
-    }
-
-    @Override
-    public void addMappings(@NotNull ObjectList<ClassMapping<M>> mappings) {
-        this.mappings.addAll(mappings);
-    }
-
-    @Override
-    protected @NotNull ObjectList<ClassMapping<M>> getCollection() {
-        return mappings;
-    }
-
-    @Override
-    protected void clearCollection() {
-        mappings.clear();
     }
 }

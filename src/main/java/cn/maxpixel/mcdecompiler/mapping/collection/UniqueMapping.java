@@ -19,34 +19,87 @@
 package cn.maxpixel.mcdecompiler.mapping.collection;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
+import cn.maxpixel.mcdecompiler.mapping.trait.MappingTrait;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 /**
- * A mapping with classes, fields and methods.
+ * A collection of mappings of classes, fields, methods, parameters and packages,
+ * which their names are unique, and stored in a flat structure.
+ *
+ * @apiNote These fields should not contain null values.
+ *          There are no checks but the assumption is made.
+ *          Put null values at your own risk.
  * @param <T> The type of this mapping
  */
-public class UniqueMapping<T extends Mapping> {
-    public final ObjectArrayList<T> classes = new ObjectArrayList<>();
+public class UniqueMapping<T extends Mapping> extends MappingCollection<T> {
+    /**
+     * Classes of this mapping.
+     */
+    public final ObjectArrayList<@NotNull T> classes = new ObjectArrayList<>();
 
-    public final ObjectArrayList<T> fields = new ObjectArrayList<>();
+    /**
+     * Fields of this mapping.
+     */
+    public final ObjectArrayList<@NotNull T> fields = new ObjectArrayList<>();
 
-    public final ObjectArrayList<T> methods = new ObjectArrayList<>();
+    /**
+     * Methods of this mapping.
+     */
+    public final ObjectArrayList<@NotNull T> methods = new ObjectArrayList<>();
 
-    public final ObjectArrayList<T> params = new ObjectArrayList<>();
+    /**
+     * Parameters of this mapping.
+     */
+    public final ObjectArrayList<@NotNull T> params = new ObjectArrayList<>();
+
+    public UniqueMapping() {}
+
+    public UniqueMapping(@NotNull MappingTrait @NotNull ... traits) {
+        super(traits);
+    }
+
+    /**
+     * Adds the contents of another {@link UniqueMapping} to this one.
+     *
+     * @param m Mappings to be added
+     */
+    public void add(@NotNull UniqueMapping<T> m) {
+        classes.addAll(m.classes);
+        fields.addAll(m.fields);
+        methods.addAll(m.methods);
+        params.addAll(m.params);
+        packages.addAll(m.packages);
+    }
+
+    /**
+     * Adds the contents of this {@link UniqueMapping} into another one.
+     *
+     * @param m Mappings to add to
+     */
+    public void addTo(@NotNull UniqueMapping<T> m) {
+        m.classes.addAll(classes);
+        m.fields.addAll(fields);
+        m.methods.addAll(methods);
+        m.params.addAll(params);
+        m.packages.addAll(packages);
+    }
 
     /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof UniqueMapping<?> that)) return false;
-        return classes.equals(that.classes) && fields.equals(that.fields) && methods.equals(that.methods) && params.equals(that.params);
+        return Objects.equals(classes, that.classes) && Objects.equals(fields, that.fields) &&
+                Objects.equals(methods, that.methods)&& Objects.equals(params, that.params) &&
+                Objects.equals(packages, that.packages);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(classes, fields, methods, params);
+        return Objects.hash(classes, fields, methods, params, packages);
     }
 
     @Override
@@ -56,6 +109,7 @@ public class UniqueMapping<T extends Mapping> {
                 ", fields=" + fields +
                 ", methods=" + methods +
                 ", params=" + params +
+                ", packages=" + packages +
                 '}';
     }
 }

@@ -25,6 +25,7 @@ import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.*;
@@ -79,32 +80,32 @@ public class ClassifiedDeobfuscator {
     }
 
     public ClassifiedDeobfuscator(String version, Info.SideType side, DeobfuscateOptions options) {
-        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD, DownloadingUtil.downloadMappingSync(version, side)), options);
+        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD).read(DownloadingUtil.downloadMappingSync(version, side)), options);
     }
 
-    public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader) {
-        this(reader, DEFAULT_OPTIONS);
+    public ClassifiedDeobfuscator(ClassifiedMapping<PairedMapping> mappings) {
+        this(mappings, DEFAULT_OPTIONS);
     }
 
-    public ClassifiedDeobfuscator(ClassifiedMappingReader<PairedMapping> reader, DeobfuscateOptions options) {
+    public ClassifiedDeobfuscator(ClassifiedMapping<PairedMapping> mappings, DeobfuscateOptions options) {
         this.options = Objects.requireNonNull(options);
         this.targetNamespace = null;
-        if(options.reverse()) ClassifiedMappingReader.reverse(Objects.requireNonNull(reader));
-        this.mappings = ClassMapping.genMappingsByUnmappedNameMap(reader.mappings);
-        this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings);
+        if (options.reverse()) mappings.reverse();
+        this.mappings = ClassifiedMappingRemapper.genMappingsByUnmappedNameMap(mappings.classes);
+        this.mappingRemapper = new ClassifiedMappingRemapper(mappings);
     }
 
-    public ClassifiedDeobfuscator(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace) {
-        this(reader, targetNamespace, DEFAULT_OPTIONS);
+    public ClassifiedDeobfuscator(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {
+        this(mappings, targetNamespace, DEFAULT_OPTIONS);
     }
 
-    public ClassifiedDeobfuscator(ClassifiedMappingReader<NamespacedMapping> reader, String targetNamespace, DeobfuscateOptions options) {
+    public ClassifiedDeobfuscator(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace, DeobfuscateOptions options) {
         this.options = Objects.requireNonNull(options);
-        String sourceNamespace = NamingUtil.findSourceNamespace(Objects.requireNonNull(reader).mappings);
-        this.targetNamespace = Objects.requireNonNull(targetNamespace);
-        if(options.reverse()) ClassifiedMappingReader.swap(reader, sourceNamespace, targetNamespace);
-        this.mappings = ClassMapping.genMappingsByNamespaceMap(reader.mappings, sourceNamespace);
-        this.mappingRemapper = new ClassifiedMappingRemapper(reader.mappings, sourceNamespace, targetNamespace);
+        String sourceNamespace = NamingUtil.getSourceNamespace(mappings);
+        this.targetNamespace = targetNamespace == null ? NamingUtil.inferTargetNamespace(mappings) : targetNamespace;
+        if (options.reverse()) mappings.swap(sourceNamespace, this.targetNamespace);
+        this.mappings = ClassifiedMappingRemapper.genMappingsByNamespaceMap(mappings.classes, sourceNamespace);
+        this.mappingRemapper = new ClassifiedMappingRemapper(mappings, this.targetNamespace);
     }
 
     final ObjectOpenHashSet<String> toDecompile = new ObjectOpenHashSet<>();

@@ -32,7 +32,6 @@ public final class MappingUtil {
 
     public static final class Paired {
         public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, ClassifiedMappingRemapper remapper) {
-            if(!method.hasComponent(Owned.class)) throw new UnsupportedOperationException();
             checkOwner(method.getOwned(), cls);
             if(method.hasComponent(Descriptor.class)) {
                 return method.getComponent(Descriptor.class).getUnmappedDescriptor();

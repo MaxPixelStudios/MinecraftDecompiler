@@ -19,59 +19,53 @@
 package cn.maxpixel.mcdecompiler.reader;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectLists;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
 /**
- * A processor which processes strings to mappings.<br>
- * <b>NOTE: You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new type of mapping</b>
+ * A processor which processes strings to mappings.
+ *
+ * @implNote You should implement {@link Unique} or {@link Classified} instead of this class unless you are creating a new type of mapping</b>
  * @param <T> Mapping type
  * @param <C> Collection type
  */
-public interface MappingProcessor<T extends Mapping, C> {
+public interface MappingProcessor<T extends Mapping, C extends MappingCollection<T>> {
     MappingType<T, C> getType();
 
-    default boolean supportPackage() {
-        return getType().supportPackage();
-    }
+    /**
+     * Processes contents(probably of one file) to a mapping collection.
+     *
+     * @param content contents to process
+     * @return processed mapping collection
+     */
+    C process(ObjectList<String> content);
 
-    Pair<C, ObjectList<T>> process(ObjectList<String> content);
-
-    Pair<C, ObjectList<T>> process(ObjectList<String>... contents);
+    /**
+     * Processes contents(probably of multiple files) and merge them into a single mapping collection.
+     *
+     * @param contents contents to process
+     * @return processed mapping collection
+     */
+    C process(ObjectList<String>... contents);// TODO: better ways of merging mapping collections?
 
     interface Unique<T extends Mapping> extends MappingProcessor<T, UniqueMapping<T>> {
         @Override
-        default Pair<UniqueMapping<T>, ObjectList<T>> process(ObjectList<String>... contents) {
-            ObjectObjectImmutablePair<UniqueMapping<T>, ObjectList<T>> pair = new ObjectObjectImmutablePair<>(new UniqueMapping<>(),
-                    supportPackage() ? new ObjectArrayList<>() : ObjectLists.emptyList());
-            for(ObjectList<String> content : contents) {
-                Pair<UniqueMapping<T>, ObjectList<T>> result = process(content);
-                pair.left().classes.addAll(result.left().classes);
-                pair.left().fields.addAll(result.left().fields);
-                pair.left().methods.addAll(result.left().methods);
-                if(supportPackage()) pair.right().addAll(result.right());
-            }
-            return pair;
+        default UniqueMapping<T> process(ObjectList<String>... contents) {
+            UniqueMapping<T> result = new UniqueMapping<>();
+            for (ObjectList<String> content : contents) result.add(process(content));
+            return result;
         }
     }
 
-    interface Classified<T extends Mapping> extends MappingProcessor<T, ObjectList<ClassMapping<T>>> {
+    interface Classified<T extends Mapping> extends MappingProcessor<T, ClassifiedMapping<T>> {
         @Override
-        default Pair<ObjectList<ClassMapping<T>>, ObjectList<T>> process(ObjectList<String>... contents) {
-            ObjectObjectImmutablePair<ObjectList<ClassMapping<T>>, ObjectList<T>> pair = new ObjectObjectImmutablePair<>(
-                    new ObjectArrayList<>(), supportPackage() ? new ObjectArrayList<>() : ObjectLists.emptyList());
-            for(ObjectList<String> content : contents) {
-                Pair<ObjectList<ClassMapping<T>>, ObjectList<T>> result = process(content);
-                pair.left().addAll(result.left());
-                if(supportPackage()) pair.right().addAll(result.right());
-            }
-            return pair;
+        default ClassifiedMapping<T> process(ObjectList<String>... contents) {
+            ClassifiedMapping<T> result = new ClassifiedMapping<>();
+            for (ObjectList<String> content : contents) result.add(process(content));
+            return result;
         }
     }
 }

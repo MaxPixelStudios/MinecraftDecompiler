@@ -51,6 +51,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param names A map keyed with namespace and valued with name
      */
     public NamespacedMapping(Map<String, String> names) {
@@ -60,6 +61,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param namespace The namespace
      * @param name The name
      */
@@ -69,6 +71,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param namespaces The namespaces
      * @param names The names
      */
@@ -86,6 +89,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Helper constructor. Internally used by mapping readers
+     *
      * @param namespaces The namespaces
      * @param names The names
      * @param nameStart To put the names start from the index
@@ -100,6 +104,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param names A map keyed with namespace and valued with name
      * @param components Components add to this mapping
      */
@@ -111,6 +116,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param namespace The namespace
      * @param name The name
      * @param components Components add to this mapping
@@ -122,6 +128,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param namespaces The namespaces
      * @param names The names
      * @param components Components add to this mapping
@@ -136,6 +143,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Constructor
+     *
      * @param components Components add to this mapping
      */
     public NamespacedMapping(Component... components) {
@@ -144,6 +152,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Helper constructor. Internally used by mapping readers
+     *
      * @param namespaces The namespaces
      * @param names The names
      * @param nameStart To put the names start from the index
@@ -165,7 +174,8 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Gets the namespaces this mapping currently has
-     * <p>Note: Removing values or clearing would also change the names map</p>
+     *
+     * @apiNote Removing values or clearing would also change the names map
      * @return The namespaces this mapping currently has
      */
     public @NotNull ObjectSet<String> getNamespaces() {
@@ -174,6 +184,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Sets the name under the given namespace
+     *
      * @param namespace The namespace the name is under
      * @param name The name to set
      */
@@ -183,6 +194,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Gets the name under the given namespace
+     *
      * @param namespace The namespace the name is under
      * @return The name under the given namespace
      */
@@ -192,6 +204,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Gets the name under the given namespace
+     *
      * @param namespace The namespace the name is under
      * @param defaultValue Return this value if there is no name under the given namespace
      * @return The name under the given namespace if exists, otherwise the given default value
@@ -202,6 +215,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Swap the names under the given two namespaces of this mapping
+     *
      * @param fromNamespace The first namespace
      * @param toNamespace The second namespace
      * @return this mapping
@@ -214,6 +228,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
     /**
      * Swap the given namespaced mapping<br>
      * <b>INTERNAL METHOD. DO NOT CALL</b>
+     *
      * @param remapper Remapper to remap descriptors
      * @param fromNamespace Namespace to swap from
      * @param toNamespace Namespace to swap to
@@ -232,6 +247,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     /**
      * Determines if this mapping contains the given namespace
+     *
      * @param namespace the namespace to determine
      * @return if this mapping contains the given namespace
      */

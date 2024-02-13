@@ -25,9 +25,12 @@ import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectCollections;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 /**
  * Base class of all mappings
- * <p>This class should only be extended, so it is abstract</p>
+ *
+ * @implNote This class should only be extended, so it is abstract
  */
 public abstract class Mapping implements NameGetter {
     private final Object2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
@@ -50,6 +53,7 @@ public abstract class Mapping implements NameGetter {
     /**
      * Gets the component of given type if it is present.<br>
      * For the {@link Owned} component, it is recommended to use {@link #getOwned()} instead of this method
+     *
      * @param component Given component type. Cannot be null
      * @return The component if exists, or {@code null}
      */
@@ -59,7 +63,20 @@ public abstract class Mapping implements NameGetter {
     }
 
     /**
+     * Gets the component of given type.
+     * <p>
+     * For the {@link Owned} component, it is recommended to use {@link #getOwned()} instead of this method
+     *
+     * @param component Given component type. Cannot be null
+     * @return The component
+     */
+    public final <C extends Component> Optional<C> getComponentOptional(@NotNull Class<? super C> component) {
+        return Optional.ofNullable(getComponent(component));
+    }
+
+    /**
      * Gets the {@link Owned} component if it is present
+     *
      * @return The {@link Owned} component if it exists, or null
      */
     protected Owned<? extends Mapping> getOwned() {

@@ -103,11 +103,11 @@ public class MinecraftDecompilerCommandLine {
         if(options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
             options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
-                    .withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(m), m))));
+                    .withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(m)).read(m))));
         } else {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO));
             String mappingPath = options.valueOf(mappingPathO);
-            builder.withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(mappingPath), mappingPath));
+            builder.withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(mappingPath)).read(mappingPath));
             options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
         }
         if(options.has(regenVarNameO)) builder.regenerateVariableNames();
