@@ -87,7 +87,7 @@ public class Utils {
     }
 
     public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(String mappingPath) {
-        try(Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#"))) {
+        try (Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8)) {
             return tryIdentifyingMappingType(lines);
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
@@ -97,7 +97,7 @@ public class Utils {
     public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(BufferedReader reader) {
         try {
             reader.mark(512);
-            MappingFormat.Classified<? extends Mapping> result = tryIdentifyingMappingType(reader.lines().filter(s -> !s.startsWith("#")));
+            MappingFormat.Classified<? extends Mapping> result = tryIdentifyingMappingType(reader.lines());
             reader.reset();
             return result;
         } catch (IOException e) {
@@ -106,7 +106,7 @@ public class Utils {
     }
 
     public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(Stream<String> lines) {
-        List<String> list = lines.limit(2).toList();
+        List<String> list = lines.filter(s -> !s.startsWith("#")).limit(2).toList();
         String s = list.get(0);
         if (s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingFormats.SRG;
         else if (s.startsWith("v1")) return MappingFormats.TINY_V1;
@@ -120,9 +120,9 @@ public class Utils {
 
     public static StringBuilder createHashString(MessageDigest md) {
         StringBuilder out = new StringBuilder();
-        for(byte b : md.digest()) {
+        for (byte b : md.digest()) {
             String hex = Integer.toHexString(Byte.toUnsignedInt(b));
-            if(hex.length() < 2) out.append('0');
+            if (hex.length() < 2) out.append('0');
             out.append(hex);
         }
         return out;

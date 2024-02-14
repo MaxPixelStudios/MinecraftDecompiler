@@ -48,7 +48,7 @@ public record MixinTargetSelector(@Nullable Type owner, @Nullable String name, @
 
         String name = null, quantifier = null, descriptor = null;
         boolean field = false;
-        int i = 0;
+        int i;
 
         if ((i = p.indexOf('*')) != -1) {
             if (i > 0) name = p.substring(0, i);

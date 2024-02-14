@@ -41,15 +41,15 @@ public class IOUtil {
     }
 
     public static byte[] readAllBytes(Path file) throws IOException {
-        if(ZIP_FILESYSTEM != file.getFileSystem().getClass()) throw new IllegalArgumentException(); // Ensure the filesystem is zipfs
+        if (ZIP_FILESYSTEM != file.getFileSystem().getClass()) throw new IllegalArgumentException(); // Ensure the filesystem is zipfs
         InputStream is = Files.newInputStream(file); // Caller will close this stream
         byte[] bytes = new byte[is.available()];
-        if(is instanceof InflaterInputStream) {
+        if (is instanceof InflaterInputStream) {
             if(bytes.length > 65536) for (int len = 0; len != bytes.length; len += is.read(bytes, len, bytes.length - len));
             else is.read(bytes);
             return bytes;
         }
-        if(is.getClass() == ENTRY_INPUT_STREAM) {
+        if (is.getClass() == ENTRY_INPUT_STREAM) {
             is.read(bytes);
             return bytes;
         }

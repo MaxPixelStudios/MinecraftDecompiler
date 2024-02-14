@@ -77,12 +77,12 @@ public final class FileUtil {
 //    }
 
     public static void copyFile(@NotNull Path source, @NotNull Path target) {
-        if(Files.notExists(source)) {
+        if (Files.notExists(source)) {
             LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
             return;
         }
-        if(Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a file");
-        if(Files.exists(target) && Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
+        if (Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a file");
+        if (Files.exists(target) && Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
         LOGGER.log(Level.FINER, "Coping file {0} to {1} ...", new Object[] {source, target});
         try {
             Files.createDirectories(target.getParent());
@@ -110,15 +110,15 @@ public final class FileUtil {
     }
 
     public static Path requireExist(@NotNull Path p) {
-        if(Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
+        if (Files.notExists(p)) throw new IllegalArgumentException("Path \"" + p + "\"does not exist");
         return p;
     }
 
     public static Path ensureFileExist(@NotNull Path p) {
-        if(Files.notExists(p)) {
+        if (Files.notExists(p)) {
             try {
                 Path parent = p.getParent();
-                if(parent != null) Files.createDirectories(parent);
+                if (parent != null) Files.createDirectories(parent);
                 Files.createFile(p);
             } catch (IOException e) {
                 throw Utils.wrapInRuntime(e);
@@ -132,7 +132,7 @@ public final class FileUtil {
             DirectoryStream<Path> ds = Files.newDirectoryStream(path);
             return StreamSupport.stream(ds.spliterator(), true)
                     .mapMulti((Path p, Consumer<Path> cons) -> {
-                        if(Files.isDirectory(p)) iterateFiles(p).forEach(cons);
+                        if (Files.isDirectory(p)) iterateFiles(p).forEach(cons);
                         else cons.accept(p);
                     }).onClose(LambdaUtil.unwrap(ds::close));
         } catch (IOException e) {
@@ -168,10 +168,10 @@ public final class FileUtil {
         if (Objects.requireNonNull(hash, "Why do you want to verify a file with null hash?").isBlank()) {
             throw new IllegalArgumentException("Why do you want to verify a file with no hash?");
         }
-        try(FileChannel fc = FileChannel.open(path, READ)) {
+        try (FileChannel fc = FileChannel.open(path, READ)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             ByteBuffer buf = ByteBuffer.allocateDirect(65536);
-            while(fc.read(buf) != -1) {
+            while (fc.read(buf) != -1) {
                 md.update(buf.flip());
                 buf.clear();
             }

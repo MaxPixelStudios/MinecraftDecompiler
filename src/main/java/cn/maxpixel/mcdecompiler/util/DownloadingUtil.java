@@ -113,7 +113,7 @@ public class DownloadingUtil {
                 HTTP_CLIENT.send(HttpRequest.newBuilder(remoteResource).build(),
                         HttpResponse.BodyHandlers.ofFile(localPath, WRITE, TRUNCATE_EXISTING));
             }
-        } catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             LOGGER.log(Level.SEVERE, "Download process interrupted", e);
             throw Utils.wrapInRuntime(e);
         }
@@ -128,7 +128,7 @@ public class DownloadingUtil {
      */
     @Blocking
     public static @NotNull ObjectSet<Path> downloadLibraries(@Nullable String version, @NotNull Path libDir) {
-        if(version == null || version.isBlank()) {
+        if (version == null || version.isBlank()) {
             LOGGER.fine("Invalid version, skipping downloading libs");
             return ObjectOpenHashSet.of();
         }
@@ -140,15 +140,15 @@ public class DownloadingUtil {
                 .map(artifact -> {
                     String url = artifact.get("url").getAsString();
                     Path file = libDir.resolve(url.substring(url.lastIndexOf('/') + 1)); // libDir.resolve(lib file name)
-                    if(!FileUtil.verify(file, artifact.get("sha1").getAsString(), artifact.get("size").getAsLong())) {
+                    if (!FileUtil.verify(file, artifact.get("sha1").getAsString(), artifact.get("size").getAsLong())) {
                         LOGGER.log(Level.FINER, "Downloading {0}", url);
                         try {
                             HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(),
                                     HttpResponse.BodyHandlers.ofFile(file, CREATE, WRITE, TRUNCATE_EXISTING));
-                        } catch(IOException e) {
+                        } catch (IOException e) {
                             LOGGER.log(Level.SEVERE, "Error downloading files", e);
                             throw Utils.wrapInRuntime(e);
-                        } catch(InterruptedException e) {
+                        } catch (InterruptedException e) {
                             LOGGER.log(Level.SEVERE, "Download process interrupted", e);
                             throw Utils.wrapInRuntime(e);
                         }

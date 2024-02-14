@@ -35,6 +35,10 @@
             <url>https://www.gnu.org/licenses/lgpl-3.0.txt</url>
         </license>
     </licenses>
+    <organization>
+        <name>MaxPixel Studios</name>
+        <url>https://github.com/MaxPixelStudios</url>
+    </organization>
     <build>
         <plugins>
             <plugin>
@@ -60,7 +64,6 @@
                         </manifest>
                         <manifestEntries>
                             <Automatic-Module-Name>cn.maxpixel.mcdecompiler</Automatic-Module-Name>
-                            <Implementation-Version>${project.version}</Implementation-Version>
                             <CFR-Version>${depend.cfr.ver}</CFR-Version>
                             <ForgeFlower-Version>${depend.forgeflower.ver}</ForgeFlower-Version>
                             <FernFlower-Version>${depend.fernflower.ver}</FernFlower-Version>
@@ -75,7 +78,7 @@
                 <version>3.5.1</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <finalName>MinecraftDecompiler</finalName>
+                    <finalName>${project.name}</finalName>
                     <minimizeJar>true</minimizeJar>
                     <filters>
                         <filter>
@@ -95,7 +98,7 @@
                                 <exclude>it/unimi/dsi/fastutil/**/*Char*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Long*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Short*</exclude>
-                                <exclude>it/unimi/dsi/fastutil/**/*Reference*</exclude>>
+                                <exclude>it/unimi/dsi/fastutil/**/*Reference*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Big*</exclude>
                             </excludes>
                         </filter>

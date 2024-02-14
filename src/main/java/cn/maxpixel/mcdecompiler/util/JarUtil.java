@@ -42,12 +42,12 @@ public class JarUtil {
     static {
         FileSystemProvider provider = null;
         for (FileSystemProvider p: FileSystemProvider.installedProviders()) {
-            if(p.getScheme().equalsIgnoreCase("jar")) {
+            if (p.getScheme().equalsIgnoreCase("jar")) {
                 provider = p;
                 break;
             }
         }
-        if(provider == null) throw new IllegalStateException("jar/zip file system provider does not exist");
+        if (provider == null) throw new IllegalStateException("jar/zip file system provider does not exist");
         JAR_FSP = provider;
     }
 }

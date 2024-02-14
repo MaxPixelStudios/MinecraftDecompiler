@@ -27,15 +27,15 @@ import cn.maxpixel.mcdecompiler.mapping.component.*;
 
 public final class MappingUtil {
     public static <T extends Mapping> void checkOwner(Owned<T> owned, ClassMapping<T> owner) {
-        if(owned.owner != owner) throw new IllegalArgumentException("Owner mismatch");
+        if (owned.owner != owner) throw new IllegalArgumentException("Owner mismatch");
     }
 
     public static final class Paired {
         public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, ClassifiedMappingRemapper remapper) {
             checkOwner(method.getOwned(), cls);
-            if(method.hasComponent(Descriptor.class)) {
+            if (method.hasComponent(Descriptor.class)) {
                 return method.getComponent(Descriptor.class).getUnmappedDescriptor();
-            } else if(remapper != null && method.hasComponent(Descriptor.Mapped.class)) {
+            } else if (remapper != null && method.hasComponent(Descriptor.Mapped.class)) {
                 return remapper.getUnmappedDescByMappedDesc(method.getComponent(Descriptor.Mapped.class)
                         .getMappedDescriptor());
             } else throw new UnsupportedOperationException();
@@ -64,11 +64,11 @@ public final class MappingUtil {
 
     public static final class Namespaced {
         public static String checkTiny(String namespace0, ClassMapping<NamespacedMapping> cls, NamespacedMapping mapping) {
-            if(!mapping.hasComponent(Owned.class) || !mapping.hasComponent(Descriptor.Namespaced.class))
+            if (!mapping.hasComponent(Owned.class) || !mapping.hasComponent(Descriptor.Namespaced.class))
                 throw new UnsupportedOperationException();
             checkOwner(mapping.getOwned(), cls);
             Descriptor.Namespaced desc = mapping.getComponent(Descriptor.Namespaced.class);
-            if(!namespace0.equals(desc.getDescriptorNamespace())) throw new IllegalArgumentException("Descriptor namespace mismatch");
+            if (!namespace0.equals(desc.getDescriptorNamespace())) throw new IllegalArgumentException("Descriptor namespace mismatch");
             return desc.getUnmappedDescriptor();
         }
 
