@@ -108,13 +108,13 @@ public class Utils {
     public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(Stream<String> lines) {
         List<String> list = lines.limit(2).toList();
         String s = list.get(0);
-        if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingFormats.SRG;
-        else if(s.startsWith("v1")) return MappingFormats.TINY_V1;
-        else if(s.startsWith("tiny\t2\t0")) return MappingFormats.TINY_V2;
-        else if(s.startsWith("tsrg2")) return MappingFormats.TSRG_V2;
+        if (s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingFormats.SRG;
+        else if (s.startsWith("v1")) return MappingFormats.TINY_V1;
+        else if (s.startsWith("tiny\t2\t0")) return MappingFormats.TINY_V2;
+        else if (s.startsWith("tsrg2")) return MappingFormats.TSRG_V2;
+        else if (s.endsWith(":")) return MappingFormats.PROGUARD;
         s = list.get(1);
-        if(s.startsWith("    ")) return MappingFormats.PROGUARD;
-        else if(s.startsWith("\t")) return MappingFormats.TSRG_V1;
+        if (s.startsWith("\t")) return MappingFormats.TSRG_V1;
         else return MappingFormats.CSRG;
     }
 
