@@ -22,9 +22,10 @@ import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
-import it.unimi.dsi.fastutil.objects.ObjectCollections;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -39,7 +40,7 @@ public abstract class Mapping implements NameGetter {
      * Constructor
      * @param components Components add to this mapping
      */
-    protected Mapping(@NotNull Component... components) {
+    protected Mapping(@NotNull Component @NotNull ... components) {
         for(@NotNull Component component : components) {
             this.components.put(component.getClass(), component);
         }
@@ -58,7 +59,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> C getComponent(@NotNull Class<? super C> component) {
+    public final <C extends Component> @Nullable C getComponent(@NotNull Class<? super C> component) {
         return (C) components.get(component);
     }
 
@@ -70,7 +71,7 @@ public abstract class Mapping implements NameGetter {
      * @param component Given component type. Cannot be null
      * @return The component
      */
-    public final <C extends Component> Optional<C> getComponentOptional(@NotNull Class<? super C> component) {
+    public final <C extends Component> @NotNull Optional<C> getComponentOptional(@NotNull Class<? super C> component) {
         return Optional.ofNullable(getComponent(component));
     }
 
@@ -83,12 +84,43 @@ public abstract class Mapping implements NameGetter {
         return getComponent(Owned.class);
     }
 
+    /**
+     * Checks if a component of given class exists.
+     *
+     * @param component The class of the component
+     * @return True if the component exists, false otherwise
+     */
     public final boolean hasComponent(@NotNull Class<? extends Component> component) {
         return components.containsKey(component);
     }
 
+    /**
+     * Gets all the components of this mapping.
+     *
+     * @return All the components of this mapping
+     */
     public final @NotNull ObjectCollection<? extends Component> getComponents() {
-        return ObjectCollections.unmodifiable(components.values());
+        return components.values();
+    }
+
+    /**
+     * Adds a component to this mapping.
+     *
+     * @implNote If a component of the same class exists, replaces that component.
+     * @param component The component to add or replace with
+     */
+    public final void addComponent(@NotNull Component component) {
+        this.components.put(component.getClass(), component);
+    }
+
+    /**
+     * Removes a component from this mapping.
+     *
+     * @implNote Do nothing if the component does not exist.
+     * @param component The class of the component to remove
+     */
+    public final void removeComponent(@NotNull Class<? extends Component> component) {
+        components.remove(Objects.requireNonNull(component));
     }
 
     /* Auto-generated equals, hashCode and toString methods */

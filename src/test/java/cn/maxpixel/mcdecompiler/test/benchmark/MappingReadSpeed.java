@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.test.benchmark;
 
-import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
+import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessors;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;

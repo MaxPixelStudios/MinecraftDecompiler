@@ -20,7 +20,6 @@ package cn.maxpixel.mcdecompiler;
 
 import cn.maxpixel.mcdecompiler.asm.ClassProcessor;
 import cn.maxpixel.mcdecompiler.decompiler.VineflowerDecompiler;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
 import cn.maxpixel.mcdecompiler.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.util.Logging;
 import cn.maxpixel.mcdecompiler.util.Utils;
@@ -28,6 +27,7 @@ import joptsimple.*;
 import joptsimple.util.PathConverter;
 import joptsimple.util.PathProperties;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -103,11 +103,11 @@ public class MinecraftDecompilerCommandLine {
         if(options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
             options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
-                    .withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(m)).read(m))));
+                    .withMapping(Utils.tryIdentifyingMappingType(m).read(new FileInputStream(m)))));
         } else {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO));
             String mappingPath = options.valueOf(mappingPathO);
-            builder.withMapping(new ClassifiedMappingReader<>(Utils.tryIdentifyingMappingType(mappingPath)).read(mappingPath));
+            builder.withMapping(Utils.tryIdentifyingMappingType(mappingPath).read(new FileInputStream(mappingPath)));
             options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
         }
         if(options.has(regenVarNameO)) builder.regenerateVariableNames();

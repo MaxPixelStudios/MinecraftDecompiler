@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.reader;
+package cn.maxpixel.mcdecompiler.mapping.processor;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
@@ -33,7 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  * @param <C> Collection type
  */
 public interface MappingProcessor<T extends Mapping, C extends MappingCollection<T>> {
-    MappingType<T, C> getType();
+    MappingFormat<T, C> getFormat();
 
     /**
      * Processes contents(probably of one file) to a mapping collection.

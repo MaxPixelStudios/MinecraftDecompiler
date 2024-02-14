@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.writer;
+package cn.maxpixel.mcdecompiler.mapping.generator;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
@@ -24,9 +24,9 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.*;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
 import cn.maxpixel.mcdecompiler.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.util.Utils;
@@ -37,8 +37,8 @@ import org.objectweb.asm.Type;
 public interface MappingGenerators {
     MappingGenerator.Classified<PairedMapping> SRG = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
-            return MappingTypes.SRG;
+        public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
+            return MappingFormats.SRG;
         }
 
         @Override
@@ -88,8 +88,8 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<PairedMapping> CSRG = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
-            return MappingTypes.CSRG;
+        public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
+            return MappingFormats.CSRG;
         }
 
         @Override
@@ -126,8 +126,8 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<PairedMapping> TSRG_V1 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
-            return MappingTypes.TSRG_V1;
+        public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
+            return MappingFormats.TSRG_V1;
         }
 
         @Override
@@ -161,8 +161,8 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<NamespacedMapping> TSRG_V2 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getType() {
-            return MappingTypes.TSRG_V2;
+        public MappingFormat<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getFormat() {
+            return MappingFormats.TSRG_V2;
         }
 
         @Override
@@ -223,8 +223,8 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<PairedMapping> PROGUARD = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<PairedMapping, ClassifiedMapping<PairedMapping>> getType() {
-            return MappingTypes.PROGUARD;
+        public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
+            return MappingFormats.PROGUARD;
         }
 
         @Override
@@ -279,8 +279,8 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<NamespacedMapping> TINY_V1 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getType() {
-            return MappingTypes.TINY_V1;
+        public MappingFormat<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getFormat() {
+            return MappingFormats.TINY_V1;
         }
 
         @Override
@@ -316,8 +316,8 @@ public interface MappingGenerators {
 
     MappingGenerator.Classified<NamespacedMapping> TINY_V2 = new MappingGenerator.Classified<>() {
         @Override
-        public MappingType<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getType() {
-            return MappingTypes.TINY_V2;
+        public MappingFormat<NamespacedMapping, ClassifiedMapping<NamespacedMapping>> getFormat() {
+            return MappingFormats.TINY_V2;
         }
 
         @Override

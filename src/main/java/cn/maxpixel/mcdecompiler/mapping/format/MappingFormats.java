@@ -16,104 +16,105 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.type;
+package cn.maxpixel.mcdecompiler.mapping.format;
 
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.reader.MappingProcessor;
-import cn.maxpixel.mcdecompiler.reader.MappingProcessors;
-import cn.maxpixel.mcdecompiler.writer.MappingGenerator;
-import cn.maxpixel.mcdecompiler.writer.MappingGenerators;
+import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
+import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerators;
+import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
+import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessors;
+import org.jetbrains.annotations.NotNull;
 
-public interface MappingTypes {
-    MappingType.Classified<PairedMapping> SRG = new MappingType.Classified<>() {
+public interface MappingFormats {
+    MappingFormat.Classified<PairedMapping> SRG = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "srg";
         }
 
         @Override
-        public MappingProcessor.Classified<PairedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.SRG;
         }
 
         @Override
-        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
             return MappingGenerators.SRG;
         }
     };
 
-    MappingType.Classified<PairedMapping> CSRG = new MappingType.Classified<>() {
+    MappingFormat.Classified<PairedMapping> CSRG = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "csrg";
         }
 
         @Override
-        public MappingProcessor.Classified<PairedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.CSRG;
         }
 
         @Override
-        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
             return MappingGenerators.CSRG;
         }
     };
 
-    MappingType.Classified<PairedMapping> TSRG_V1 = new MappingType.Classified<>() {
+    MappingFormat.Classified<PairedMapping> TSRG_V1 = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "tsrg_v1";
         }
 
         @Override
-        public MappingProcessor.Classified<PairedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.TSRG_V1;
         }
 
         @Override
-        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
             return MappingGenerators.TSRG_V1;
         }
     };
 
-    MappingType.Classified<NamespacedMapping> TSRG_V2 = new MappingType.Classified<>() {
+    MappingFormat.Classified<NamespacedMapping> TSRG_V2 = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "tsrg_v2";
         }
 
         @Override
-        public MappingProcessor.Classified<NamespacedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<NamespacedMapping> getProcessor() {
             return MappingProcessors.TSRG_V2;
         }
 
         @Override
-        public MappingGenerator.Classified<NamespacedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<NamespacedMapping> getGenerator() {
             return MappingGenerators.TSRG_V2;
         }
     };
 
-    MappingType.Classified<PairedMapping> PROGUARD = new MappingType.Classified<>() {
+    MappingFormat.Classified<PairedMapping> PROGUARD = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "proguard";
         }
 
         @Override
-        public MappingProcessor.Classified<PairedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
             return MappingProcessors.PROGUARD;
         }
 
         @Override
-        public MappingGenerator.Classified<PairedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
             return MappingGenerators.PROGUARD;
         }
     };
 
-    MappingType.Classified<NamespacedMapping> TINY_V1 = new MappingType.Classified<>() {
+    MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "tiny_v1";
         }
 
@@ -123,19 +124,19 @@ public interface MappingTypes {
         }
 
         @Override
-        public MappingProcessor.Classified<NamespacedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<NamespacedMapping> getProcessor() {
             return MappingProcessors.TINY_V1;
         }
 
         @Override
-        public MappingGenerator.Classified<NamespacedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<NamespacedMapping> getGenerator() {
             return MappingGenerators.TINY_V1;
         }
     };
 
-    MappingType.Classified<NamespacedMapping> TINY_V2 = new MappingType.Classified<>() {
+    MappingFormat.Classified<NamespacedMapping> TINY_V2 = new MappingFormat.Classified<>() {
         @Override
-        public String getName() {
+        public @NotNull String getName() {
             return "tiny_v2";
         }
 
@@ -145,12 +146,12 @@ public interface MappingTypes {
         }
 
         @Override
-        public MappingProcessor.Classified<NamespacedMapping> getProcessor() {
+        public @NotNull MappingProcessor.Classified<NamespacedMapping> getProcessor() {
             return MappingProcessors.TINY_V2;
         }
 
         @Override
-        public MappingGenerator.Classified<NamespacedMapping> getGenerator() {
+        public @NotNull MappingGenerator.Classified<NamespacedMapping> getGenerator() {
             return MappingGenerators.TINY_V2;
         }
     };

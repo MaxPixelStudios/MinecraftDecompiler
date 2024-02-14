@@ -18,35 +18,34 @@
 
 package cn.maxpixel.mcdecompiler.test.reader;
 
-import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 
 public class MappingProcessorTest {
     public void testSrg() {
-        new ClassifiedMappingReader<>(MappingTypes.SRG).read(getClass().getClassLoader().getResourceAsStream("1.17.1.srg"));
+        MappingFormats.SRG.read(getClass().getClassLoader().getResourceAsStream("1.17.1.srg"));
     }
 
     public void testCsrg() {
-        new ClassifiedMappingReader<>(MappingTypes.CSRG).read(getClass().getClassLoader().getResourceAsStream("1.17.1.csrg"));
+        MappingFormats.CSRG.read(getClass().getClassLoader().getResourceAsStream("1.17.1.csrg"));
     }
 
     public void testTsrg() {
-        new ClassifiedMappingReader<>(MappingTypes.TSRG_V1).read(getClass().getClassLoader().getResourceAsStream("1.17.1.tsrg"));
+        MappingFormats.TSRG_V1.read(getClass().getClassLoader().getResourceAsStream("1.17.1.tsrg"));
     }
 
     public void testTsrg2() {
-        new ClassifiedMappingReader<>(MappingTypes.TSRG_V2).read(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tsrg"));
+        MappingFormats.TSRG_V2.read(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tsrg"));
     }
 
     public void testProguard() {
-        new ClassifiedMappingReader<>(MappingTypes.PROGUARD).read(getClass().getClassLoader().getResourceAsStream("1.17.1.txt"));
+        MappingFormats.PROGUARD.read(getClass().getClassLoader().getResourceAsStream("1.17.1.txt"));
     }
 
     public void testTiny1() {
-        new ClassifiedMappingReader<>(MappingTypes.TINY_V1).read(getClass().getClassLoader().getResourceAsStream("1.17.1.tiny"));
+        MappingFormats.TINY_V1.read(getClass().getClassLoader().getResourceAsStream("1.17.1.tiny"));
     }
 
     public void testTiny2() {
-        new ClassifiedMappingReader<>(MappingTypes.TINY_V2).read(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tiny"));
+        MappingFormats.TINY_V2.read(getClass().getClassLoader().getResourceAsStream("1.17.1-v2.tiny"));
     }
 }

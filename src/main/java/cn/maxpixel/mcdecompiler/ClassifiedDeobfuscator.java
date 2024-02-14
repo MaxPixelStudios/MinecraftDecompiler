@@ -26,8 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
-import cn.maxpixel.mcdecompiler.reader.ClassifiedMappingReader;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.util.*;
 import it.unimi.dsi.fastutil.objects.*;
 import org.objectweb.asm.ClassReader;
@@ -80,7 +79,7 @@ public class ClassifiedDeobfuscator {
     }
 
     public ClassifiedDeobfuscator(String version, Info.SideType side, DeobfuscateOptions options) {
-        this(new ClassifiedMappingReader<>(MappingTypes.PROGUARD).read(DownloadingUtil.downloadMappingSync(version, side)), options);
+        this(MappingFormats.PROGUARD.read(DownloadingUtil.downloadMappingSync(version, side)), options);
     }
 
     public ClassifiedDeobfuscator(ClassifiedMapping<PairedMapping> mappings) {

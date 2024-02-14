@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.writer;
+package cn.maxpixel.mcdecompiler.mapping.generator;
 
 import cn.maxpixel.mcdecompiler.asm.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 /**
@@ -34,7 +34,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
  * @param <C> Collection type
  */
 public interface MappingGenerator<T extends Mapping, C extends MappingCollection<T>> {
-    MappingType<T, C> getType();
+    MappingFormat<T, C> getFormat();
 
     ObjectList<String> generate(C mappings);
 

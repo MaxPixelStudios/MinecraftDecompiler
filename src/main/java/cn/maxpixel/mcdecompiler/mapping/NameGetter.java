@@ -31,7 +31,7 @@ public interface NameGetter {
     /**
      * For {@link NamespacedMapping} to implement.
      *
-     * @implNote unmapped namespace should be set by mapping processors
+     * @implSpec unmapped namespace should be set by mapping processors
      */
     interface Namespaced {
         String getUnmappedNamespace();

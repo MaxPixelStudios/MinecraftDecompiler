@@ -19,8 +19,8 @@
 package cn.maxpixel.mcdecompiler.util;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingType;
-import cn.maxpixel.mcdecompiler.mapping.type.MappingTypes;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -86,7 +86,7 @@ public class Utils {
         throw new IllegalArgumentException("Key duplicated for \"" + t + "\" and \"" + u + "\"");
     }
 
-    public static MappingType.Classified<? extends Mapping> tryIdentifyingMappingType(String mappingPath) {
+    public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(String mappingPath) {
         try(Stream<String> lines = Files.lines(Path.of(mappingPath), StandardCharsets.UTF_8).filter(s -> !s.startsWith("#"))) {
             return tryIdentifyingMappingType(lines);
         } catch (IOException e) {
@@ -94,10 +94,10 @@ public class Utils {
         }
     }
 
-    public static MappingType.Classified<? extends Mapping> tryIdentifyingMappingType(BufferedReader reader) {
+    public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(BufferedReader reader) {
         try {
             reader.mark(512);
-            MappingType.Classified<? extends Mapping> result = tryIdentifyingMappingType(reader.lines().filter(s -> !s.startsWith("#")));
+            MappingFormat.Classified<? extends Mapping> result = tryIdentifyingMappingType(reader.lines().filter(s -> !s.startsWith("#")));
             reader.reset();
             return result;
         } catch (IOException e) {
@@ -105,17 +105,17 @@ public class Utils {
         }
     }
 
-    public static MappingType.Classified<? extends Mapping> tryIdentifyingMappingType(Stream<String> lines) {
+    public static MappingFormat.Classified<? extends Mapping> tryIdentifyingMappingType(Stream<String> lines) {
         List<String> list = lines.limit(2).toList();
         String s = list.get(0);
-        if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingTypes.SRG;
-        else if(s.startsWith("v1")) return MappingTypes.TINY_V1;
-        else if(s.startsWith("tiny\t2\t0")) return MappingTypes.TINY_V2;
-        else if(s.startsWith("tsrg2")) return MappingTypes.TSRG_V2;
+        if(s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return MappingFormats.SRG;
+        else if(s.startsWith("v1")) return MappingFormats.TINY_V1;
+        else if(s.startsWith("tiny\t2\t0")) return MappingFormats.TINY_V2;
+        else if(s.startsWith("tsrg2")) return MappingFormats.TSRG_V2;
         s = list.get(1);
-        if(s.startsWith("    ")) return MappingTypes.PROGUARD;
-        else if(s.startsWith("\t")) return MappingTypes.TSRG_V1;
-        else return MappingTypes.CSRG;
+        if(s.startsWith("    ")) return MappingFormats.PROGUARD;
+        else if(s.startsWith("\t")) return MappingFormats.TSRG_V1;
+        else return MappingFormats.CSRG;
     }
 
     public static StringBuilder createHashString(MessageDigest md) {
