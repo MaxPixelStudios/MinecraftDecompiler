@@ -19,7 +19,7 @@ For usage and more information, visit [the wiki](https://github.com/MaxPixelStud
 **Discord: https://discord.gg/pjQd8PVk3t**  
 **GH Discussions: https://github.com/MaxPixelStudios/MinecraftDecompiler/discussions**  
 **KOOK/开黑啦: https://kook.top/WI8xyn**  
-**QQ群(加群请注明理由: MinecraftDecompiler): 814722661**
+**QQ群(加群请注明理由: MinecraftDecompiler): 814722661**  
 **QQ频道: https://pd.qq.com/s/1ospru74**
 
 ## Special Thanks
