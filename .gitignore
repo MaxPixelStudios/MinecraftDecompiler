@@ -1,6 +1,6 @@
 # Project exclude paths
-/target/
-/out/
+target/
+out/
 /downloads/
 /output/
 /.idea/

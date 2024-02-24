@@ -1,0 +1,7 @@
+{
+  "loggers": {
+    "root": {
+      "level": "INFO"
+    }
+  }
+}
