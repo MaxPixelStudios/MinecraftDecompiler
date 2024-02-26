@@ -29,6 +29,9 @@ jobs:
         distribution: temurin
         check-latest: true
         cache: 'maven'
+    - name: Copy servers
+      shell: pwsh
+      run: ./copy-server.ps1
     - name: Build with Maven and deploy to GitHub Packages
       run: |
         mvn -B clean deploy
@@ -40,7 +43,7 @@ jobs:
       uses: actions/upload-artifact@v4.3.1
       with:
         name: MinecraftDecompiler
-        path: target/MinecraftDecompiler.jar
+        path: modules/cli/target/MinecraftDecompiler.jar
 #    - name: Pre-release
 #      if: ${{ success() && !startsWith(github.event.head_commit.head_commit.message, 'Bump version to ') && !endsWith(github.event.head_commit.head_commit.message, ' Release') }}
 #      uses: softprops/action-gh-release@v1

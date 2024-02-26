@@ -14,6 +14,9 @@ jobs:
           distribution: temurin
           check-latest: true
           cache: 'maven'
+      - name: Copy servers
+        shell: pwsh
+        run: ./copy-server.ps1
       - name: Build with Maven
         run: mvn -B clean package
       - name: Upload target
