@@ -10,4 +10,5 @@ foreach ($server in $servers.ChildNodes) {
     }
 }
 
-$mvnSettings.Save('~/.m2/settings.xml')
+Set-Location ~/.m2
+$mvnSettings.Save('settings.xml')
