@@ -155,7 +155,7 @@
             <url>https://www.jetbrains.com/intellij-repository/releases</url>
         </repository>
         <repository>
-            <id>github</id>
+            <id>rewh-github</id>
             <url>https://maven.pkg.github.com/MaxPixelStudios/ReinventedWheels</url>
         </repository>
     </repositories>

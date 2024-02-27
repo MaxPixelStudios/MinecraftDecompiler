@@ -1,4 +1,4 @@
-[xml]$mvnSettings = Get-Content ~\.m2\settings.xml
+[xml]$mvnSettings = Get-Content ~/.m2/settings.xml
 $servers = $mvnSettings.settings.servers
 
 foreach ($server in $servers.ChildNodes) {
@@ -10,5 +10,4 @@ foreach ($server in $servers.ChildNodes) {
     }
 }
 
-Set-Location ~/.m2
-$mvnSettings.Save('settings.xml')
+$mvnSettings.Save((Convert-Path ~/.m2/settings.xml))
