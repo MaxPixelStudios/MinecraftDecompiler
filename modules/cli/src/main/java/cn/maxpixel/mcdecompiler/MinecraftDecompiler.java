@@ -341,9 +341,8 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             if(this.outputJar.getParent().equals(this.outputDecompDir))
                 throw new IllegalArgumentException("The parent directory of outputJar cannot be the same as outputDecomp");
             return new Options() {
-                private final ObjectSet<Path> uExtraJars = ObjectSets.unmodifiable(extraJars);
-                private final ObjectSet<String> uExtraClasses = ObjectSets.unmodifiable(extraClasses);
-                private final DeobfuscationOptions deobfuscation = new DeobfuscationOptions(includeOthers, rvn, reverse, uExtraJars, uExtraClasses, refMap);
+                private final DeobfuscationOptions deobfuscation = new DeobfuscationOptions(includeOthers, rvn, reverse,
+                        ObjectSets.unmodifiable(extraJars), ObjectSets.unmodifiable(extraClasses), refMap);
 
                 @Override
                 public String version() {
@@ -393,7 +392,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         }
     }
 
-    private interface Options {
+    public interface Options {
         String version();
 
         SideType type();

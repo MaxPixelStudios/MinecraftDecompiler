@@ -80,6 +80,7 @@ public class ClassFileRemapper extends Remapper {
     // String[] {0: unmapped owner class name, 1: mapped name, 2: unmapped name, 3: unmapped descriptor}
     private String[] reduceMethod(@NotNull String[] left, @NotNull String[] right) {
         if (left[0].equals(right[0])) return left;// just checking owner is enough
+        if (left[1].equals(right[1]) && left[3].equals(right[3])) return left;// may be an override
         int leftAcc = extraClassesInformation.getAccessFlags(left[0], left[2].concat(left[3]));
         int rightAcc = extraClassesInformation.getAccessFlags(right[0], right[2].concat(right[3]));
         if ((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {

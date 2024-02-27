@@ -11,4 +11,6 @@ open module cn.maxpixel.mcdecompiler.remapper {
     exports cn.maxpixel.mcdecompiler.remapper;
     exports cn.maxpixel.mcdecompiler.remapper.processing;
     exports cn.maxpixel.mcdecompiler.remapper.variable;
+
+    uses cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor.Process;
 }

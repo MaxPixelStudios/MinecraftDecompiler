@@ -78,12 +78,13 @@ public interface MappingRemapper {
         int start = 0;
         for (int i = 1; i < desc.length(); i++) {
             switch (desc.charAt(i)) {
-                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S', '[', ')' -> {} // no op
+                case 'Z', 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'V', '[', ')' -> {} // no op
                 case 'L' -> {
                     ret.append(desc, start, ++i);
                     start = desc.indexOf(';', i + 1);// skip 'L'(++i) and the first char
                     if (start < 0) DescriptorUtil.throwInvalid(true);
                     ret.append(map ? mapClass(desc.substring(i, start)) : unmapClass(desc.substring(i, start)));
+                    i = start;// will do i++, so don't assign `start + 1` here
                 }
                 default -> DescriptorUtil.throwInvalid(true);
             }

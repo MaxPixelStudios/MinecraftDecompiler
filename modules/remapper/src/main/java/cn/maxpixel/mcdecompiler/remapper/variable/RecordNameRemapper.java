@@ -26,12 +26,15 @@ import org.objectweb.asm.RecordComponentVisitor;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @apiNote Use this when (access & Opcodes.ACC_RECORD) != 0
+ */
 public class RecordNameRemapper extends ClassVisitor implements VariableNameProvider {
     private final ObjectArrayList<String> recordNames = new ObjectArrayList<>();
     private final StringBuilder recordDesc = new StringBuilder("(");
     private boolean done;
 
-    public RecordNameRemapper(ClassVisitor classVisitor) { // Use this when (access & Opcodes.ACC_RECORD) != 0
+    public RecordNameRemapper(ClassVisitor classVisitor) {
         super(Deobfuscator.ASM_VERSION, classVisitor);
     }
 
