@@ -27,7 +27,7 @@ import org.objectweb.asm.RecordComponentVisitor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @apiNote Use this when (access & Opcodes.ACC_RECORD) != 0
+ * @apiNote Use this when {@code (access & Opcodes.ACC_RECORD) != 0}
  */
 public class RecordNameRemapper extends ClassVisitor implements VariableNameProvider {
     private final ObjectArrayList<String> recordNames = new ObjectArrayList<>();
