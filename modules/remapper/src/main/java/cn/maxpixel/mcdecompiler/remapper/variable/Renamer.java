@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.remapper.variable;
 
+import cn.maxpixel.rewh.logging.LogManager;
+import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,8 @@ import org.objectweb.asm.Type;
 import java.util.Locale;
 
 public class Renamer {
+    protected static final Logger LOGGER = LogManager.getLogger();
+
     private record Holder(boolean skipZero, @NotNull String... names) {
         private Holder(@NotNull String... names) {
             this(true, names);
@@ -57,18 +61,24 @@ public class Renamer {
         PREDEF.put("Void", new Holder("ovoid"));
     }
 
-    private final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
+    protected final Object2IntOpenHashMap<String> vars = new Object2IntOpenHashMap<>();
 
     {
         vars.defaultReturnValue(0);
     }
 
-    public String addExistingName(String name) {
-        if (vars.addTo(name, 1) > 0) throw new IllegalArgumentException("Duplicated var name");
+    public void prepare() {
+    }
+
+    public String addExistingName(String name, int index) {
+        if (vars.addTo(name, 1) > 0) {
+            LOGGER.warn("Duplicated variable name: {}", name);
+            vars.addTo(name, -1);
+        }
         return name;
     }
 
-    public String getVarName(Type type) {
+    public String getVarName(Type type, int index) {
         boolean isArray = false;
         if (type.getSort() == Type.ARRAY) {
             type = type.getElementType();

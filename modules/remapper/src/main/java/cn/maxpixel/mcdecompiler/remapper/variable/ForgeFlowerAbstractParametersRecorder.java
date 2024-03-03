@@ -69,7 +69,7 @@ public final class ForgeFlowerAbstractParametersRecorder {
         for (int i = 0; i < types.length; i++) {
             Type type = types[i];
             String name = provider != null ? provider.getName(omitThis ? i : i + 1, type) : null;
-            joiner.add(name != null ? renamer.addExistingName(name) : renamer.getVarName(type));
+            joiner.add(name != null ? renamer.addExistingName(name, i) : renamer.getVarName(type, i));
         }
         generated.add(joiner.toString());
         LOGGER.trace("Record of abstract parameter names completed for method {}{1} in class {}",

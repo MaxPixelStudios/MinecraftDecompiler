@@ -52,4 +52,8 @@ public class Utils {
         }
         return out;
     }
+
+    public static boolean isStringNotBlank(String s) {
+        return s != null && !s.isBlank();
+    }
 }

@@ -77,6 +77,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             deobfuscator.deobfuscate(options.inputJar(), options.outputJar());
         } catch (IOException e) {
             LOGGER.fatal("Error deobfuscating", e);
+            throw Utils.wrapInRuntime(e);
         } finally {
             deobfuscator.releaseRemapper();// clean up the memory for decompilation
         }

@@ -404,10 +404,10 @@ public interface MappingProcessors {
         @Override
         public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {// TODO: Support properties
             if (!content.get(0).startsWith("tiny\t2\t0")) error();
-            String[] namespaces = content.get(0).substring(9).split("\t");
+            String[] namespaces = MappingUtil.split(content.get(0).substring(9), '\t');
             ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(new NamespacedTrait(namespaces));
             for (int i = 1, len = content.size(); i < len; ) {
-                String[] sa = content.get(i).split("\t");
+                String[] sa = MappingUtil.split(content.get(i), '\t');
                 if (sa[0].length() == 1 && sa[0].charAt(0) == 'c') {
                     ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingUtil.Namespaced.d(namespaces, sa, 1));
                     i = processTree(i, len, namespaces, content, classMapping);
@@ -422,7 +422,7 @@ public interface MappingProcessors {
             for (index = index + 1; index < size; index++) {
                 String s = content.get(index);
                 if (s.charAt(0) == '\t') {
-                    String[] sa = s.substring(3).split("\t");
+                    String[] sa = MappingUtil.split(s.substring(3), '\t');
                     switch (s.charAt(1)) {
                         case 'c' -> classMapping.mapping.getComponent(Documented.class).setDoc(sa[0]);
                         case 'f' -> {
@@ -450,7 +450,7 @@ public interface MappingProcessors {
                     switch (s.charAt(2)) {
                         case 'c' -> mapping.getComponent(Documented.class).setDoc(s.substring(4));
                         case 'p' -> {
-                            String[] sa = s.substring(4).split("\t");
+                            String[] sa = MappingUtil.split(s.substring(4), '\t');
                             NamespacedMapping localVariable = MappingUtil.Namespaced.d(namespaces, sa, 1);
                             mapping.getComponent(LocalVariableTable.Namespaced.class)
                                     .setLocalVariable(Integer.parseInt(sa[0]), localVariable);

@@ -145,14 +145,14 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
         }
         mappings.classes.parallelStream().forEach(old -> {
             ClassMapping<PairedMapping> cm = new ClassMapping<>(new PairedMapping(old.mapping.getName(sourceNamespace),
-                    old.mapping.getName(targetNamespace)));
+                    getName(old.mapping, targetNamespace, sourceNamespace)));
             for (NamespacedMapping f : old.getFields()) {
-                cm.addField(MappingUtil.Paired.o(f.getName(sourceNamespace), f.getName(targetNamespace)));
+                cm.addField(MappingUtil.Paired.o(f.getName(sourceNamespace), getName(f, targetNamespace, sourceNamespace)));
             }
             for (NamespacedMapping m : old.getMethods()) {
                 var desc = m.getComponent(Descriptor.Namespaced.class);
                 if (!sourceNamespace.equals(desc.descriptorNamespace)) throw new IllegalArgumentException();
-                cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), m.getName(targetNamespace),
+                cm.addMethod(MappingUtil.Paired.duo(m.getName(sourceNamespace), getName(m, targetNamespace, sourceNamespace),
                         desc.unmappedDescriptor));
             }
             synchronized (paired.classes) {
@@ -160,5 +160,10 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
             }
         });
         return paired;
+    }
+
+    private static String getName(NamespacedMapping mapping, String targetNamespace, String fallbackNamespace) {
+        var name = mapping.getName(targetNamespace);// TODO: Fallback namespace
+        return Utils.isStringNotBlank(name) ? name : mapping.getName(fallbackNamespace);
     }
 }

@@ -102,4 +102,21 @@ public final class MappingUtil {
                     .setUnmappedNamespace(namespaces[0]);
         }
     }
+
+    public static String[] split(String s, char c) {
+        int n = 2;
+        int i = s.indexOf(c);
+        if (i == -1) return new String[] {s};
+        while ((i = s.indexOf(c, i + 1)) != -1) n++;
+
+        String[] ret = new String[n];
+        int start = 0;
+        for (int j = s.indexOf(c), p = 0; j != -1; j = s.indexOf(c, start)) {
+            ret[p++] = s.substring(start, j);
+            start = j + 1;
+        }
+        ret[n - 1] = s.substring(start);
+
+        return ret;
+    }
 }

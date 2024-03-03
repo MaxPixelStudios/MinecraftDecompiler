@@ -60,6 +60,7 @@
                             <mainClass>cn.maxpixel.mcdecompiler.MinecraftDecompilerCommandLine</mainClass>
                         </manifest>
                         <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
                             <CFR-Version>${depend.cfr.ver}</CFR-Version>
                             <ForgeFlower-Version>${depend.forgeflower.ver}</ForgeFlower-Version>
                             <FernFlower-Version>${depend.fernflower.ver}</FernFlower-Version>
@@ -79,7 +80,6 @@
                             <artifact>it.unimi.dsi:fastutil</artifact>
                             <excludes>
                                 <exclude>it/unimi/dsi/fastutil/booleans/**</exclude>
-                                <exclude>it/unimi/dsi/fastutil/bytes/*Map</exclude>
                                 <exclude>it/unimi/dsi/fastutil/chars/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/doubles/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/floats/**</exclude>
@@ -88,7 +88,6 @@
                                 <exclude>it/unimi/dsi/fastutil/shorts/**</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Double*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Float*</exclude>
-                                <exclude>it/unimi/dsi/fastutil/**/*Byte*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Char*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Long*</exclude>
                                 <exclude>it/unimi/dsi/fastutil/**/*Short*</exclude>

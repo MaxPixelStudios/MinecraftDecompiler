@@ -18,6 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.remapper.variable;
 
+import cn.maxpixel.mcdecompiler.common.util.DescriptorUtil;
+import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.remapper.Deobfuscator;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
@@ -28,7 +30,7 @@ import org.objectweb.asm.*;
 
 public class VariableNameProcessor extends ClassVisitor {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Object2ObjectOpenHashMap<String, Renamer> sharedRenamers = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, Renamer> lambdaRenamers = new Object2ObjectOpenHashMap<>();
     private final @NotNull ForgeFlowerAbstractParametersRecorder recorder;
     private final @NotNull VariableNameHandler handler;
     private final @NotNull String className;
@@ -52,7 +54,7 @@ public class VariableNameProcessor extends ClassVisitor {
         String method = name.concat(descriptor);
         // Filter some methods because only lambda methods need to share renamer with the caller
         Renamer renamer = regenerate ? ((access & Opcodes.ACC_PRIVATE) != 0 && (access & Opcodes.ACC_SYNTHETIC) != 0 ?
-                sharedRenamers.getOrDefault(method, new Renamer()) : new Renamer()) : null;
+                lambdaRenamers.getOrDefault(method, new Renamer()) : new Renamer()) : null;
         return new MethodProcessor(super.visitMethod(access, name, descriptor, signature, exceptions), func, renamer,
                 method, (access & Opcodes.ACC_STATIC) == 0);
     }
@@ -69,11 +71,16 @@ public class VariableNameProcessor extends ClassVisitor {
             super(Deobfuscator.ASM_VERSION, methodVisitor);
             this.renameFunction = renameFunction;
             this.renamer = renamer;
+            if (renamer != null) renamer.prepare();
             this.method = method;
             this.notStatic = notStatic;
             this.omitThis = handler.omitThis();
         }
 
+        /*
+         * Skip var processing for auto-generated record methods.
+         * Share renamers with lambda methods.
+         */
         @Override
         public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
             super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
@@ -83,9 +90,15 @@ public class VariableNameProcessor extends ClassVisitor {
                 case "java/lang/invoke/LambdaMetafactory" -> {
                     if (!regenerate) return;
                     Handle lambdaImpl = (Handle) bootstrapMethodArguments[1];
-                    if (lambdaImpl.getOwner().equals(className) && sharedRenamers.putIfAbsent(
-                            lambdaImpl.getName().concat(lambdaImpl.getDesc()), renamer) == null) {
+                    int argCount = DescriptorUtil.getArgumentCount(descriptor);
+                    if (argCount > 1 || (argCount == 1 && descriptor.indexOf(1) != 'L')) {// definitely a lambda method
+                        // May put more than once when the lambda is in finally block
+                        lambdaRenamers.put(lambdaImpl.getName().concat(lambdaImpl.getDesc()), new LambdaRenamer(renamer, argCount));
                         LOGGER.trace("Method {} is going to share renamer with {}{}", method,
+                                lambdaImpl.getName(), lambdaImpl.getDesc());
+                    } else if (lambdaImpl.getOwner().equals(className) && lambdaRenamers.putIfAbsent(
+                            lambdaImpl.getName().concat(lambdaImpl.getDesc()), new LambdaRenamer(renamer, argCount)) == null) {
+                        LOGGER.trace("Method {} may be going to share renamer with {}{}", method,
                                 lambdaImpl.getName(), lambdaImpl.getDesc());
                     }
                 }
@@ -98,8 +111,11 @@ public class VariableNameProcessor extends ClassVisitor {
             else {
                 String newName = renameFunction != null ? renameFunction.getName(name, descriptor, signature, start, end,
                         (notStatic && omitThis) ? index - 1 : index) : null;
-                super.visitLocalVariable(regenerate ? (newName != null ? renamer.addExistingName(newName) :
-                        renamer.getVarName(Type.getType(descriptor))) : (newName != null ? newName : name), descriptor, signature, start, end, index);
+                if (regenerate) {
+                    newName = Utils.isStringNotBlank(newName) ? renamer.addExistingName(newName, index) :
+                            renamer.getVarName(Type.getType(descriptor), index);
+                }
+                super.visitLocalVariable(Utils.isStringNotBlank(newName) ? newName : name, descriptor, signature, start, end, index);
             }
         }
     }

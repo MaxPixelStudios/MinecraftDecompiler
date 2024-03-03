@@ -46,7 +46,8 @@ public class MappingVariableNameProvider<T extends Mapping> implements VariableN
             else if (m.hasComponent(Descriptor.Namespaced.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.Namespaced.class).unmappedDescriptor);
             else throw new IllegalArgumentException("Method mapping requires at least one of the descriptor components");
             if (!omitThis && m.hasComponent(StaticIdentifiable.class)) omitThis = true;
-            return m.getMappedName().concat(descriptor);
+            String mappedName = m.getMappedName();
+            return (Utils.isStringNotBlank(mappedName) ? mappedName : m.getUnmappedName()).concat(descriptor);// TODO
         }, Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 

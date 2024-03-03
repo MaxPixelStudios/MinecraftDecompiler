@@ -98,7 +98,7 @@ public class ClassifiedDeobfuscator extends Deobfuscator {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);
         Files.createDirectories(target.getParent());
-        try(FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
+        try (FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
             FileSystem targetFs = JarUtil.createZipFs(target, true);
             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             Set<String> extraClasses = options.extraClasses;
@@ -110,9 +110,9 @@ public class ClassifiedDeobfuscator extends Deobfuscator {
                         return (deobfAll && p.toString().endsWith(".class")) || mappings.containsKey(k) || (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
             options.extraJars.forEach(jar -> {
-                try(FileSystem jarFs = JarUtil.createZipFs(jar)) {
+                try (FileSystem jarFs = JarUtil.createZipFs(jar)) {
                     FileUtil.iterateFiles(jarFs.getPath("")).filter(p -> p.toString().endsWith(".class")).forEach(info);
-                } catch(IOException e) {
+                } catch (IOException e) {
                     LOGGER.warn("Error reading extra jar: {}", jar, e);
                 }
             });
@@ -123,7 +123,7 @@ public class ClassifiedDeobfuscator extends Deobfuscator {
                 try {
                     String pathString = path.toString();
                     String classKeyName = NamingUtil.file2Native(pathString);
-                    if((deobfAll && pathString.endsWith(".class")) || mappings.containsKey(classKeyName) ||
+                    if ((deobfAll && pathString.endsWith(".class")) || mappings.containsKey(classKeyName) ||
                             (extraClassesNotEmpty && extraClasses.stream().anyMatch(classKeyName::startsWith))) {
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));
                         ClassWriter writer = new ClassWriter(0);
@@ -136,24 +136,22 @@ public class ClassifiedDeobfuscator extends Deobfuscator {
                         try (OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(mapped)))) {
                             os.write(writer.toByteArray());
                         }
-                    } else if(options.includeOthers) {
-                        if(pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;
-                        try(InputStream inputStream = Files.newInputStream(path);
+                    } else if (options.includeOthers) {
+                        if (pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;
+                        try (InputStream inputStream = Files.newInputStream(path);
                             OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(pathString)))) {
-                            if(path.endsWith("META-INF/MANIFEST.MF")) {
+                            if (path.endsWith("META-INF/MANIFEST.MF")) {
                                 Manifest man = new Manifest(inputStream);
                                 man.getEntries().clear();
                                 man.write(os);
                             } else inputStream.transferTo(os);
                         }
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     LOGGER.warn("Error when remapping classes or coping files", e);
                 }
             });
             ClassProcessor.afterRunning(options, targetNamespace, remapper);
-        } catch(IOException e) {
-            LOGGER.warn("Error when deobfuscating", e);
         }
         return this;
     }

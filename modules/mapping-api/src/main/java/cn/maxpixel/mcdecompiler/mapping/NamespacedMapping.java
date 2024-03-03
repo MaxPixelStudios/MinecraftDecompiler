@@ -95,7 +95,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      * @param nameStart To put the names start from the index
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart) {
-        if (nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart))
+        if (namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length)))
             throw new IllegalArgumentException();
         for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
@@ -160,10 +160,11 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart, Component... components) {
         super(components);
-        if (nameStart < 0 || nameStart >= names.length || namespaces.length != (names.length - nameStart))
+        if (namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length)))
             throw new IllegalArgumentException();
-        for(int i = 0; i < namespaces.length; i++) {
-            this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
+        for (int i = 0; i < namespaces.length; i++) {
+            var n = i + nameStart;
+            this.names.put(Objects.requireNonNull(namespaces[i]), n >= names.length ? names[names.length - 1] : names[i + nameStart]);
         }
     }
 
@@ -288,22 +289,21 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
     public void setMappedNamespace(@NotNull String namespace) {
         this.mappedNamespace = Objects.requireNonNull(namespace);
         LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
-        if(n != null) n.setMappedNamespace(namespace);
+        if (n != null) n.setMappedNamespace(namespace);
     }
 
     /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof NamespacedMapping)) return false;
+        if (!(o instanceof NamespacedMapping that)) return false;
         if (!super.equals(o)) return false;
-        NamespacedMapping that = (NamespacedMapping) o;
         return names.equals(that.names);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + Objects.hash(names);
+        return 31 * super.hashCode() + Objects.hashCode(names);
     }
 
     @Override
