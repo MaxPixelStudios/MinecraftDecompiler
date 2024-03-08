@@ -52,8 +52,8 @@ import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
 public class ClassifiedDeobfuscator extends Deobfuscator {
-    private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappings;
     private final String targetNamespace;
+    private Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappings;
 
     public ClassifiedDeobfuscator(String version, SideType side) {
         this(version, side, DeobfuscationOptions.DEFAULT);
@@ -154,5 +154,11 @@ public class ClassifiedDeobfuscator extends Deobfuscator {
             ClassProcessor.afterRunning(options, targetNamespace, remapper);
         }
         return this;
+    }
+
+    @Override
+    public void release() {
+        super.release();
+        mappings = null;
     }
 }

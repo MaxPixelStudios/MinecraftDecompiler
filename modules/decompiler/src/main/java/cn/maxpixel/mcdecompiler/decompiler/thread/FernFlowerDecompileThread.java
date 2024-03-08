@@ -70,7 +70,7 @@ class ThreadedLogger extends IFernflowerLogger {
     private static final EnumMap<Severity, Level> LEVEL_MAP = new EnumMap<>(Severity.class);
     static {
         LEVEL_MAP.put(Severity.TRACE, Level.TRACE);
-        LEVEL_MAP.put(Severity.INFO, Level.INFO);
+        LEVEL_MAP.put(Severity.INFO, Level.DEBUG);
         LEVEL_MAP.put(Severity.WARN, Level.WARN);
         LEVEL_MAP.put(Severity.ERROR, Level.ERROR);
     }

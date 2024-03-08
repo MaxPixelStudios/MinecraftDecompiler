@@ -27,4 +27,8 @@ public abstract class Deobfuscator {
     public final void releaseRemapper() {
         this.remapper = null;
     }
+
+    public void release() {
+        releaseRemapper();
+    }
 }
