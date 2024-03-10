@@ -24,6 +24,7 @@ import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
 import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
 import cn.maxpixel.mcdecompiler.common.util.IOUtil;
 import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
@@ -82,11 +83,11 @@ public class ClassifiedDeobfuscator extends Deobfuscator {
         super(options);
         this.targetNamespace = inferTargetNamespace(targetNamespace, mappings);
         this.mappings = ClassifiedMappingRemapper.genMappingsByNamespaceMap(mappings.classes, ClassifiedMapping.getSourceNamespace(mappings));
-        this.remapper = new ClassFileRemapper(new ClassifiedMappingRemapper(mappings, targetNamespace, options.reverse));
+        this.remapper = new ClassFileRemapper(new ClassifiedMappingRemapper(mappings, this.targetNamespace, options.reverse));
     }
 
     private static String inferTargetNamespace(String targetNamespace, @NotNull ClassifiedMapping<NamespacedMapping> mappings) {
-        if (targetNamespace != null) return targetNamespace;
+        if (Utils.isStringNotBlank(targetNamespace)) return targetNamespace;
         var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
         if (namespaces.size() > 2) throw new IllegalArgumentException("Cannot infer a target namespace. You must manually specify a target namespace.");
         return namespaces.last();
