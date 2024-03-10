@@ -21,17 +21,7 @@
         </dependency>
         <dependency>
             <groupId>cn.maxpixel.minecraft-decompiler</groupId>
-            <artifactId>decompiler</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>cn.maxpixel.minecraft-decompiler</groupId>
-            <artifactId>remapper</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>cn.maxpixel.minecraft-decompiler</groupId>
-            <artifactId>mapping-format-detector</artifactId>
+            <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -18,6 +18,9 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import cn.maxpixel.mcdecompiler.api.MinecraftDecompiler;
+import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
+import cn.maxpixel.mcdecompiler.api.extension.Option;
 import cn.maxpixel.mcdecompiler.common.Constants;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.common.app.SideType;
@@ -25,9 +28,10 @@ import cn.maxpixel.mcdecompiler.common.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.decompiler.VineflowerDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.detector.Detector;
-import cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import joptsimple.*;
 import joptsimple.util.PathConverter;
 import joptsimple.util.PathProperties;
@@ -41,7 +45,9 @@ import static java.util.List.of;
 public class MinecraftDecompilerCommandLine {
     static {
         System.setProperty("org.openjdk.java.util.stream.tripwire", Boolean.toString(Constants.IS_DEV));
+        ExtensionManager.init();
     }
+    private static final Object2ObjectOpenHashMap<Option, OptionSpec<?>> OPTION_MAP = new Object2ObjectOpenHashMap<>();
     private static final Logger LOGGER = LogManager.getLogger("CommandLine");
 
     public static void main(String[] args) throws Throwable {
@@ -83,27 +89,57 @@ public class MinecraftDecompilerCommandLine {
                 "incrementally. Input a jar to compare the difference. Only works with decompilers of source type \"DIRECTORY\"")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
-        ClassProcessor.registerCommandLineOptions(parser);
 
-        if(args == null || args.length == 0) {
+        for (Option option : ExtensionManager.OPTION_REGISTRY.getOptions()) {
+            var spec = parser.acceptsAll(option.options, option.description == null ? "" : option.description);
+            if (option instanceof Option.ValueAccepting<?> v) {
+                var valueAcceptingSpec = v.requiresArg ? spec.withRequiredArg() : spec.withOptionalArg();
+                if (v.converter != null) {
+                    valueAcceptingSpec.withValuesConvertedBy(new ValueConverter<>() {
+                        @Override
+                        public Object convert(String value) {
+                            return v.converter.apply(value);
+                        }
+
+                        @Override
+                        public Class<?> valueType() {
+                            return v.type;
+                        }
+
+                        @Override
+                        public String valuePattern() {
+                            return null;
+                        }
+                    });
+                } else valueAcceptingSpec.ofType(v.type);
+                if (v.isRequired()) valueAcceptingSpec.required();
+                if (v.getDefaultValue() != null)
+                    ((ArgumentAcceptingOptionSpec) valueAcceptingSpec).defaultsTo(v.getDefaultValue());
+                OPTION_MAP.put(option, valueAcceptingSpec);
+            } else {
+                OPTION_MAP.put(option, spec);
+            }
+        }
+
+        if (args == null || args.length == 0) {
             printHelp(parser);
             return;
         }
 
         OptionSet options = parser.parse(args);
-        if(!options.hasOptions() || options.has(help)) {
+        if (!options.hasOptions() || options.has(help)) {
             printHelp(parser);
             return;
         }
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Directories.TEMP_DIR = p);
-        if(!options.has(sideTypeO)) {
-            if(!options.has(inputO)) throw new IllegalArgumentException("--input is required when --side is unspecified");
-            if(!options.has(mappingPathO)) throw new IllegalArgumentException("--mapping-path is required when --side is unspecified");
+        if (!options.has(sideTypeO)) {
+            if (!options.has(inputO)) throw new IllegalArgumentException("--input is required when --side is unspecified");
+            if (!options.has(mappingPathO)) throw new IllegalArgumentException("--mapping-path is required when --side is unspecified");
         }
 
         MinecraftDecompiler.OptionBuilder builder;
-        if(options.has(sideTypeO)) {
+        if (options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
             options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
                     .withMapping(Detector.tryDetectingMappingType(m).read(new FileInputStream(m)))));
@@ -113,15 +149,25 @@ public class MinecraftDecompilerCommandLine {
             builder.withMapping(Detector.tryDetectingMappingType(mappingPath).read(new FileInputStream(mappingPath)));
             options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
         }
-        if(options.has(regenVarNameO)) builder.regenerateVariableNames();
-        if(options.has(dontIncludeOthersO)) builder.doNotIncludeOthers();
+        if (options.has(regenVarNameO)) builder.regenerateVariableNames();
+        if (options.has(dontIncludeOthersO)) builder.doNotIncludeOthers();
         options.valueOfOptional(targetNamespaceO).ifPresent(builder::targetNamespace);
         options.valueOfOptional(outputO).ifPresent(builder::output);
         options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
         builder.addExtraJars(options.valuesOf(extraJarsO));
         builder.addExtraClasses(options.valuesOf(extraClassesO));
 
-        ClassProcessor.acceptCommandLineValues(options);
+        for (var it = Object2ObjectMaps.fastIterator(OPTION_MAP); it.hasNext(); ) {
+            var entry = it.next();
+            var o = entry.getKey();
+            var spec = entry.getValue();
+            if (options.has(spec)) {
+                if (options.hasArgument(spec)) {
+                    if (!(o instanceof Option.ValueAccepting<?>)) throw new IllegalArgumentException("Should not get here");
+                    ExtensionManager.OPTION_REGISTRY.addOption(o.options.get(0), options.valuesOf(spec));
+                } else ExtensionManager.OPTION_REGISTRY.addOption(o.options.get(0));
+            }
+        }
 
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();

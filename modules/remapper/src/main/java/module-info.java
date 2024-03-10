@@ -6,7 +6,6 @@ open module cn.maxpixel.mcdecompiler.remapper {
     requires org.objectweb.asm.commons;
     requires it.unimi.dsi.fastutil;
     requires cn.maxpixel.rewh.logging.core;
-    requires joptsimple;
 
     exports cn.maxpixel.mcdecompiler.remapper;
     exports cn.maxpixel.mcdecompiler.remapper.processing;

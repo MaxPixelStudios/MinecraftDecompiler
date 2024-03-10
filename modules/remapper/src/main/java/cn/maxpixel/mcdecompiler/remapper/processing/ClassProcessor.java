@@ -27,10 +27,6 @@ import cn.maxpixel.mcdecompiler.remapper.DeobfuscationOptions;
 import cn.maxpixel.mcdecompiler.remapper.variable.*;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
-import joptsimple.OptionSpecBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -40,11 +36,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ServiceLoader;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 @ApiStatus.Experimental
 public final class ClassProcessor {
@@ -56,27 +49,6 @@ public final class ClassProcessor {
 
     private ClassProcessor() {
         throw new AssertionError("No instances");
-    }
-
-    public static void registerCommandLineOptions(OptionParser parser) {
-        CoreProcess.INSTANCE.registerCommandLineOptions(parser::accepts, parser::accepts);
-        for (Process process : LOADER) {
-            process.registerCommandLineOptions((option) -> parser.accepts(process.getName() + '.' + option),
-                    (option, description) -> parser.accepts(process.getName() + '.' + option, description));
-        }
-    }
-
-    public static void acceptCommandLineValues(OptionSet options) {
-        CoreProcess.INSTANCE.acceptCommandLineValues(options::has, options::hasArgument, options::valueOf, options::valuesOf);
-        for (Process process : LOADER) {
-            process.acceptCommandLineValues(options::has, options::hasArgument, options::valueOf, options::valuesOf);
-        }
-    }
-
-    public static void fetchOptions() {
-        for (Process process : LOADER) {
-            process.fetchOptions();
-        }
     }
 
     public static void beforeRunning(DeobfuscationOptions options, @Nullable String targetNamespace,
@@ -119,32 +91,12 @@ public final class ClassProcessor {
             /**
              * Run after the class is remapped
              */
-            AFTER,
-            /**
-             * <b>THIS IS INTERNALLY USED BY {@link CoreProcess}</b><br>
-             * Others that use this state will be skipped
-             */
-            @ApiStatus.Internal
-            CORE
+            AFTER
         }
 
         String getName();
 
         State getState();
-
-        default void registerCommandLineOptions(Function<String, OptionSpecBuilder> accept,
-                                                BiFunction<String, String, OptionSpecBuilder> acceptWithDescription) {
-        }
-
-        default void acceptCommandLineValues(Predicate<OptionSpec<?>> has, Predicate<OptionSpec<?>> hasArgument,
-                                                 Function<OptionSpec<?>, ?> valueOf, Function<OptionSpec<?>, List<?>> valuesOf) {
-        }
-
-        /**
-         * Your own logic to fetch options of your process
-         */
-        default void fetchOptions() {
-        }
 
         default void beforeRunning(DeobfuscationOptions options, @Nullable String targetNamespace,
                            ClassFileRemapper mappingRemapper) throws IOException {
@@ -170,7 +122,7 @@ public final class ClassProcessor {
 
         @Override
         public State getState() {
-            return State.CORE;
+            return State.BEFORE;
         }
 
         @Override

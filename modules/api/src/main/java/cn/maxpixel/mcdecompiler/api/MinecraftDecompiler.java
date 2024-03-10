@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler;
+package cn.maxpixel.mcdecompiler.api;
 
+import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.common.app.SideType;
 import cn.maxpixel.mcdecompiler.common.app.util.DownloadingUtil;
@@ -59,6 +60,9 @@ import java.util.stream.Stream;
 
 public class MinecraftDecompiler {// This class is not designed to be reusable
     private static final Logger LOGGER = LogManager.getLogger();
+    static {
+        ExtensionManager.init();
+    }
 
     private final Options options;
     private final ClassifiedDeobfuscator deobfuscator;
@@ -68,6 +72,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
     }
 
     public MinecraftDecompiler(Options options) {
+        ExtensionManager.receiveOptions();
         this.options = options;
         this.deobfuscator = options.buildDeobfuscator();
     }

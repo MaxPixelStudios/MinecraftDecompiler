@@ -64,7 +64,7 @@ public interface MappingFormats {
     MappingFormat.Classified<PairedMapping> TSRG_V1 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
-            return "tsrg_v1";
+            return "tsrg-v1";
         }
 
         @Override
@@ -81,7 +81,7 @@ public interface MappingFormats {
     MappingFormat.Classified<NamespacedMapping> TSRG_V2 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
-            return "tsrg_v2";
+            return "tsrg-v2";
         }
 
         @Override
@@ -115,7 +115,7 @@ public interface MappingFormats {
     MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
-            return "tiny_v1";
+            return "tiny-v1";
         }
 
         @Override
@@ -137,7 +137,7 @@ public interface MappingFormats {
     MappingFormat.Classified<NamespacedMapping> TINY_V2 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
-            return "tiny_v2";
+            return "tiny-v2";
         }
 
         @Override

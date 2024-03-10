@@ -48,7 +48,8 @@
         <module>modules/remapper</module>
         <module>modules/mapping-format-detector</module>
         <module>modules/app-common</module>
-<!--        <module>extensions</module>-->
+        <module>modules/api</module>
+        <!--        <module>extensions</module>-->
     </modules>
     <build>
         <pluginManagement>

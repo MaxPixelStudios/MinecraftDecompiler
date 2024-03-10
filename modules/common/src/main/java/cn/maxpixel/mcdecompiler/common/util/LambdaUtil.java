@@ -55,7 +55,7 @@ public class LambdaUtil {
         return () -> {
             try {
                 runnableWithThrowable.run();
-            } catch(Throwable e) {
+            } catch (Throwable e) {
                 exceptionHandler.accept((E) e);
             }
         };
@@ -70,7 +70,7 @@ public class LambdaUtil {
         return t -> {
             try {
                 return functionWithThrowable.apply(t);
-            } catch(Throwable e) {
+            } catch (Throwable e) {
                 exceptionHandler.accept((E) e);
                 return null;
             }
@@ -86,7 +86,7 @@ public class LambdaUtil {
         return t -> {
             try {
                 consumerWithThrowable.accept(t);
-            } catch(Throwable e) {
+            } catch (Throwable e) {
                 exceptionHandler.accept((E) e);
             }
         };
@@ -105,7 +105,7 @@ public class LambdaUtil {
 //        return t -> {
 //            try {
 //                return functionWithThrowable.apply(t);
-//            } catch(Throwable e) {
+//            } catch (Throwable e) {
 //                return exceptionHandler.apply((E) e);
 //            }
 //        };
