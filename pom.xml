@@ -21,7 +21,7 @@
         <depend.forgeflower.ver>2.0.629.1</depend.forgeflower.ver>
         <depend.vineflower.ver>1.9.3</depend.vineflower.ver>
         <depend.jbannos.ver>24.0.1</depend.jbannos.ver>
-        <depend.jmh.ver>1.36</depend.jmh.ver>
+        <depend.jmh.ver>1.37</depend.jmh.ver>
         <depend.rewh.ver>0.1-SNAPSHOT</depend.rewh.ver>
     </properties>
     <licenses>
