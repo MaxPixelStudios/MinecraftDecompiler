@@ -29,60 +29,51 @@ import java.util.Optional;
 
 public class ClassFileRemapper extends Remapper {
     public final MappingRemapper remapper;
+    public final ExtraClassesInformation eci;
 
-    private ExtraClassesInformation extraClassesInformation;
-
-    public ClassFileRemapper(@NotNull MappingRemapper remapper) {
+    public ClassFileRemapper(@NotNull MappingRemapper remapper, @NotNull ExtraClassesInformation eci) {
         this.remapper = Objects.requireNonNull(remapper);
-    }
-
-    public ClassFileRemapper setExtraClassesInformation(ExtraClassesInformation extraClassesInformation) {
-        this.extraClassesInformation = Objects.requireNonNull(extraClassesInformation);
-        return this;
-    }
-
-    public ExtraClassesInformation getExtraClassesInformation() {
-        return extraClassesInformation;
+        this.eci = Objects.requireNonNull(eci);
     }
 
     @Override
     public String map(String internalName) {
-        return remapper.mapClass(internalName);
+        return remapper.mapClassOrDefault(internalName);
     }
 
     @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if (name.charAt(0) != '<') { // equivalent to !(name.equals("<init>") || name.equals("<clinit>"))
             String mapped = remapper.mapMethod(owner, name, descriptor);
-            return mapped.equals(name) ? processSuperMethod(owner, name, descriptor).map(a -> a[1]).orElse(name) : mapped;
+            return mapped == null ? processSuperMethod(owner, name, descriptor).map(a -> a[1]).orElse(name) : mapped;
         }
         return name;
     }
 
     private Optional<String[]> processSuperMethod(String owner, String name, String descriptor) {
-        if (extraClassesInformation == null) throw new UnsupportedOperationException("ExtraClassesInformation not present");
-        return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
-                .flatMap(superNames -> superNames.parallelStream()
-                        .map(cls -> {
-                            var remapped = remapper.mapMethod(cls, name, descriptor);
-                            return remapped.equals(name) ? null : new String[] {cls, remapped, name, descriptor};
-                        }).filter(Objects::nonNull)
-                        .reduce(this::reduceMethod)
+        return Optional.ofNullable(eci.getSuperNames(owner))
+                .flatMap(superNames -> {
+                    String nameAndDesc = name.concat(descriptor);
+                    return superNames.parallelStream().map(cls -> {
+                        var mapped = remapper.mapMethod(cls, name, descriptor);
+                        return mapped == null ? null : new String[] {cls, mapped};
+                    }).filter(Objects::nonNull)
+                        .reduce((l, r) -> reduceMethod(nameAndDesc, l, r))
                         .or(() -> superNames.parallelStream()
                                 .map(n -> processSuperMethod(n, name, descriptor))
                                 .filter(Optional::isPresent)
                                 .map(Optional::get)
-                                .reduce(this::reduceMethod)
-                        )
-                );
+                                .reduce((l, r) -> reduceMethod(nameAndDesc, l, r))
+                        );
+                });
     }
 
-    // String[] {0: unmapped owner class name, 1: mapped name, 2: unmapped name, 3: unmapped descriptor}
-    private String[] reduceMethod(@NotNull String[] left, @NotNull String[] right) {
+    // String[] {0: unmapped owner class name, 1: mapped name}
+    private String[] reduceMethod(String nameAndDesc, @NotNull String[] left, @NotNull String[] right) {
         if (left[0].equals(right[0])) return left;// just checking owner is enough
-        if (left[1].equals(right[1]) && left[3].equals(right[3])) return left;// may be an override
-        int leftAcc = extraClassesInformation.getAccessFlags(left[0], left[2].concat(left[3]));
-        int rightAcc = extraClassesInformation.getAccessFlags(right[0], right[2].concat(right[3]));
+        if (left[1].equals(right[1])) return left;// may be an override
+        int leftAcc = eci.getAccessFlags(left[0], nameAndDesc);
+        int rightAcc = eci.getAccessFlags(right[0], nameAndDesc);
         if ((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {
             if ((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) throw new IllegalArgumentException("This can't happen!");
             return left;
@@ -99,32 +90,31 @@ public class ClassFileRemapper extends Remapper {
     @Override
     public String mapFieldName(String owner, String name, String descriptor) {
         String mapped = remapper.mapField(owner, name);
-        return mapped.equals(name) ? processSuperField(owner, name).map(a -> a[1]).orElse(name) : mapped;
+        return mapped == null ? processSuperField(owner, name).map(a -> a[1]).orElse(name) : mapped;
     }
 
     private Optional<String[]> processSuperField(String owner, String name) {
-        if (extraClassesInformation == null) throw new UnsupportedOperationException("ExtraClassesInformation not present");
-        return Optional.ofNullable(extraClassesInformation.getSuperNames(owner))
+        return Optional.ofNullable(eci.getSuperNames(owner))
                 .flatMap(superNames -> superNames.parallelStream()
                         .map(cls -> {
-                            var remapped = remapper.mapField(cls, name);
-                            return remapped.equals(name) ? null : new String[] {cls, remapped, name};
+                            var mapped = remapper.mapField(cls, name);
+                            return mapped == null ? null : new String[] {cls, mapped};
                         }).filter(Objects::nonNull)
-                        .reduce(this::reduceField)
+                        .reduce((l, r) -> reduceField(name, l, r))
                         .or(() -> superNames.parallelStream()
                                 .map(n -> processSuperField(n, name))
                                 .filter(Optional::isPresent)
                                 .map(Optional::get)
-                                .reduce(this::reduceField)
+                                .reduce((l, r) -> reduceField(name, l, r))
                         )
                 );
     }
 
-    // String[] {0: unmapped owner class name, 1: mapped name, 2: unmapped name}
-    private String[] reduceField(@NotNull String[] left, @NotNull String[] right) {
+    // String[] {0: unmapped owner class name, 1: mapped name}
+    private String[] reduceField(String name, @NotNull String[] left, @NotNull String[] right) {
         if (left[0].equals(right[0])) return left;// just checking owner is enough
-        int leftAcc = extraClassesInformation.getAccessFlags(left[0], left[2]);
-        int rightAcc = extraClassesInformation.getAccessFlags(right[0], right[2]);
+        int leftAcc = eci.getAccessFlags(left[0], name);
+        int rightAcc = eci.getAccessFlags(right[0], name);
         if ((leftAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0) {
             if ((rightAcc & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) != 0)
                 throw new IllegalArgumentException("This can't happen!");

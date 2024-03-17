@@ -18,44 +18,38 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.util.Objects;
 
-public class LocalVariableTable implements Component {
-    private final @NotNull Int2ObjectOpenHashMap<PairedMapping> lvt = new Int2ObjectOpenHashMap<>();
-    private final @NotNull IntSet keys = lvt.keySet();
-    private final @NotNull ObjectCollection<@NotNull PairedMapping> values = lvt.values();
+public abstract class LocalVariableTable<T extends Mapping> {
+    protected final @NotNull Int2ObjectOpenHashMap<T> lvt = new Int2ObjectOpenHashMap<>();
 
-    public PairedMapping getLocalVariable(@Range(from = 0, to = 255) int index) {
+    public T getLocalVariable(@Range(from = 0, to = 255) int index) {
         return lvt.get(index);
     }
 
-    public void setLocalVariable(@Range(from = 0, to = 255) int index, @Nullable("To remove the previous mapping") PairedMapping mapping) {
+    public void setLocalVariable(@Range(from = 0, to = 255) int index, @Nullable("To remove the previous mapping") T mapping) {
         lvt.put(index, mapping);
     }
 
     public @NotNull IntSet getLocalVariableIndexes() {
-        return keys;
-    }
-
-    public void reverse() {
-        values.forEach(PairedMapping::reverse);
+        return lvt.keySet();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof LocalVariableTable that)) return false;
+        if (!(o instanceof LocalVariableTable<?> that)) return false;
         return Objects.equals(lvt, that.lvt);
     }
 
@@ -64,27 +58,19 @@ public class LocalVariableTable implements Component {
         return lvt.hashCode();
     }
 
-    public static class Namespaced implements Component, NameGetter.Namespaced {
+    public static class Paired extends LocalVariableTable<PairedMapping> implements Component {
+        public void reverse() {
+            lvt.values().forEach(PairedMapping::reverse);
+        }
+    }
+
+    public static class Namespaced extends LocalVariableTable<NamespacedMapping> implements Component, NameGetter.Namespace {
         private String unmappedNamespace;
         private String mappedNamespace;
-        private final @NotNull Int2ObjectOpenHashMap<NamespacedMapping> lvt = new Int2ObjectOpenHashMap<>();
-        private final @NotNull IntSet keys = lvt.keySet();
-        private final @NotNull ObjectCollection<@NotNull NamespacedMapping> values = lvt.values();
-
-        public NamespacedMapping getLocalVariable(@Range(from = 0, to = 255) int index) {
-            return lvt.get(index);
-        }
-
-        public void setLocalVariable(@Range(from = 0, to = 255) int index, @Nullable("To remove the previous mapping") NamespacedMapping mapping) {
-            lvt.put(index, mapping);
-        }
-
-        public @NotNull IntSet getLocalVariableIndexes() {
-            return keys;
-        }
+        private String fallbackNamespace;
 
         public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace, ClassifiedMappingRemapper remapper) {
-            values.forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
+            lvt.values().forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
         }
 
         @Override
@@ -99,26 +85,44 @@ public class LocalVariableTable implements Component {
 
         public Namespaced setUnmappedNamespace(@NotNull String namespace) {
             this.unmappedNamespace = Objects.requireNonNull(namespace);
-            values.forEach(v -> v.setMappedNamespace(unmappedNamespace));
+            lvt.values().forEach(v -> v.setMappedNamespace(unmappedNamespace));
             return this;
         }
 
         @Override
         public void setMappedNamespace(@NotNull String namespace) {
             this.mappedNamespace = Objects.requireNonNull(namespace);
-            values.forEach(v -> v.setMappedNamespace(mappedNamespace));
+            for (NamespacedMapping v : lvt.values()) {
+                v.setMappedNamespace(namespace);
+            }
+        }
+
+        @Override
+        public String getFallbackNamespace() {
+            return fallbackNamespace;
+        }
+
+        @Override
+        public void setFallbackNamespace(@NotNull String namespace) {
+            this.fallbackNamespace = Objects.requireNonNull(namespace);
+            for (NamespacedMapping v : lvt.values()) {
+                v.setFallbackNamespace(namespace);
+            }
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Namespaced that)) return false;
-            return Objects.equals(unmappedNamespace, that.unmappedNamespace) && Objects.equals(mappedNamespace, that.mappedNamespace) && Objects.equals(lvt, that.lvt);
+            if (!super.equals(o)) return false;
+            return Objects.equals(unmappedNamespace, that.unmappedNamespace) &&
+                    Objects.equals(mappedNamespace, that.mappedNamespace) &&
+                    Objects.equals(fallbackNamespace, that.fallbackNamespace);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(unmappedNamespace, mappedNamespace, lvt);
+            return 31 * super.hashCode() + Objects.hash(unmappedNamespace, mappedNamespace, fallbackNamespace);
         }
     }
 }

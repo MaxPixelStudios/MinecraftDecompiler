@@ -21,14 +21,13 @@ package cn.maxpixel.mcdecompiler.remapper.processing;
 import cn.maxpixel.mcdecompiler.common.Constants;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.remapper.DeobfuscationOptions;
 import cn.maxpixel.mcdecompiler.remapper.variable.*;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -36,79 +35,61 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 
 import java.io.IOException;
-import java.util.ServiceLoader;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-@ApiStatus.Experimental
 public final class ClassProcessor {
-    private static final ServiceLoader<Process> LOADER = ServiceLoader.load(Process.class);
-    private static final Process[] BEFORE = LOADER.stream().map(ServiceLoader.Provider::get)
-            .filter(pro -> pro.getState() == Process.State.BEFORE).toArray(Process[]::new);
-    private static final Process[] AFTER = LOADER.stream().map(ServiceLoader.Provider::get)
-            .filter(pro -> pro.getState() == Process.State.AFTER).toArray(Process[]::new);
+    private static final ObjectArrayList<Supplier<Process>> BEFORE = new ObjectArrayList<>();
+    private static final ObjectArrayList<Supplier<Process>> AFTER = new ObjectArrayList<>();
 
-    private ClassProcessor() {
-        throw new AssertionError("No instances");
+    private final ObjectArrayList<Process> before;
+    private final ObjectArrayList<Process> after;
+    private final DeobfuscationOptions options;
+
+    public ClassProcessor(DeobfuscationOptions options) {
+        this.options = Objects.requireNonNull(options);
+        this.before = BEFORE.stream().map(Supplier::get).collect(ObjectArrayList.toListWithExpectedSize(BEFORE.size()));
+        this.after = AFTER.stream().map(Supplier::get).collect(ObjectArrayList.toListWithExpectedSize(AFTER.size()));
     }
 
-    public static void beforeRunning(DeobfuscationOptions options, @Nullable String targetNamespace,
-                                     ClassFileRemapper mappingRemapper) throws IOException {
-        CoreProcess.INSTANCE.beforeRunning(options, targetNamespace, mappingRemapper);
-        for (Process process : LOADER) {
-            process.beforeRunning(options, targetNamespace, mappingRemapper);
+    public static void addProcess(Process.Run run, Supplier<Process> process) {
+        switch (Objects.requireNonNull(run)) {
+            case BEFORE -> BEFORE.add(Objects.requireNonNull(process));
+            case AFTER -> AFTER.add(Objects.requireNonNull(process));
         }
     }
 
-    public static void afterRunning(DeobfuscationOptions options, @Nullable String targetNamespace,
-                                     ClassFileRemapper mappingRemapper) throws IOException {
-        CoreProcess.INSTANCE.afterRunning(options, targetNamespace, mappingRemapper);
-        for (Process process : LOADER) {
-            process.afterRunning(options, targetNamespace, mappingRemapper);
+    public void beforeRunning(ClassFileRemapper mappingRemapper) throws IOException {
+        CoreProcess.INSTANCE.beforeRunning(options, mappingRemapper);
+        for (Process process : after) {
+            process.beforeRunning(options, mappingRemapper);
+        }
+        for (Process process : before) {
+            process.beforeRunning(options, mappingRemapper);
         }
     }
 
-    public static ClassVisitor getVisitor(ClassWriter writer, DeobfuscationOptions options, ClassReader reader,
-                                   @Nullable ClassMapping<? extends Mapping> mapping, String targetNamespace,
-                                   ClassFileRemapper mappingRemapper) {
+    public void afterRunning(ClassFileRemapper mappingRemapper) throws IOException {
+        CoreProcess.INSTANCE.afterRunning(options, mappingRemapper);
+        for (Process process : after) {
+            process.afterRunning(options, mappingRemapper);
+        }
+        for (Process process : before) {
+            process.afterRunning(options, mappingRemapper);
+        }
+    }
+
+    public ClassVisitor getVisitor(ClassWriter writer, ClassReader reader, ClassFileRemapper mappingRemapper) {
         ClassVisitor cv = writer;
-        for (Process process : AFTER) {
-            cv = process.getVisitor(options, reader, mapping, targetNamespace, mappingRemapper).apply(cv);
+        for (Process process : after) {
+            cv = process.getVisitor(options, reader, mappingRemapper).apply(cv);
         }
-        cv = CoreProcess.INSTANCE.getVisitor(options, reader, mapping, targetNamespace, mappingRemapper).apply(cv);
-        for (Process process : BEFORE) {
-            cv = process.getVisitor(options, reader, mapping, targetNamespace, mappingRemapper).apply(cv);
+        cv = CoreProcess.INSTANCE.getVisitor(options, reader, mappingRemapper).apply(cv);
+        for (Process process : before) {
+            cv = process.getVisitor(options, reader, mappingRemapper).apply(cv);
         }
         return cv;
-    }
-
-    @ApiStatus.OverrideOnly
-    public interface Process {
-        enum State {
-            /**
-             * Run before the class is remapped
-             */
-            BEFORE,
-            /**
-             * Run after the class is remapped
-             */
-            AFTER
-        }
-
-        String getName();
-
-        State getState();
-
-        default void beforeRunning(DeobfuscationOptions options, @Nullable String targetNamespace,
-                           ClassFileRemapper mappingRemapper) throws IOException {
-        }
-
-        default void afterRunning(DeobfuscationOptions options, @Nullable String targetNamespace,
-                          ClassFileRemapper mappingRemapper) throws IOException {
-        }
-
-        Function<ClassVisitor, ClassVisitor> getVisitor(DeobfuscationOptions options, ClassReader reader,
-                                                        @Nullable ClassMapping<? extends Mapping> mapping,
-                                                        @Nullable String targetNamespace, ClassFileRemapper mappingRemapper);
     }
 
     private enum CoreProcess implements Process {
@@ -121,55 +102,46 @@ public final class ClassProcessor {
         }
 
         @Override
-        public State getState() {
-            return State.BEFORE;
-        }
-
-        @Override
-        public void beforeRunning(DeobfuscationOptions options, String targetNamespace,
-                                  ClassFileRemapper mappingRemapper) {
+        public void beforeRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) {
             if (options.rvn) recorder.startRecord();
         }
 
         @Override
-        public void afterRunning(DeobfuscationOptions options, String targetNamespace,
-                                 ClassFileRemapper mappingRemapper) throws IOException {
+        public void afterRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) throws IOException {
             if (options.rvn) recorder.endRecord(Directories.TEMP_DIR.resolve(Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         }
 
         @Override
-        public Function<ClassVisitor, ClassVisitor> getVisitor(DeobfuscationOptions options, ClassReader reader,
-                                                               ClassMapping<? extends Mapping> mapping, String targetNamespace,
-                                                               ClassFileRemapper mappingRemapper) {
+        public Function<ClassVisitor, ClassVisitor> getVisitor(DeobfuscationOptions options, ClassReader reader, ClassFileRemapper cfr) {
             return parent -> {
                 String className = reader.getClassName();
                 int access = reader.getAccess();
                 ClassVisitor cv = parent;
                 VariableNameHandler handler = new VariableNameHandler();
-                if (mapping != null) {
-                    if (mapping.mapping instanceof NameGetter.Namespaced) {
-                        ClassMapping.setMappedNamespace((ClassMapping<? extends NameGetter.Namespaced>) mapping, targetNamespace);
+                if (cfr.remapper instanceof ClassifiedMappingRemapper cmr) {
+                    ClassMapping<? extends Mapping> cm = cmr.getClassMappingUnmapped(className);
+                    if (cm != null) {
+                        MappingVariableNameProvider provider = new MappingVariableNameProvider(cm, cmr);
+                        if (provider.omitThis()) handler.setOmitThis();
+                        handler.addProvider(provider);
                     }
-                    MappingVariableNameProvider<? extends Mapping> provider = new MappingVariableNameProvider<>(mapping, mappingRemapper.remapper);
-                    if (provider.omitThis()) handler.setOmitThis();
-                    handler.addProvider(provider);
                 }
                 if ((access & Opcodes.ACC_RECORD) != 0) {
                     RecordNameRemapper r = new RecordNameRemapper(cv);
                     cv = r;
                     handler.addProvider(r);
                 }
-                cv = new VariableNameProcessor(cv, recorder, handler, mappingRemapper.map(className), options.rvn);
-                cv = new ClassRemapper(cv, mappingRemapper);
-                cv = new IndyRemapper(cv, mappingRemapper);
-                ExtraClassesInformation eci = mappingRemapper.getExtraClassesInformation();
+                cv = new VariableNameProcessor(cv, recorder, handler, cfr.map(className), options.rvn);
+                cv = new ClassRemapper(cv, cfr);
+                cv = new IndyRemapper(cv, cfr);
+                ExtraClassesInformation eci = cfr.eci;
                 if (eci.dontRemap.containsKey(className)) {
                     ObjectSet<String> skipped = eci.dontRemap.get(className);
                     if (!skipped.isEmpty()) {
-                        cv = new MixinClassRemapper(cv, mappingRemapper.remapper, eci, options.refMap, skipped, className);
+                        cv = new MixinClassRemapper(cv, cfr.remapper, eci, options.refMap, skipped, className);
                     }
                 } else {
-                    cv = new MixinClassRemapper(cv, mappingRemapper.remapper, eci, options.refMap, ObjectSets.emptySet(), className);
+                    cv = new MixinClassRemapper(cv, cfr.remapper, eci, options.refMap, ObjectSets.emptySet(), className);
                 }
                 return new RuntimeParameterAnnotationFixer(cv, className, access);
             };

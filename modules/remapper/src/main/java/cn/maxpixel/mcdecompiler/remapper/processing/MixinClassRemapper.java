@@ -63,7 +63,7 @@ public class MixinClassRemapper extends ClassVisitor {
                             @Override
                             public void visit(String name, Object value) {
                                 if (value instanceof String s) {
-                                    super.visit(name, remapper.mapClass(
+                                    super.visit(name, remapper.mapClassOrDefault(
                                             refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
                                                     .getOrDefault(s, s)
                                     ));
@@ -110,18 +110,14 @@ public class MixinClassRemapper extends ClassVisitor {
                     .map(List::of)
                     .or(() -> Optional.ofNullable(info.getSuperNames(className)))
                     .filter(owners -> selector.name() != null)
-                    .flatMap(owners -> selector.field() ? owners.parallelStream().map(owner -> {
-                        String mapped = remapper.mapField(owner, selector.name());
-                        return mapped.equals(selector.name()) ? null : mapped;
-                    }).filter(Objects::nonNull).reduce((l, r) -> {
-                        throw new IllegalArgumentException("Multiple matches found");
-                    }) : owners.parallelStream().map(owner -> {// FIXME: potentially incorrect remapping
-                        String name = selector.name();
-                        String mapped = remapper.mapMethod(owner, name, selector.descriptor());
-                        if (name.equals(mapped)) return null;// not matches
-                        return mapped;
-                    }).filter(Objects::nonNull).findAny())
-                    .map(mapped -> selector.remap(remapper, mapped).toSelectorString())
+                    .flatMap(owners -> selector.field() ? owners.parallelStream()
+                            .map(owner -> remapper.mapField(owner, selector.name()))
+                            .filter(Objects::nonNull).reduce((l, r) -> {
+                                throw new IllegalArgumentException("Multiple matches found");
+                            }) : owners.parallelStream()
+                            .map(owner -> remapper.mapMethod(owner, selector.name(), selector.descriptor()))// FIXME: potentially incorrect remapping
+                            .filter(Objects::nonNull).findAny()
+                    ).map(mapped -> selector.remap(remapper, mapped).toSelectorString())
                     .orElse(s1);
         } else return s;
     }
@@ -133,11 +129,11 @@ public class MixinClassRemapper extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-            if (name.equals("at")) {
+            if ("at".equals(name)) {
                 return new AnnotationVisitor(api, super.visitAnnotation(name, descriptor)) {
                     @Override
                     public void visit(String name, Object value) {
-                        if (name.equals("target")) {
+                        if ("target".equals(name)) {
                             super.visit(name, remapMethodSelector(((String) value)));
                         } else super.visit(name, value);
                     }
@@ -148,7 +144,7 @@ public class MixinClassRemapper extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitArray(String name) {
-            if (name.equals("method")) {
+            if ("method".equals(name)) {
                 return new MethodTargetSelectorArrayRemapper(api, super.visitArray(name));
             }
             return super.visitArray(name);

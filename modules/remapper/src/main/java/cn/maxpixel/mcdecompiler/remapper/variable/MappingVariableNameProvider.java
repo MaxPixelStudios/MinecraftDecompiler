@@ -20,12 +20,9 @@ package cn.maxpixel.mcdecompiler.remapper.variable;
 
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
-import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -33,50 +30,49 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class MappingVariableNameProvider<T extends Mapping> implements VariableNameProvider {
+public class MappingVariableNameProvider implements VariableNameProvider {
     private static final String PLACEHOLDER_CHARS = "o";
-    private final Object2ObjectOpenHashMap<String, T> methodByMappedName;
-    private boolean omitThis;
+    private final Object2ObjectOpenHashMap<String, Mapping> methodByMappedName;
+    private final boolean omitThis;
 
-    public MappingVariableNameProvider(@NotNull ClassMapping<T> mapping, @NotNull MappingRemapper remapper) {
+    public MappingVariableNameProvider(@NotNull ClassMapping<? extends Mapping> mapping, @NotNull MappingRemapper remapper) {
+        this.omitThis = remapper.isMethodStaticIdentifiable();
         this.methodByMappedName = mapping.getMethods().stream().collect(Collectors.toMap(m -> {
             String descriptor;
             if (m.hasComponent(Descriptor.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.class).unmappedDescriptor);
             else if (m.hasComponent(Descriptor.Mapped.class)) descriptor = m.getComponent(Descriptor.Mapped.class).mappedDescriptor;
             else if (m.hasComponent(Descriptor.Namespaced.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.Namespaced.class).unmappedDescriptor);
             else throw new IllegalArgumentException("Method mapping requires at least one of the descriptor components");
-            if (!omitThis && m.hasComponent(StaticIdentifiable.class)) omitThis = true;
-            String mappedName = m.getMappedName();
-            return (Utils.isStringNotBlank(mappedName) ? mappedName : m.getUnmappedName()).concat(descriptor);// TODO
+            return m.getMappedName().concat(descriptor);
         }, Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     @Override
     public @NotNull RenameFunction forMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        T mapping = methodByMappedName.get(name.concat(descriptor));
+        Mapping mapping = methodByMappedName.get(name.concat(descriptor));
         if (mapping != null) {
-            if (mapping.hasComponent(LocalVariableTable.class)) {
-                LocalVariableTable lvt = mapping.getComponent(LocalVariableTable.class);
-                return (originalName, descriptor1, signature1, start, end, index) -> {
-                    PairedMapping m = lvt.getLocalVariable(index);
-                    return m != null && !m.mappedName.isBlank() && !PLACEHOLDER_CHARS.contains(m.mappedName)
-                            ? m.mappedName : null;
-                };
+            LocalVariableTable<? extends Mapping> lvt;
+            if (mapping.hasComponent(LocalVariableTable.Paired.class)) {
+                lvt = mapping.getComponent(LocalVariableTable.Paired.class);
             } else if (mapping.hasComponent(LocalVariableTable.Namespaced.class)) {
-                LocalVariableTable.Namespaced lvt = mapping.getComponent(LocalVariableTable.Namespaced.class);
-                return (originalName, descriptor1, signature1, start, end, index) -> {
-                    NamespacedMapping m = lvt.getLocalVariable(index);
-                    return m != null && !m.getMappedName().isBlank() && !PLACEHOLDER_CHARS.contains(m.getMappedName())
-                            ? m.getMappedName() : null;
-                };
-            }
+                lvt = mapping.getComponent(LocalVariableTable.Namespaced.class);
+            } else return RenameFunction.NOP;
+            return (originalName, descriptor1, signature1, start, end, index) -> {
+                Mapping m = lvt.getLocalVariable(index);
+                if (m != null) {
+                    String mapped = m.getMappedName();
+                    return Utils.isStringNotBlank(mapped) && !PLACEHOLDER_CHARS.contains(mapped) ? mapped : null;
+                }
+                return null;
+            };
         }
         return RenameFunction.NOP;
     }
 
     @Override
     public @NotNull RenameAbstractFunction forAbstractMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        return (i, t) -> forMethod(access, name, descriptor, signature, exceptions).getName(null, null, null, null, null, i);
+        RenameFunction rf = forMethod(access, name, descriptor, signature, exceptions);
+        return (i, t) -> rf.getName(null, null, null, null, null, i);
     }
 
     @Override

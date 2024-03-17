@@ -107,7 +107,7 @@ public class PairedMapping extends Mapping {
             addComponent(new Descriptor(getComponent(Descriptor.Mapped.class).mappedDescriptor));
             removeComponent(Descriptor.Mapped.class);
         }
-        getComponentOptional(LocalVariableTable.class).ifPresent(LocalVariableTable::reverse);
+        getComponentOptional(LocalVariableTable.Paired.class).ifPresent(LocalVariableTable.Paired::reverse);
         return this;
     }
 

@@ -2,6 +2,7 @@ package cn.maxpixel.mcdecompiler.api.extension;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.function.Function;
 
 public class Option {
     OptionRegistry registry;
-    public final @NotNull List<@NotNull String> options;// immutable
+    public final @NotNull @Unmodifiable List<@NotNull String> options;
     public final @Nullable String description;
 
     Option(@NotNull List<@NotNull String> options, @Nullable String description) {

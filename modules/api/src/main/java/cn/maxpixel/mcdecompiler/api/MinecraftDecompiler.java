@@ -72,7 +72,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
     }
 
     public MinecraftDecompiler(Options options) {
-        ExtensionManager.receiveOptions();
+        ExtensionManager.setup();
         this.options = options;
         this.deobfuscator = options.buildDeobfuscator();
     }

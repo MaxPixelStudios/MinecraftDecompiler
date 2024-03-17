@@ -18,13 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.remapper.variable;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 
-@ApiStatus.Experimental
 public interface VariableNameProvider {
     @FunctionalInterface
     interface RenameFunction {
@@ -39,8 +37,6 @@ public interface VariableNameProvider {
 
         @Nullable String getName(int index, Type type);
     }
-
-    VariableNameProvider NOP = (access, name, descriptor, signature, exceptions) -> RenameFunction.NOP;
 
     @NotNull RenameFunction forMethod(int access, String name, String descriptor, String signature, String[] exceptions);
 

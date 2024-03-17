@@ -8,9 +8,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface MappingRemapper {
-    @NotNull String mapClass(@NotNull String name);
+    boolean hasClassMapping(String name);
 
-    @NotNull String unmapClass(@NotNull String name);
+    boolean isMethodStaticIdentifiable();
+
+    @Nullable("When no corresponding mapping found") String mapClass(@NotNull String name);
+
+    default @NotNull String mapClassOrDefault(@NotNull String name) {
+        String ret = mapClass(name);
+        return ret == null ? name : ret;
+    }
+
+    @Nullable("When no corresponding mapping found") String unmapClass(@NotNull String name);
+
+    default @NotNull String unmapClassOrDefault(@NotNull String name) {
+        String ret = unmapClass(name);
+        return ret == null ? name : ret;
+    }
 
     /**
      * Map a field.
@@ -20,7 +34,12 @@ public interface MappingRemapper {
      * @param name Name to map.
      * @return Mapped name if present. Provided name otherwise.
      */
-    @NotNull String mapField(@NotNull String owner, @NotNull String name);
+    @Nullable("When no corresponding mapping found") String mapField(@NotNull String owner, @NotNull String name);
+
+    default @NotNull String mapFieldOrDefault(@NotNull String owner, @NotNull String name) {
+        String ret = mapField(owner, name);
+        return ret == null ? name : ret;
+    }
 
     /**
      * Map a method.
@@ -32,7 +51,12 @@ public interface MappingRemapper {
      * @param desc Descriptor of the method.
      * @return Mapped name if present. Provided name otherwise.
      */
-    @NotNull String mapMethod(@NotNull String owner, @NotNull String name, @Nullable("When desc doesn't matter") String desc);
+    @Nullable("When no corresponding mapping found") String mapMethod(@NotNull String owner, @NotNull String name, @Nullable("When desc doesn't matter") String desc);
+
+    default @NotNull String mapMethodOrDefault(@NotNull String owner, @NotNull String name, @Nullable("When desc doesn't matter") String desc) {
+        String ret = mapMethod(owner, name, desc);
+        return ret == null ? name : ret;
+    }
 
     @Subst("I")
     default @Pattern(Constants.FIELD_DESC_PATTERN) String mapDesc(@Pattern(Constants.FIELD_DESC_PATTERN) String unmappedDesc) {
@@ -64,7 +88,7 @@ public interface MappingRemapper {
                 StringBuilder ret = new StringBuilder(desc.length()).append(desc, 0, ++i);
                 int j = desc.indexOf(';', i + 1);// skip 'L' and the first char
                 if (j < 0) DescriptorUtil.throwInvalid(true);
-                yield ret.append(map ? mapClass(desc.substring(i, j)) : unmapClass(desc.substring(i, j)))
+                yield ret.append(map ? mapClassOrDefault(desc.substring(i, j)) : unmapClassOrDefault(desc.substring(i, j)))
                         .append(desc, j, desc.length()).toString();
             }
             default -> DescriptorUtil.throwInvalid(true);
@@ -83,7 +107,7 @@ public interface MappingRemapper {
                     ret.append(desc, start, ++i);
                     start = desc.indexOf(';', i + 1);// skip 'L'(++i) and the first char
                     if (start < 0) DescriptorUtil.throwInvalid(true);
-                    ret.append(map ? mapClass(desc.substring(i, start)) : unmapClass(desc.substring(i, start)));
+                    ret.append(map ? mapClassOrDefault(desc.substring(i, start)) : unmapClassOrDefault(desc.substring(i, start)));
                     i = start;// will do i++, so don't assign `start + 1` here
                 }
                 default -> DescriptorUtil.throwInvalid(true);

@@ -102,6 +102,15 @@ public abstract class MappingCollection<M extends Mapping> {
     }
 
     /**
+     * Updates this collection with all the traits.
+     */
+    public final void updateCollection() {
+        for (MappingTrait value : traits.values()) {
+            value.updateCollection(this);
+        }
+    }
+
+    /**
      * Clears this mapping collection.
      * <p>
      * This won't remove the traits.

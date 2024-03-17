@@ -29,15 +29,19 @@ public interface NameGetter {
     String getMappedName();
 
     /**
-     * For {@link NamespacedMapping} to implement.
+     * Universal interface for getting/setting namespaces
      *
      * @implSpec unmapped namespace should be set by mapping processors
      */
-    interface Namespaced {
+    interface Namespace {
         String getUnmappedNamespace();
 
         String getMappedNamespace();
 
         void setMappedNamespace(@NotNull String namespace);
+
+        String getFallbackNamespace();
+
+        void setFallbackNamespace(@NotNull String namespace);
     }
 }

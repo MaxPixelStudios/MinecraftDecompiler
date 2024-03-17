@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
+import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
@@ -35,7 +36,7 @@ import java.util.Objects;
 /**
  * A mapping with names under namespaces
  */
-public class NamespacedMapping extends Mapping implements NameGetter.Namespaced {
+public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     // Forge
     public static final String OBF = "obf";
     public static final String SRG = "srg";
@@ -47,6 +48,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     private String unmappedNamespace;
     private String mappedNamespace;
+    private String fallbackNamespace;
     private final Object2ObjectLinkedOpenHashMap<String, String> names = new Object2ObjectLinkedOpenHashMap<>();
 
     /**
@@ -260,14 +262,16 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
 
     @Override
     public String getUnmappedName() {
-        if(unmappedNamespace == null) throw new IllegalStateException("Set a namespace for unmapped name first");
+        if (unmappedNamespace == null) throw new IllegalStateException("Set a namespace for unmapped name first");
         return names.get(unmappedNamespace);
     }
 
     @Override
     public String getMappedName() {
-        if(mappedNamespace == null) throw new IllegalStateException("Set a namespace for mapped name first");
-        return names.get(mappedNamespace);
+        if (mappedNamespace == null) throw new IllegalStateException("Set a namespace for mapped name first");
+        var name = names.get(mappedNamespace);
+        if (fallbackNamespace == null || Utils.isStringNotBlank(name)) return name;
+        return names.get(fallbackNamespace);
     }
 
     @Override
@@ -290,6 +294,18 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespaced 
         this.mappedNamespace = Objects.requireNonNull(namespace);
         LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
         if (n != null) n.setMappedNamespace(namespace);
+    }
+
+    @Override
+    public String getFallbackNamespace() {
+        return fallbackNamespace;
+    }
+
+    @Override
+    public void setFallbackNamespace(@NotNull String namespace) {
+        this.fallbackNamespace = Objects.requireNonNull(namespace);
+        LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
+        if (n != null) n.setFallbackNamespace(namespace);
     }
 
     /* Auto-generated equals, hashCode and toString methods */

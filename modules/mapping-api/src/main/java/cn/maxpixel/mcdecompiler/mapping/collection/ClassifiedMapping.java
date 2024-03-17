@@ -158,7 +158,7 @@ public class ClassifiedMapping<T extends Mapping> extends MappingCollection<T> {
      * @return The source namespace of that mapping collection.
      */
     public static String getSourceNamespace(@NotNull ClassifiedMapping<NamespacedMapping> mappings) {
-        return mappings.getTrait(NamespacedTrait.class).namespaces.first();
+        return mappings.getTrait(NamespacedTrait.class).getUnmappedNamespace();
     }
 
     /* Auto-generated equals, hashCode and toString methods */

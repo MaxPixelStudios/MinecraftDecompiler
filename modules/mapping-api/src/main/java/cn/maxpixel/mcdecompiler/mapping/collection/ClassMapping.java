@@ -184,10 +184,16 @@ public class ClassMapping<T extends Mapping> {
         mapping.getMethods().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
     }
 
-    public static void setMappedNamespace(ClassMapping<? extends NameGetter.Namespaced> cm, String namespace) {
+    public static void setMappedNamespace(ClassMapping<? extends NameGetter.Namespace> cm, String namespace) {
         cm.mapping.setMappedNamespace(namespace);
         cm.fields.forEach(m -> m.setMappedNamespace(namespace));
         cm.methods.forEach(m -> m.setMappedNamespace(namespace));
+    }
+
+    public static void setFallbackNamespace(ClassMapping<? extends NameGetter.Namespace> cm, String namespace) {
+        cm.mapping.setFallbackNamespace(namespace);
+        cm.fields.forEach(m -> m.setFallbackNamespace(namespace));
+        cm.methods.forEach(m -> m.setFallbackNamespace(namespace));
     }
 
     /* Auto-generated equals, hashCode and toString methods */

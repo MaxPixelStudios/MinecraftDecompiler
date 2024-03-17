@@ -25,7 +25,7 @@ public class VariableNameHandler {
     private boolean omitThis;
 
     public void addProvider(VariableNameProvider provider) {
-        this.providers.add(provider);
+        this.providers.add(provider);// NOTE: order dependent
     }
 
     public VariableNameProvider.RenameFunction handleMethod(int access, String name, String descriptor, String signature, String[] exceptions) {

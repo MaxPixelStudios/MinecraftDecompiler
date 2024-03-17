@@ -18,6 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.mapping.trait;
 
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * A mapping trait is a mark that indicates the all entries of a mapping collection has a common feature.
  *
@@ -31,4 +34,14 @@ public interface MappingTrait {
      * @return The name of this trait.
      */
     String getName();
+
+    /**
+     * Updates the given mapping collection containing {@code this} trait.
+     *
+     * @implSpec This should be called by the {@link MappingCollection} that owns this trait.
+     * @param collection The mapping collection to update
+     */
+    @ApiStatus.OverrideOnly
+    default void updateCollection(MappingCollection<?> collection) {
+    }
 }

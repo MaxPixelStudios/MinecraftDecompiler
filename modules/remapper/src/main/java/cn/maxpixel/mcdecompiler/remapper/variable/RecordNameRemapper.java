@@ -21,10 +21,10 @@ package cn.maxpixel.mcdecompiler.remapper.variable;
 import cn.maxpixel.mcdecompiler.remapper.Deobfuscator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.RecordComponentVisitor;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @apiNote Use this when {@code (access & Opcodes.ACC_RECORD) != 0}
@@ -53,12 +53,16 @@ public class RecordNameRemapper extends ClassVisitor implements VariableNameProv
                 done = true;
             }
             if (descriptor.contentEquals(recordDesc)) {
-                AtomicInteger i = new AtomicInteger();
-                return (originalName, descriptor1, signature1, start, end, index) -> {
-                    if (index > 0 && i.get() < recordNames.size()) {
-                        return recordNames.get(i.getAndIncrement());
+                return new RenameFunction() {
+                    private int i;
+
+                    @Override
+                    public @Nullable String getName(String originalName, String descriptor, String signature, Label start, Label end, int index) {
+                        if (index > 0 && i < recordNames.size()) {
+                            return recordNames.get(i++);
+                        }
+                        return null;
                     }
-                    return null;
                 };
             }
         }
