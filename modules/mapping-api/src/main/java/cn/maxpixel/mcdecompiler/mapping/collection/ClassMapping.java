@@ -24,7 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.ApiStatus;
@@ -177,7 +177,7 @@ public class ClassMapping<T extends Mapping> {
      * @see ClassifiedMapping#swap(String, String)
      */
     @ApiStatus.Internal
-    public static void swap(ClassMapping<NamespacedMapping> mapping, ClassifiedMappingRemapper remapper,
+    public static void swap(ClassMapping<NamespacedMapping> mapping, DescriptorRemapper remapper,
                             String sourceNamespace, String targetNamespace) {
         mapping.mapping.swap(remapper, sourceNamespace, targetNamespace);
         mapping.getFields().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));

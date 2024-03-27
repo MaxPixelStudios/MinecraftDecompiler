@@ -138,6 +138,18 @@ public class MinecraftDecompilerCommandLine {
             if (!options.has(mappingPathO)) throw new IllegalArgumentException("--mapping-path is required when --side is unspecified");
         }
 
+        for (var it = Object2ObjectMaps.fastIterator(OPTION_MAP); it.hasNext(); ) {
+            var entry = it.next();
+            var o = entry.getKey();
+            var spec = entry.getValue();
+            if (options.has(spec)) {
+                if (options.hasArgument(spec)) {
+                    if (!(o instanceof Option.ValueAccepting<?>)) throw new IllegalArgumentException("Should not get here");
+                    ExtensionManager.OPTION_REGISTRY.addOption(o.options.get(0), options.valuesOf(spec));
+                } else ExtensionManager.OPTION_REGISTRY.addOption(o.options.get(0));
+            }
+        }
+
         MinecraftDecompiler.OptionBuilder builder;
         if (options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
@@ -156,18 +168,6 @@ public class MinecraftDecompilerCommandLine {
         options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
         builder.addExtraJars(options.valuesOf(extraJarsO));
         builder.addExtraClasses(options.valuesOf(extraClassesO));
-
-        for (var it = Object2ObjectMaps.fastIterator(OPTION_MAP); it.hasNext(); ) {
-            var entry = it.next();
-            var o = entry.getKey();
-            var spec = entry.getValue();
-            if (options.has(spec)) {
-                if (options.hasArgument(spec)) {
-                    if (!(o instanceof Option.ValueAccepting<?>)) throw new IllegalArgumentException("Should not get here");
-                    ExtensionManager.OPTION_REGISTRY.addOption(o.options.get(0), options.valuesOf(spec));
-                } else ExtensionManager.OPTION_REGISTRY.addOption(o.options.get(0));
-            }
-        }
 
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();

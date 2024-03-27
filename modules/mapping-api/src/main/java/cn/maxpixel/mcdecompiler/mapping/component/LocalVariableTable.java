@@ -22,7 +22,7 @@ import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public abstract class LocalVariableTable<T extends Mapping> {
         private String mappedNamespace;
         private String fallbackNamespace;
 
-        public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace, ClassifiedMappingRemapper remapper) {
+        public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
             lvt.values().forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
         }
 

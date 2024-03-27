@@ -10,6 +10,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
             ? extends Object2ObjectOpenHashMap<String, ? extends Mapping>>> methodsByUnm;
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByMap;
+    private final DescriptorRemapper descriptorRemapper;
     private boolean methodStaticIdentifiable;
 
     public ClassifiedMappingRemapper(ClassifiedMapping<PairedMapping> mappings) {
@@ -47,6 +49,7 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
             }
             return map;
         }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+        this.descriptorRemapper = new DescriptorRemapper(mappingByUnm, mappingByMap);
     }
 
     public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {
@@ -81,6 +84,7 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
             }
             return map;
         }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
+        this.descriptorRemapper = new DescriptorRemapper(mappingByUnm, mappingByMap);
     }
 
     @Override
@@ -133,6 +137,11 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
             }
         }
         return null;
+    }
+
+    @Override
+    public DescriptorRemapper getDescriptorRemapper() {
+        return descriptorRemapper;
     }
 
     public ClassMapping<? extends Mapping> getClassMappingUnmapped(@NotNull String name) {

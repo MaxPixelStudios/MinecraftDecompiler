@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class ExtraClassesInformation implements Consumer<Path> {
+public class ExtraClassesInformation implements Consumer<Path> {// TODO: extensions
     private static final Logger LOGGER = LogManager.getLogger();
     private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();

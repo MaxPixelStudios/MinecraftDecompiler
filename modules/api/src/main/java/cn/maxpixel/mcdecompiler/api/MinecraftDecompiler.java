@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.api;
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.common.app.SideType;
+import cn.maxpixel.mcdecompiler.common.app.util.DataMap;
 import cn.maxpixel.mcdecompiler.common.app.util.DownloadingUtil;
 import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
 import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
@@ -72,7 +73,6 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
     }
 
     public MinecraftDecompiler(Options options) {
-        ExtensionManager.setup();
         this.options = options;
         this.deobfuscator = options.buildDeobfuscator();
     }
@@ -175,7 +175,8 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
         private final ObjectSet<String> extraClasses = new ObjectOpenHashSet<>();
         private Optional<ObjectSet<Path>> bundledLibs = Optional.empty();
-        private Map<String, Map<String, String>> refMap = Object2ObjectMaps.emptyMap();
+        private Map<String, Map<String, String>> refMap = Object2ObjectMaps.emptyMap();// TODO: move this to datamap
+        private final DataMap dataMap = new DataMap();
 
         private Path inputJar;
         private boolean reverse;
@@ -204,6 +205,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         }
 
         private void preprocess(Path inputJar) {
+            ExtensionManager.setup();
             FileUtil.deleteIfExists(Directories.TEMP_DIR);
             try (FileSystem jarFs = JarUtil.createZipFs(FileUtil.requireExist(inputJar))) {
                 Files.createDirectories(Directories.TEMP_DIR);
@@ -271,6 +273,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                                     })
                             ).orElse(Object2ObjectMaps.emptyMap());
                 }
+                ExtensionManager.onPreprocess(jarFs, Directories.TEMP_DIR, dataMap);
             } catch (IOException e) {
                 LOGGER.fatal("Error preprocessing jar file {}", inputJar, e);
                 throw Utils.wrapInRuntime(e);
@@ -361,6 +364,11 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                 }
 
                 @Override
+                public DataMap dataMap() {
+                    return dataMap;
+                }
+
+                @Override
                 public DeobfuscationOptions deobfuscation() {
                     return deobfuscation;
                 }
@@ -414,6 +422,8 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             }
             return new ClassifiedDeobfuscator(version(), type(), deobfuscation());
         }
+
+        DataMap dataMap();
 
         DeobfuscationOptions deobfuscation();
 

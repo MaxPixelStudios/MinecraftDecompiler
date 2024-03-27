@@ -3,9 +3,9 @@ package cn.maxpixel.mcdecompiler.mapping.collection;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.MappingTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,7 +133,7 @@ public class ClassifiedMapping<T extends Mapping> extends MappingCollection<T> {
      */
     public static void swap(@NotNull ClassifiedMapping<NamespacedMapping> m, @NotNull String sourceNamespace, @NotNull String targetNamespace) {
         if (!m.classes.isEmpty()) {
-            ClassifiedMappingRemapper remapper = new ClassifiedMappingRemapper(m, targetNamespace);
+            DescriptorRemapper remapper = new DescriptorRemapper(m, targetNamespace);
             m.classes.parallelStream().forEach(cm -> ClassMapping.swap(cm, remapper, sourceNamespace, targetNamespace));
         }
         if (!m.packages.isEmpty()) m.packages.parallelStream().forEach(nm -> nm.swap(sourceNamespace, targetNamespace));

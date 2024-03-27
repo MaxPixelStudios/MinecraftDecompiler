@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -237,7 +237,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      * @param toNamespace Namespace to swap to
      */
     @ApiStatus.Internal
-    public void swap(ClassifiedMappingRemapper remapper, String fromNamespace, String toNamespace) {
+    public void swap(DescriptorRemapper remapper, String fromNamespace, String toNamespace) {
         swap(fromNamespace, toNamespace);
         if (hasComponent(Descriptor.Namespaced.class)) {
             Descriptor.Namespaced n = getComponent(Descriptor.Namespaced.class);
