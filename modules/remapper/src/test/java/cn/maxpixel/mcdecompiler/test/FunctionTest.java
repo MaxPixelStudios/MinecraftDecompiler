@@ -36,13 +36,12 @@ public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
 
 //    public void test() throws Throwable {
-//        ClassifiedMappingReader<PairedMapping> srg = new ClassifiedMappingReader<>(MappingFormats.SRG, "downloads/1.8.9/joined.srg");
-//        UniqueMappingReader<PairedMapping> mcp = new UniqueMappingReader<>(new MCP(), "downloads/1.8.9/methods.csv",
-//                "downloads/1.8.9/fields.csv");
-//        Map<String, String> fields = mcp.mappings.fields.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
-//        Map<String, String> methods = mcp.mappings.methods.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
-//        ClassifiedMappingWriter<PairedMapping> writer = new ClassifiedMappingWriter<>(MappingFormats.TSRG_V1);
-//        srg.mappings.forEach(mapping -> {
+//        ClassifiedMapping<PairedMapping> srg = MappingFormats.SRG.read(Files.newBufferedReader(Path.of("downloads/1.8.9/joined.srg")));
+//        UniqueMapping<PairedMapping> mcp =  MCP.INSTANCE.read(Files.newBufferedReader(Path.of("downloads/1.8.9/methods.csv")), Files.newBufferedReader(Path.of("downloads/1.8.9/fields.csv")));
+//        Map<String, String> fields = mcp.fields.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
+//        Map<String, String> methods = mcp.methods.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
+//        ClassifiedMapping<PairedMapping> out = new ClassifiedMapping<>();
+//        srg.classes.forEach(mapping -> {
 //            mapping.mapping.unmappedName = mapping.mapping.mappedName;
 //            mapping.getMethods().forEach(m -> {
 //                m.unmappedName = m.mappedName;
@@ -53,9 +52,11 @@ public class FunctionTest {
 //                m.unmappedName = m.mappedName;
 //                m.mappedName = fields.getOrDefault(m.mappedName, m.mappedName);
 //            });
-//            writer.addMapping(mapping);
+//            out.classes.add(mapping);
 //        });
-//        writer.writeTo(Files.newOutputStream(Path.of("output/1.8.9-srg2mcp.tsrg"), StandardOpenOption.CREATE));
+//        try (var os = Files.newOutputStream(Path.of("output/1.8.9-srg2mcp.tsrg"), StandardOpenOption.CREATE)) {
+//            MappingFormats.TSRG_V1.write(out, os);
+//        }
 //    }
 
     public static void main(String[] args) throws Throwable {
@@ -69,26 +70,32 @@ public class FunctionTest {
         MappingFormats.TSRG_V2.write(mcpconfig, Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
     }
 
-//    private static class MCP implements MappingFormat.Unique<PairedMapping> {
+//    private enum MCP implements MappingFormat.Unique<PairedMapping> {
+//        INSTANCE;
+//        @Override
+//        public @NotNull String getName() {
+//            return "mcp";
+//        }
+//
 //        @Override
 //        public MappingProcessor.Unique<PairedMapping> getProcessor() {
 //            return new MappingProcessor.Unique<>() {
 //                @Override
-//                public MappingFormat<PairedMapping, UniqueMapping<PairedMapping>> getType() {
+//                public MappingFormat<PairedMapping, UniqueMapping<PairedMapping>> getFormat() {
 //                    return MCP.this;
 //                }
 //
 //                @Override
-//                public Pair<UniqueMapping<PairedMapping>, ObjectList<PairedMapping>> process(ObjectList<String> content) {
-//                    ObjectObjectImmutablePair<UniqueMapping<PairedMapping>, ObjectList<PairedMapping>> ret = new ObjectObjectImmutablePair<>(new UniqueMapping<>(), null);
-//                    for(String s : content) {
+//                public UniqueMapping<PairedMapping> process(ObjectList<String> content) {
+//                    UniqueMapping<PairedMapping> ret = new UniqueMapping<>();
+//                    for (String s : content) {
 //                        String[] sa = s.split(",");
 //                        if(s.startsWith("field")) {
-//                            ret.left().fields.add(new PairedMapping(sa[0], sa[1]));
+//                            ret.fields.add(new PairedMapping(sa[0], sa[1]));
 //                        } else if(s.startsWith("func")) {
-//                            ret.left().methods.add(new PairedMapping(sa[0], sa[1]));
+//                            ret.methods.add(new PairedMapping(sa[0], sa[1]));
 //                        } else if(s.startsWith("p_")) {
-//                            ret.left().params.add(new PairedMapping(sa[0], sa[1]));
+//                            ret.params.add(new PairedMapping(sa[0], sa[1]));
 //                        }
 //                    }
 //                    return ret;
