@@ -37,6 +37,7 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
         this.fieldByUnm = genFieldsByUnmappedNameMap(mappings.classes);
         this.mappingByUnm = genMappingsByUnmappedNameMap(mappings.classes);
         this.mappingByMap = genMappingsByMappedNameMap(mappings.classes);
+        this.descriptorRemapper = new DescriptorRemapper(mappingByUnm, mappingByMap);
         this.methodsByUnm = mappings.classes.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName, cm -> {
             Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> map =
                     new Object2ObjectOpenHashMap<>();
@@ -49,7 +50,6 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
             }
             return map;
         }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-        this.descriptorRemapper = new DescriptorRemapper(mappingByUnm, mappingByMap);
     }
 
     public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {

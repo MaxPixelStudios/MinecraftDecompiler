@@ -18,26 +18,15 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
-import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
-import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
-
-import java.io.FileInputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
 
-//    public void test() throws Throwable {
+//    public static void srg2mcp() throws Throwable {
 //        ClassifiedMapping<PairedMapping> srg = MappingFormats.SRG.read(Files.newBufferedReader(Path.of("downloads/1.8.9/joined.srg")));
-//        UniqueMapping<PairedMapping> mcp =  MCP.INSTANCE.read(Files.newBufferedReader(Path.of("downloads/1.8.9/methods.csv")), Files.newBufferedReader(Path.of("downloads/1.8.9/fields.csv")));
+//        UniqueMapping<PairedMapping> mcp = MCP.INSTANCE.read(Files.newBufferedReader(Path.of("downloads/1.9.4/methods.csv")), Files.newBufferedReader(Path.of("downloads/1.9.4/fields.csv")));
 //        Map<String, String> fields = mcp.fields.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
 //        Map<String, String> methods = mcp.methods.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
 //        ClassifiedMapping<PairedMapping> out = new ClassifiedMapping<>();
@@ -54,20 +43,21 @@ public class FunctionTest {
 //            });
 //            out.classes.add(mapping);
 //        });
-//        try (var os = Files.newOutputStream(Path.of("output/1.8.9-srg2mcp.tsrg"), StandardOpenOption.CREATE)) {
+//        try (var os = Files.newOutputStream(Path.of("output/1.9.4-srg2mcp.tsrg"), StandardOpenOption.CREATE)) {
 //            MappingFormats.TSRG_V1.write(out, os);
 //        }
 //    }
 
     public static void main(String[] args) throws Throwable {
-        ClassifiedMapping<NamespacedMapping> mcpconfig = MappingFormats.TSRG_V2.read(new FileInputStream("downloads/1.19.3/joined.tsrg"));
-        ClassifiedMapping<PairedMapping> official = MappingFormats.PROGUARD.read(new FileInputStream("downloads/1.19.3/client_mappings.txt"));
-        var mappings = ClassifiedMappingRemapper.genMappingsByUnmappedNameMap(official.classes);
-        for (ClassMapping<NamespacedMapping> cm : mcpconfig.classes) {
-            NamespacedMapping mapping = cm.mapping;
-            mapping.setName("srg", mappings.get(mapping.getName("obf")).mapping.mappedName);
-        }
-        MappingFormats.TSRG_V2.write(mcpconfig, Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
+//        ClassifiedMapping<NamespacedMapping> mcpconfig = MappingFormats.TSRG_V2.read(new FileInputStream("downloads/1.19.3/joined.tsrg"));
+//        ClassifiedMapping<PairedMapping> official = MappingFormats.PROGUARD.read(new FileInputStream("downloads/1.19.3/client_mappings.txt"));
+//        var mappings = ClassifiedMappingRemapper.genMappingsByUnmappedNameMap(official.classes);
+//        for (ClassMapping<NamespacedMapping> cm : mcpconfig.classes) {
+//            NamespacedMapping mapping = cm.mapping;
+//            mapping.setName("srg", mappings.get(mapping.getName("obf")).mapping.mappedName);
+//        }
+//        MappingFormats.TSRG_V2.write(mcpconfig, Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
+//        srg2mcp();
     }
 
 //    private enum MCP implements MappingFormat.Unique<PairedMapping> {
@@ -90,15 +80,33 @@ public class FunctionTest {
 //                    UniqueMapping<PairedMapping> ret = new UniqueMapping<>();
 //                    for (String s : content) {
 //                        String[] sa = s.split(",");
-//                        if(s.startsWith("field")) {
+//                        if (s.startsWith("field")) {
 //                            ret.fields.add(new PairedMapping(sa[0], sa[1]));
-//                        } else if(s.startsWith("func")) {
+//                        } else if (s.startsWith("func")) {
 //                            ret.methods.add(new PairedMapping(sa[0], sa[1]));
-//                        } else if(s.startsWith("p_")) {
+//                        } else if (s.startsWith("p_")) {
 //                            ret.params.add(new PairedMapping(sa[0], sa[1]));
 //                        }
 //                    }
 //                    return ret;
+//                }
+//
+//                @Override
+//                public UniqueMapping<PairedMapping> process(ObjectList<String>... contents) {
+//                    UniqueMapping<PairedMapping> result = new UniqueMapping<>();
+//                    for (ObjectList<String> content : contents) {
+//                        for (String s : content) {
+//                            String[] sa = s.split(",");
+//                            if (s.startsWith("field")) {
+//                                result.fields.add(new PairedMapping(sa[0], sa[1]));
+//                            } else if (s.startsWith("func")) {
+//                                result.methods.add(new PairedMapping(sa[0], sa[1]));
+//                            } else if (s.startsWith("p_")) {
+//                                result.params.add(new PairedMapping(sa[0], sa[1]));
+//                            }
+//                        }
+//                    }
+//                    return result;
 //                }
 //            };
 //        }
