@@ -3,8 +3,6 @@ package cn.maxpixel.mcdecompiler.mapping.detector;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import it.unimi.dsi.fastutil.Pair;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +22,7 @@ public class DefaultDetectionUnit implements DetectionUnit {
     }
 
     @Override
-    public Pair<@Nullable MappingFormat<?, ?>, @NotNull Percentage> detectContent(List<String> contents) {
+    public Pair<MappingFormat<?, ?>, Percentage> detectContent(List<String> contents) {
         String s = contents.get(0);
         if (s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return Pair.of(MappingFormats.SRG, Percentage.NINETY_NINE);
         else if (s.endsWith(":")) return Pair.of(MappingFormats.PROGUARD, Percentage.NINETY);

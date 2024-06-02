@@ -3,8 +3,6 @@ package cn.maxpixel.mcdecompiler.mapping.detector;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +22,7 @@ public interface DetectionUnit {
         return Optional.empty();
     }
 
-    Pair<@Nullable MappingFormat<?, ?>, @NotNull Percentage> detectContent(List<String> contents);
+    Pair<MappingFormat<?, ?>, Percentage> detectContent(List<String> contents);
 
     enum Percentage {
         ZERO,
