@@ -38,12 +38,16 @@ import java.util.jar.Manifest;
 public class Decompilers {
     private static final Manifest MANIFEST = JarUtil.getManifest(Decompilers.class);
     private static final Logger LOGGER = LogManager.getLogger("Decompiler Manager");
-    private static final Object2ObjectOpenHashMap<String, IDecompiler> decompilers = new Object2ObjectOpenHashMap<>();
+    private static final Object2ObjectOpenHashMap<String, IDecompiler> DECOMPILERS = new Object2ObjectOpenHashMap<>();
     static {
         for (IDecompiler d : ServiceLoader.load(IDecompiler.class)) {
-            decompilers.put(d.name(), d);
+            DECOMPILERS.put(d.name(), d);
         }
-        decompilers.put(UserDefinedDecompiler.NAME, findUserDefined());
+        DECOMPILERS.put(UserDefinedDecompiler.NAME, findUserDefined());
+    }
+
+    public static boolean registerDecompiler(IDecompiler decompiler) {
+        return DECOMPILERS.putIfAbsent(decompiler.name(), decompiler) == null;
     }
 
     private static UserDefinedDecompiler findUserDefined() {
@@ -68,7 +72,7 @@ public class Decompilers {
     }
 
     public static IDecompiler get(String name) {
-        return decompilers.get(name);
+        return DECOMPILERS.get(name);
     }
 
     public static String getProperty(String name, String prop) {

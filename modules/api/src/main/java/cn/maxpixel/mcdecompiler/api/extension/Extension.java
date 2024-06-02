@@ -16,7 +16,11 @@ import java.util.function.Supplier;
 public interface Extension {
     @NotNull String getName();
 
-    default void onRegisteringOptions(OptionRegistry.Registrar registrar) {
+    /**
+     * Register options, mapping formats, format detectors, decompilers, etc.
+     * @param registrar option registrar
+     */
+    default void onRegistering(OptionRegistry.Registrar registrar) {
     }
 
     default void onReceivingOptions(OptionRegistry.ValueGetter getter) {

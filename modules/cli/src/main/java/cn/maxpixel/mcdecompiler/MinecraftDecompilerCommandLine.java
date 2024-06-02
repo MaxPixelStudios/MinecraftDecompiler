@@ -27,7 +27,9 @@ import cn.maxpixel.mcdecompiler.common.app.SideType;
 import cn.maxpixel.mcdecompiler.common.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.decompiler.VineflowerDecompiler;
-import cn.maxpixel.mcdecompiler.mapping.detector.Detector;
+import cn.maxpixel.mcdecompiler.mapping.detector.FormatDetector;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
@@ -45,7 +47,6 @@ import static java.util.List.of;
 public class MinecraftDecompilerCommandLine {
     static {
         System.setProperty("org.openjdk.java.util.stream.tripwire", Boolean.toString(Constants.IS_DEV));
-        ExtensionManager.init();
     }
     private static final Object2ObjectOpenHashMap<Option, OptionSpec<?>> OPTION_MAP = new Object2ObjectOpenHashMap<>();
     private static final Logger LOGGER = LogManager.getLogger("CommandLine");
@@ -58,16 +59,18 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(of("v", "ver", "version"), "Version to " +
                 "deobfuscate/decompile. Only works on Proguard mappings or downloading libraries for the decompiler.")
                 .requiredIf(sideTypeO).withRequiredArg();
-        OptionSpecBuilder regenVarNameO = parser.acceptsAll(of("r", "rvn", "regenerate-variable-names"), "Regenerate local variable " +
-                "names if the input mapping doesn't provide ones");
-        OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use the reversed mapping " +
-                "to deobfuscate.").availableUnless(sideTypeO);
+        OptionSpecBuilder regenVarNameO = parser.acceptsAll(of("r", "rvn", "regenerate-variable-names"),
+                "Regenerate local variable names if the input mapping doesn't provide ones");
+        OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use " +
+                "the reversed mapping to deobfuscate.").availableUnless(sideTypeO);
         OptionSpecBuilder dontIncludeOthersO = parser.accepts("exclude-others", "Drop non-class files of the output jar.");
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(of("i", "input"), "Input jar. With this option, you must " +
                 "specify --mappingPath and can't specify --side.").availableUnless(sideTypeO).requiredUnless(sideTypeO).withRequiredArg()
                 .withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(of("m", "map", "mapping-path"), "Mapping file that " +
                 "is used to deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> mappingFormatO = parser.acceptsAll(of("M", "mapping-format"),
+                "Manually specify the mapping format").availableIf(mappingPathO).withRequiredArg();
         ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.acceptsAll(of("t", "target-namespace"), "Namespace to " +
                 "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(of("o", "output"), "Mapped output file. Including the suffix.")
@@ -85,8 +88,8 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<String> extraClassesO = parser.acceptsAll(of("c", "extra-class"), "Extra classes/packages that " +
                 "will be deobfuscated. Can be specified multiple times. Use \"/\" instead of \".\" to separate names. Use \"*\" or \"*all*\" to " +
                 "deobfuscate all").withRequiredArg();
-        ArgumentAcceptingOptionSpec<Path> incrementalDecompilationO = parser.accepts("incremental-decompilation", "Try to decompile" +
-                "incrementally. Input a jar to compare the difference. Only works with decompilers of source type \"DIRECTORY\"")
+        ArgumentAcceptingOptionSpec<Path> incrementalDecompilationO = parser.accepts("incremental-decompilation","Try to decompile " +
+                "incrementally. Specify a jar to compare the difference. Only works with decompilers of source type \"DIRECTORY\"")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
 
@@ -151,14 +154,15 @@ public class MinecraftDecompilerCommandLine {
         }
 
         MinecraftDecompiler.OptionBuilder builder;
+        String mappingFormat = options.valueOf(mappingFormatO);
         if (options.has(sideTypeO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
             options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
-                    .withMapping(Detector.tryDetectingMappingType(m).read(new FileInputStream(m)))));
+                    .withMapping(orDetect(mappingFormat, m).read(new FileInputStream(m)))));
         } else {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO));
             String mappingPath = options.valueOf(mappingPathO);
-            builder.withMapping(Detector.tryDetectingMappingType(mappingPath).read(new FileInputStream(mappingPath)));
+            builder.withMapping(orDetect(mappingFormat, mappingPath).read(new FileInputStream(mappingPath)));
             options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
         }
         if (options.has(regenVarNameO)) builder.regenerateVariableNames();
@@ -175,6 +179,17 @@ public class MinecraftDecompilerCommandLine {
         if (options.has(decompileO)) md.decompile(options.valueOf(decompileO), options.valueOf(incrementalDecompilationO));
 
         LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
+    }
+
+    private static MappingFormat<?, ?> orDetect(String mappingFormat, String path) {
+        if (mappingFormat != null) {
+            MappingFormat<?, ?> format = MappingFormats.get(mappingFormat);
+            if (format == null) {
+                LOGGER.warn("The specified mapping format \"{}\" does not exist. Available formats are: {}. MCD will" +
+                        "try to automatically detect the mapping format", mappingFormat, MappingFormats.getFormatNames());
+            } else return format;
+        }
+        return FormatDetector.tryDetecting(Path.of(path));
     }
 
     private static void printHelp(OptionParser parser) {

@@ -24,10 +24,15 @@ import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
 import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerators;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessors;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import org.jetbrains.annotations.NotNull;
 
-public interface MappingFormats {
-    MappingFormat.Classified<PairedMapping> SRG = new MappingFormat.Classified<>() {
+import java.util.Objects;
+import java.util.Set;
+
+public final class MappingFormats {
+    public static final MappingFormat.Classified<PairedMapping> SRG = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "srg";
@@ -44,7 +49,7 @@ public interface MappingFormats {
         }
     };
 
-    MappingFormat.Classified<PairedMapping> CSRG = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<PairedMapping> CSRG = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "csrg";
@@ -61,7 +66,7 @@ public interface MappingFormats {
         }
     };
 
-    MappingFormat.Classified<PairedMapping> TSRG_V1 = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<PairedMapping> TSRG_V1 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "tsrg-v1";
@@ -78,7 +83,7 @@ public interface MappingFormats {
         }
     };
 
-    MappingFormat.Classified<NamespacedMapping> TSRG_V2 = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<NamespacedMapping> TSRG_V2 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "tsrg-v2";
@@ -95,7 +100,7 @@ public interface MappingFormats {
         }
     };
 
-    MappingFormat.Classified<PairedMapping> PROGUARD = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<PairedMapping> PROGUARD = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "proguard";
@@ -112,7 +117,7 @@ public interface MappingFormats {
         }
     };
 
-    MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "tiny-v1";
@@ -134,7 +139,7 @@ public interface MappingFormats {
         }
     };
 
-    MappingFormat.Classified<NamespacedMapping> TINY_V2 = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<NamespacedMapping> TINY_V2 = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "tiny-v2";
@@ -155,4 +160,27 @@ public interface MappingFormats {
             return MappingGenerators.TINY_V2;
         }
     };
+
+    private static final Object2ObjectOpenHashMap<String, MappingFormat<?, ?>> MAPPING_FORMATS = new Object2ObjectOpenHashMap<>();
+    static {
+        registerMappingFormat(SRG);
+        registerMappingFormat(CSRG);
+        registerMappingFormat(TSRG_V1);
+        registerMappingFormat(TSRG_V2);
+        registerMappingFormat(PROGUARD);
+        registerMappingFormat(TINY_V1);
+        registerMappingFormat(TINY_V2);
+    }
+
+    public static boolean registerMappingFormat(MappingFormat<?, ?> format) {
+        return MAPPING_FORMATS.putIfAbsent(Objects.requireNonNull(format.getName()), format) == null;
+    }
+
+    public static MappingFormat<?, ?> get(String name) {
+        return MAPPING_FORMATS.get(name);
+    }
+
+    public static Set<String> getFormatNames() {
+        return ObjectSets.unmodifiable(MAPPING_FORMATS.keySet());
+    }
 }

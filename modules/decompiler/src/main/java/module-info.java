@@ -1,3 +1,5 @@
+import cn.maxpixel.mcdecompiler.decompiler.*;
+
 open module cn.maxpixel.mcdecompiler.decompiler {
     requires transitive cn.maxpixel.mcdecompiler.common.app;
 
@@ -7,4 +9,7 @@ open module cn.maxpixel.mcdecompiler.decompiler {
     requires static org.jetbrains.java.decompiler;
 
     exports cn.maxpixel.mcdecompiler.decompiler;
+
+    uses IDecompiler;
+    provides IDecompiler with CFRDecompiler, FernFlowerDecompiler, ForgeFlowerDecompiler, VineflowerDecompiler;
 }

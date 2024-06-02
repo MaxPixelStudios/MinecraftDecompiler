@@ -28,7 +28,7 @@ public final class OptionRegistry {
         if (optionRegistered) throw new IllegalStateException("Options already registered");
         optionRegistered = true;
         for (Extension extension : extensions) {
-            extension.onRegisteringOptions(new Registrar(extension.getName()));
+            extension.onRegistering(new Registrar(extension.getName()));
         }
     }
 
