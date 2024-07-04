@@ -96,6 +96,10 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         var decompiler = Decompilers.get(decompilerName);
         if (decompiler == null) throw new IllegalArgumentException("Decompiler \"" + decompilerName + "\" does not exist");
         if (Files.notExists(options.outputJar())) deobfuscate();
+        if (deobfuscator.toDecompile.isEmpty()) {
+            LOGGER.info("Nothing to decompile, skipping decompilation");
+            return;
+        }
         LOGGER.info("Decompiling using \"{}\"", decompiler.name());
         var inputJar = options.outputJar();
         var outputDir = options.outputDecompDir();

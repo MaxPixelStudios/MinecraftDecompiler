@@ -117,15 +117,10 @@ public final class MappingFormats {
         }
     };
 
-    public static final MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {
+    public static final MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {// TODO: support properties
         @Override
         public @NotNull String getName() {
             return "tiny-v1";
-        }
-
-        @Override
-        public char getCommentChar() {
-            return '\0';
         }
 
         @Override

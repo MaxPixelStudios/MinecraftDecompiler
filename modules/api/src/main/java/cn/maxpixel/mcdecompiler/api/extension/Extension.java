@@ -1,6 +1,9 @@
 package cn.maxpixel.mcdecompiler.api.extension;
 
 import cn.maxpixel.mcdecompiler.common.app.util.DataMap;
+import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
+import cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.remapper.processing.Process;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +21,12 @@ public interface Extension {
 
     /**
      * Register options, mapping formats, format detectors, decompilers, etc.
-     * @param registrar option registrar
+     * @param optionRegistrar option registrar
+     * @see cn.maxpixel.mcdecompiler.decompiler.Decompilers#registerDecompiler(IDecompiler)
+     * @see cn.maxpixel.mcdecompiler.mapping.format.MappingFormats#registerMappingFormat(MappingFormat)
+     * @see cn.maxpixel.mcdecompiler.mapping.detector.FormatDetector#registerDetectionUnit(DetectionUnit)
      */
-    default void onRegistering(OptionRegistry.Registrar registrar) {
+    default void onRegistering(OptionRegistry.Registrar optionRegistrar) {
     }
 
     default void onReceivingOptions(OptionRegistry.ValueGetter getter) {
