@@ -173,10 +173,7 @@ public final class FileUtil {
         try (FileChannel fc = FileChannel.open(path, READ)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             ByteBuffer buf = ByteBuffer.allocateDirect(65536);
-            while (fc.read(buf) != -1) {
-                md.update(buf.flip());
-                buf.clear();
-            }
+            while (fc.read(buf.clear()) != -1) md.update(buf.flip());
             return (size < 0 || fc.size() == size) && hash.contentEquals(Utils.createHashString(md));
         } catch (IOException e) {
             LOGGER.fatal("Error reading files", e);

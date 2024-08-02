@@ -52,8 +52,9 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
             ExtraClassesInformation info = new ExtraClassesInformation(options.refMap, FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
-                        String k = NamingUtil.file2Native(p.toString());
-                        return (deobfAll && p.toString().endsWith(".class")) || remapper.hasClassMapping(k) ||
+                        String ps = p.toString();
+                        String k = NamingUtil.file2Native(ps);
+                        return (deobfAll && ps.endsWith(".class")) || remapper.hasClassMapping(k) ||
                                 (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
             options.extraJars.forEach(jar -> {

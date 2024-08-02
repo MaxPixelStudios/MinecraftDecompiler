@@ -23,7 +23,6 @@ import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -41,7 +40,7 @@ public abstract class Mapping implements NameGetter {
      * @param components Components add to this mapping
      */
     protected Mapping(@NotNull Component @NotNull ... components) {
-        for(@NotNull Component component : components) {
+        for (@NotNull Component component : components) {
             this.components.put(component.getClass(), component);
         }
     }
@@ -59,7 +58,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> @Nullable C getComponent(@NotNull Class<? extends C> component) {
+    public final <C extends Component> C getComponent(@NotNull Class<? extends C> component) {
         return (C) components.get(component);
     }
 

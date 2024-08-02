@@ -18,24 +18,19 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.FileReader;
-import java.nio.file.Files;
+import java.io.File;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -93,38 +88,68 @@ public class FunctionTest {
 //    }
 
     public static void main(String[] args) throws Throwable {
-//        ClassifiedMapping<NamespacedMapping> mcpconfig = MappingFormats.TSRG_V2.read(new FileInputStream("downloads/1.19.3/joined.tsrg"));
-//        ClassifiedMapping<PairedMapping> official = MappingFormats.PROGUARD.read(new FileInputStream("downloads/1.19.3/client_mappings.txt"));
-//        var mappings = ClassifiedMappingRemapper.genMappingsByUnmappedNameMap(official.classes);
-//        for (ClassMapping<NamespacedMapping> cm : mcpconfig.classes) {
-//            NamespacedMapping mapping = cm.mapping;
-//            mapping.setName("srg", mappings.get(mapping.getName("obf")).mapping.mappedName);
+        FileChannel.open(Path.of("")).size();
+        new File("").length();
+//        ClassifiedMapping<NamespacedMapping> obf2srg = MappingFormats.TSRG_V2.read(new FileInputStream("downloads/1.19.2/joined.tsrg"));
+//        obf2srg.getTrait(NamespacedTrait.class).setMappedNamespace("srg");
+//        obf2srg.updateCollection();
+//        ClassifiedMapping<PairedMapping> official = MappingFormats.PROGUARD.read(new FileInputStream("downloads/1.19.2/client_mappings.txt"));
+//        var obf2off = new ClassifiedMappingRemapper(official);
+//        var out = new ClassifiedMapping<PairedMapping>();
+//        for (ClassMapping<NamespacedMapping> cm : obf2srg.classes) {
+//            String obfClassName = cm.mapping.getName("obf");
+//            ClassMapping<PairedMapping> ncm = new ClassMapping<>(new PairedMapping(obfClassName, obf2off.mapClass(obfClassName)));
+//            for (NamespacedMapping field : cm.getFields()) {
+//                ncm.addField(MappingUtil.Paired.o(field.getUnmappedName(), field.getMappedName()));
+//            }
+//            for (NamespacedMapping method : cm.getMethods()) {
+//                ncm.addMethod(MappingUtil.Paired.duo(method.getUnmappedName(), method.getMappedName(), method.getComponent(Descriptor.Namespaced.class).unmappedDescriptor));
+//            }
+//            out.classes.add(ncm);
 //        }
-//        MappingFormats.TSRG_V2.write(mcpconfig, Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.3/obf2srg.tsrg"))));
+//        try (var writer = Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.2/obf2srg.tsrg")))) {
+//            MappingFormats.TSRG_V1.write(out, writer);
+//        }
+//        for (ClassMapping<NamespacedMapping> cm : obf2srg.classes) {
+//            String obfClassName = cm.mapping.getUnmappedName();
+//            ClassMapping<PairedMapping> ncm = new ClassMapping<>(new PairedMapping(obf2off.mapClass(obfClassName), obf2off.mapClass(obfClassName)));
+//            for (NamespacedMapping field : cm.getFields()) {
+//                ncm.addField(MappingUtil.Paired.o(field.getMappedName(), obf2off.mapField(obfClassName, field.getUnmappedName())));
+//            }
+//            for (NamespacedMapping method : cm.getMethods()) {
+//                String obfDesc = method.getComponent(Descriptor.Namespaced.class).unmappedDescriptor;
+//                ncm.addMethod(MappingUtil.Paired.duo(method.getMappedName(), obf2off.mapMethod(obfClassName, method.getUnmappedName(), obfDesc), obf2off.mapMethodDesc(obfDesc)));
+//            }
+//            out.classes.add(ncm);
+//        }
+//        try (var writer = Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.2/srg2moj.tsrg")))) {
+//            MappingFormats.TSRG_V1.write(out, writer);
+//        }
+
 //        srg2mcp();
 //        moj2srg();
 
-        ClassifiedMapping<PairedMapping> srcMixin = MappingFormats.TSRG_V1.read(new FileReader("downloads/CSL/mixin.tsrg"));// mcp -> int
-        ClassifiedMapping<PairedMapping> srcFabric = MappingFormats.TSRG_V1.read(new FileReader("downloads/CSL/Fabric.tsrg"));
-        ClassifiedMapping<PairedMapping> mMoj2srg = MappingFormats.TSRG_V1.read(new FileReader("output/1.16.5-moj2srg.tsrg"));
-        ClassifiedMapping<PairedMapping> mObf2srg = MappingFormats.TSRG_V1.read(new FileReader("downloads/1.16.5/old_srg.tsrg"));
-        ClassifiedMapping<NamespacedMapping> srcIntermediary = MappingFormats.TINY_V1.read(new FileReader("downloads/1.16.5/intermediary.tiny"));
-        ClassifiedMappingRemapper int2obf = new ClassifiedMappingRemapper(srcIntermediary, "intermediary", true);
-        ClassifiedMappingRemapper obf2srg = new ClassifiedMappingRemapper(mObf2srg);
-        ClassifiedMappingRemapper srg2moj = new ClassifiedMappingRemapper(mMoj2srg, true);
-        ClassifiedMapping<PairedMapping> outMixin = new ClassifiedMapping<>();// moj -> srg
-        ClassifiedMapping<PairedMapping> outFabric = new ClassifiedMapping<>();
-        process(srcMixin, int2obf, obf2srg, srg2moj, outMixin, "mixin.tsrg");
-        process(srcFabric, int2obf, obf2srg, srg2moj, outFabric, "Fabric.tsrg");
-        try (var osMixin = Files.newOutputStream(Path.of("output/mixin-moj2srg.tsrg"), CREATE, TRUNCATE_EXISTING);
-            var osFabric = Files.newOutputStream(Path.of("output/Fabric-moj2srg.tsrg"), CREATE, TRUNCATE_EXISTING)) {
-            MappingFormats.TSRG_V1.write(outMixin, osMixin);
-            MappingFormats.TSRG_V1.write(outFabric, osFabric);
-        }
-        try (var in = Files.newBufferedReader(Path.of("in"));
-            var out = Files.newBufferedWriter(Path.of("out"))) {
-            MappingFormats.SRG.write(MappingFormats.TSRG_V1.read(in), out);
-        }
+//        ClassifiedMapping<PairedMapping> srcMixin = MappingFormats.TSRG_V1.read(new FileReader("downloads/CSL/mixin.tsrg"));// mcp -> int
+//        ClassifiedMapping<PairedMapping> srcFabric = MappingFormats.TSRG_V1.read(new FileReader("downloads/CSL/Fabric.tsrg"));
+//        ClassifiedMapping<PairedMapping> mMoj2srg = MappingFormats.TSRG_V1.read(new FileReader("output/1.16.5-moj2srg.tsrg"));
+//        ClassifiedMapping<PairedMapping> mObf2srg = MappingFormats.TSRG_V1.read(new FileReader("downloads/1.16.5/old_srg.tsrg"));
+//        ClassifiedMapping<NamespacedMapping> srcIntermediary = MappingFormats.TINY_V1.read(new FileReader("downloads/1.16.5/intermediary.tiny"));
+//        ClassifiedMappingRemapper int2obf = new ClassifiedMappingRemapper(srcIntermediary, "intermediary", true);
+//        ClassifiedMappingRemapper obf2srg = new ClassifiedMappingRemapper(mObf2srg);
+//        ClassifiedMappingRemapper srg2moj = new ClassifiedMappingRemapper(mMoj2srg, true);
+//        ClassifiedMapping<PairedMapping> outMixin = new ClassifiedMapping<>();// moj -> srg
+//        ClassifiedMapping<PairedMapping> outFabric = new ClassifiedMapping<>();
+//        process(srcMixin, int2obf, obf2srg, srg2moj, outMixin, "mixin.tsrg");
+//        process(srcFabric, int2obf, obf2srg, srg2moj, outFabric, "Fabric.tsrg");
+//        try (var osMixin = Files.newOutputStream(Path.of("output/mixin-moj2srg.tsrg"), CREATE, TRUNCATE_EXISTING);
+//            var osFabric = Files.newOutputStream(Path.of("output/Fabric-moj2srg.tsrg"), CREATE, TRUNCATE_EXISTING)) {
+//            MappingFormats.TSRG_V1.write(outMixin, osMixin);
+//            MappingFormats.TSRG_V1.write(outFabric, osFabric);
+//        }
+//        try (var in = Files.newBufferedReader(Path.of("in"));
+//            var out = Files.newBufferedWriter(Path.of("out"))) {
+//            MappingFormats.SRG.write(MappingFormats.TSRG_V1.read(in), out);
+//        }
     }
 
     private static void process(ClassifiedMapping<PairedMapping> src, ClassifiedMappingRemapper int2obf, ClassifiedMappingRemapper obf2srg,
