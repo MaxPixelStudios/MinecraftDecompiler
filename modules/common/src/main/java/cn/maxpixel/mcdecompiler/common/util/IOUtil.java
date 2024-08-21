@@ -30,12 +30,12 @@ import java.util.Objects;
 import java.util.zip.InflaterInputStream;
 
 public class IOUtil {
-    private static final Class<?> ZIP_FILESYSTEM;
+    private static final Class<?> ZIP_PATH;
     private static final Class<?> ENTRY_INPUT_STREAM;
 
     static {
         try {
-            ZIP_FILESYSTEM = Class.forName("jdk.nio.zipfs.ZipFileSystem");
+            ZIP_PATH = Class.forName("jdk.nio.zipfs.ZipPath");
             ENTRY_INPUT_STREAM = Class.forName("jdk.nio.zipfs.ZipFileSystem$EntryInputStream");
         } catch (ClassNotFoundException e) {
             throw Utils.wrapInRuntime(e);
@@ -43,7 +43,7 @@ public class IOUtil {
     }
 
     public static byte[] readAllBytes(@NotNull Path file) throws IOException {
-        if (ZIP_FILESYSTEM != file.getFileSystem().getClass()) throw new IllegalArgumentException(); // Ensure the filesystem is zipfs
+        if (ZIP_PATH != file.getClass()) throw new IllegalArgumentException(); // Ensure this is zipfs path
         try (InputStream is = Files.newInputStream(file)) {
             byte[] bytes = new byte[is.available()];
             if (is instanceof InflaterInputStream) {

@@ -27,6 +27,10 @@ import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import org.jetbrains.annotations.Nullable;
 
 public final class MappingUtil {
+    private MappingUtil() {
+        throw new AssertionError("No instances");
+    }
+
     public static <T extends Mapping> void checkOwner(Owned<T> owned, ClassMapping<T> owner) {
         if (owned.owner != owner) throw new IllegalArgumentException("Owner mismatch");
     }

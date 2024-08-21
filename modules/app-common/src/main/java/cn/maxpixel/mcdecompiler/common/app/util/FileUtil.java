@@ -134,8 +134,9 @@ public final class FileUtil {
             DirectoryStream<Path> ds = Files.newDirectoryStream(path);
             return StreamSupport.stream(ds.spliterator(), true)
                     .mapMulti((Path p, Consumer<Path> cons) -> {
-                        if (Files.isDirectory(p)) iterateFiles(p).forEach(cons);
-                        else cons.accept(p);
+                        if (Files.isDirectory(p)) try (var s = iterateFiles(p)) {
+                            s.sequential().forEach(cons);
+                        } else cons.accept(p);
                     }).onClose(LambdaUtil.unwrap(ds::close));
         } catch (IOException e) {
             LOGGER.fatal("Error iterating files", e);

@@ -44,13 +44,12 @@ public class IndyRemapper extends ClassVisitor {
 
         @Override
         public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
-            // We only remap name here. Other things are remapped by ASM's ClassRemapper
-            String newName = name;
+            // Only remap name here. Other things are remapped by ASM's ClassRemapper
             if (bootstrapMethodHandle.getOwner().equals("java/lang/invoke/LambdaMetafactory")) {
                 Type interfaceMethodType = (Type) bootstrapMethodArguments[0];
-                newName = mappingRemapper.mapMethodName(Type.getReturnType(descriptor).getInternalName(), name, interfaceMethodType.getDescriptor());
+                name = mappingRemapper.mapMethodName(Type.getReturnType(descriptor).getInternalName(), name, interfaceMethodType.getDescriptor());
             }
-            super.visitInvokeDynamicInsn(newName, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+            super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
         }
     }
 }

@@ -14,7 +14,7 @@ import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Lightweight remapper for descriptors in place of the general heavyweight remappers.
+ * Lightweight remapper for descriptors in place of the general heavyweight {@link cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper}s.
  */
 public class DescriptorRemapper {// TODO
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByUnm;

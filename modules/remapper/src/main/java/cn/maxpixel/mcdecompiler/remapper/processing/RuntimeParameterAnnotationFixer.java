@@ -67,7 +67,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, @Subst("(Ljava/lang/String;I)V") String descriptor, String signature, String[] exceptions) {
-        if(toProcess != null && "<init>".equals(name) && descriptor.startsWith(toProcess)) {
+        if (toProcess != null && "<init>".equals(name) && descriptor.startsWith(toProcess)) {
             return new MethodVisitor(Deobfuscator.ASM_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
                 private final int params = DescriptorUtil.getArgumentCount(descriptor);
                 private boolean processVisible;
