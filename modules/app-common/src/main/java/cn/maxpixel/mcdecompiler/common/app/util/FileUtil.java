@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.common.app.util;
 
-import cn.maxpixel.mcdecompiler.common.util.LambdaUtil;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
@@ -35,7 +34,6 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -116,28 +114,26 @@ public final class FileUtil {
         return p;
     }
 
-    public static Path ensureFileExist(@NotNull Path p) {
-        if (Files.notExists(p)) {
-            try {
-                Path parent = p.getParent();
-                if (parent != null) Files.createDirectories(parent);
-                Files.createFile(p);
-            } catch (IOException e) {
-                throw Utils.wrapInRuntime(e);
-            }
+    public static Path makeParentDirs(@NotNull Path p) {
+        try {
+            Path parent = p.getParent();
+            if (parent != null) Files.createDirectories(parent);
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(e);
         }
         return p;
     }
 
     public static Stream<Path> iterateFiles(@NotNull Path path) {
-        try {
-            DirectoryStream<Path> ds = Files.newDirectoryStream(path);
-            return StreamSupport.stream(ds.spliterator(), true)
-                    .mapMulti((Path p, Consumer<Path> cons) -> {
-                        if (Files.isDirectory(p)) try (var s = iterateFiles(p)) {
-                            s.sequential().forEach(cons);
-                        } else cons.accept(p);
-                    }).onClose(LambdaUtil.unwrap(ds::close));
+        try {// TODO: implement a custom spliterator later
+//            DirectoryStream<Path> ds = Files.newDirectoryStream(path);
+//            return StreamSupport.stream(ds.spliterator(), true)
+//                    .mapMulti((Path p, Consumer<Path> cons) -> {
+//                        if (Files.isDirectory(p)) try (var s = iterateFiles(p)) {
+//                            s.sequential().forEach(cons);
+//                        } else cons.accept(p);
+//                    }).onClose(LambdaUtil.unwrap(ds::close));
+            return Files.walk(path).parallel().filter(Files::isRegularFile);
         } catch (IOException e) {
             LOGGER.fatal("Error iterating files", e);
             throw Utils.wrapInRuntime(e);

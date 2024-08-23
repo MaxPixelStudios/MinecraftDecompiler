@@ -41,6 +41,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -56,6 +57,7 @@ public class DownloadingUtil {
     public static final Proxy INTERNAL_PROXY = Constants.IS_DEV ?
             new Proxy(Proxy.Type.HTTP, new InetSocketAddress(1080)) : // Just for internal testing.
             Proxy.NO_PROXY;
+    private static final OpenOption[] OPEN_OPTIONS = {CREATE, WRITE, TRUNCATE_EXISTING};
 
     public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .proxy(new ProxySelector() {
@@ -90,7 +92,7 @@ public class DownloadingUtil {
                 LOGGER.info("Downloading {} {} jar...", id, type);
                 return HTTP_CLIENT.sendAsync(
                         HttpRequest.newBuilder(URI.create(download.get("url").getAsString())).build(),
-                        HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING)
+                        HttpResponse.BodyHandlers.ofFile(FileUtil.makeParentDirs(p), OPEN_OPTIONS)
                 ).thenApply(HttpResponse::body);
             } else return CompletableFuture.completedFuture(p);
         }).whenComplete((p, ex) -> {
@@ -116,7 +118,7 @@ public class DownloadingUtil {
                 LOGGER.info("Downloading {} {} mapping...", id, type);
                 return HTTP_CLIENT.sendAsync(
                         HttpRequest.newBuilder(URI.create(mappings.get("url").getAsString())).build(),
-                        HttpResponse.BodyHandlers.ofFile(FileUtil.ensureFileExist(p), WRITE, TRUNCATE_EXISTING)
+                        HttpResponse.BodyHandlers.ofFile(FileUtil.makeParentDirs(p), OPEN_OPTIONS)
                 ).thenApply(HttpResponse::body);
             } else return CompletableFuture.completedFuture(p);
         }).thenApply(LambdaUtil.unwrap(Files::newBufferedReader, LambdaUtil::rethrowAsCompletion));
@@ -134,11 +136,9 @@ public class DownloadingUtil {
         try {
             if (!FileUtil.verify(Objects.requireNonNull(localPath), HTTP_CLIENT.send(HttpRequest.newBuilder(remoteHash)
                     .build(), HttpResponse.BodyHandlers.ofString()).body())) {
-                FileUtil.deleteIfExists(localPath);
                 LOGGER.debug("Downloading the resource");
-                FileUtil.ensureFileExist(localPath);
                 HTTP_CLIENT.send(HttpRequest.newBuilder(remoteResource).build(),
-                        HttpResponse.BodyHandlers.ofFile(localPath, WRITE, TRUNCATE_EXISTING));
+                        HttpResponse.BodyHandlers.ofFile(FileUtil.makeParentDirs(localPath), OPEN_OPTIONS));
             }
         } catch (InterruptedException e) {
             LOGGER.fatal("Download process interrupted", e);
@@ -171,7 +171,7 @@ public class DownloadingUtil {
                         LOGGER.debug("Downloading {}", url);
                         try {
                             HTTP_CLIENT.send(HttpRequest.newBuilder(URI.create(url)).build(),
-                                    HttpResponse.BodyHandlers.ofFile(file, CREATE, WRITE, TRUNCATE_EXISTING));
+                                    HttpResponse.BodyHandlers.ofFile(file, OPEN_OPTIONS));
                         } catch (IOException e) {
                             LOGGER.fatal("Error downloading files", e);
                             throw Utils.wrapInRuntime(e);

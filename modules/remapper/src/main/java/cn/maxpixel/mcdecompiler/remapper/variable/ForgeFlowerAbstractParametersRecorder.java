@@ -28,7 +28,6 @@ import org.objectweb.asm.Type;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.StringJoiner;
 
 public final class ForgeFlowerAbstractParametersRecorder {
@@ -51,9 +50,7 @@ public final class ForgeFlowerAbstractParametersRecorder {
 
     public void endRecord(@NotNull Path writeTo) throws IOException {
         if (!recording) throw new IllegalStateException("Record not started yet");
-        FileUtil.deleteIfExists(writeTo);
-        Files.writeString(FileUtil.ensureFileExist(writeTo), String.join("\n", generated),
-                StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(FileUtil.makeParentDirs(writeTo), String.join("\n", generated));
         LOGGER.debug("Saved record to {}", writeTo);
         recording = false;
         LOGGER.debug("Ended record");

@@ -50,7 +50,7 @@ public class ClassFileRemapper extends Remapper {
         return name;
     }
 
-    private Optional<String[]> processSuperMethod(String owner, String name, String descriptor) {
+    private Optional<String[]> processSuperMethod(String owner, String name, String descriptor) {// TODO: Optimize this
         return Optional.ofNullable(eci.getSuperNames(owner))
                 .flatMap(superNames -> {
                     String nameAndDesc = name.concat(descriptor);

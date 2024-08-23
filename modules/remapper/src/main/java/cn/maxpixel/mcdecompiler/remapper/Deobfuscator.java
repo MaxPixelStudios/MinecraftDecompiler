@@ -43,9 +43,8 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
     public Deobfuscator<T> deobfuscate(Path source, Path target) throws IOException {
         LOGGER.info("Deobfuscating...");
         Files.deleteIfExists(target);
-        Files.createDirectories(target.getParent());
         try (FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
-             FileSystem targetFs = JarUtil.createZipFs(target, true);
+             FileSystem targetFs = JarUtil.createZipFs(FileUtil.makeParentDirs(target), true);
              Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             Set<String> extraClasses = options.extraClasses;
             boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
@@ -58,8 +57,9 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
                                 (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
             options.extraJars.forEach(jar -> {
-                try (FileSystem jarFs = JarUtil.createZipFs(jar)) {
-                    FileUtil.iterateFiles(jarFs.getPath("")).filter(p -> p.toString().endsWith(".class")).forEach(info);
+                try (FileSystem jarFs = JarUtil.createZipFs(jar);
+                    Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {
+                    s.filter(p -> p.toString().endsWith(".class")).forEach(info);
                 } catch (IOException e) {
                     LOGGER.warn("Error reading extra jar: {}", jar, e);
                 }
@@ -81,13 +81,13 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
                         synchronized (toDecompile) {
                             toDecompile.add(mapped);
                         }
-                        try (OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(mapped)))) {
+                        try (OutputStream os = Files.newOutputStream(FileUtil.makeParentDirs(targetFs.getPath(mapped)))) {
                             os.write(writer.toByteArray());
                         }
                     } else if (options.includeOthers) {
                         if (pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;
                         try (InputStream inputStream = Files.newInputStream(path);
-                             OutputStream os = Files.newOutputStream(FileUtil.ensureFileExist(targetFs.getPath(pathString)))) {
+                             OutputStream os = Files.newOutputStream(FileUtil.makeParentDirs(targetFs.getPath(pathString)))) {
                             if (path.endsWith("META-INF/MANIFEST.MF")) {
                                 Manifest man = new Manifest(inputStream);
                                 man.getEntries().clear();

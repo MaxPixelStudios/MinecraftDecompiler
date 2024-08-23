@@ -113,11 +113,12 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                 ObjectSet<Path> libs = options.bundledLibs().<ObjectSet<Path>>map(ObjectOpenHashSet::new).orElseGet(() ->
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
                 if (incrementalJar != null && decompiler.getSourceType() == IDecompiler.SourceType.DIRECTORY) {
-                    try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar)) {
+                    try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar);
+                        Stream<Path> paths = FileUtil.iterateFiles(incrementalFs.getPath(""))) {
                         var toDecompile = deobfuscator.toDecompile;
                         ObjectOpenHashSet<String> possibleInnerClasses = new ObjectOpenHashSet<>();
                         ObjectOpenHashSet<String> maybeRemoved = new ObjectOpenHashSet<>();
-                        FileUtil.iterateFiles(incrementalFs.getPath("")).forEach(p -> {
+                        paths.forEach(p -> {
                             String path = p.toString();
                             if (path.endsWith(".class")) {
                                 String fileName = p.getFileName().toString();
@@ -224,8 +225,9 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                     } else throw new IllegalArgumentException("Why multiple versions in a bundle?");
                     ObjectOpenHashSet<Path> libs = new ObjectOpenHashSet<>();
                     try (Stream<String> lines = Files.lines(metaInf.resolve("libraries.list"))) {
+                        Path libraries = metaInf.resolve("libraries");
                         lines.forEach(line -> {
-                            Path lib = metaInf.resolve("libraries").resolve(line.split("\t")[2]);
+                            Path lib = libraries.resolve(line.split("\t")[2]);
                             FileUtil.copyFile(lib, extractDir);
                             libs.add(extractDir.resolve(lib.getFileName().toString()));
                         });
