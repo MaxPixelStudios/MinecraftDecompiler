@@ -18,28 +18,63 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 import java.util.Objects;
 
+/**
+ * The component that holds documentation about a class, field, method, or parameter.
+ *
+ * @apiNote The content is a list of strings, which each element represents exactly <b>one</b> line,
+ * so {@code \n} and {@code \r} are not allowed. An empty line must be represented by {@code ""}.
+ * {@code null} elements are prohibited
+ */
 public class Documented implements Component {
-    private String doc;
+    /**
+     * The contents
+     */
+    public final ObjectArrayList<String> contents = new ObjectArrayList<>();
 
-    public String getDoc() {
-        return doc;
+    /**
+     * Gets the contents
+     * @return The contents
+     */
+    public List<String> getContents() {
+        return contents;
     }
 
-    public void setDoc(String doc) {
-        this.doc = Objects.requireNonNull(doc, "null documentation isn't meaningful huh?");
+    /**
+     * Join the contents with {@code \n}
+     * @return the joined string
+     */
+    public @NotNull String getContentString() {
+        if (contents.isEmpty()) return "";
+        return String.join("\n", contents);
+    }
+
+    /**
+     * Breaks the string into lines and sets them as contents
+     * @param content the string
+     */
+    public void setContents(@NotNull String content) {
+        int mark = 0;
+        for (int i = content.indexOf('\n'); i >= 0; i = content.indexOf('\n', mark)) {
+            contents.add(content.substring(mark, content.charAt(i - 1) == '\r' ? i - 1 : i));
+            mark = i + 1;
+        }
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Documented that)) return false;
-        return Objects.equals(doc, that.doc);
+        return Objects.equals(contents, that.contents);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(doc);
+        return Objects.hashCode(contents);
     }
 }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Lightweight remapper for descriptors in place of the general heavyweight {@link cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper}s.
  */
-public class DescriptorRemapper {// TODO
+public class DescriptorRemapper {
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByUnm;
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByMap;
 

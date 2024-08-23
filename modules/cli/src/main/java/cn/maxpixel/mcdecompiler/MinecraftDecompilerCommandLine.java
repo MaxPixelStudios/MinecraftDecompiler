@@ -52,6 +52,7 @@ public class MinecraftDecompilerCommandLine {
     private static final Logger LOGGER = LogManager.getLogger("CommandLine");
 
     public static void main(String[] args) throws Throwable {
+        if (Constants.IS_DEV) LOGGER.info("MCD Begin");// Used to measure time
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<SideType> sideTypeO = parser.acceptsAll(of("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". With this option, you must specify --version option and can't " +

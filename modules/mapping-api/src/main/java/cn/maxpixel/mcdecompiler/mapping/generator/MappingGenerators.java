@@ -29,6 +29,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -339,8 +340,8 @@ public interface MappingGenerators {
                     synchronized (lines) {
                         lines.add("\tf\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
                         if (field.hasComponent(Documented.class)) {
-                            String doc = field.getComponent(Documented.class).getDoc();
-                            if (doc != null && !doc.isBlank()) lines.add("\t\tc\t" + doc);
+                            String doc = field.getComponent(Documented.class).getContentString();
+                            if (!doc.isBlank()) lines.add("\t\tc\t" + TinyUtil.escape(doc));
                         }
                     }
                 });
@@ -349,8 +350,8 @@ public interface MappingGenerators {
                     synchronized (lines) {
                         lines.add("\tm\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));
                         if (method.hasComponent(Documented.class)) {
-                            String doc = method.getComponent(Documented.class).getDoc();
-                            if (doc != null && !doc.isBlank()) lines.add("\t\tc\t" + doc);
+                            String doc = method.getComponent(Documented.class).getContentString();
+                            if (!doc.isBlank()) lines.add("\t\tc\t" + TinyUtil.escape(doc));
                         }
                         if (method.hasComponent(LocalVariableTable.Namespaced.class)) {
                             LocalVariableTable.Namespaced lvt = method.getComponent(LocalVariableTable.Namespaced.class);
@@ -364,9 +365,9 @@ public interface MappingGenerators {
                                     return name;
                                 }, "\t");
                                 lines.add("\t\tp\t" + index + '\t' + names);
-                                if(localVariable.hasComponent(Documented.class)) {
-                                    String doc = localVariable.getComponent(Documented.class).getDoc();
-                                    if(doc != null && !doc.isBlank()) lines.add("\t\t\tc\t" + doc);
+                                if (localVariable.hasComponent(Documented.class)) {
+                                    String doc = localVariable.getComponent(Documented.class).getContentString();
+                                    if (!doc.isBlank()) lines.add("\t\t\tc\t" + TinyUtil.escape(doc));
                                 }
                             });
                         }

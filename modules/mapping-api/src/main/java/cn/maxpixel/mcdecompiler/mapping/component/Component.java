@@ -22,4 +22,10 @@ package cn.maxpixel.mcdecompiler.mapping.component;
  * Base component class. Every component must implement this interface
  */
 public interface Component {
+    /**
+     * Validates this component.
+     * @throws IllegalStateException if the validation fails
+     */
+    default void validate() throws IllegalStateException {// TODO
+    }
 }

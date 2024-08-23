@@ -30,6 +30,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -424,7 +425,7 @@ public interface MappingProcessors {
                 if (s.charAt(0) == '\t') {
                     String[] sa = MappingUtil.split(s.substring(3), '\t');
                     switch (s.charAt(1)) {
-                        case 'c' -> classMapping.mapping.getComponent(Documented.class).setDoc(sa[0]);
+                        case 'c' -> classMapping.mapping.getComponent(Documented.class).setContents(TinyUtil.unescape(sa[0]));
                         case 'f' -> {
                             NamespacedMapping fieldMapping = MappingUtil.Namespaced.dduo(namespaces, sa, 1, namespaces[0], sa[0]);
                             index = processTree1(index, size, namespaces, content, fieldMapping);
@@ -448,7 +449,7 @@ public interface MappingProcessors {
                 String s = content.get(index);
                 if (s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                     switch (s.charAt(2)) {
-                        case 'c' -> mapping.getComponent(Documented.class).setDoc(s.substring(4));
+                        case 'c' -> mapping.getComponent(Documented.class).setContents(TinyUtil.unescape(s.substring(4)));
                         case 'p' -> {
                             String[] sa = MappingUtil.split(s.substring(4), '\t');
                             NamespacedMapping localVariable = MappingUtil.Namespaced.d(namespaces, sa, 1);
@@ -467,7 +468,7 @@ public interface MappingProcessors {
             if (++index < size) {
                 String s = content.get(index);
                 if (s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
-                    if(s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setDoc(s.substring(5));
+                    if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContents(TinyUtil.unescape(s.substring(5)));
                     else error();
                     return index;
                 }

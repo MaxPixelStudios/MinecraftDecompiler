@@ -165,8 +165,6 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
         if (namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length)))
             throw new IllegalArgumentException();
         for (int i = 0; i < namespaces.length; i++) {
-//            var n = i + nameStart;// FIXME: Maybe useless?
-//            this.names.put(Objects.requireNonNull(namespaces[i]), n >= names.length ? names[names.length - 1] : names[n]);
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
         }
     }
