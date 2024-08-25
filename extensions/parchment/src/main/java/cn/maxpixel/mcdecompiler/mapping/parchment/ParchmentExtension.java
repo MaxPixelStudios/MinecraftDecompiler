@@ -6,12 +6,10 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import org.jetbrains.annotations.NotNull;
 
 public class ParchmentExtension implements Extension {
-    public static final String NAME = "parchment";
-
     @NotNull
     @Override
     public String getName() {
-        return NAME;
+        return ParchmentMappingFormat.NAME;
     }
 
     @Override

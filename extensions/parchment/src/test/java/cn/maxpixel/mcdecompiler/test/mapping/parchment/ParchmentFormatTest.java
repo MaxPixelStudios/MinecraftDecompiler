@@ -4,7 +4,6 @@ import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.parchment.FormatVersion;
-import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentExtension;
 import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingProcessor;
 import cn.maxpixel.rewh.logging.LogManager;
@@ -33,7 +32,7 @@ class ParchmentFormatTest {
     @Test
     void testFormatExtension() {
         ExtensionManager.init();
-        assertEquals(ParchmentMappingFormat.INSTANCE, MappingFormats.get(ParchmentExtension.NAME));
+        assertEquals(ParchmentMappingFormat.INSTANCE, MappingFormats.get(ParchmentMappingFormat.NAME));
     }
 
     @Test

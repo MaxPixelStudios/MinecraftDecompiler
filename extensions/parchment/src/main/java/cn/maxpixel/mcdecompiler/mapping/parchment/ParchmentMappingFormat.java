@@ -10,6 +10,7 @@ import java.util.Objects;
 
 public enum ParchmentMappingFormat implements MappingFormat.Classified<PairedMapping> {
     INSTANCE;
+    public static final String NAME = "parchment";
     public static final String KEY_NAME = "name";
     public static final String KEY_JAVADOC = "javadoc";
     public static final String KEY_DESCRIPTOR = "descriptor";
@@ -23,7 +24,7 @@ public enum ParchmentMappingFormat implements MappingFormat.Classified<PairedMap
 
     @Override
     public @NotNull String getName() {
-        return ParchmentExtension.NAME;
+        return NAME;
     }
 
     @Override
