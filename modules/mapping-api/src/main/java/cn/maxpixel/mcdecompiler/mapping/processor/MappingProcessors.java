@@ -54,34 +54,34 @@ public interface MappingProcessors {
             content.parallelStream().forEach(s -> {
                 String[] strings = s.split(" ", 6);
                 switch (strings[0]) {
-                    case "CL:":
+                    case "CL:" -> {
                         ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(strings[1], strings[2]));
                         synchronized (classes) {
                             classes.putIfAbsent(strings[1], classMapping);
                         }
-                        break;
-                    case "FD:":
+                    }
+                    case "FD:" -> {
                         PairedMapping fieldMapping = MappingUtil.Paired.o(getName(strings[1]), getName(strings[2]));
                         String unmClassName = getClassName(strings[1]);
                         synchronized (classes) {
                             classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[2]))
                                     .addField(fieldMapping);
                         }
-                        break;
-                    case "MD:":
+                    }
+                    case "MD:" -> {
                         PairedMapping methodMapping = MappingUtil.Paired.d2o(getName(strings[1]), getName(strings[3]), strings[2], strings[4]);
-                        unmClassName = getClassName(strings[1]);
+                        String unmClassName = getClassName(strings[1]);
                         synchronized (classes) {
                             classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[3]))
                                     .addMethod(methodMapping);
                         }
-                        break;
-                    case "PK:":
+                    }
+                    case "PK:" -> {
                         synchronized (mappings.packages) {
                             mappings.packages.add(new PairedMapping(strings[1], strings[2]));
                         }
-                        break;
-                    default: throw new IllegalArgumentException("Is this a SRG mapping file?");
+                    }
+                    default -> throw new IllegalArgumentException("Is this a SRG mapping file?");
                 }
             });
             mappings.classes.addAll(classes.values());
@@ -99,7 +99,7 @@ public interface MappingProcessors {
 
     MappingProcessor.Classified<PairedMapping> CSRG = new MappingProcessor.Classified<>() {
         private static final Function<String, ClassMapping<PairedMapping>> COMPUTE_FUNC = name ->
-                new ClassMapping<>(new PairedMapping(name, name));
+                new ClassMapping<>(new PairedMapping(name));
 
         @Override
         public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
@@ -113,7 +113,7 @@ public interface MappingProcessors {
             content.parallelStream().forEach(s -> {
                 String[] sa = s.split(" ", 5);
                 switch (sa.length) {
-                    case 2: // Class / Package
+                    case 2 -> { // Class / Package
                         if (sa[0].charAt(sa[0].length() - 1) == '/') synchronized (mappings.packages) {
                             mappings.packages.add(new PairedMapping(sa[0].substring(0, sa[0].length() - 1),
                                     sa[1].substring(0, sa[1].length() - 1)));
@@ -127,20 +127,20 @@ public interface MappingProcessors {
                                 });
                             }
                         }
-                        break;
-                    case 3: // Field
+                    }
+                    case 3 -> { // Field
                         PairedMapping fieldMapping = MappingUtil.Paired.o(sa[1], sa[2]);
                         synchronized (classes) {
                             classes.computeIfAbsent(sa[0], COMPUTE_FUNC).addField(fieldMapping);
                         }
-                        break;
-                    case 4: // Method
+                    }
+                    case 4 -> { // Method
                         PairedMapping methodMapping = MappingUtil.Paired.duo(sa[1], sa[3], sa[2]);
                         synchronized (classes) {
                             classes.computeIfAbsent(sa[0], COMPUTE_FUNC).addMethod(methodMapping);
                         }
-                        break;
-                    default: throw new IllegalArgumentException("Is this a CSRG mapping file?");
+                    }
+                    default -> throw new IllegalArgumentException("Is this a CSRG mapping file?");
                 }
             });
             mappings.classes.addAll(classes.values());
@@ -425,7 +425,7 @@ public interface MappingProcessors {
                 if (s.charAt(0) == '\t') {
                     String[] sa = MappingUtil.split(s.substring(3), '\t');
                     switch (s.charAt(1)) {
-                        case 'c' -> classMapping.mapping.getComponent(Documented.class).setContents(TinyUtil.unescape(sa[0]));
+                        case 'c' -> classMapping.mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(sa[0]));
                         case 'f' -> {
                             NamespacedMapping fieldMapping = MappingUtil.Namespaced.dduo(namespaces, sa, 1, namespaces[0], sa[0]);
                             index = processTree1(index, size, namespaces, content, fieldMapping);
@@ -449,7 +449,7 @@ public interface MappingProcessors {
                 String s = content.get(index);
                 if (s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                     switch (s.charAt(2)) {
-                        case 'c' -> mapping.getComponent(Documented.class).setContents(TinyUtil.unescape(s.substring(4)));
+                        case 'c' -> mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(s.substring(4)));
                         case 'p' -> {
                             String[] sa = MappingUtil.split(s.substring(4), '\t');
                             NamespacedMapping localVariable = MappingUtil.Namespaced.d(namespaces, sa, 1);
@@ -468,7 +468,7 @@ public interface MappingProcessors {
             if (++index < size) {
                 String s = content.get(index);
                 if (s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
-                    if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContents(TinyUtil.unescape(s.substring(5)));
+                    if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContentString(TinyUtil.unescape(s.substring(5)));
                     else error();
                     return index;
                 }

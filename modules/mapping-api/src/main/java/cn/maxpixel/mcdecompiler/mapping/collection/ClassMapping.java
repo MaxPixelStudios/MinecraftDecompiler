@@ -43,9 +43,14 @@ public class ClassMapping<T extends Mapping> {
     /**
      * The mapping for this class
      */
-    public @NotNull T mapping;
+    public T mapping;
     private final ObjectArrayList<@NotNull T> methods = new ObjectArrayList<>();
     private final ObjectArrayList<@NotNull T> fields = new ObjectArrayList<>();
+
+    /**
+     * No-arg constructor
+     */
+    public ClassMapping() {}
 
     /**
      * Constructor
@@ -85,7 +90,7 @@ public class ClassMapping<T extends Mapping> {
      * @return this class mapping
      */
     public ClassMapping<T> addMethods(T... methods) {
-        for(T method : methods) addMethod(method);
+        for (T method : methods) addMethod(method);
         return this;
     }
 
@@ -108,8 +113,8 @@ public class ClassMapping<T extends Mapping> {
      */
     @SuppressWarnings("unchecked")
     public ClassMapping<T> addField(T field) {
-        if(!field.hasComponent(Owned.class)) throw new UnsupportedOperationException();
-        field.getComponent(Owned.class).setOwner(this);
+        if (!field.hasComponent(Owned.class)) field.addComponent(new Owned<>(this));
+        else field.getComponent(Owned.class).setOwner(this);
         fields.add(field);
         return this;
     }
@@ -122,10 +127,10 @@ public class ClassMapping<T extends Mapping> {
      */
     @SuppressWarnings("unchecked")
     public ClassMapping<T> addMethod(T method) {
-        if(!method.hasComponent(Owned.class)) throw new UnsupportedOperationException();
-        if(!method.hasComponent(Descriptor.class) && !method.hasComponent(Descriptor.Mapped.class) &&
+        if (!method.hasComponent(Descriptor.class) && !method.hasComponent(Descriptor.Mapped.class) &&
                 !method.hasComponent(Descriptor.Namespaced.class)) throw new UnsupportedOperationException();
-        method.getComponent(Owned.class).setOwner(this);
+        if (!method.hasComponent(Owned.class)) method.addComponent(new Owned<>(this));
+        else method.getComponent(Owned.class).setOwner(this);
         methods.add(method);
         return this;
     }
@@ -196,12 +201,22 @@ public class ClassMapping<T extends Mapping> {
         cm.methods.forEach(m -> m.setFallbackNamespace(namespace));
     }
 
+    public boolean mappingEquals(ClassMapping<?> that) {
+        if (this == that) return true;
+        if (that == null) return false;
+        return Objects.equals(mapping, that.mapping);
+    }
+
+    public static boolean mappingEquals(ClassMapping<?> a, ClassMapping<?> b) {
+        return (a == b) || (a != null && b != null && Objects.equals(a.mapping, b.mapping));
+    }
+
     /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ClassMapping<?> that)) return false;
-        return mapping.equals(that.mapping) && methods.equals(that.methods) && fields.equals(that.fields);
+        return Objects.equals(mapping, that.mapping) && methods.equals(that.methods) && fields.equals(that.fields);
     }
 
     @Override

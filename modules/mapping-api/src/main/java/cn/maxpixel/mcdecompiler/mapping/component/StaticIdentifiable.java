@@ -18,6 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+/**
+ * This component indicates whether a method is static.
+ * @see LocalVariableTable API note of LocalVariableTable
+ * @apiNote The behavior of {@link LocalVariableTable} changes when this component is present
+ */
 public class StaticIdentifiable implements Component {
     public boolean isStatic;
 

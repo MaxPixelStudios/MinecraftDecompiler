@@ -31,6 +31,14 @@ import org.jetbrains.annotations.Range;
 
 import java.util.Objects;
 
+/**
+ * This component represents a local variable table mapping
+ * @param <T> The type of the mapping
+ * @apiNote The default behavior is to treat the index in {@link LocalVariableTable} as the actual lvt index.
+ *          However, when {@link StaticIdentifiable} presents and {@code isStatic == false}, the index in {@link LocalVariableTable}
+ *          will be treated as the actual lvt index - 1, which means that index 0 in {@link LocalVariableTable} represents
+ *          the index 1 in the actual lvt(omitting {@code this}).
+ */
 public abstract class LocalVariableTable<T extends Mapping> {
     protected final @NotNull Int2ObjectOpenHashMap<T> lvt = new Int2ObjectOpenHashMap<>();
 
@@ -46,6 +54,14 @@ public abstract class LocalVariableTable<T extends Mapping> {
         return lvt.keySet();
     }
 
+    public int getLocalVariableCount() {
+        return lvt.size();
+    }
+
+    public boolean isEmpty() {
+        return lvt.isEmpty();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -56,6 +72,13 @@ public abstract class LocalVariableTable<T extends Mapping> {
     @Override
     public int hashCode() {
         return lvt.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "LocalVariableTable{" +
+                "lvt=" + lvt +
+                '}';
     }
 
     public static class Paired extends LocalVariableTable<PairedMapping> implements Component {

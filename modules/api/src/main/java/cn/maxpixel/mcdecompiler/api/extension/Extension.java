@@ -6,6 +6,7 @@ import cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.remapper.processing.Process;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 import org.objectweb.asm.ClassReader;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.OverrideOnly
 public interface Extension {
     @NotNull String getName();
 

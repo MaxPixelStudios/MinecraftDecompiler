@@ -26,6 +26,12 @@ import java.util.Objects;
 public class Owned<T extends Mapping> implements Component {
     public ClassMapping<T> owner;
 
+    public Owned() {}
+
+    public Owned(ClassMapping<T> owner) {
+        this.owner = owner;
+    }
+
     public ClassMapping<T> getOwner() {
         return owner;
     }
@@ -38,11 +44,11 @@ public class Owned<T extends Mapping> implements Component {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Owned<?> owned)) return false;
-        return Objects.equals(owner.mapping, owned.owner.mapping);
+        return ClassMapping.mappingEquals(owner, owned.owner);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(owner.mapping);
+        return owner == null ? 0 : Objects.hashCode(owner.mapping);
     }
 }

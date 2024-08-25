@@ -66,6 +66,28 @@ public class PairedMapping extends Mapping {
     /**
      * Constructor
      *
+     * @param name The name
+     * @param components Components add to this mapping
+     */
+    public PairedMapping(String name, Component... components) {
+        super(components);
+        this.unmappedName = name;
+        this.mappedName = name;
+    }
+
+    /**
+     * Constructor
+     *
+     * @param name The name
+     */
+    public PairedMapping(String name) {
+        this.unmappedName = name;
+        this.mappedName = name;
+    }
+
+    /**
+     * Constructor
+     *
      * @param components Components add to this mapping
      */
     public PairedMapping(Component... components) {
@@ -77,6 +99,7 @@ public class PairedMapping extends Mapping {
      */
     public PairedMapping() {}
 
+    @SuppressWarnings("unchecked")
     public Owned<PairedMapping> getOwned() {
         return getComponent(Owned.class);
     }

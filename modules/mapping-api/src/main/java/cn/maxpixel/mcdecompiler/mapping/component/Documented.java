@@ -58,12 +58,13 @@ public class Documented implements Component {
      * Breaks the string into lines and sets them as contents
      * @param content the string
      */
-    public void setContents(@NotNull String content) {
+    public void setContentString(@NotNull String content) {
         int mark = 0;
         for (int i = content.indexOf('\n'); i >= 0; i = content.indexOf('\n', mark)) {
             contents.add(content.substring(mark, content.charAt(i - 1) == '\r' ? i - 1 : i));
             mark = i + 1;
         }
+        if (mark < content.length()) contents.add(content.substring(mark));
     }
 
     @Override
