@@ -90,6 +90,12 @@
                                 <exclude>it/unimi/dsi/fastutil/**/*Big*</exclude>
                             </excludes>
                         </filter>
+                        <filter>
+                            <artifact>cn.maxpixel.minecraft-decompiler:decompiler</artifact>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                        </filter>
                     </filters>
                     <relocations>
                         <relocation>

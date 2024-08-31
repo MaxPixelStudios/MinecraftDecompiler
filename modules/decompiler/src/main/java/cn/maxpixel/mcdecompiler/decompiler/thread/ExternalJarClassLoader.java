@@ -31,7 +31,7 @@ public class ExternalJarClassLoader extends URLClassLoader {
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if(name.startsWith("cn.maxpixel.mcdecompiler.decompiler.thread")) {
+        if (name.startsWith("cn.maxpixel.mcdecompiler.decompiler.thread")) {
             synchronized (getClassLoadingLock(name)) {
                 Class<?> c = findLoadedClass(name);
                 if (c == null) {

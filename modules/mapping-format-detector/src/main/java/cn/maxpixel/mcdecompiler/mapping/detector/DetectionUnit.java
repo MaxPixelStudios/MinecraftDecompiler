@@ -22,7 +22,7 @@ public interface DetectionUnit {
         return Optional.empty();
     }
 
-    Pair<MappingFormat<?, ?>, Percentage> detectContent(List<String> contents);
+    Pair</*@Nullable*/ MappingFormat<?, ?>, /*@NotNull*/ Percentage> detectContent(List<String> contents);
 
     enum Percentage {
         ZERO,

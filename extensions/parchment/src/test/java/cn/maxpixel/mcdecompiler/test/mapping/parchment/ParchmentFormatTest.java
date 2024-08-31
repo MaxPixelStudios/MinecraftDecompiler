@@ -36,7 +36,7 @@ class ParchmentFormatTest {
     }
 
     @Test
-    void testProcessor(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
+    void testProcessorAndGenerator(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         LOGGER.info(tmp.toString());
         var is = getClass().getClassLoader().getResourceAsStream("parchment.json");
         assertNotNull(is);
