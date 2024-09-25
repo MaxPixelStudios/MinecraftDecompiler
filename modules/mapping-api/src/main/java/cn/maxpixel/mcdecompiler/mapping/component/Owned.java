@@ -41,6 +41,11 @@ public class Owned<T extends Mapping> implements Component {
     }
 
     @Override
+    public void validate() throws IllegalStateException {
+        if (owner == null) throw new IllegalStateException("Owner is null");
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Owned<?> owned)) return false;

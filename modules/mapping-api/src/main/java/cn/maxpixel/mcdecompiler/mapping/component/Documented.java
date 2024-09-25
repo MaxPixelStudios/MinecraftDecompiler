@@ -35,13 +35,13 @@ public class Documented implements Component {
     /**
      * The contents
      */
-    public final ObjectArrayList<String> contents = new ObjectArrayList<>();
+    public final ObjectArrayList<@NotNull String> contents = new ObjectArrayList<>();
 
     /**
      * Gets the contents
      * @return The contents
      */
-    public List<String> getContents() {
+    public List<@NotNull String> getContents() {
         return contents;
     }
 
@@ -68,10 +68,18 @@ public class Documented implements Component {
     }
 
     @Override
+    public void validate() throws IllegalStateException {
+        for (String content : contents) {
+            if (content.indexOf('\n') != -1 || content.indexOf('\r') != -1)
+                throw new IllegalStateException("The document contains invalid characters");
+        }
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Documented that)) return false;
-        return Objects.equals(contents, that.contents);
+        return contents.equals(that.contents);
     }
 
     @Override

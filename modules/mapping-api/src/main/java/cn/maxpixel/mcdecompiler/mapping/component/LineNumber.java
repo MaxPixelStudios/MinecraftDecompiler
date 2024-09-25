@@ -47,6 +47,12 @@ public class LineNumber implements Component {
     }
 
     @Override
+    public void validate() throws IllegalStateException {
+        if (startLineNumber < 0 || endLineNumber < 0 || startLineNumber > endLineNumber)
+            throw new IllegalStateException("Invalid line number");
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof LineNumber that)) return false;

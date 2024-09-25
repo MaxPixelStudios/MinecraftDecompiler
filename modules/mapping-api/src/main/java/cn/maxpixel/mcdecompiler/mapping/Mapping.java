@@ -122,6 +122,17 @@ public abstract class Mapping implements NameGetter {
         components.remove(Objects.requireNonNull(component));
     }
 
+    /**
+     * Validates all the components of this mapping
+     *
+     * @throws IllegalStateException If any of the component fails validation
+     */
+    public final void validateComponents() throws IllegalStateException {// TODO
+        for (Component value : components.values()) {
+            value.validate();
+        }
+    }
+
     /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {

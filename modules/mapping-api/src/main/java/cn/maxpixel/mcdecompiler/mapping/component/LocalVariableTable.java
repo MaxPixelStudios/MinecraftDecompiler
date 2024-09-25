@@ -82,6 +82,14 @@ public abstract class LocalVariableTable<T extends Mapping> {
     }
 
     public static class Paired extends LocalVariableTable<PairedMapping> implements Component {
+        @Override
+        public void validate() throws IllegalStateException {
+            lvt.int2ObjectEntrySet().fastForEach(entry -> {
+                if (entry.getIntKey() < 0 || entry.getIntKey() > 255) throw new IllegalStateException();
+                entry.getValue().validateComponents();
+            });
+        }
+
         public void reverse() {
             lvt.values().forEach(PairedMapping::reverse);
         }
@@ -131,6 +139,16 @@ public abstract class LocalVariableTable<T extends Mapping> {
             for (NamespacedMapping v : lvt.values()) {
                 v.setFallbackNamespace(namespace);
             }
+        }
+
+        @Override
+        public void validate() throws IllegalStateException {
+            if (unmappedNamespace == null) throw new IllegalStateException();
+            lvt.int2ObjectEntrySet().fastForEach(entry -> {
+                if (entry.getIntKey() < 0 || entry.getIntKey() > 255)
+                    throw new IllegalStateException("Illegal LVT index");
+                entry.getValue().validateComponents();
+            });
         }
 
         @Override

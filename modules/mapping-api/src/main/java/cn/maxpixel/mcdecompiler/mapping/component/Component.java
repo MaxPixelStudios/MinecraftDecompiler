@@ -26,6 +26,6 @@ public interface Component {
      * Validates this component.
      * @throws IllegalStateException if the validation fails
      */
-    default void validate() throws IllegalStateException {// TODO: component validation
+    default void validate() throws IllegalStateException {
     }
 }
