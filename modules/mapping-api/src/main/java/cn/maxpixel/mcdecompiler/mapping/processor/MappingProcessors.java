@@ -18,6 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.mapping.processor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+
 import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
@@ -33,9 +38,6 @@ import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-
-import java.util.Arrays;
-import java.util.function.Function;
 
 public interface MappingProcessors {
     MappingProcessor.Classified<PairedMapping> SRG = new MappingProcessor.Classified<>() {
@@ -478,6 +480,183 @@ public interface MappingProcessors {
 
         private static void error() {
             throw new IllegalArgumentException("Is this a Tiny v2 mapping file?");
-        }
+        }    
     };
+   
+	MappingProcessor.Classified<PairedMapping> PDME = new MappingProcessor.Classified<>() { //Does not support Include/Incluir (MCD requires jar anyhow) or AccessFlag/BanderaDeAcceso
+		record Clazz(String name, String mapped, String doc) {}
+		ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
+		ArrayList<Clazz> clazzes = new ArrayList<Clazz>();
+		Map<String, String> classes = new Object2ObjectOpenHashMap<String, String>();
+		Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classmap = new Object2ObjectOpenHashMap<>();
+		Object2ObjectOpenHashMap<String, PairedMapping> methodmap = new Object2ObjectOpenHashMap<>(); 
+		@Override
+		public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
+			return MappingFormats.PDME;
+		}
+		@Override
+		public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
+			for (String line : content) {
+				String[] row = line.split("¶").length < 2 ? line.split("\\u00B6") : line.split("¶");
+				switch (row[0]) {
+				case "Class":
+					String docs = putDocs(row,null,false);;
+					classes.put(row[1], row[2]);
+					clazzes.add(new Clazz(row[1], row[2], docs));
+					break;
+				}
+			}
+			for (Clazz clazz : clazzes) {
+				String value = parseSubClass(clazz.name, classes);
+				getClass(clazz.name, value, clazz.doc);
+			}
+			for (String line : content) {
+				String[] row = line.split("¶").length < 2 ? line.split("\\u00B6") : line.split("¶");
+				switch (row[0]) {
+				case "Def":
+					getMethod(row);
+					break;
+				case "Var":
+					String defau = row[1].split("\\.")[row[1].split("\\.").length - 1].split(":")[0];
+					PairedMapping paired = MappingUtil.Paired.o(defau, row[2]);
+					putDocs(row,paired,true);
+					String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
+					ClassMapping<PairedMapping> cm = getClass(unmClassName, unmClassName, null);
+					cm.addField(paired);
+					break;
+				}
+			}
+			for (String line : content) {
+				String[] row = line.split("¶").length < 2 ? line.split("\\u00B6") : line.split("¶");
+				switch (row[0]) {
+				case "Param":
+					String init = row[3] + "@" + row[4];
+					if (!row[1].equals("nil") && !row[1].isEmpty()) {
+						init = row[1];
+					}
+					PairedMapping local = new PairedMapping(init, row[2]);
+					putDocs(row,local,true);
+					PairedMapping mp = getEmptyMethod(row[3]);
+					LocalVariableTable.Paired paired = mp.getComponent(LocalVariableTable.Paired.class);
+					if(paired == null) {
+						paired = new LocalVariableTable.Paired();
+						mp.addComponent(paired);
+					}
+					paired.setLocalVariable(Integer.parseInt(row[4]),
+							local);
+				}
+			}
+
+			return mappings;
+
+		}
+
+		private String parseSubClass(String original_classname, Map<String, String> clazzes) {
+			String new_name = clazzes.getOrDefault(original_classname, original_classname);
+			if(!original_classname.contains("$")) {return new_name;}
+			String[] sub_arr = original_classname.split("\\$");
+			String[] subarray = Arrays.copyOfRange(sub_arr, 0, sub_arr.length - 1).clone();
+			if (clazzes.containsKey(original_classname)) {
+				if (new_name.contains("$")) {return new_name;}
+					String subarrayjoin = String.join("$", subarray);
+					String root_class;
+					if (subarrayjoin.contains("$")) {
+						root_class = parseSubClass(subarrayjoin, clazzes);
+					} else {
+						root_class = clazzes.getOrDefault(subarrayjoin, subarrayjoin);
+					}
+					return root_class + "$" + new_name;
+			}
+			String root_class = clazzes.getOrDefault(String.join("$", subarray), String.join("$", subarray));
+			if (root_class.contains("$")) {
+				root_class = (parseSubClass(root_class, clazzes));
+			}
+			String sub_class = sub_arr[sub_arr.length - 1];
+			return root_class + "$" + sub_class;
+		}
+
+		// Adapted from AssistRemapper which adapted Javassist Descriptor.rename
+		private String renameClassesInMethodDescriptor(String methodDescriptor, Map<String, String> classes) {
+			if (classes == null)
+				return methodDescriptor;
+			StringBuilder newdesc = new StringBuilder();
+			int head = 0;
+			int i = 0;
+			for (;;) {
+				int j = methodDescriptor.indexOf('L', i);
+				if (j < 0)
+					break;
+				int k = methodDescriptor.indexOf(';', j);
+				if (k < 0)
+					break;
+				i = k + 1;
+				String name = methodDescriptor.substring(j + 1, k);
+				String name2 = classes.get(name.replace("/", "."));
+				if (name2 != null) {
+					newdesc.append(methodDescriptor.substring(head, j)).append('L').append(name2.replace(".", "/")).append(';');
+					head = i;
+				}
+			}
+			if (head == 0)
+				return methodDescriptor;
+			int len = methodDescriptor.length();
+			if (head < len)
+				newdesc.append(methodDescriptor.substring(head, len));
+			return newdesc.toString();
+		}
+
+		private static String[] getAllButLast(String[] array) {
+			if (array == null || array.length == 0) {
+				return new String[0];
+			}
+			String[] result = new String[array.length - 1];
+			System.arraycopy(array, 0, result, 0, result.length);
+			return result;
+		}
+
+		private ClassMapping<PairedMapping> getClass(String name, String mapped, String doc) {
+			if (classmap.containsKey(name)) {
+				return classmap.get(name);
+			}
+			classes.put(name, mapped);
+			PairedMapping paired = new PairedMapping(name.replace(".", "/"),mapped.replace(".", "/"));
+			if (doc != null) {paired.getComponent(Documented.class).setContentString(doc);}
+			ClassMapping<PairedMapping> classMapping = new ClassMapping<>(paired);
+			classmap.put(name, classMapping);
+			mappings.classes.add(classMapping);
+			return classMapping;
+		}
+
+		private PairedMapping getMethod(String[] row) {
+			if (methodmap.containsKey(row[1])) {
+				return methodmap.get(row[1]);
+			}
+			String defau = row[1].split("\\.")[row[1].split("\\.").length - 1].split("\\(")[0];
+			String desc = "(" + row[1].split("\\(")[1];
+			PairedMapping paired = MappingUtil.Paired.d2o(defau, row[2], desc,
+					renameClassesInMethodDescriptor(desc, classes));
+			putDocs(row,paired,true);
+			String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
+			ClassMapping<PairedMapping> cm = getClass(unmClassName, unmClassName, null);
+			cm.addMethod(paired);
+			methodmap.put(row[1], paired);
+			return paired;
+
+		}
+		private PairedMapping getEmptyMethod(String full_path) {
+			String defau = full_path.split("\\.")[full_path.split("\\.").length - 1].split("\\(")[0];
+			return getMethod(new String[] { "", full_path, defau });
+		}
+		
+		private String putDocs(String[] row, PairedMapping mapping, boolean req) {
+			if (row.length > 5) {
+				if (req) {mapping.getComponent(Documented.class).setContentString(row[5]);}
+				return row[5];
+			}
+			return null;
+		}
+	};
+    
+    
+    
 }
