@@ -377,4 +377,83 @@ public interface MappingGenerators {
             return lines;
         }
     };
+    
+    
+    
+    MappingGenerator.Classified < PairedMapping > PDME = new MappingGenerator.Classified < > () {
+    	   @Override
+    	   public MappingFormat < PairedMapping, ClassifiedMapping < PairedMapping >> getFormat() {
+    	     return MappingFormats.PDME;
+    	   }
+
+    	   @Override
+    	   public ObjectList < String > generate(ClassifiedMapping < PairedMapping > mappings, ClassifiedMappingRemapper remapper) {
+    	     ObjectArrayList < String > lines = new ObjectArrayList < > ();
+    	     if (mappings.classes.isEmpty()) return lines;
+    	     mappings.classes.parallelStream().forEach(cls -> {
+    	       PairedMapping classMapping = cls.mapping;
+  	           String clazz = classMapping.getUnmappedName().replace("/", ".");
+	           String mapped_class = classMapping.getMappedName().replace("/", ".");
+    	       synchronized(lines) {
+    	         String classdoc = "";
+    	         String parsed_mapped_class; //Only have the name of the subclass by default
+    	         if (classMapping.hasComponent(Documented.class)) {
+    	           classdoc = classMapping.getComponent(Documented.class).getContentString();
+    	         }
+    	         if (mapped_class.contains("$")) {
+    	           String[] clz = mapped_class.split("\\$");
+    	           parsed_mapped_class = clz[clz.length - 1];
+    	         } else {
+    	           parsed_mapped_class = mapped_class;
+    	         }
+    	         lines.add(
+    	           "Class¶" + clazz + '¶' + parsed_mapped_class + "¶nil¶nil¶" + classdoc
+    	         );
+    	       }
+    	       cls.getFields().parallelStream().forEach(field -> {
+    	         String desc = field.getComponent(Descriptor.class).unmappedDescriptor;
+    	         String unmapped = clazz.replace("/", ".") + '.' + field.getUnmappedName() + ":" + desc;
+    	         String doc = "";
+    	         if (field.hasComponent(Documented.class)) {
+    	           doc = field.getComponent(Documented.class).getContentString();
+    	         }
+    	         synchronized(lines) {
+    	           lines.add(
+    	             "Var¶" + unmapped + '¶' + field.getMappedName() + "¶nil¶nil¶" + doc
+    	           );
+    	         }
+    	       });
+    	       cls.getMethods().parallelStream().forEach(method -> {
+    	         String desc = method.getComponent(Descriptor.class).unmappedDescriptor;
+    	         String unmapped = clazz.replace("/", ".") + '.' + method.getUnmappedName() + desc;
+    	         String doc = "";
+    	         if (method.hasComponent(Documented.class)) {
+    	           doc = method.getComponent(Documented.class).getContentString();
+    	         }
+    	         synchronized(lines) {
+    	           lines.add(
+    	             "Def¶" + unmapped + '¶' + method.getMappedName() + "¶nil¶nil¶" + doc
+    	           );
+    	         }
+    	         if (method.hasComponent(LocalVariableTable.Paired.class)) {
+    	           LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
+    	           lvt.getLocalVariableIndexes().forEach(index -> {
+    	             String loc_unmapped = "nil";
+    	             PairedMapping loc = lvt.getLocalVariable(index);
+    	             String loc_doc = "";
+    	             if (!loc.getUnmappedName().equals(unmapped + "@" + Integer.toString(index))) {
+    	               loc_unmapped = loc.getUnmappedName();
+    	             }
+    	             if (loc.hasComponent(Documented.class)) {
+    	               loc_doc = loc.getComponent(Documented.class).getContentString();
+    	             }
+    	             lines.add("Param¶" + loc_unmapped + "¶" + loc.getMappedName() + "¶" + unmapped + "¶" + Integer.toString(index) + "¶" + loc_doc);
+    	           });
+    	         }
+    	       });
+    	     });
+    	     return lines;
+    	   }
+    	 };
+    
 }
