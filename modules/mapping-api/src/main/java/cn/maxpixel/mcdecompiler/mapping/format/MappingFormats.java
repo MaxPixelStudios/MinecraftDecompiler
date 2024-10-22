@@ -155,6 +155,29 @@ public final class MappingFormats {
             return MappingGenerators.TINY_V2;
         }
     };
+    
+    public static final MappingFormat.Classified<PairedMapping> PDME = new MappingFormat.Classified<>() {
+        @Override
+        public @NotNull String getName() {
+            return "pdme";
+        }
+
+        @Override
+        public char getCommentChar() {
+            return '#';
+        }
+
+        @Override
+        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
+            return MappingProcessors.PDME;
+        }
+
+        @Override
+        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
+            return MappingGenerators.PDME;
+        }
+    };
+    
 
     private static final Object2ObjectOpenHashMap<String, MappingFormat<?, ?>> MAPPING_FORMATS = new Object2ObjectOpenHashMap<>();
     static {
@@ -165,6 +188,7 @@ public final class MappingFormats {
         registerMappingFormat(PROGUARD);
         registerMappingFormat(TINY_V1);
         registerMappingFormat(TINY_V2);
+        registerMappingFormat(PDME);
     }
 
     public static boolean registerMappingFormat(MappingFormat<?, ?> format) {
