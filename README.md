@@ -10,7 +10,7 @@ Progress: View [the project](https://github.com/orgs/MaxPixelStudios/projects/1)
 For usage and more information, visit [the wiki](https://github.com/MaxPixelStudios/MinecraftDecompiler/wiki)(Currently in progress)
 
 ## Features
-1. Deobfuscate Minecraft using Proguard(Official) mappings, SRG, TSRG, CSRG, ParagraphDelimitedMappingsExtended and Tiny mappings
+1. Deobfuscate Minecraft using Proguard(Official) mappings, SRG, TSRG, CSRG, Tiny, and ParagraphDelimitedMappingsExtended mappings
 2. Decompile Minecraft using CFR/Fernflower/ForgeFlower/[Any Decompiler You Like](https://github.com/MaxPixelStudios/MinecraftDecompiler/wiki#tutorials-about-decompiler)
 3. Regenerate local variable names in JAD style
 4. Mapping API
