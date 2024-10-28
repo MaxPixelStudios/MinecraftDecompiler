@@ -28,10 +28,6 @@ import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -88,12 +84,10 @@ public class FunctionTest {
 //    }
 
     public static void main(String[] args) throws Throwable {
-        FileChannel.open(Path.of("")).size();
-        new File("").length();
-//        ClassifiedMapping<NamespacedMapping> obf2srg = MappingFormats.TSRG_V2.read(new FileInputStream("downloads/1.19.2/joined.tsrg"));
+//        ClassifiedMapping<NamespacedMapping> obf2srg = MappingFormats.TSRG_V2.read(new FileInputStream("downloads/1.19/joined.tsrg"));
 //        obf2srg.getTrait(NamespacedTrait.class).setMappedNamespace("srg");
 //        obf2srg.updateCollection();
-//        ClassifiedMapping<PairedMapping> official = MappingFormats.PROGUARD.read(new FileInputStream("downloads/1.19.2/client_mappings.txt"));
+//        ClassifiedMapping<PairedMapping> official = MappingFormats.PROGUARD.read(new FileInputStream("downloads/1.19/client_mappings.txt"));
 //        var obf2off = new ClassifiedMappingRemapper(official);
 //        var out = new ClassifiedMapping<PairedMapping>();
 //        for (ClassMapping<NamespacedMapping> cm : obf2srg.classes) {
@@ -107,9 +101,10 @@ public class FunctionTest {
 //            }
 //            out.classes.add(ncm);
 //        }
-//        try (var writer = Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.2/obf2srg.tsrg")))) {
+//        try (var writer = Files.newBufferedWriter(Path.of("downloads/1.19/obf2srg.tsrg"))) {
 //            MappingFormats.TSRG_V1.write(out, writer);
 //        }
+
 //        for (ClassMapping<NamespacedMapping> cm : obf2srg.classes) {
 //            String obfClassName = cm.mapping.getUnmappedName();
 //            ClassMapping<PairedMapping> ncm = new ClassMapping<>(new PairedMapping(obf2off.mapClass(obfClassName), obf2off.mapClass(obfClassName)));
@@ -122,7 +117,7 @@ public class FunctionTest {
 //            }
 //            out.classes.add(ncm);
 //        }
-//        try (var writer = Files.newBufferedWriter(FileUtil.ensureFileExist(Path.of("downloads/1.19.2/srg2moj.tsrg")))) {
+//        try (var writer = Files.newBufferedWriter(Path.of("downloads/1.19/srg2moj.tsrg"))) {
 //            MappingFormats.TSRG_V1.write(out, writer);
 //        }
 

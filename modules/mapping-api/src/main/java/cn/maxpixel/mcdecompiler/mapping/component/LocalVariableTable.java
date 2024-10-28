@@ -100,6 +100,16 @@ public abstract class LocalVariableTable<T extends Mapping> {
         private String mappedNamespace;
         private String fallbackNamespace;
 
+        @Override
+        public void setLocalVariable(@Range(from = 0, to = 255) int index, @Nullable("To remove the previous mapping") NamespacedMapping mapping) {
+            if (mapping != null) {
+                if (unmappedNamespace != null) mapping.setUnmappedNamespace(unmappedNamespace);
+                if (mappedNamespace != null) mapping.setMappedNamespace(mappedNamespace);
+                if (fallbackNamespace != null) mapping.setFallbackNamespace(fallbackNamespace);
+            }
+            super.setLocalVariable(index, mapping);
+        }
+
         public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
             lvt.values().forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
         }
