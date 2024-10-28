@@ -480,7 +480,7 @@ public interface MappingProcessors {
 
         private static void error() {
             throw new IllegalArgumentException("Is this a Tiny v2 mapping file?");
-        }    
+        }
     };
    
 	MappingProcessor.Classified<PairedMapping> PDME = new MappingProcessor.Classified<>() { //Does not support Include/Incluir (MCD requires jar anyhow) or AccessFlag/BanderaDeAcceso
