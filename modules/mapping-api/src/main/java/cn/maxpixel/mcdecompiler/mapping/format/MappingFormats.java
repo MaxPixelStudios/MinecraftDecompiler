@@ -155,16 +155,11 @@ public final class MappingFormats {
             return MappingGenerators.TINY_V2;
         }
     };
-    
+
     public static final MappingFormat.Classified<PairedMapping> PDME = new MappingFormat.Classified<>() {
         @Override
         public @NotNull String getName() {
             return "pdme";
-        }
-
-        @Override
-        public char getCommentChar() {
-            return '#';
         }
 
         @Override
@@ -177,9 +172,9 @@ public final class MappingFormats {
             return MappingGenerators.PDME;
         }
     };
-    
 
     private static final Object2ObjectOpenHashMap<String, MappingFormat<?, ?>> MAPPING_FORMATS = new Object2ObjectOpenHashMap<>();
+
     static {
         registerMappingFormat(SRG);
         registerMappingFormat(CSRG);
