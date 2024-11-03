@@ -515,33 +515,35 @@ public interface MappingProcessors {
                         getMethod(row, classes, classStrings, methodMap);
                         break;
                     case "Var":
-                        String defau = row[1].split("\\.")[row[1].split("\\.").length - 1].split(":")[0];
-                        PairedMapping paired = MappingUtil.Paired.o(defau, row[2]);
-                        putDocs(row, paired, true);
-                        String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
-                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(unmClassName, (String k) -> new ClassMapping<>(new PairedMapping(k)));
-                        cm.addField(paired);
+                        int lastDot = row[1].lastIndexOf('.');
+                        String nameAndDesc = row[1].substring(lastDot + 1);
+                        int colon = nameAndDesc.indexOf(':');
+                        PairedMapping field = MappingUtil.Paired.duo(nameAndDesc.substring(0, colon), row[2],
+                                nameAndDesc.substring(colon + 1));
+                        field.addComponent(new Documented(row[5]));
+                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(row[1].substring(0, lastDot),
+                                (String k) -> new ClassMapping<>(new PairedMapping(k)));
+                        cm.addField(field);
                         break;
                 }
             }
             for (String line : content) {
                 String[] row = MappingUtil.split(line, PARA);
-                switch (row[0]) {
-                    case "Param":
-                        String init = row[3] + "@" + row[4];
-                        if (!row[1].equals("nil") && !row[1].isEmpty()) {
-                            init = row[1];
-                        }
-                        PairedMapping local = new PairedMapping(init, row[2]);
-                        putDocs(row, local, true);
-                        PairedMapping mp = getEmptyMethod(row[3], classes, classStrings, methodMap);
-                        LocalVariableTable.Paired paired = mp.getComponent(LocalVariableTable.Paired.class);
-                        if (paired == null) {
-                            paired = new LocalVariableTable.Paired();
-                            mp.addComponent(paired);
-                        }
-                        paired.setLocalVariable(Integer.parseInt(row[4]),
-                                local);
+                if (row[0].equals("Param")) {
+                    String init = row[3] + "@" + row[4];
+                    if (!row[1].equals("nil") && !row[1].isEmpty()) {
+                        init = row[1];
+                    }
+                    PairedMapping local = new PairedMapping(init, row[2]);
+                    local.addComponent(new Documented(row[5]));
+                    String defau = row[3].split("\\.")[row[3].split("\\.").length - 1].split("\\(")[0];
+                    PairedMapping mp = getMethod(new String[]{"", row[3], defau}, classes, classStrings, methodMap);
+                    LocalVariableTable.Paired paired = mp.getComponent(LocalVariableTable.Paired.class);
+                    if (paired == null) {
+                        paired = new LocalVariableTable.Paired();
+                        mp.addComponent(paired);
+                    }
+                    paired.setLocalVariable(Integer.parseInt(row[4]), local);
                 }
             }
 
@@ -582,7 +584,7 @@ public interface MappingProcessors {
                 String name = methodDescriptor.substring(j + 1, k);
                 String name2 = classes.get(name.replace("/", "."));
                 if (name2 != null) {
-                    newdesc.append(methodDescriptor.substring(head, j)).append('L').append(name2.replace(".", "/")).append(';');
+                    newdesc.append(methodDescriptor, head, j).append('L').append(name2.replace(".", "/")).append(';');
                     head = i;
                 }
             }
@@ -590,7 +592,7 @@ public interface MappingProcessors {
                 return methodDescriptor;
             int len = methodDescriptor.length();
             if (head < len)
-                newdesc.append(methodDescriptor.substring(head, len));
+                newdesc.append(methodDescriptor, head, len);
             return newdesc.toString();
         }
 
@@ -611,28 +613,13 @@ public interface MappingProcessors {
             String desc = "(" + row[1].split("\\(")[1];
             PairedMapping paired = MappingUtil.Paired.d2o(defau, row[2], desc,
                     renameClassesInMethodDescriptor(desc, classStrings));
-            putDocs(row, paired, true);
+            paired.addComponent(new Documented(row[5]));
             String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
             ClassMapping<PairedMapping> cm = classes.computeIfAbsent(unmClassName, (String k) -> new ClassMapping<>(new PairedMapping(k)));
             cm.addMethod(paired);
             methodMap.put(row[1], paired);
             return paired;
 
-        }
-
-        private static PairedMapping getEmptyMethod(String full_path, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, String> classStrings, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
-            String defau = full_path.split("\\.")[full_path.split("\\.").length - 1].split("\\(")[0];
-            return getMethod(new String[]{"", full_path, defau}, classes, classStrings, methodMap);
-        }
-
-        private static String putDocs(String[] row, PairedMapping mapping, boolean req) {
-            if (row.length > 5) {
-                if (req) {
-                    mapping.getComponent(Documented.class).setContentString(row[5]);
-                }
-                return row[5];
-            }
-            return null;
         }
     };
 }
