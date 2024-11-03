@@ -38,6 +38,19 @@ public class Documented implements Component {
     public final ObjectArrayList<@NotNull String> contents = new ObjectArrayList<>();
 
     /**
+     * No-arg constructor
+     */
+    public Documented() {}
+
+    /**
+     * Constructor
+     * @param contentString The content string which will be set by {@link #setContentString(String)}
+     */
+    public Documented(String contentString) {
+        setContentString(contentString);
+    }
+
+    /**
      * Gets the contents
      * @return The contents
      */
@@ -55,7 +68,7 @@ public class Documented implements Component {
     }
 
     /**
-     * Breaks the string into lines and sets them as contents
+     * Breaks the string into lines and sets them as contents. An empty string will simply be ignored
      * @param content the string
      */
     public void setContentString(@NotNull String content) {

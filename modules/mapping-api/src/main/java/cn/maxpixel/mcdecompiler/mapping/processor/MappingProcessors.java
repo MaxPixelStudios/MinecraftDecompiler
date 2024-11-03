@@ -34,7 +34,6 @@ import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
@@ -484,14 +483,7 @@ public interface MappingProcessors {
     };
 
     MappingProcessor.Classified<PairedMapping> PDME = new MappingProcessor.Classified<>() { //Does not support Include/Incluir (MCD requires jar anyhow) or AccessFlag/BanderaDeAcceso
-        record Clazz(String name, String mapped, String doc) {
-        }
-
-        ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
-        ArrayList<Clazz> clazzes = new ArrayList<>();
-        Map<String, String> classes = new Object2ObjectOpenHashMap<>();
-        Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classmap = new Object2ObjectOpenHashMap<>();
-        Object2ObjectOpenHashMap<String, PairedMapping> methodmap = new Object2ObjectOpenHashMap<>();
+        private static final char PARA = '¶';
 
         @Override
         public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
@@ -499,39 +491,41 @@ public interface MappingProcessors {
         }
 
         @Override
-        public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
+        public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {// FIXME: What to do when class name itself contains "$"?
+            ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
+            Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
+            Object2ObjectOpenHashMap<String, String> classStrings = new Object2ObjectOpenHashMap<>();
+            Object2ObjectOpenHashMap<String, PairedMapping> methodMap = new Object2ObjectOpenHashMap<>();
             for (String line : content) {
-                String[] row = line.split("¶").length < 2 ? line.split("\\u00B6") : line.split("¶");
-                switch (row[0]) {
-                    case "Class":
-                        String docs = putDocs(row, null, false);
-                        classes.put(row[1], row[2]);
-                        clazzes.add(new Clazz(row[1], row[2], docs));
-                        break;
+                if (line.startsWith("Class")) {
+                    String[] row = MappingUtil.split(line, PARA);
+                    String unmapped = row[1].replace('.', '/');
+                    String mapped = row[2].replace('.', '/');
+                    classes.put(unmapped, new ClassMapping<>(new PairedMapping(unmapped, mapped, new Documented(row[5]))));
+                    classStrings.put(unmapped, mapped);
                 }
             }
-            for (Clazz clazz : clazzes) {
-                String value = parseSubClass(clazz.name, classes);
-                getClass(clazz.name, value, clazz.doc);
+            for (var cm : classes.values()) {
+                cm.mapping.mappedName = parseOuterClass(cm.mapping.unmappedName, classStrings);
             }
             for (String line : content) {
-                String[] row = line.split("¶").length < 2 ? line.split("\\u00B6") : line.split("¶");
+                String[] row = MappingUtil.split(line, PARA);
                 switch (row[0]) {
                     case "Def":
-                        getMethod(row);
+                        getMethod(row, classes, classStrings, methodMap);
                         break;
                     case "Var":
                         String defau = row[1].split("\\.")[row[1].split("\\.").length - 1].split(":")[0];
                         PairedMapping paired = MappingUtil.Paired.o(defau, row[2]);
                         putDocs(row, paired, true);
                         String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
-                        ClassMapping<PairedMapping> cm = getClass(unmClassName, unmClassName, null);
+                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(unmClassName, (String k) -> new ClassMapping<>(new PairedMapping(k)));
                         cm.addField(paired);
                         break;
                 }
             }
             for (String line : content) {
-                String[] row = line.split("¶").length < 2 ? line.split("\\u00B6") : line.split("¶");
+                String[] row = MappingUtil.split(line, PARA);
                 switch (row[0]) {
                     case "Param":
                         String init = row[3] + "@" + row[4];
@@ -540,7 +534,7 @@ public interface MappingProcessors {
                         }
                         PairedMapping local = new PairedMapping(init, row[2]);
                         putDocs(row, local, true);
-                        PairedMapping mp = getEmptyMethod(row[3]);
+                        PairedMapping mp = getEmptyMethod(row[3], classes, classStrings, methodMap);
                         LocalVariableTable.Paired paired = mp.getComponent(LocalVariableTable.Paired.class);
                         if (paired == null) {
                             paired = new LocalVariableTable.Paired();
@@ -552,39 +546,26 @@ public interface MappingProcessors {
             }
 
             return mappings;
-
         }
 
-        private String parseSubClass(String original_classname, Map<String, String> clazzes) {
-            String new_name = clazzes.getOrDefault(original_classname, original_classname);
-            if (!original_classname.contains("$")) {
-                return new_name;
+        private static String parseOuterClass(String unmapped, Object2ObjectOpenHashMap<String, String> classes) {
+            String mapped = classes.getOrDefault(unmapped, unmapped);
+            int lastDollar = unmapped.lastIndexOf('$');
+            if (lastDollar < 0) return mapped;
+            String outer = unmapped.substring(0, lastDollar);
+            if (classes.containsKey(unmapped)) {
+                if (mapped.contains("$")) return mapped;
+                String ret = parseOuterClass(outer, classes) + '$' + mapped;
+                classes.put(unmapped, ret);
+                return ret;
             }
-            String[] sub_arr = original_classname.split("\\$");
-            String[] subarray = Arrays.copyOfRange(sub_arr, 0, sub_arr.length - 1).clone();
-            if (clazzes.containsKey(original_classname)) {
-                if (new_name.contains("$")) {
-                    return new_name;
-                }
-                String subarrayjoin = String.join("$", subarray);
-                String root_class;
-                if (subarrayjoin.contains("$")) {
-                    root_class = parseSubClass(subarrayjoin, clazzes);
-                } else {
-                    root_class = clazzes.getOrDefault(subarrayjoin, subarrayjoin);
-                }
-                return root_class + "$" + new_name;
-            }
-            String root_class = clazzes.getOrDefault(String.join("$", subarray), String.join("$", subarray));
-            if (root_class.contains("$")) {
-                root_class = (parseSubClass(root_class, clazzes));
-            }
-            String sub_class = sub_arr[sub_arr.length - 1];
-            return root_class + "$" + sub_class;
+            String ret = parseOuterClass(outer, classes) + '$' + unmapped.substring(lastDollar + 1);
+            classes.put(unmapped, ret);
+            return ret;
         }
 
         // Adapted from AssistRemapper which adapted Javassist Descriptor.rename
-        private String renameClassesInMethodDescriptor(String methodDescriptor, Map<String, String> classes) {
+        private static String renameClassesInMethodDescriptor(String methodDescriptor, Map<String, String> classes) {
             if (classes == null)
                 return methodDescriptor;
             StringBuilder newdesc = new StringBuilder();
@@ -622,44 +603,29 @@ public interface MappingProcessors {
             return result;
         }
 
-        private ClassMapping<PairedMapping> getClass(String name, String mapped, String doc) {
-            if (classmap.containsKey(name)) {
-                return classmap.get(name);
-            }
-            classes.put(name, mapped);
-            PairedMapping paired = new PairedMapping(name.replace(".", "/"), mapped.replace(".", "/"));
-            if (doc != null) {
-                paired.getComponent(Documented.class).setContentString(doc);
-            }
-            ClassMapping<PairedMapping> classMapping = new ClassMapping<>(paired);
-            classmap.put(name, classMapping);
-            mappings.classes.add(classMapping);
-            return classMapping;
-        }
-
-        private PairedMapping getMethod(String[] row) {
-            if (methodmap.containsKey(row[1])) {
-                return methodmap.get(row[1]);
+        private static PairedMapping getMethod(String[] row, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, String> classStrings, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
+            if (methodMap.containsKey(row[1])) {
+                return methodMap.get(row[1]);
             }
             String defau = row[1].split("\\.")[row[1].split("\\.").length - 1].split("\\(")[0];
             String desc = "(" + row[1].split("\\(")[1];
             PairedMapping paired = MappingUtil.Paired.d2o(defau, row[2], desc,
-                    renameClassesInMethodDescriptor(desc, classes));
+                    renameClassesInMethodDescriptor(desc, classStrings));
             putDocs(row, paired, true);
             String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
-            ClassMapping<PairedMapping> cm = getClass(unmClassName, unmClassName, null);
+            ClassMapping<PairedMapping> cm = classes.computeIfAbsent(unmClassName, (String k) -> new ClassMapping<>(new PairedMapping(k)));
             cm.addMethod(paired);
-            methodmap.put(row[1], paired);
+            methodMap.put(row[1], paired);
             return paired;
 
         }
 
-        private PairedMapping getEmptyMethod(String full_path) {
+        private static PairedMapping getEmptyMethod(String full_path, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, String> classStrings, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
             String defau = full_path.split("\\.")[full_path.split("\\.").length - 1].split("\\(")[0];
-            return getMethod(new String[]{"", full_path, defau});
+            return getMethod(new String[]{"", full_path, defau}, classes, classStrings, methodMap);
         }
 
-        private String putDocs(String[] row, PairedMapping mapping, boolean req) {
+        private static String putDocs(String[] row, PairedMapping mapping, boolean req) {
             if (row.length > 5) {
                 if (req) {
                     mapping.getComponent(Documented.class).setContentString(row[5]);
