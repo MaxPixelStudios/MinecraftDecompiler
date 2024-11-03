@@ -511,7 +511,7 @@ public interface MappingProcessors {
                 String[] row = MappingUtil.split(line, PARA);
                 switch (row[0]) {
                     case "Def":
-                        getMethod(row, classes, classStrings, methodMap);
+                        getMethod(row, classes, methodMap);
                         break;
                     case "Var":
                         int lastDot = row[1].lastIndexOf('.');
@@ -536,7 +536,7 @@ public interface MappingProcessors {
                     PairedMapping local = new PairedMapping(init, row[2]);
                     local.addComponent(new Documented(row[5]));
                     String defau = row[3].split("\\.")[row[3].split("\\.").length - 1].split("\\(")[0];
-                    PairedMapping mp = getMethod(new String[]{"", row[3], defau}, classes, classStrings, methodMap);
+                    PairedMapping mp = getMethod(new String[]{"", row[3], defau}, classes, methodMap);
                     LocalVariableTable.Paired paired = mp.getComponent(LocalVariableTable.Paired.class);
                     if (paired == null) {
                         paired = new LocalVariableTable.Paired();
@@ -565,7 +565,7 @@ public interface MappingProcessors {
             return ret;
         }
 
-        private static PairedMapping getMethod(String[] row, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, String> classStrings, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
+        private static PairedMapping getMethod(String[] row, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
             if (methodMap.containsKey(row[1])) {
                 return methodMap.get(row[1]);
             }
