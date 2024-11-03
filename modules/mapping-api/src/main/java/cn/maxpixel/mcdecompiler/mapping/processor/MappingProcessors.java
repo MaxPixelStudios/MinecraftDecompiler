@@ -35,7 +35,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.function.Function;
 
 public interface MappingProcessors {
@@ -566,56 +565,17 @@ public interface MappingProcessors {
             return ret;
         }
 
-        // Adapted from AssistRemapper which adapted Javassist Descriptor.rename
-        private static String renameClassesInMethodDescriptor(String methodDescriptor, Map<String, String> classes) {
-            if (classes == null)
-                return methodDescriptor;
-            StringBuilder newdesc = new StringBuilder();
-            int head = 0;
-            int i = 0;
-            for (; ; ) {
-                int j = methodDescriptor.indexOf('L', i);
-                if (j < 0)
-                    break;
-                int k = methodDescriptor.indexOf(';', j);
-                if (k < 0)
-                    break;
-                i = k + 1;
-                String name = methodDescriptor.substring(j + 1, k);
-                String name2 = classes.get(name.replace("/", "."));
-                if (name2 != null) {
-                    newdesc.append(methodDescriptor, head, j).append('L').append(name2.replace(".", "/")).append(';');
-                    head = i;
-                }
-            }
-            if (head == 0)
-                return methodDescriptor;
-            int len = methodDescriptor.length();
-            if (head < len)
-                newdesc.append(methodDescriptor, head, len);
-            return newdesc.toString();
-        }
-
-        private static String[] getAllButLast(String[] array) {
-            if (array == null || array.length == 0) {
-                return new String[0];
-            }
-            String[] result = new String[array.length - 1];
-            System.arraycopy(array, 0, result, 0, result.length);
-            return result;
-        }
-
         private static PairedMapping getMethod(String[] row, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, String> classStrings, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
             if (methodMap.containsKey(row[1])) {
                 return methodMap.get(row[1]);
             }
-            String defau = row[1].split("\\.")[row[1].split("\\.").length - 1].split("\\(")[0];
-            String desc = "(" + row[1].split("\\(")[1];
-            PairedMapping paired = MappingUtil.Paired.d2o(defau, row[2], desc,
-                    renameClassesInMethodDescriptor(desc, classStrings));
+            int lastDot = row[1].lastIndexOf('.');
+            String nameAndDesc = row[1].substring(lastDot + 1);
+            int bracket = nameAndDesc.indexOf('(');
+            PairedMapping paired = MappingUtil.Paired.duo(nameAndDesc.substring(0, bracket), row[2], nameAndDesc.substring(bracket));
             paired.addComponent(new Documented(row[5]));
-            String unmClassName = String.join(".", getAllButLast(row[1].split("\\.")));
-            ClassMapping<PairedMapping> cm = classes.computeIfAbsent(unmClassName, (String k) -> new ClassMapping<>(new PairedMapping(k)));
+            ClassMapping<PairedMapping> cm = classes.computeIfAbsent(row[1].substring(0, lastDot),
+                    (String k) -> new ClassMapping<>(new PairedMapping(k)));
             cm.addMethod(paired);
             methodMap.put(row[1], paired);
             return paired;
