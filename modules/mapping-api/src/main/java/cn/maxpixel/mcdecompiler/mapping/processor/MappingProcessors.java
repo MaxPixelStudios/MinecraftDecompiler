@@ -493,93 +493,85 @@ public interface MappingProcessors {
         public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {// FIXME: What to do when class name itself contains "$"?
             ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
             Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
-            Object2ObjectOpenHashMap<String, String> classStrings = new Object2ObjectOpenHashMap<>();
             Object2ObjectOpenHashMap<String, PairedMapping> methodMap = new Object2ObjectOpenHashMap<>();
             for (String line : content) {
                 if (line.startsWith("Class")) {
-                    String[] row = MappingUtil.split(line, PARA);
-                    String unmapped = row[1].replace('.', '/');
-                    String mapped = row[2].replace('.', '/');
-                    classes.put(unmapped, new ClassMapping<>(new PairedMapping(unmapped, mapped, new Documented(row[5]))));
-                    classStrings.put(unmapped, mapped);
+                    String[] parts = MappingUtil.split(line, PARA);
+                    String unmapped = parts[1].replace('.', '/');
+                    String mapped = parts[2].replace('.', '/');
+                    classes.put(unmapped, new ClassMapping<>(new PairedMapping(unmapped, mapped, new Documented(parts[5]))));
                 }
             }
-            for (var cm : classes.values()) {
-                cm.mapping.mappedName = parseOuterClass(cm.mapping.unmappedName, classStrings);
-            }
+            for (var cm : classes.values()) parseOuterClass(cm.mapping.unmappedName, classes);
             for (String line : content) {
-                String[] row = MappingUtil.split(line, PARA);
-                switch (row[0]) {
-                    case "Def":
-                        getMethod(row, classes, methodMap);
-                        break;
-                    case "Var":
-                        int lastDot = row[1].lastIndexOf('.');
-                        String nameAndDesc = row[1].substring(lastDot + 1);
+                String[] parts = MappingUtil.split(line, PARA);
+                switch (parts[0]) {
+                    case "Def" -> getMethod(parts[1], parts[2], parts[5], classes, methodMap);
+                    case "Var" -> {
+                        int lastDot = parts[1].lastIndexOf('.');
+                        String nameAndDesc = parts[1].substring(lastDot + 1);
                         int colon = nameAndDesc.indexOf(':');
-                        PairedMapping field = MappingUtil.Paired.duo(nameAndDesc.substring(0, colon), row[2],
+                        PairedMapping field = MappingUtil.Paired.duo(nameAndDesc.substring(0, colon), parts[2],
                                 nameAndDesc.substring(colon + 1));
-                        field.addComponent(new Documented(row[5]));
-                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(row[1].substring(0, lastDot),
+                        field.addComponent(new Documented(parts[5]));
+                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(parts[1].substring(0, lastDot),
                                 (String k) -> new ClassMapping<>(new PairedMapping(k)));
                         cm.addField(field);
-                        break;
+                    }
                 }
             }
             for (String line : content) {
-                String[] row = MappingUtil.split(line, PARA);
-                if (row[0].equals("Param")) {
-                    String init = row[3] + "@" + row[4];
-                    if (!row[1].equals("nil") && !row[1].isEmpty()) {
-                        init = row[1];
+                String[] parts = MappingUtil.split(line, PARA);
+                if (parts[0].equals("Param")) {
+                    String unmapped = parts[1].isEmpty() || parts[1].equals("nil") ? parts[3] + '@' + parts[4] : parts[1];
+                    PairedMapping local = new PairedMapping(unmapped, parts[2]);
+                    local.addComponent(new Documented(parts[5]));
+                    PairedMapping method = getMethod(parts[3], null, null, classes, methodMap);
+                    LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
+                    if (lvt == null) {// TODO
+                        lvt = new LocalVariableTable.Paired();
+                        method.addComponent(lvt);
                     }
-                    PairedMapping local = new PairedMapping(init, row[2]);
-                    local.addComponent(new Documented(row[5]));
-                    String defau = row[3].split("\\.")[row[3].split("\\.").length - 1].split("\\(")[0];
-                    PairedMapping mp = getMethod(new String[]{"", row[3], defau}, classes, methodMap);
-                    LocalVariableTable.Paired paired = mp.getComponent(LocalVariableTable.Paired.class);
-                    if (paired == null) {
-                        paired = new LocalVariableTable.Paired();
-                        mp.addComponent(paired);
-                    }
-                    paired.setLocalVariable(Integer.parseInt(row[4]), local);
+                    lvt.setLocalVariable(Integer.parseInt(parts[4]), local);
                 }
             }
-
+            mappings.classes.addAll(classes.values());
             return mappings;
         }
 
-        private static String parseOuterClass(String unmapped, Object2ObjectOpenHashMap<String, String> classes) {
-            String mapped = classes.getOrDefault(unmapped, unmapped);
+        private static String parseOuterClass(String unmapped, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes) {
+            ClassMapping<PairedMapping> cm = classes.get(unmapped);
+            String mapped = cm == null ? unmapped : cm.mapping.mappedName;
             int lastDollar = unmapped.lastIndexOf('$');
             if (lastDollar < 0) return mapped;
             String outer = unmapped.substring(0, lastDollar);
-            if (classes.containsKey(unmapped)) {
+            if (cm != null) {
                 if (mapped.contains("$")) return mapped;
                 String ret = parseOuterClass(outer, classes) + '$' + mapped;
-                classes.put(unmapped, ret);
+                cm.mapping.mappedName = ret;
                 return ret;
             }
             String ret = parseOuterClass(outer, classes) + '$' + unmapped.substring(lastDollar + 1);
-            classes.put(unmapped, ret);
+            classes.put(unmapped, new ClassMapping<>(new PairedMapping(unmapped, ret)));
             return ret;
         }
 
-        private static PairedMapping getMethod(String[] row, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes, Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
-            if (methodMap.containsKey(row[1])) {
-                return methodMap.get(row[1]);
-            }
-            int lastDot = row[1].lastIndexOf('.');
-            String nameAndDesc = row[1].substring(lastDot + 1);
-            int bracket = nameAndDesc.indexOf('(');
-            PairedMapping paired = MappingUtil.Paired.duo(nameAndDesc.substring(0, bracket), row[2], nameAndDesc.substring(bracket));
-            paired.addComponent(new Documented(row[5]));
-            ClassMapping<PairedMapping> cm = classes.computeIfAbsent(row[1].substring(0, lastDot),
-                    (String k) -> new ClassMapping<>(new PairedMapping(k)));
-            cm.addMethod(paired);
-            methodMap.put(row[1], paired);
-            return paired;
-
+        private static PairedMapping getMethod(String original, String mapped, String docs,
+                                               Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes,
+                                               Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
+            return methodMap.computeIfAbsent(original, (String s) -> {
+                int lastDot = s.lastIndexOf('.');
+                String nameAndDesc = s.substring(lastDot + 1);
+                int bracket = nameAndDesc.indexOf('(');
+                String name = nameAndDesc.substring(0, bracket);
+                PairedMapping method = MappingUtil.Paired.duo(name, mapped == null ? name : mapped,
+                        nameAndDesc.substring(bracket));
+                if (docs != null) method.addComponent(new Documented(docs));
+                ClassMapping<PairedMapping> cm = classes.computeIfAbsent(s.substring(0, lastDot),
+                        (String k) -> new ClassMapping<>(new PairedMapping(k)));// TODO
+                cm.addMethod(method);
+                return method;
+            });
         }
     };
 }
