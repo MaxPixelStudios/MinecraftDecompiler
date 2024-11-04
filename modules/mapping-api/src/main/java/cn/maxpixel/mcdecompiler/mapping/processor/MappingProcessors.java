@@ -514,25 +514,22 @@ public interface MappingProcessors {
                         PairedMapping field = MappingUtil.Paired.duo(nameAndDesc.substring(0, colon), parts[2],
                                 nameAndDesc.substring(colon + 1));
                         field.addComponent(new Documented(parts[5]));
-                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(parts[1].substring(0, lastDot),
+                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(parts[1].substring(0, lastDot).replace('.', '/'),
                                 (String k) -> new ClassMapping<>(new PairedMapping(k)));
                         cm.addField(field);
                     }
-                }
-            }
-            for (String line : content) {
-                String[] parts = MappingUtil.split(line, PARA);
-                if (parts[0].equals("Param")) {
-                    String unmapped = parts[1].isEmpty() || parts[1].equals("nil") ? parts[3] + '@' + parts[4] : parts[1];
-                    PairedMapping local = new PairedMapping(unmapped, parts[2]);
-                    local.addComponent(new Documented(parts[5]));
-                    PairedMapping method = getMethod(parts[3], null, null, classes, methodMap);
-                    LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
-                    if (lvt == null) {// TODO
-                        lvt = new LocalVariableTable.Paired();
-                        method.addComponent(lvt);
+                    case "Param" -> {
+                        String unmapped = parts[1].isEmpty() || parts[1].equals("nil") ? parts[3] + '@' + parts[4] : parts[1];
+                        PairedMapping local = new PairedMapping(unmapped, parts[2]);
+                        local.addComponent(new Documented(parts[5]));
+                        PairedMapping method = getMethod(parts[3], null, null, classes, methodMap);
+                        LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
+                        if (lvt == null) {// TODO
+                            lvt = new LocalVariableTable.Paired();
+                            method.addComponent(lvt);
+                        }
+                        lvt.setLocalVariable(Integer.parseInt(parts[4]), local);
                     }
-                    lvt.setLocalVariable(Integer.parseInt(parts[4]), local);
                 }
             }
             mappings.classes.addAll(classes.values());
@@ -559,7 +556,12 @@ public interface MappingProcessors {
         private static PairedMapping getMethod(String original, String mapped, String docs,
                                                Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes,
                                                Object2ObjectOpenHashMap<String, PairedMapping> methodMap) {
-            return methodMap.computeIfAbsent(original, (String s) -> {
+            return methodMap.compute(original, (s, old) -> {
+                if (old != null) {
+                    if (docs != null) old.addComponent(new Documented(docs));
+                    if (mapped != null) old.mappedName = mapped;
+                    return old;
+                }
                 int lastDot = s.lastIndexOf('.');
                 String nameAndDesc = s.substring(lastDot + 1);
                 int bracket = nameAndDesc.indexOf('(');
@@ -567,7 +569,7 @@ public interface MappingProcessors {
                 PairedMapping method = MappingUtil.Paired.duo(name, mapped == null ? name : mapped,
                         nameAndDesc.substring(bracket));
                 if (docs != null) method.addComponent(new Documented(docs));
-                ClassMapping<PairedMapping> cm = classes.computeIfAbsent(s.substring(0, lastDot),
+                ClassMapping<PairedMapping> cm = classes.computeIfAbsent(s.substring(0, lastDot).replace('.', '/'),
                         (String k) -> new ClassMapping<>(new PairedMapping(k)));// TODO
                 cm.addMethod(method);
                 return method;
