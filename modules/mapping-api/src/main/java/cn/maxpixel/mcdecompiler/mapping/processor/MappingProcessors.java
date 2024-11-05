@@ -490,22 +490,22 @@ public interface MappingProcessors {
         }
 
         @Override
-        public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {// FIXME: What to do when class name itself contains "$"?
+        public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
             ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
             Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             Object2ObjectOpenHashMap<String, PairedMapping> methodMap = new Object2ObjectOpenHashMap<>();
             for (String line : content) {
-                if (line.startsWith("Class")) {
-                    String[] parts = MappingUtil.split(line, PARA);
-                    String unmapped = parts[1].replace('.', '/');
-                    String mapped = parts[2].replace('.', '/');
-                    classes.put(unmapped, new ClassMapping<>(new PairedMapping(unmapped, mapped, new Documented(parts[5]))));
-                }
-            }
-            for (var cm : classes.values()) parseOuterClass(cm.mapping.unmappedName, classes);
-            for (String line : content) {
                 String[] parts = MappingUtil.split(line, PARA);
                 switch (parts[0]) {
+                    case "Class" -> {
+                        String unmapped = parts[1].replace('.', '/');
+                        String mapped = parts[2].replace('.', '/');
+                        classes.merge(unmapped, new ClassMapping<>(new PairedMapping(unmapped, mapped, new Documented(parts[5]))), (o, n) -> {
+                            n.addFields(o.getFields());
+                            n.addMethods(o.getMethods());
+                            return n;
+                        });
+                    }
                     case "Def" -> getMethod(parts[1], parts[2], parts[5], classes, methodMap);
                     case "Var" -> {
                         int lastDot = parts[1].lastIndexOf('.');
@@ -533,9 +533,11 @@ public interface MappingProcessors {
                 }
             }
             mappings.classes.addAll(classes.values());
+            for (var cm : mappings.classes) parseOuterClass(cm.mapping.unmappedName, classes);
             return mappings;
         }
 
+        // FIXME: What to do when class name itself contains "$"?
         private static String parseOuterClass(String unmapped, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes) {
             ClassMapping<PairedMapping> cm = classes.get(unmapped);
             String mapped = cm == null ? unmapped : cm.mapping.mappedName;

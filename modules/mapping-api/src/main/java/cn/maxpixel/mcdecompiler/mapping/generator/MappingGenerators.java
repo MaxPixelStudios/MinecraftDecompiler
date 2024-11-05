@@ -379,6 +379,8 @@ public interface MappingGenerators {
     };
 
     MappingGenerator.Classified<PairedMapping> PDME = new MappingGenerator.Classified<>() {
+        private static final char PARA = '¶';
+
         @Override
         public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
             return MappingFormats.PDME;
@@ -390,8 +392,8 @@ public interface MappingGenerators {
             if (mappings.classes.isEmpty()) return lines;
             mappings.classes.parallelStream().forEach(cls -> {
                 PairedMapping classMapping = cls.mapping;
-                String clazz = classMapping.getUnmappedName().replace("/", ".");
-                String mapped_class = classMapping.getMappedName().replace("/", ".");
+                String clazz = classMapping.getUnmappedName().replace('/', '.');
+                String mapped_class = classMapping.getMappedName().replace('/', '.');
                 synchronized (lines) {
                     String classdoc = "";
                     String parsed_mapped_class; //Only have the name of the subclass by default
