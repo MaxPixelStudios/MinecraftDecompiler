@@ -30,6 +30,7 @@ import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -379,7 +380,8 @@ public interface MappingGenerators {
     };
 
     MappingGenerator.Classified<PairedMapping> PDME = new MappingGenerator.Classified<>() {
-        private static final char PARA = '¶';
+        private static final String PARA = "¶";
+        private static final String NIL = "nil";
 
         @Override
         public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
@@ -390,69 +392,60 @@ public interface MappingGenerators {
         public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
             ObjectArrayList<String> lines = new ObjectArrayList<>();
             if (mappings.classes.isEmpty()) return lines;
-            mappings.classes.parallelStream().forEach(cls -> {
-                PairedMapping classMapping = cls.mapping;
-                String clazz = classMapping.getUnmappedName().replace('/', '.');
-                String mapped_class = classMapping.getMappedName().replace('/', '.');
+            mappings.classes.parallelStream().forEach(classMapping -> {
+                PairedMapping cm = classMapping.mapping;
+                String unmapped = cm.getUnmappedName().replace('/', '.');
+                String mapped = cm.getMappedName().replace('/', '.');
+                String clsDoc = getDoc(cm);
                 synchronized (lines) {
-                    String classdoc = "";
-                    String parsed_mapped_class; //Only have the name of the subclass by default
-                    if (classMapping.hasComponent(Documented.class)) {
-                        classdoc = classMapping.getComponent(Documented.class).getContentString();
-                    }
-                    if (mapped_class.contains("$")) {
-                        String[] clz = mapped_class.split("\\$");
-                        parsed_mapped_class = clz[clz.length - 1];
-                    } else {
-                        parsed_mapped_class = mapped_class;
-                    }
-                    lines.add(
-                            "Class¶" + clazz + '¶' + parsed_mapped_class + "¶nil¶nil¶" + classdoc
-                    );
+                    lines.add(String.join(PARA, "Class", unmapped, mapped, NIL, NIL, clsDoc));
                 }
-                cls.getFields().parallelStream().forEach(field -> {
+                classMapping.getFields().parallelStream().forEach(field -> {
                     String desc = field.getComponent(Descriptor.class).unmappedDescriptor;
-                    String unmapped = clazz.replace("/", ".") + '.' + field.getUnmappedName() + ":" + desc;
-                    String doc = "";
-                    if (field.hasComponent(Documented.class)) {
-                        doc = field.getComponent(Documented.class).getContentString();
-                    }
+                    String unmappedName = unmapped + '.' + field.getUnmappedName() + ':' + desc;
+                    String doc = getDoc(field);
                     synchronized (lines) {
-                        lines.add(
-                                "Var¶" + unmapped + '¶' + field.getMappedName() + "¶nil¶nil¶" + doc
-                        );
+                        lines.add(String.join("Var", unmappedName, field.mappedName, NIL, NIL, doc));
                     }
                 });
-                cls.getMethods().parallelStream().forEach(method -> {
+                classMapping.getMethods().parallelStream().forEach(method -> {
                     String desc = method.getComponent(Descriptor.class).unmappedDescriptor;
-                    String unmapped = clazz.replace("/", ".") + '.' + method.getUnmappedName() + desc;
-                    String doc = "";
-                    if (method.hasComponent(Documented.class)) {
-                        doc = method.getComponent(Documented.class).getContentString();
-                    }
+                    String unmappedName = unmapped + '.' + method.getUnmappedName() + desc;
+                    String doc = getDoc(method);
                     synchronized (lines) {
-                        lines.add(
-                                "Def¶" + unmapped + '¶' + method.getMappedName() + "¶nil¶nil¶" + doc
-                        );
+                        lines.add(String.join(PARA, "Def", unmappedName, method.mappedName, NIL, NIL, doc));
                     }
                     if (method.hasComponent(LocalVariableTable.Paired.class)) {
                         LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
-                        lvt.getLocalVariableIndexes().forEach(index -> {
-                            String loc_unmapped = "nil";
+                        IntIterator it = lvt.getLocalVariableIndexes().iterator();
+                        while (it.hasNext()) {
+                            int index = it.nextInt();
                             PairedMapping loc = lvt.getLocalVariable(index);
-                            String loc_doc = "";
-                            if (!loc.getUnmappedName().equals(unmapped + "@" + index)) {
-                                loc_unmapped = loc.getUnmappedName();
+                            String line = String.join(
+                                    PARA,
+                                    "Param",
+                                    nilWhenBlank(loc.unmappedName),
+                                    nilWhenBlank(loc.mappedName),
+                                    unmappedName,
+                                    String.valueOf(index),
+                                    getDoc(loc)
+                            );
+                            synchronized (lines) {
+                                lines.add(line);
                             }
-                            if (loc.hasComponent(Documented.class)) {
-                                loc_doc = loc.getComponent(Documented.class).getContentString();
-                            }
-                            lines.add("Param¶" + loc_unmapped + "¶" + loc.getMappedName() + "¶" + unmapped + "¶" + index + "¶" + loc_doc);
-                        });
+                        }
                     }
                 });
             });
             return lines;
+        }
+
+        private static String nilWhenBlank(String s) {
+            return s == null || s.isBlank() ? NIL : s;
+        }
+
+        private static String getDoc(PairedMapping m) {
+            return m.getComponentOptional(Documented.class).map(Documented::getContentString).orElse("");
         }
     };
 }

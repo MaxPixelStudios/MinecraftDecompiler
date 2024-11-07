@@ -98,9 +98,6 @@ public interface MappingProcessors {
     };
 
     MappingProcessor.Classified<PairedMapping> CSRG = new MappingProcessor.Classified<>() {
-        private static final Function<String, ClassMapping<PairedMapping>> COMPUTE_FUNC = name ->
-                new ClassMapping<>(new PairedMapping(name));
-
         @Override
         public MappingFormat<PairedMapping, ClassifiedMapping<PairedMapping>> getFormat() {
             return MappingFormats.CSRG;
@@ -131,13 +128,13 @@ public interface MappingProcessors {
                     case 3 -> { // Field
                         PairedMapping fieldMapping = MappingUtil.Paired.o(sa[1], sa[2]);
                         synchronized (classes) {
-                            classes.computeIfAbsent(sa[0], COMPUTE_FUNC).addField(fieldMapping);
+                            classes.computeIfAbsent(sa[0], MappingUtil.Paired.COMPUTE_DEFAULT_CLASS).addField(fieldMapping);
                         }
                     }
                     case 4 -> { // Method
                         PairedMapping methodMapping = MappingUtil.Paired.duo(sa[1], sa[3], sa[2]);
                         synchronized (classes) {
-                            classes.computeIfAbsent(sa[0], COMPUTE_FUNC).addMethod(methodMapping);
+                            classes.computeIfAbsent(sa[0], MappingUtil.Paired.COMPUTE_DEFAULT_CLASS).addMethod(methodMapping);
                         }
                     }
                     default -> throw new IllegalArgumentException("Is this a CSRG mapping file?");
@@ -514,13 +511,12 @@ public interface MappingProcessors {
                         PairedMapping field = MappingUtil.Paired.duo(nameAndDesc.substring(0, colon), parts[2],
                                 nameAndDesc.substring(colon + 1));
                         field.addComponent(new Documented(parts[5]));
-                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(parts[1].substring(0, lastDot).replace('.', '/'),
-                                (String k) -> new ClassMapping<>(new PairedMapping(k)));
+                        ClassMapping<PairedMapping> cm = classes.computeIfAbsent(parts[1].substring(0, lastDot)
+                                .replace('.', '/'), MappingUtil.Paired.COMPUTE_DEFAULT_CLASS);
                         cm.addField(field);
                     }
                     case "Param" -> {
-                        String unmapped = parts[1].isEmpty() || parts[1].equals("nil") ? parts[3] + '@' + parts[4] : parts[1];
-                        PairedMapping local = new PairedMapping(unmapped, parts[2]);
+                        PairedMapping local = new PairedMapping(parts[1], parts[2]);
                         local.addComponent(new Documented(parts[5]));
                         PairedMapping method = getMethod(parts[3], null, null, classes, methodMap);
                         LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
@@ -570,8 +566,8 @@ public interface MappingProcessors {
                 PairedMapping method = MappingUtil.Paired.duo(name, mapped == null ? name : mapped,
                         nameAndDesc.substring(bracket));
                 if (docs != null) method.addComponent(new Documented(docs));
-                ClassMapping<PairedMapping> cm = classes.computeIfAbsent(s.substring(0, lastDot).replace('.', '/'),
-                        (String k) -> new ClassMapping<>(new PairedMapping(k)));// TODO
+                ClassMapping<PairedMapping> cm = classes.computeIfAbsent(s.substring(0, lastDot)
+                        .replace('.', '/'), MappingUtil.Paired.COMPUTE_DEFAULT_CLASS);
                 cm.addMethod(method);
                 return method;
             });

@@ -26,6 +26,8 @@ import cn.maxpixel.mcdecompiler.mapping.component.*;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 public final class MappingUtil {
     private MappingUtil() {
         throw new AssertionError("No instances");
@@ -36,6 +38,9 @@ public final class MappingUtil {
     }
 
     public static final class Paired {
+        public static final Function<String, ClassMapping<PairedMapping>> COMPUTE_DEFAULT_CLASS = name ->
+                new ClassMapping<>(new PairedMapping(name));
+
         public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, @Nullable ClassifiedMappingRemapper remapper) {
             checkOwner(method.getOwned(), cls);
             if (method.hasComponent(Descriptor.class)) {
