@@ -537,7 +537,6 @@ public interface MappingProcessors {
             return mappings;
         }
 
-        // FIXME: What to do when class name itself contains "$"?
         private static String parseOuterClass(String unmapped, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes) {
             ClassMapping<PairedMapping> cm = classes.get(unmapped);
             String mapped = cm == null ? unmapped : cm.mapping.mappedName;
