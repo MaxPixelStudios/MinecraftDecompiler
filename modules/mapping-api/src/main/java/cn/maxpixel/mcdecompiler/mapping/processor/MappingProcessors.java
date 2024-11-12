@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping.processor;
 
 import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
@@ -28,6 +29,8 @@ import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
+import cn.maxpixel.mcdecompiler.mapping.trait.AccessTransformationTrait;
+import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
@@ -488,7 +491,9 @@ public interface MappingProcessors {
 
         @Override
         public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
-            ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
+            InheritanceTrait inheritanceMap = new InheritanceTrait();
+            AccessTransformationTrait at = new AccessTransformationTrait();
+            ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>(inheritanceMap, at);
             Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             Object2ObjectOpenHashMap<String, PairedMapping> methodMap = new Object2ObjectOpenHashMap<>();
             for (String line : content) {
@@ -526,6 +531,12 @@ public interface MappingProcessors {
                         }
                         lvt.setLocalVariable(Integer.parseInt(parts[4]), local);
                     }
+                    case "Include", "Incluir" -> inheritanceMap.put(parts[1].replace('.', '/'),
+                            Utils.mapArray(MappingUtil.split(parts[2], ','), String[]::new,
+                                    s -> s.replace('.', '/')));
+                    case "AccessFlag", "BanderaDeAcceso" -> at.add(parts[1].replace('.', '/'),
+                            parts[2].startsWith("0x") ? Integer.parseInt(parts[2].substring(2), 16) :
+                                    Integer.parseInt(parts[2]));
                 }
             }
             mappings.classes.addAll(classes.values());

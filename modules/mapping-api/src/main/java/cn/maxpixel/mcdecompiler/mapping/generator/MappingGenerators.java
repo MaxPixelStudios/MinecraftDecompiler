@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping.generator;
 
 import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
@@ -27,12 +28,16 @@ import cn.maxpixel.mcdecompiler.mapping.component.*;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.trait.AccessTransformationTrait;
+import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import java.util.Locale;
 
 public interface MappingGenerators {
     MappingGenerator.Classified<PairedMapping> SRG = new MappingGenerator.Classified<>() {
@@ -437,6 +442,18 @@ public interface MappingGenerators {
                     }
                 });
             });
+            if (mappings.hasTrait(InheritanceTrait.class)) {
+                mappings.getTrait(InheritanceTrait.class).getMap().forEach((k, v) -> lines.add(
+                        String.join(PARA, "Include", k.replace('/', '.'),
+                                String.join(",", Utils.mapArray(v.toArray(), String[]::new,
+                                        s -> ((String) s).replace('/', '.'))),
+                                NIL, NIL, "")));
+            }
+            if (mappings.hasTrait(AccessTransformationTrait.class)) {
+                var map = mappings.getTrait(AccessTransformationTrait.class).getMap();
+                map.object2IntEntrySet().fastForEach(e -> lines.add(String.join(PARA, "AccessFlag",
+                        e.getKey().replace('/', '.'), formatHex(e.getIntValue()), NIL, NIL, "")));
+            }
             return lines;
         }
 
@@ -446,6 +463,11 @@ public interface MappingGenerators {
 
         private static String getDoc(PairedMapping m) {
             return m.getComponentOptional(Documented.class).map(Documented::getContentString).orElse("");
+        }
+
+        private static String formatHex(int value) {
+            String s = Integer.toHexString(value).toUpperCase(Locale.ENGLISH);
+            return "0x" + "0".repeat(4 - s.length()) + s;
         }
     };
 }

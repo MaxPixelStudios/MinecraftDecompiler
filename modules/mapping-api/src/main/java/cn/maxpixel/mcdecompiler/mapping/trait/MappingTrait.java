@@ -22,7 +22,8 @@ import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * A mapping trait is a mark that indicates the all entries of a mapping collection has a common feature.
+ * A mapping trait is a mark that indicates the all entries of a mapping collection has a common feature
+ * or an attachment to a mapping collection to hold extra data.
  *
  * @apiNote The assumption is that mapping traits should apply to all the entries in the collection.
  *          Otherwise, you may get unexpected behavior.

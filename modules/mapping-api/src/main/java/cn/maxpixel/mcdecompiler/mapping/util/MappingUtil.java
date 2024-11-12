@@ -112,7 +112,7 @@ public final class MappingUtil {
         }
     }
 
-    public static String[] split(String s, char c) {
+    public static String[] split(String s, char c) {// TODO: Do we need an withMapping version?
         int n = 2;
         int i = s.indexOf(c);
         if (i == -1) return new String[] {s};
