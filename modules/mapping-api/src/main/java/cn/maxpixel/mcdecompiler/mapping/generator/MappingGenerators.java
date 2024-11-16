@@ -443,11 +443,11 @@ public interface MappingGenerators {
                 });
             });
             if (mappings.hasTrait(InheritanceTrait.class)) {
-                mappings.getTrait(InheritanceTrait.class).getMap().forEach((k, v) -> lines.add(
-                        String.join(PARA, "Include", k.replace('/', '.'),
-                                String.join(",", Utils.mapArray(v.toArray(), String[]::new,
-                                        s -> ((String) s).replace('/', '.'))),
-                                NIL, NIL, "")));
+                mappings.getTrait(InheritanceTrait.class).getMap().forEach((k, v) -> {
+                    if (!v.isEmpty()) lines.add(String.join(PARA, "Include", k.replace('/', '.'),
+                            String.join(",", Utils.mapArray(v.toArray(), String[]::new,
+                                    s -> ((String) s).replace('/', '.'))), NIL, NIL, ""));
+                });
             }
             if (mappings.hasTrait(AccessTransformationTrait.class)) {
                 var map = mappings.getTrait(AccessTransformationTrait.class).getMap();

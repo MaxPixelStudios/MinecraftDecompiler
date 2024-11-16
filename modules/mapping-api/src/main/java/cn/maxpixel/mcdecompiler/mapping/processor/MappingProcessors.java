@@ -481,7 +481,7 @@ public interface MappingProcessors {
         }
     };
 
-    MappingProcessor.Classified<PairedMapping> PDME = new MappingProcessor.Classified<>() { //Does not support Include/Incluir (MCD requires jar anyhow) or AccessFlag/BanderaDeAcceso
+    MappingProcessor.Classified<PairedMapping> PDME = new MappingProcessor.Classified<>() {
         private static final char PARA = '¶';
 
         @Override
@@ -534,9 +534,14 @@ public interface MappingProcessors {
                     case "Include", "Incluir" -> inheritanceMap.put(parts[1].replace('.', '/'),
                             Utils.mapArray(MappingUtil.split(parts[2], ','), String[]::new,
                                     s -> s.replace('.', '/')));
-                    case "AccessFlag", "BanderaDeAcceso" -> at.add(parts[1].replace('.', '/'),
-                            parts[2].startsWith("0x") ? Integer.parseInt(parts[2].substring(2), 16) :
-                                    Integer.parseInt(parts[2]));
+                    case "AccessFlag", "BanderaDeAcceso" -> {
+                        if (parts[1].contains(":")) { // field
+                        } else if (parts[1].contains("(")) { // method
+                        } else { // class
+                            at.add(parts[1].replace('.', '/'), parts[2].startsWith("0x") ?
+                                    Integer.parseInt(parts[2].substring(2), 16) : Integer.parseInt(parts[2]));
+                        }
+                    }
                 }
             }
             mappings.classes.addAll(classes.values());

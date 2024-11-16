@@ -2,6 +2,9 @@ package cn.maxpixel.mcdecompiler.mapping.trait;
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
+/**
+ * A trait that stores access flag transformation data
+ */
 public class AccessTransformationTrait implements MappingTrait {
     private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
 

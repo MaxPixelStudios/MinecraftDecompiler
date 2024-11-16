@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.util.List;
 
 /**
- * A trait that stores inheritance information statically
+ * A trait that stores inheritance information
  */
 public class InheritanceTrait implements MappingTrait {
     private final Object2ObjectOpenHashMap<String, List<String>> map = new Object2ObjectOpenHashMap<>();
@@ -21,6 +21,7 @@ public class InheritanceTrait implements MappingTrait {
     }
 
     public void put(String parent, String[] children) {
+        if (children.length == 0) return;
         map.put(parent, ObjectArrayList.wrap(children));
     }
 }
