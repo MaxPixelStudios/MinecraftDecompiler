@@ -26,6 +26,7 @@ public class DefaultDetectionUnit implements DetectionUnit {
         String s = contents.get(0);
         if (s.startsWith("PK: ") || s.startsWith("CL: ") || s.startsWith("FD: ") || s.startsWith("MD: ")) return Pair.of(MappingFormats.SRG, Percentage.NINETY_NINE);
         else if (s.endsWith(":")) return Pair.of(MappingFormats.PROGUARD, Percentage.NINETY);
+        else if (s.contains("\u00B6")) return Pair.of(MappingFormats.PDME, Percentage.NINETY);
         s = contents.get(1);
         if (s.startsWith("\t")) return Pair.of(MappingFormats.TSRG_V1, Percentage.FIFTY);
         else return Pair.of(MappingFormats.CSRG, Percentage.FIFTY);

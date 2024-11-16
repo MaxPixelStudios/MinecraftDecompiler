@@ -54,4 +54,8 @@ public class MappingProcessorTest {
     public void testTiny2() {
         MappingFormats.TINY_V2.read(getResourceAsStream("1.17.1-v2.tiny"));
     }
+
+    public void testPDME() {
+        MappingFormats.PDME.read(getResourceAsStream("1.17.1.pdme"));
+    }
 }
