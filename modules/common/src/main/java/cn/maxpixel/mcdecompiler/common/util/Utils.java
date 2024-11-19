@@ -29,10 +29,8 @@ public class Utils {
 
     public static <I, O, E extends Throwable> O[] mapArray(I[] input, IntFunction<O[]> outputGenerator,
                                                            LambdaUtil.Function_WithThrowable<I, O, E> func) throws E {
-        Objects.requireNonNull(input);// TODO: Do we need these 2 checks?
-        Objects.requireNonNull(outputGenerator);
         Objects.requireNonNull(func);
-        O[] output = outputGenerator.apply(input.length);
+        O[] output = Objects.requireNonNull(outputGenerator.apply(input.length));
         for (int i = 0; i < input.length; i++) {
             output[i] = Objects.requireNonNull(func.apply(Objects.requireNonNull(input[i])));
         }

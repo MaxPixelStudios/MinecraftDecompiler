@@ -55,7 +55,7 @@ public interface MappingProcessors {
             ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
             Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             content.parallelStream().forEach(s -> {
-                String[] strings = s.split(" ", 6);
+                String[] strings = MappingUtil.split(s, ' ');
                 switch (strings[0]) {
                     case "CL:" -> {
                         ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(strings[1], strings[2]));
@@ -111,7 +111,7 @@ public interface MappingProcessors {
             ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
             Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
             content.parallelStream().forEach(s -> {
-                String[] sa = s.split(" ", 5);
+                String[] sa = MappingUtil.split(s, ' ');
                 switch (sa.length) {
                     case 2 -> { // Class / Package
                         if (sa[0].charAt(sa[0].length() - 1) == '/') synchronized (mappings.packages) {
@@ -158,7 +158,7 @@ public interface MappingProcessors {
         public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
             ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
             for (int i = 0, len = content.size(); i < len;) {
-                String[] sa = content.get(i).split(" ");
+                String[] sa = MappingUtil.split(content.get(i), ' ');
                 if (sa[0].charAt(0) != '\t') {
                     if (sa[0].charAt(sa[0].length() - 1) == '/') {
                         mappings.packages.add(new PairedMapping(sa[0].substring(0, sa[0].length() - 1),
@@ -178,7 +178,7 @@ public interface MappingProcessors {
             for (index = index + 1; index < size; index++) {
                 String s = content.get(index);
                 if (s.charAt(0) == '\t') {
-                    String[] sa = s.substring(1).split(" ");
+                    String[] sa = MappingUtil.split(s, ' ', 1);
                     switch (sa.length) {
                         case 2 -> classMapping.addField(MappingUtil.Paired.o(sa[0], sa[1]));
                         case 3 -> classMapping.addMethod(MappingUtil.Paired.duo(sa[0], sa[2], sa[1]));
@@ -203,10 +203,10 @@ public interface MappingProcessors {
         @Override
         public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {
             if(!content.get(0).startsWith("tsrg2")) error();
-            String[] namespaces = content.get(0).substring(6).split(" ");
+            String[] namespaces = MappingUtil.split(content.get(0), ' ', 6);
             ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(new NamespacedTrait(namespaces));
             for (int i = 1, len = content.size(); i < len; ) {
-                String[] sa = content.get(i).split(" ");
+                String[] sa = MappingUtil.split(content.get(i), ' ');
                 if (sa[0].charAt(0) != '\t') {
                     if (sa[0].charAt(sa[0].length() - 1) == '/') {
                         for (int j = 0; j < sa.length; j++) sa[j] = sa[j].substring(0, sa[j].length() - 1);
@@ -228,7 +228,7 @@ public interface MappingProcessors {
             for (index = index + 1; index < size; index++) {
                 String s = content.get(index);
                 if (s.charAt(0) == '\t') {
-                    String[] sa = s.substring(1).split(" ");
+                    String[] sa = MappingUtil.split(s, ' ', 1);
                     switch (sa.length - namespaces.length) {
                         case 0 -> classMapping.addField(MappingUtil.Namespaced.o(namespaces, sa));
                         case 1 -> {
@@ -257,7 +257,7 @@ public interface MappingProcessors {
                 if (s.charAt(1) == '\t') {
                     if (s.equals("\t\tstatic")) methodMapping.getComponent(StaticIdentifiable.class).setStatic(true);
                     else {
-                        String[] sa = s.substring(2).split(" ");
+                        String[] sa = MappingUtil.split(s, ' ', 2);
                         methodMapping.getComponent(LocalVariableTable.Namespaced.class)
                                 .setLocalVariable(Integer.parseInt(sa[0]), new NamespacedMapping(namespaces, sa, 1));
                     }
@@ -361,12 +361,12 @@ public interface MappingProcessors {
         @Override
         public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {// TODO: Support properties
             if (!content.get(0).startsWith("v1")) error();
-            String[] namespaces = content.get(0).substring(3).split("\t");
+            String[] namespaces = MappingUtil.split(content.get(0), '\t', 3);
             ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(new NamespacedTrait(namespaces));
             Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: the first namespace, usually unmapped name
             String k = namespaces[0];
             content.parallelStream().skip(1).forEach(s -> {
-                String[] sa = s.split("\t");
+                String[] sa = MappingUtil.split(s, '\t');
                 if (s.startsWith("CLASS")) {
                     ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa, 1)
                             .setUnmappedNamespace(k));
@@ -405,7 +405,7 @@ public interface MappingProcessors {
         @Override
         public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {// TODO: Support properties
             if (!content.get(0).startsWith("tiny\t2\t0")) error();
-            String[] namespaces = MappingUtil.split(content.get(0).substring(9), '\t');
+            String[] namespaces = MappingUtil.split(content.get(0), '\t', 9);
             ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(new NamespacedTrait(namespaces));
             for (int i = 1, len = content.size(); i < len; ) {
                 String[] sa = MappingUtil.split(content.get(i), '\t');
@@ -423,7 +423,7 @@ public interface MappingProcessors {
             for (index = index + 1; index < size; index++) {
                 String s = content.get(index);
                 if (s.charAt(0) == '\t') {
-                    String[] sa = MappingUtil.split(s.substring(3), '\t');
+                    String[] sa = MappingUtil.split(s, '\t', 3);
                     switch (s.charAt(1)) {
                         case 'c' -> classMapping.mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(sa[0]));
                         case 'f' -> {
@@ -449,9 +449,9 @@ public interface MappingProcessors {
                 String s = content.get(index);
                 if (s.charAt(1) == '\t' && s.charAt(0) == '\t') {
                     switch (s.charAt(2)) {
-                        case 'c' -> mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(s.substring(4)));
+                        case 'c' -> mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 4));
                         case 'p' -> {
-                            String[] sa = MappingUtil.split(s.substring(4), '\t');
+                            String[] sa = MappingUtil.split(s, '\t', 4);
                             NamespacedMapping localVariable = MappingUtil.Namespaced.d(namespaces, sa, 1);
                             mapping.getComponent(LocalVariableTable.Namespaced.class)
                                     .setLocalVariable(Integer.parseInt(sa[0]), localVariable);
@@ -468,7 +468,7 @@ public interface MappingProcessors {
             if (++index < size) {
                 String s = content.get(index);
                 if (s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
-                    if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContentString(TinyUtil.unescape(s.substring(5)));
+                    if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 5));
                     else error();
                     return index;
                 }
@@ -524,11 +524,8 @@ public interface MappingProcessors {
                         PairedMapping local = new PairedMapping(parts[1], parts[2]);
                         local.addComponent(new Documented(parts[5]));
                         PairedMapping method = getMethod(parts[3], null, null, classes, methodMap);
-                        LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
-                        if (lvt == null) {// TODO
-                            lvt = new LocalVariableTable.Paired();
-                            method.addComponent(lvt);
-                        }
+                        LocalVariableTable.Paired lvt = method.getOrCreateComponent(LocalVariableTable.Paired.class,
+                                LocalVariableTable.Paired::new);
                         lvt.setLocalVariable(Integer.parseInt(parts[4]), local);
                     }
                     case "Include", "Incluir" -> inheritanceMap.put(parts[1].replace('.', '/'),

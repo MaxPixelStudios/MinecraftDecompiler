@@ -112,15 +112,19 @@ public final class MappingUtil {
         }
     }
 
-    public static String[] split(String s, char c) {// TODO: Do we need an withMapping version?
-        int n = 2;
-        int i = s.indexOf(c);
+    public static String[] split(String s, char c) {
+        return split(s, c, 0);
+    }
+
+    public static String[] split(String s, char c, int beginIndex) {// TODO: Do we need an withMapping version?
+        int i = s.indexOf(c, beginIndex);
         if (i == -1) return new String[] {s};
+        int n = 2;
         while ((i = s.indexOf(c, i + 1)) != -1) n++;
 
         String[] ret = new String[n];
-        int start = 0;
-        for (int j = s.indexOf(c), p = 0; j != -1; j = s.indexOf(c, start)) {
+        int start = beginIndex;
+        for (int j = s.indexOf(c, beginIndex), p = 0; j != -1; j = s.indexOf(c, start)) {
             ret[p++] = s.substring(start, j);
             start = j + 1;
         }

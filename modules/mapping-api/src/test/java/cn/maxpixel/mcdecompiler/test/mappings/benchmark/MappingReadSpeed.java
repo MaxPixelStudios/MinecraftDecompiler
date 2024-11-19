@@ -16,12 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.test.benchmark;
+package cn.maxpixel.mcdecompiler.test.mappings.benchmark;
 
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessors;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -54,6 +57,13 @@ public class MappingReadSpeed {
 
             return s;
         }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
+    }
+
+    public void test() throws RunnerException {
+        Options options = new OptionsBuilder()
+                .include(MappingReadSpeed.class.getSimpleName())
+                .build();
+//        new Runner(options).run();
     }
 
     @Benchmark

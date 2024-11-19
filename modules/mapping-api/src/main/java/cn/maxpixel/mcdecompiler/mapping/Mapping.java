@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Base class of all mappings
@@ -60,6 +61,21 @@ public abstract class Mapping implements NameGetter {
     @SuppressWarnings("unchecked")
     public final <C extends Component> C getComponent(@NotNull Class<? extends C> component) {
         return (C) components.get(component);
+    }
+
+    /**
+     * Gets the component of given type if it is present, otherwise create a new component<br>
+     *
+     * @param component Given component type. Cannot be null
+     * @return The component if exists, or the newly created component
+     */
+    @SuppressWarnings("unchecked")
+    public final <C extends Component> @NotNull C getOrCreateComponent(@NotNull Class<? extends C> component, Supplier<? extends C> factory) {
+        var value = components.get(component);
+        if (value != null) return (C) value;
+        value = Objects.requireNonNull(factory.get());
+        components.put(component, value);
+        return (C) value;
     }
 
     /**

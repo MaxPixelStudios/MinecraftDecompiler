@@ -27,9 +27,13 @@ public final class TinyUtil {
     }
 
     public static String unescape(String escaped) {
+        return unescape(escaped, 0);
+    }
+
+    public static String unescape(String escaped, int beginIndex) {
         StringBuilder sb = new StringBuilder(escaped.length());
-        int mark = 0;
-        for (int i = escaped.indexOf('\\'); i >= 0; i = escaped.indexOf('\\', mark)) {
+        int mark = beginIndex;
+        for (int i = escaped.indexOf('\\', beginIndex); i >= 0; i = escaped.indexOf('\\', mark)) {
             char unescaped = switch (escaped.charAt(++i)) {
                 case '\\' -> '\\';
                 case 'n' -> '\n';
