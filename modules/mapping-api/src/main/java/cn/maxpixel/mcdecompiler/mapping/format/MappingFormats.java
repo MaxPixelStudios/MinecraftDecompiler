@@ -18,160 +18,21 @@
 
 package cn.maxpixel.mcdecompiler.mapping.format;
 
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
-import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerators;
-import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
-import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessors;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Set;
 
 public final class MappingFormats {
-    public static final MappingFormat.Classified<PairedMapping> SRG = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "srg";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
-            return MappingProcessors.SRG;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
-            return MappingGenerators.SRG;
-        }
-    };
-
-    public static final MappingFormat.Classified<PairedMapping> CSRG = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "csrg";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
-            return MappingProcessors.CSRG;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
-            return MappingGenerators.CSRG;
-        }
-    };
-
-    public static final MappingFormat.Classified<PairedMapping> TSRG_V1 = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "tsrg-v1";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
-            return MappingProcessors.TSRG_V1;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
-            return MappingGenerators.TSRG_V1;
-        }
-    };
-
-    public static final MappingFormat.Classified<NamespacedMapping> TSRG_V2 = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "tsrg-v2";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<NamespacedMapping> getProcessor() {
-            return MappingProcessors.TSRG_V2;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<NamespacedMapping> getGenerator() {
-            return MappingGenerators.TSRG_V2;
-        }
-    };
-
-    public static final MappingFormat.Classified<PairedMapping> PROGUARD = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "proguard";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
-            return MappingProcessors.PROGUARD;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
-            return MappingGenerators.PROGUARD;
-        }
-    };
-
-    public static final MappingFormat.Classified<NamespacedMapping> TINY_V1 = new MappingFormat.Classified<>() {// TODO: support properties
-        @Override
-        public @NotNull String getName() {
-            return "tiny-v1";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<NamespacedMapping> getProcessor() {
-            return MappingProcessors.TINY_V1;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<NamespacedMapping> getGenerator() {
-            return MappingGenerators.TINY_V1;
-        }
-    };
-
-    public static final MappingFormat.Classified<NamespacedMapping> TINY_V2 = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "tiny-v2";
-        }
-
-        @Override
-        public char getCommentChar() {
-            return '\0';
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<NamespacedMapping> getProcessor() {
-            return MappingProcessors.TINY_V2;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<NamespacedMapping> getGenerator() {
-            return MappingGenerators.TINY_V2;
-        }
-    };
-
-    public static final MappingFormat.Classified<PairedMapping> PDME = new MappingFormat.Classified<>() {
-        @Override
-        public @NotNull String getName() {
-            return "pdme";
-        }
-
-        @Override
-        public @NotNull MappingProcessor.Classified<PairedMapping> getProcessor() {
-            return MappingProcessors.PDME;
-        }
-
-        @Override
-        public @NotNull MappingGenerator.Classified<PairedMapping> getGenerator() {
-            return MappingGenerators.PDME;
-        }
-    };
+    public static final SrgMappingFormat SRG = SrgMappingFormat.INSTANCE;
+    public static final CsrgMappingFormat CSRG = CsrgMappingFormat.INSTANCE;
+    public static final TsrgV1MappingFormat TSRG_V1 = TsrgV1MappingFormat.INSTANCE;
+    public static final TsrgV2MappingFormat TSRG_V2 = TsrgV2MappingFormat.INSTANCE;
+    public static final ProguardMappingFormat PROGUARD = ProguardMappingFormat.INSTANCE;
+    public static final TinyV1MappingFormat TINY_V1 = TinyV1MappingFormat.INSTANCE;
+    public static final TinyV2MappingFormat TINY_V2 = TinyV2MappingFormat.INSTANCE;
+    public static final PdmeMappingFormat PDME = PdmeMappingFormat.INSTANCE;
 
     private static final Object2ObjectOpenHashMap<String, MappingFormat<?, ?>> MAPPING_FORMATS = new Object2ObjectOpenHashMap<>();
 

@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.test.mappings.benchmark;
 
-import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessors;
+import cn.maxpixel.mcdecompiler.mapping.processor.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -68,36 +68,36 @@ public class MappingReadSpeed {
 
     @Benchmark
     public void readSrg(Blackhole bh) {
-        bh.consume(MappingProcessors.SRG.process(srg));
+        bh.consume(SrgMappingProcessor.INSTANCE.process(srg));
     }
 
     @Benchmark
     public void readCsrg(Blackhole bh) {
-        bh.consume(MappingProcessors.CSRG.process(csrg));
+        bh.consume(CsrgMappingProcessor.INSTANCE.process(csrg));
     }
 
     @Benchmark
     public void readTsrg(Blackhole bh) {
-        bh.consume(MappingProcessors.TSRG_V1.process(tsrg));
+        bh.consume(TsrgV1MappingProcessor.INSTANCE.process(tsrg));
     }
 
     @Benchmark
     public void readTsrgV2(Blackhole bh) {
-        bh.consume(MappingProcessors.TSRG_V2.process(tsrg2));
+        bh.consume(TsrgV2MappingProcessor.INSTANCE.process(tsrg2));
     }
 
     @Benchmark
     public void readProguard(Blackhole bh) {
-        bh.consume(MappingProcessors.PROGUARD.process(proguard));
+        bh.consume(ProguardMappingProcessor.INSTANCE.process(proguard));
     }
 
     @Benchmark
     public void readTinyV1(Blackhole bh) {
-        bh.consume(MappingProcessors.TINY_V1.process(tiny1));
+        bh.consume(TinyV1MappingProcessor.INSTANCE.process(tiny1));
     }
 
     @Benchmark
     public void readTinyV2(Blackhole bh) {
-        bh.consume(MappingProcessors.TINY_V2.process(tiny2));
+        bh.consume(TinyV2MappingProcessor.INSTANCE.process(tiny2));
     }
 }
