@@ -88,25 +88,24 @@ public class NamingUtil {
         }
     }
 
+    // NOTE: Not strictly FIELD_DESC_PATTERN: this allows void/V
     public static String descriptor2Java(@NotNull @Pattern(Constants.FIELD_DESC_PATTERN) String descriptor) {
         if (descriptor.isBlank()) return "";
         char c0 = descriptor.charAt(0);
-        if (c0 != '[') {
-            if (c0 == 'L') return asJavaName(descriptor.substring(1, descriptor.length() - 1));
-            else return primitive2Java(c0);
-        } else {
-            int dim = 1;
-            while (descriptor.charAt(dim++) == '[');
-            String s = "[]".repeat(--dim);
-            return switch (descriptor.charAt(dim)) {
-                case 'L' -> asJavaName(descriptor.substring(dim + 1, descriptor.length() - 1)) + s;
-                case 'V' -> DescriptorUtil.throwInvalid(false);
-                default -> primitive2Java(descriptor.charAt(dim));
-            } + s;
-        }
+        return switch (c0) {
+            case 'L' -> asJavaName(descriptor.substring(1, descriptor.length() - 1));
+            case '[' -> {
+                int dim = 0;
+                while (descriptor.charAt(++dim) == '[');
+                char c1 = descriptor.charAt(dim);
+                yield (c1 == 'L' ? asJavaName(descriptor.substring(dim + 1, descriptor.length() - 1)) :
+                        primitive2Java(c1)) + "[]".repeat(dim);
+            }
+            default -> primitive2Java(c0);
+        };
     }
 
-    public static String primitive2Java(@NotNull char desc) {
+    public static String primitive2Java(char desc) {
         return switch (desc) {
             case 'Z' -> "boolean";
             case 'B' -> "byte";

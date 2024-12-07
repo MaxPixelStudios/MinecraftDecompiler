@@ -47,7 +47,7 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
             PairedMapping mapping = cls.mapping;
             lines.add(NamingUtil.asJavaName(mapping.mappedName) + " -> " +
                     NamingUtil.asJavaName(mapping.unmappedName) + ':');
-            cls.getFields().parallelStream().forEach(field -> {
+            for (PairedMapping field : cls.getFields()) {
                 MappingUtil.checkOwner(field.getOwned(), cls);
                 String mappedDesc;
                 if (field.hasComponent(Descriptor.Mapped.class)) {
@@ -55,12 +55,10 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
                 } else if (remapper != null && field.hasComponent(Descriptor.class)) {
                     mappedDesc = remapper.mapDesc(field.getComponent(Descriptor.class).unmappedDescriptor);
                 } else throw new UnsupportedOperationException();
-                synchronized (lines) {
-                    lines.add("    " + NamingUtil.descriptor2Java(mappedDesc) + ' ' + field.mappedName +
-                            " -> " + field.unmappedName);
-                }
-            });
-            cls.getMethods().parallelStream().forEach(method -> {
+                lines.add("    " + NamingUtil.descriptor2Java(mappedDesc) + ' ' + field.mappedName +
+                        " -> " + field.unmappedName);
+            }
+            for (PairedMapping method : cls.getMethods()) {
                 MappingUtil.checkOwner(method.getOwned(), cls);
                 String mappedDesc;
                 if (method.hasComponent(Descriptor.Mapped.class)) {
@@ -68,8 +66,6 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
                 } else if (remapper != null && method.hasComponent(Descriptor.class)) {
                     mappedDesc = remapper.mapMethodDesc(method.getComponent(Descriptor.class).unmappedDescriptor);
                 } else throw new UnsupportedOperationException();
-//                    String args = String.join(",", Utils.mapArray(Type.getArgumentTypes(mappedDesc),
-//                            String[]::new, Type::getClassName));
                 StringBuilder args = new StringBuilder(mappedDesc.length());
                 int end = mappedDesc.lastIndexOf(')'), last = 1;
                 for (int i = 1; i < end; i++) {
@@ -79,18 +75,16 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
                         args.append(NamingUtil.descriptor2Java(mappedDesc.substring(last, last = i + 1))).append(',');
                     }
                 }
-                args.deleteCharAt(args.length() - 1);
+                if (end > 1) args.deleteCharAt(args.length() - 1);
                 String ret = NamingUtil.descriptor2Java(mappedDesc.substring(end + 1));
                 if (method.hasComponent(LineNumber.class)) {
                     LineNumber lineNumber = method.getComponent(LineNumber.class);
-                    synchronized (lines) {
-                        lines.add("    " + lineNumber.startLineNumber + ':' + lineNumber.endLineNumber + ':' +
-                                ret + ' ' + method.mappedName + '(' + args + ") -> " + method.unmappedName);
-                    }
-                } else synchronized (lines) {
+                    lines.add("    " + lineNumber.startLineNumber + ':' + lineNumber.endLineNumber + ':' +
+                            ret + ' ' + method.mappedName + '(' + args + ") -> " + method.unmappedName);
+                } else {
                     lines.add("    " + ret + ' ' + method.mappedName + '(' + args + ") -> " + method.unmappedName);
                 }
-            });
+            }
         }
         return lines;
     }

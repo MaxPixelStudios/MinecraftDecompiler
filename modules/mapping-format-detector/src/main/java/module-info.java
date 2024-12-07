@@ -5,6 +5,6 @@ open module cn.maxpixel.mcdecompiler.mapping.detector {
 
     exports cn.maxpixel.mcdecompiler.mapping.detector;
 
-    uses DetectionUnit;
-    provides DetectionUnit with DefaultDetectionUnit;
+    uses cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit;
+    provides cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit with cn.maxpixel.mcdecompiler.mapping.detector.DefaultDetectionUnit;
 }
