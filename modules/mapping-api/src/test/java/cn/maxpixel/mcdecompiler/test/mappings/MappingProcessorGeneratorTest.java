@@ -84,7 +84,7 @@ class MappingProcessorGeneratorTest {
         try (var reader = Files.newBufferedReader(path)) {
             var c2 = format.read(reader);
 //            c1.classes.stream().collect(Collectors.toMap(cm -> cm.mapping.getUnmappedName(), Function.identity()));
-//            assertEquals(c1, c2);// FIXME: How to assert equals mappings?
+//            assertEquals(c1, c2);// FIXME: How to assertEquals mappings?
         }
     }
 }

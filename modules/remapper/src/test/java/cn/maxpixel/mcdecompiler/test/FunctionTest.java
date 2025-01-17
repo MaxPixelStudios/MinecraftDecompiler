@@ -18,15 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.test;
 
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
-import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
-import org.jetbrains.annotations.NotNull;
 
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -146,46 +139,46 @@ public class FunctionTest {
 //            MappingFormats.SRG.write(MappingFormats.TSRG_V1.read(in), out);
 //        }
     }
-
-    private static void process(ClassifiedMapping<PairedMapping> src, ClassifiedMappingRemapper int2obf, ClassifiedMappingRemapper obf2srg,
-                                ClassifiedMappingRemapper srg2moj, ClassifiedMapping<PairedMapping> out, String fileName) {
-        for (var cm : src.classes) {
-            String intClassName = cm.mapping.mappedName;
-            String obfClassName = int2obf.mapClass(intClassName);
-            if (obfClassName == null) {
-                LOGGER.warn("[{}] missing intermediary entry {}", fileName, intClassName);
-                obfClassName = intClassName;
-            }
-            String srgClassName = obf2srg.mapClassOrDefault(obfClassName);
-            ClassMapping<PairedMapping> outClass = new ClassMapping<>(
-                    new PairedMapping(srg2moj.mapClassOrDefault(srgClassName), srgClassName)
-            );
-            for (@NotNull PairedMapping field : cm.getFields()) {
-                String obfFieldName = int2obf.mapField(intClassName, field.mappedName);
-                if (obfFieldName == null) {
-                    LOGGER.warn("[{}] missing intermediary entry {}", fileName, field.mappedName);
-                    obfFieldName = field.mappedName;
-                }
-                String srgFieldName = obf2srg.mapFieldOrDefault(obfClassName, obfFieldName);
-                outClass.addField(MappingUtil.Paired.o(srg2moj.mapFieldOrDefault(srgClassName, srgFieldName), srgFieldName));
-            }
-            for (@NotNull PairedMapping method : cm.getMethods()) {
-                String srgMethodDesc = method.getComponent(Descriptor.class).unmappedDescriptor;
-                String obfMethodDesc = obf2srg.unmapMethodDesc(srgMethodDesc);
-                String intMethodDesc = int2obf.unmapMethodDesc(obfMethodDesc);
-                String obfMethodName = int2obf.mapMethod(intClassName, method.mappedName, intMethodDesc);
-                if (obfMethodName == null) {
-                    LOGGER.warn("[{}] missing intermediary entry {}", fileName, method.mappedName);
-                    obfMethodName = method.mappedName;
-                }
-                String srgMethodName = obf2srg.mapMethodOrDefault(obfClassName, obfMethodName, obfMethodDesc);
-                outClass.addMethod(MappingUtil.Paired.duo(srg2moj.mapMethodOrDefault(srgClassName, srgMethodName, srgMethodDesc),
-                        srgMethodName, srg2moj.mapMethodDesc(srgMethodDesc)));
-            }
-            out.classes.add(outClass);
-        }
-    }
-
+//
+//    private static void process(ClassifiedMapping<PairedMapping> src, ClassifiedMappingRemapper int2obf, ClassifiedMappingRemapper obf2srg,
+//                                ClassifiedMappingRemapper srg2moj, ClassifiedMapping<PairedMapping> out, String fileName) {
+//        for (var cm : src.classes) {
+//            String intClassName = cm.mapping.mappedName;
+//            String obfClassName = int2obf.mapClass(intClassName);
+//            if (obfClassName == null) {
+//                LOGGER.warn("[{}] missing intermediary entry {}", fileName, intClassName);
+//                obfClassName = intClassName;
+//            }
+//            String srgClassName = obf2srg.mapClassOrDefault(obfClassName);
+//            ClassMapping<PairedMapping> outClass = new ClassMapping<>(
+//                    new PairedMapping(srg2moj.mapClassOrDefault(srgClassName), srgClassName)
+//            );
+//            for (@NotNull PairedMapping field : cm.getFields()) {
+//                String obfFieldName = int2obf.mapField(intClassName, field.mappedName);
+//                if (obfFieldName == null) {
+//                    LOGGER.warn("[{}] missing intermediary entry {}", fileName, field.mappedName);
+//                    obfFieldName = field.mappedName;
+//                }
+//                String srgFieldName = obf2srg.mapFieldOrDefault(obfClassName, obfFieldName);
+//                outClass.addField(MappingUtil.Paired.o(srg2moj.mapFieldOrDefault(srgClassName, srgFieldName), srgFieldName));
+//            }
+//            for (@NotNull PairedMapping method : cm.getMethods()) {
+//                String srgMethodDesc = method.getComponent(Descriptor.class).unmappedDescriptor;
+//                String obfMethodDesc = obf2srg.unmapMethodDesc(srgMethodDesc);
+//                String intMethodDesc = int2obf.unmapMethodDesc(obfMethodDesc);
+//                String obfMethodName = int2obf.mapMethod(intClassName, method.mappedName, intMethodDesc);
+//                if (obfMethodName == null) {
+//                    LOGGER.warn("[{}] missing intermediary entry {}", fileName, method.mappedName);
+//                    obfMethodName = method.mappedName;
+//                }
+//                String srgMethodName = obf2srg.mapMethodOrDefault(obfClassName, obfMethodName, obfMethodDesc);
+//                outClass.addMethod(MappingUtil.Paired.duo(srg2moj.mapMethodOrDefault(srgClassName, srgMethodName, srgMethodDesc),
+//                        srgMethodName, srg2moj.mapMethodDesc(srgMethodDesc)));
+//            }
+//            out.classes.add(outClass);
+//        }
+//    }
+//
 //    private enum MCP implements MappingFormat.Unique<PairedMapping> {
 //        INSTANCE;
 //        @Override

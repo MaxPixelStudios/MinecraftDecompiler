@@ -56,7 +56,7 @@ public class MinecraftDecompilerCommandLine {
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<SideType> sideTypeO = parser.acceptsAll(of("s", "side"), "Side to deobfuscate/" +
                 "decompile. Values are \"CLIENT\" and \"SERVER\". With this option, you must specify --version option and can't " +
-                "specify --input option.").withRequiredArg().ofType(SideType.class);
+                "specify --input option.").withRequiredArg().ofType(SideType.class).defaultsTo(SideType.CLIENT);
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(of("v", "ver", "version"), "Version to " +
                 "deobfuscate/decompile. Only works on Proguard mappings or downloading libraries for the decompiler.")
                 .requiredIf(sideTypeO).withRequiredArg();
