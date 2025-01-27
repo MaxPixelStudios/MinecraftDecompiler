@@ -55,26 +55,25 @@ public class MinecraftDecompilerCommandLine {
         if (Constants.IS_DEV) LOGGER.info("MCD Begin");// Used to measure time
         OptionParser parser = new OptionParser();
         ArgumentAcceptingOptionSpec<SideType> sideTypeO = parser.acceptsAll(of("s", "side"), "Side to deobfuscate/" +
-                "decompile. Values are \"CLIENT\" and \"SERVER\". With this option, you must specify --version option and can't " +
-                "specify --input option.").withRequiredArg().ofType(SideType.class).defaultsTo(SideType.CLIENT);
-        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(of("v", "ver", "version"), "Version to " +
-                "deobfuscate/decompile. Only works on Proguard mappings or downloading libraries for the decompiler.")
-                .requiredIf(sideTypeO).withRequiredArg();
-        OptionSpecBuilder regenVarNameO = parser.acceptsAll(of("r", "rvn", "regenerate-variable-names"),
-                "Regenerate local variable names if the input mapping doesn't provide ones");
-        OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use " +
-                "the reversed mapping to deobfuscate.").availableUnless(sideTypeO);
-        OptionSpecBuilder dontIncludeOthersO = parser.accepts("exclude-others", "Drop non-class files of the output jar.");
-        ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(of("i", "input"), "Input jar. With this option, you must " +
-                "specify --mappingPath and can't specify --side.").availableUnless(sideTypeO).requiredUnless(sideTypeO).withRequiredArg()
-                .withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
+                "decompile. Values are \"CLIENT\" and \"SERVER\". With this option, you must specify --version option.")
+                .withRequiredArg().ofType(SideType.class).defaultsTo(SideType.CLIENT);
+        ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(of("i", "input"), "Input jar.")
+                .requiredUnless(sideTypeO).withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(of("m", "map", "mapping-path"), "Mapping file that " +
                 "is used to deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(of("v", "ver", "version"), "Version to " +
+                "deobfuscate/decompile. Only works on Proguard mappings or downloading libraries for the decompiler.")
+                .requiredUnless(inputO, mappingPathO).requiredIf(sideTypeO).withRequiredArg();
+        OptionSpecBuilder regenVarNameO = parser.acceptsAll(of("r", "rvn", "regenerate-variable-names"),
+                "Regenerate local variable names if the input mapping doesn't provide ones");
+        OptionSpecBuilder dontIncludeOthersO = parser.accepts("exclude-others", "Drop non-class files of the output jar.");
+        OptionSpecBuilder reverseO = parser.accepts("reverse", "Reverse the input mapping, then use " +
+                "the reversed mapping to deobfuscate.").availableIf(inputO);
         ArgumentAcceptingOptionSpec<String> mappingFormatO = parser.acceptsAll(of("M", "mapping-format"),
                 "Manually specify the mapping format").availableIf(mappingPathO).withRequiredArg();
         ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.acceptsAll(of("t", "target-namespace"), "Namespace to " +
                 "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
-        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(of("o", "output"), "Mapped output file. Including the suffix.")
+        ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(of("o", "output"), "Mapped output file, including the suffix.")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("decompiled-output", "Decompiled output directory. " +
                 "Will be deleted before decompiling if it exists").withRequiredArg().withValuesConvertedBy(new PathConverter());
@@ -137,10 +136,6 @@ public class MinecraftDecompilerCommandLine {
         }
 
         options.valueOfOptional(tempDirO).ifPresent(p -> Directories.TEMP_DIR = p);
-        if (!options.has(sideTypeO)) {
-            if (!options.has(inputO)) throw new IllegalArgumentException("--input is required when --side is unspecified");
-            if (!options.has(mappingPathO)) throw new IllegalArgumentException("--mapping-path is required when --side is unspecified");
-        }
 
         for (var it = Object2ObjectMaps.fastIterator(OPTION_MAP); it.hasNext(); ) {
             var entry = it.next();
@@ -155,17 +150,14 @@ public class MinecraftDecompilerCommandLine {
         }
 
         MinecraftDecompiler.OptionBuilder builder;
-        String mappingFormat = options.valueOf(mappingFormatO);
-        if (options.has(sideTypeO)) {
-            builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
-            options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
-                    .withMapping(orDetect(mappingFormat, m).read(new FileInputStream(m)))));
-        } else {
+        if (options.has(inputO)) {
             builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(inputO), options.has(reverseO));
-            String mappingPath = options.valueOf(mappingPathO);
-            builder.withMapping(orDetect(mappingFormat, mappingPath).read(new FileInputStream(mappingPath)));
             options.valueOfOptional(versionO).ifPresent(builder::libsUsing);
+        } else {
+            builder = new MinecraftDecompiler.OptionBuilder(options.valueOf(versionO), options.valueOf(sideTypeO));
         }
+        options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> builder
+                .withMapping(orDetect(options.valueOf(mappingFormatO), m).read(new FileInputStream(m)))));
         if (options.has(regenVarNameO)) builder.regenerateVariableNames();
         if (options.has(dontIncludeOthersO)) builder.doNotIncludeOthers();
         options.valueOfOptional(targetNamespaceO).ifPresent(builder::targetNamespace);
