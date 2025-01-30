@@ -59,7 +59,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
                 lines.add(String.join(PARA, "Class", unmapped, mapped, NIL, NIL, clsDoc));
             }
             classMapping.getFields().parallelStream().forEach(field -> {
-                String desc = field.getComponent(Descriptor.class).unmappedDescriptor;
+                String desc = field.getComponent(Descriptor.Unmapped.class).descriptor;
                 String unmappedName = unmapped + '.' + field.getUnmappedName() + ':' + desc;
                 String doc = getDoc(field);
                 synchronized (lines) {
@@ -67,7 +67,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
                 }
             });
             classMapping.getMethods().parallelStream().forEach(method -> {
-                String desc = method.getComponent(Descriptor.class).unmappedDescriptor;
+                String desc = method.getComponent(Descriptor.Unmapped.class).descriptor;
                 String unmappedName = unmapped + '.' + method.getUnmappedName() + desc;
                 String doc = getDoc(method);
                 synchronized (lines) {

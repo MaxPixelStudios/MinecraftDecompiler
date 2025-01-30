@@ -51,9 +51,9 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
                 MappingUtil.checkOwner(field.getOwned(), cls);
                 String mappedDesc;
                 if (field.hasComponent(Descriptor.Mapped.class)) {
-                    mappedDesc = field.getComponent(Descriptor.Mapped.class).mappedDescriptor;
-                } else if (remapper != null && field.hasComponent(Descriptor.class)) {
-                    mappedDesc = remapper.mapDesc(field.getComponent(Descriptor.class).unmappedDescriptor);
+                    mappedDesc = field.getComponent(Descriptor.Mapped.class).descriptor;
+                } else if (remapper != null && field.hasComponent(Descriptor.Unmapped.class)) {
+                    mappedDesc = remapper.mapDesc(field.getComponent(Descriptor.Unmapped.class).descriptor);
                 } else throw new UnsupportedOperationException();
                 lines.add("    " + NamingUtil.descriptor2Java(mappedDesc) + ' ' + field.mappedName +
                         " -> " + field.unmappedName);
@@ -62,9 +62,9 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
                 MappingUtil.checkOwner(method.getOwned(), cls);
                 String mappedDesc;
                 if (method.hasComponent(Descriptor.Mapped.class)) {
-                    mappedDesc = method.getComponent(Descriptor.Mapped.class).mappedDescriptor;
-                } else if (remapper != null && method.hasComponent(Descriptor.class)) {
-                    mappedDesc = remapper.mapMethodDesc(method.getComponent(Descriptor.class).unmappedDescriptor);
+                    mappedDesc = method.getComponent(Descriptor.Mapped.class).descriptor;
+                } else if (remapper != null && method.hasComponent(Descriptor.Unmapped.class)) {
+                    mappedDesc = remapper.mapMethodDesc(method.getComponent(Descriptor.Unmapped.class).descriptor);
                 } else throw new UnsupportedOperationException();
                 StringBuilder args = new StringBuilder(mappedDesc.length());
                 int end = mappedDesc.lastIndexOf(')'), last = 1;

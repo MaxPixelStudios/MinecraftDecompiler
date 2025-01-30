@@ -59,7 +59,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or {@code null}
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> C getComponent(@NotNull Class<? extends C> component) {
+    public <C extends Component> C getComponent(@NotNull Class<? extends C> component) {
         return (C) components.get(component);
     }
 
@@ -70,11 +70,12 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or the newly created component
      */
     @SuppressWarnings("unchecked")
-    public final <C extends Component> @NotNull C getOrCreateComponent(@NotNull Class<? extends C> component, Supplier<? extends C> factory) {
+    public <C extends Component> @NotNull C getOrCreateComponent(@NotNull Class<? extends C> component, Supplier<? extends C> factory) {
         var value = components.get(component);
-        if (value != null) return (C) value;
-        value = Objects.requireNonNull(factory.get());
-        components.put(component, value);
+        if (value == null) {
+            value = Objects.requireNonNull(factory.get());
+            components.put(component, value);
+        }
         return (C) value;
     }
 
@@ -86,7 +87,7 @@ public abstract class Mapping implements NameGetter {
      * @param component Given component type. Cannot be null
      * @return The component
      */
-    public final <C extends Component> @NotNull Optional<C> getComponentOptional(@NotNull Class<? extends C> component) {
+    public <C extends Component> @NotNull Optional<C> getComponentOptional(@NotNull Class<? extends C> component) {
         return Optional.ofNullable(getComponent(component));
     }
 
@@ -95,9 +96,7 @@ public abstract class Mapping implements NameGetter {
      *
      * @return The {@link Owned} component if it exists, or null
      */
-    protected Owned<? extends Mapping> getOwned() {
-        return getComponent(Owned.class);
-    }
+    protected abstract Owned<? extends Mapping> getOwned();
 
     /**
      * Checks if a component of given class exists.
@@ -105,7 +104,7 @@ public abstract class Mapping implements NameGetter {
      * @param component The class of the component
      * @return True if the component exists, false otherwise
      */
-    public final boolean hasComponent(@NotNull Class<? extends Component> component) {
+    public boolean hasComponent(@NotNull Class<? extends Component> component) {
         return components.containsKey(component);
     }
 
@@ -114,7 +113,7 @@ public abstract class Mapping implements NameGetter {
      *
      * @return All the components of this mapping
      */
-    public final @NotNull ObjectCollection<? extends Component> getComponents() {
+    public @NotNull ObjectCollection<? extends Component> getComponents() {
         return components.values();
     }
 
@@ -124,7 +123,7 @@ public abstract class Mapping implements NameGetter {
      * @implNote If a component of the same class exists, replaces that component.
      * @param component The component to add or replace with
      */
-    public final void addComponent(@NotNull Component component) {
+    public void addComponent(@NotNull Component component) {
         this.components.put(component.getClass(), component);
     }
 
@@ -134,7 +133,7 @@ public abstract class Mapping implements NameGetter {
      * @implNote Do nothing if the component does not exist.
      * @param component The class of the component to remove
      */
-    public final void removeComponent(@NotNull Class<? extends Component> component) {
+    public void removeComponent(@NotNull Class<? extends Component> component) {
         components.remove(Objects.requireNonNull(component));
     }
 
@@ -143,7 +142,7 @@ public abstract class Mapping implements NameGetter {
      *
      * @throws IllegalStateException If any of the component fails validation
      */
-    public final void validateComponents() throws IllegalStateException {// TODO
+    public void validateComponents() throws IllegalStateException {
         for (Component value : components.values()) {
             value.validate();
         }

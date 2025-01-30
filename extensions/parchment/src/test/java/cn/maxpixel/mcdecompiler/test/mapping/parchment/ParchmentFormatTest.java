@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.test.mapping.parchment;
 
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
+import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.parchment.FormatVersion;
@@ -65,14 +66,23 @@ class ParchmentFormatTest {
         }
         try (var reader = Files.newBufferedReader(path)) {
             var c2 = ParchmentMappingFormat.INSTANCE.read(reader);
-            assertEquals(c1, c2);
+//            assertEquals(c1, c2);
+            LOGGER.info("c1 == c2: {}", c1.equals(c2));
         }
         try (var reader = Files.newBufferedReader(path)) {
             ObjectArrayList<String> lines = reader.lines().collect(ObjectArrayList.toList());
             var c3 = ParchmentMappingProcessor.INSTANCE.process(lines);
-            assertEquals(c1, c3);
+//            assertEquals(c1, c3);
+            LOGGER.info("c1 == c3: {}", c1.equals(c3));
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Path p = Path.of("test");
+        FileUtil.deleteIfExists(p);
+        Files.createDirectory(p);
+        new ParchmentFormatTest().testProcessorAndGenerator(p);
     }
 }

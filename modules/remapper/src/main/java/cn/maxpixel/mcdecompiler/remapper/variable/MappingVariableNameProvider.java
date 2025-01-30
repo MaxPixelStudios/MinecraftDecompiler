@@ -39,9 +39,9 @@ public class MappingVariableNameProvider implements VariableNameProvider {
         this.omitThis = remapper.isMethodStaticIdentifiable();
         this.methodByMappedName = mapping.getMethods().stream().collect(Collectors.toMap(m -> {
             String descriptor;
-            if (m.hasComponent(Descriptor.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.class).unmappedDescriptor);
-            else if (m.hasComponent(Descriptor.Mapped.class)) descriptor = m.getComponent(Descriptor.Mapped.class).mappedDescriptor;
-            else if (m.hasComponent(Descriptor.Namespaced.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.Namespaced.class).unmappedDescriptor);
+            if (m.hasComponent(Descriptor.Unmapped.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.Unmapped.class).descriptor);
+            else if (m.hasComponent(Descriptor.Mapped.class)) descriptor = m.getComponent(Descriptor.Mapped.class).descriptor;
+            else if (m.hasComponent(Descriptor.Namespaced.class)) descriptor = remapper.mapMethodDesc(m.getComponent(Descriptor.Namespaced.class).descriptor);
             else throw new IllegalArgumentException("Method mapping requires at least one of the descriptor components");
             return m.getMappedName().concat(descriptor);
         }, Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));

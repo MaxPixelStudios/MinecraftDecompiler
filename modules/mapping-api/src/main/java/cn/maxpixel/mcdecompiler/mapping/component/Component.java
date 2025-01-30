@@ -18,6 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Base component class. Every component must implement this interface
  */
@@ -27,5 +30,21 @@ public interface Component {
      * @throws IllegalStateException if the validation fails
      */
     default void validate() throws IllegalStateException {
+    }
+
+    interface ConvertingReversible<T extends Component> {
+        @NotNull Class<T> getTarget();
+
+        @NotNull T convert();
+
+        void reverse(@NotNull T target);
+    }
+
+    interface Reversible {
+        void reverse();
+    }
+
+    interface Swappable {
+        void swap(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper);
     }
 }

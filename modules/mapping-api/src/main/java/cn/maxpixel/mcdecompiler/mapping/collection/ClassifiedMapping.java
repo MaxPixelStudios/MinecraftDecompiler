@@ -24,7 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.trait.MappingTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -45,7 +45,8 @@ public class ClassifiedMapping<T extends Mapping> extends MappingCollection<T> {
     /**
      * Classes of this mapping.
      */
-    public final ObjectArrayList<@NotNull ClassMapping<@NotNull T>> classes = new ObjectArrayList<>();
+//    public final ObjectArrayList<@NotNull ClassMapping<@NotNull T>> classes = new ObjectArrayList<>();// TODO: Remove this after passing the tests
+    public final ObjectLinkedOpenHashSet<@NotNull ClassMapping<@NotNull T>> classes = new ObjectLinkedOpenHashSet<>();
 
     public ClassifiedMapping() {}
 

@@ -43,10 +43,10 @@ public final class MappingUtil {
 
         public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, @Nullable ClassifiedMappingRemapper remapper) {
             checkOwner(method.getOwned(), cls);
-            if (method.hasComponent(Descriptor.class)) {
-                return method.getComponent(Descriptor.class).unmappedDescriptor;
+            if (method.hasComponent(Descriptor.Unmapped.class)) {
+                return method.getComponent(Descriptor.Unmapped.class).descriptor;
             } else if (remapper != null && method.hasComponent(Descriptor.Mapped.class)) {
-                return remapper.unmapMethodDesc(method.getComponent(Descriptor.Mapped.class).mappedDescriptor);
+                return remapper.unmapMethodDesc(method.getComponent(Descriptor.Mapped.class).descriptor);
             } else throw new UnsupportedOperationException();
         }
 
@@ -55,7 +55,7 @@ public final class MappingUtil {
         }
 
         public static PairedMapping duo(String unmapped, String mapped, String unmappedDesc) {
-            return new PairedMapping(unmapped, mapped, new Descriptor(unmappedDesc), new Owned<>());
+            return new PairedMapping(unmapped, mapped, new Descriptor.Unmapped(unmappedDesc), new Owned<>());
         }
 
         public static PairedMapping dmo(String unmapped, String mapped, String mappedDesc) {
@@ -67,7 +67,7 @@ public final class MappingUtil {
         }
 
         public static PairedMapping d2o(String unmapped, String mapped, String unmappedDesc, String mappedDesc) {
-            return new PairedMapping(unmapped, mapped, new Descriptor(unmappedDesc), new Descriptor.Mapped(mappedDesc), new Owned<>());
+            return new PairedMapping(unmapped, mapped, new Descriptor.Unmapped(unmappedDesc), new Descriptor.Mapped(mappedDesc), new Owned<>());
         }
     }
 
@@ -78,7 +78,7 @@ public final class MappingUtil {
             checkOwner(mapping.getOwned(), cls);
             Descriptor.Namespaced desc = mapping.getComponent(Descriptor.Namespaced.class);
             if (!namespace0.equals(desc.descriptorNamespace)) throw new IllegalArgumentException("Descriptor namespace mismatch");
-            return desc.unmappedDescriptor;
+            return desc.descriptor;
         }
 
         public static NamespacedMapping o(String[] namespaces, String[] names) {

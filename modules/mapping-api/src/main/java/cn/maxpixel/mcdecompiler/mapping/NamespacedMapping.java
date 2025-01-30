@@ -20,7 +20,6 @@ package cn.maxpixel.mcdecompiler.mapping;
 
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
-import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
@@ -97,7 +96,8 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      * @param nameStart To put the names start from the index
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart) {
-        if (namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length)))
+        // namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length))
+        if (names.length - namespaces.length != Objects.checkIndex(nameStart, names.length))
             throw new IllegalArgumentException();
         for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
@@ -162,13 +162,15 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart, Component... components) {
         super(components);
-        if (namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length)))
+        // namespaces.length != (names.length - Objects.checkIndex(nameStart, names.length))
+        if (names.length - namespaces.length != Objects.checkIndex(nameStart, names.length))
             throw new IllegalArgumentException();
         for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Owned<NamespacedMapping> getOwned() {
         return getComponent(Owned.class);
@@ -238,15 +240,15 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     @ApiStatus.Internal
     public void swap(DescriptorRemapper remapper, String fromNamespace, String toNamespace) {
         swap(fromNamespace, toNamespace);
-        if (hasComponent(Descriptor.Namespaced.class)) {
-            Descriptor.Namespaced n = getComponent(Descriptor.Namespaced.class);
-            if (!n.getDescriptorNamespace().equals(fromNamespace)) throw new IllegalArgumentException();
-            String desc = n.unmappedDescriptor;
-            if (desc.charAt(0) == '(') n.unmappedDescriptor = remapper.mapMethodDesc(desc);
-            else n.unmappedDescriptor = remapper.mapDesc(desc);
+//        if (hasComponent(Descriptor.Namespaced.class)) {
+//            Descriptor.Namespaced n = getComponent(Descriptor.Namespaced.class);
+//            if (!n.descriptorNamespace.equals(fromNamespace)) throw new IllegalArgumentException();
+//            String desc = n.descriptor;
+//            n.setDescriptor(desc.charAt(0) == '(' ? remapper.mapMethodDesc(desc) : remapper.mapDesc(desc));
+//        }// TODO: Remove this after passing the tests
+        for (Component component : getComponents()) {
+            if (component instanceof Component.Swappable s) s.swap(fromNamespace, toNamespace, remapper);
         }
-        if (hasComponent(LocalVariableTable.Namespaced.class))
-            getComponent(LocalVariableTable.Namespaced.class).swapAll(fromNamespace, toNamespace, remapper);
     }
 
     /**

@@ -55,14 +55,14 @@ public enum SrgMappingGenerator implements MappingGenerator.Classified<PairedMap
             cls.getMethods().parallelStream().forEach(method -> {
                 MappingUtil.checkOwner(method.getOwned(), cls);
                 String unmappedDesc, mappedDesc;
-                if (method.hasComponent(Descriptor.class)) {
-                    unmappedDesc = method.getComponent(Descriptor.class).unmappedDescriptor;
+                if (method.hasComponent(Descriptor.Unmapped.class)) {
+                    unmappedDesc = method.getComponent(Descriptor.Unmapped.class).descriptor;
                     if (method.hasComponent(Descriptor.Mapped.class))
-                        mappedDesc = method.getComponent(Descriptor.Mapped.class).mappedDescriptor;
+                        mappedDesc = method.getComponent(Descriptor.Mapped.class).descriptor;
                     else if (remapper != null) mappedDesc = remapper.mapMethodDesc(unmappedDesc);
                     else throw new UnsupportedOperationException();
                 } else if (method.hasComponent(Descriptor.Mapped.class)) {
-                    mappedDesc = method.getComponent(Descriptor.Mapped.class).mappedDescriptor;
+                    mappedDesc = method.getComponent(Descriptor.Mapped.class).descriptor;
                     if (remapper != null) unmappedDesc = remapper.unmapMethodDesc(mappedDesc);
                     else throw new UnsupportedOperationException();
                 } else throw new UnsupportedOperationException();

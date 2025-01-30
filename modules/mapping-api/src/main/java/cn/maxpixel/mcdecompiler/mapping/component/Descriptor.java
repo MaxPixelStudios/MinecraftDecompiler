@@ -18,77 +18,117 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import cn.maxpixel.mcdecompiler.common.Constants;
 import cn.maxpixel.mcdecompiler.common.annotation.MethodOrFieldDesc;
+import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Descriptor component for paired mappings
  */
-public class Descriptor implements Component {
-    public @NotNull @MethodOrFieldDesc String unmappedDescriptor;
+public abstract class Descriptor implements Component {
+    private static final Pattern DESC_PATTERN = Pattern.compile('(' + Constants.FIELD_DESC_PATTERN + ")|(" + Constants.METHOD_DESC_PATTERN + ')');
+    private static final ThreadLocal<Matcher> MATCHERS = ThreadLocal.withInitial(() -> DESC_PATTERN.matcher(""));
 
-    public Descriptor(@NotNull @MethodOrFieldDesc String unmappedDescriptor) {
-        this.unmappedDescriptor = Objects.requireNonNull(unmappedDescriptor);
+    public @NotNull @MethodOrFieldDesc String descriptor;
+
+    public Descriptor(@NotNull @MethodOrFieldDesc String descriptor) {
+        this.descriptor = Objects.requireNonNull(descriptor);
     }
 
-    public @NotNull String getUnmappedDescriptor() {
-        return unmappedDescriptor;
+    public @NotNull @MethodOrFieldDesc String getDescriptor() {
+        return descriptor;
     }
 
-    public void setUnmappedDescriptor(@NotNull @MethodOrFieldDesc String unmappedDescriptor) {
-        this.unmappedDescriptor = Objects.requireNonNull(unmappedDescriptor);
+    public void setDescriptor(@NotNull @MethodOrFieldDesc String desc) {
+        this.descriptor = Objects.requireNonNull(desc);
+    }
+
+    @Override
+    public void validate() throws IllegalStateException {
+        if (descriptor == null) throw new IllegalStateException("Descriptor must not be null");
+        if (!MATCHERS.get().reset(descriptor).matches()) {
+            throw new IllegalStateException("Invalid descriptor: " + descriptor);
+        }
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Descriptor that)) return false;
-        return unmappedDescriptor.equals(that.unmappedDescriptor);
+        return descriptor.equals(that.descriptor);
     }
 
     @Override
     public int hashCode() {
-        return unmappedDescriptor.hashCode();
+        return descriptor.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Descriptor{" +
+                "descriptor='" + descriptor + '\'' +
+                '}';
+    }
+
+    public static class Unmapped extends Descriptor implements ConvertingReversible<Mapped> {
+        public Unmapped(@NotNull @MethodOrFieldDesc String unmappedDescriptor) {
+            super(unmappedDescriptor);
+        }
+
+        @Override
+        public @NotNull Class<Mapped> getTarget() {
+            return Mapped.class;
+        }
+
+        @Override
+        public @NotNull Mapped convert() {
+            return new Mapped(descriptor);
+        }
+
+        @Override
+        public void reverse(@NotNull Mapped target) {
+            String desc = descriptor;
+            descriptor = target.descriptor;
+            target.descriptor = desc;
+        }
     }
 
     /**
      * Mapped descriptor component for paired mappings
      */
-    public static class Mapped implements Component {
-        public @NotNull @MethodOrFieldDesc String mappedDescriptor;
-
+    public static class Mapped extends Descriptor implements ConvertingReversible<Unmapped> {
         public Mapped(@NotNull @MethodOrFieldDesc String mappedDescriptor) {
-            this.mappedDescriptor = Objects.requireNonNull(mappedDescriptor);
-        }
-
-        public @NotNull @MethodOrFieldDesc String getMappedDescriptor() {
-            return mappedDescriptor;
-        }
-
-        public void setMappedDescriptor(@NotNull @MethodOrFieldDesc String mappedDescriptor) {
-            this.mappedDescriptor = Objects.requireNonNull(mappedDescriptor);
+            super(mappedDescriptor);
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Mapped mapped)) return false;
-            return mappedDescriptor.equals(mapped.mappedDescriptor);
+        public @NotNull Class<Unmapped> getTarget() {
+            return Unmapped.class;
         }
 
         @Override
-        public int hashCode() {
-            return mappedDescriptor.hashCode();
+        public @NotNull Unmapped convert() {
+            return new Unmapped(descriptor);
+        }
+
+        @Override
+        public void reverse(@NotNull Unmapped target) {
+            String desc = descriptor;
+            descriptor = target.descriptor;
+            target.descriptor = desc;
         }
     }
 
     /**
-     * Namespaced descriptor component<br>
+     * Swappable descriptor component<br>
      * Extends {@link Descriptor} because the currently supported namespaced mappings only have unmapped descriptors
      */
-    public static class Namespaced extends Descriptor {
+    public static class Namespaced extends Descriptor implements Component.Swappable {
         public @NotNull String descriptorNamespace;
 
         public Namespaced(@NotNull @MethodOrFieldDesc String unmappedDescriptor, @NotNull String descriptorNamespace) {
@@ -105,6 +145,12 @@ public class Descriptor implements Component {
         }
 
         @Override
+        public void validate() throws IllegalStateException {
+            super.validate();
+            if (descriptorNamespace == null) throw new IllegalStateException("Descriptor namespace must not be null");
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Namespaced that)) return false;
@@ -115,6 +161,19 @@ public class Descriptor implements Component {
         @Override
         public int hashCode() {
             return 31 * super.hashCode() + descriptorNamespace.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Namespaced{" +
+                    "descriptorNamespace='" + descriptorNamespace + '\'' +
+                    "} " + super.toString();
+        }
+
+        @Override
+        public void swap(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
+            if (!descriptorNamespace.equals(fromNamespace)) throw new IllegalArgumentException();
+            descriptor = descriptor.charAt(0) == '(' ? remapper.mapMethodDesc(descriptor) : remapper.mapDesc(descriptor);
         }
     }
 }

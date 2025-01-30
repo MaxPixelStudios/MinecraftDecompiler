@@ -93,6 +93,6 @@ public enum TsrgV2MappingGenerator implements MappingGenerator.Classified<Namesp
         Descriptor.Namespaced desc = method.getComponent(Descriptor.Namespaced.class);
         if (!namespace0.equals(desc.descriptorNamespace)) throw new IllegalArgumentException();
         int i = names.indexOf(' ');
-        lines.add('\t' + names.substring(0, i + 1) + desc.unmappedDescriptor + names.substring(i));
+        lines.add('\t' + names.substring(0, i + 1) + desc.descriptor + names.substring(i));
     }
 }

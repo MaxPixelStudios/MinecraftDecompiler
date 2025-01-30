@@ -19,9 +19,9 @@
 package cn.maxpixel.mcdecompiler.mapping;
 
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
-import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
-import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.Objects;
 
@@ -100,6 +100,7 @@ public class PairedMapping extends Mapping {
     public PairedMapping() {}
 
     @SuppressWarnings("unchecked")
+    @Override
     public Owned<PairedMapping> getOwned() {
         return getComponent(Owned.class);
     }
@@ -109,28 +110,51 @@ public class PairedMapping extends Mapping {
      *
      * @return this mapping
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public PairedMapping reverse() {
         String temp = unmappedName;
         unmappedName = mappedName;
         mappedName = temp;
-        boolean supportDesc = hasComponent(Descriptor.class);
-        boolean supportDescMapped = hasComponent(Descriptor.Mapped.class);
-        if (supportDesc) {
-            Descriptor unmapped = getComponent(Descriptor.class);
-            if (supportDescMapped) {
-                Descriptor.Mapped mapped = getComponent(Descriptor.Mapped.class);
-                String desc = unmapped.unmappedDescriptor;
-                unmapped.unmappedDescriptor = mapped.mappedDescriptor;
-                mapped.mappedDescriptor = desc;
-            } else {
-                addComponent(new Descriptor.Mapped(unmapped.unmappedDescriptor));
-                removeComponent(Descriptor.class);
+//        boolean supportDesc = hasComponent(Descriptor.Unmapped.class);// TODO: abstract as a general-purpose interface
+//        boolean supportDescMapped = hasComponent(Descriptor.Mapped.class);
+//        if (supportDesc) {
+//            Descriptor.Unmapped unmapped = getComponent(Descriptor.Unmapped.class);
+//            if (supportDescMapped) {
+//                Descriptor.Mapped mapped = getComponent(Descriptor.Mapped.class);
+//                String desc = unmapped.descriptor;
+//                unmapped.descriptor = mapped.descriptor;
+//                mapped.descriptor = desc;
+//            } else {
+//                addComponent(new Descriptor.Mapped(unmapped.descriptor));
+//                removeComponent(Descriptor.Unmapped.class);
+//            }
+//        } else if (supportDescMapped) {
+//            addComponent(new Descriptor.Unmapped(getComponent(Descriptor.Mapped.class).descriptor));
+//            removeComponent(Descriptor.Mapped.class);
+//        }// TODO: Remove this after passing the tests
+        ObjectOpenHashSet<Class<? extends Component>> skipped = new ObjectOpenHashSet<>();
+        Object2ObjectOpenHashMap<Class<? extends Component>, Component> toAdd = new Object2ObjectOpenHashMap<>();
+        var it = getComponents().iterator();
+        while (it.hasNext()) {
+            Component component = it.next();
+            if (skipped.contains(component.getClass())) continue;
+            if (component instanceof Component.Reversible r) r.reverse();
+            if (component instanceof Component.ConvertingReversible c) {
+                var targetClass = c.getTarget();
+                var targetComponent = getComponent(targetClass);
+                if (targetComponent != null) {
+                    skipped.add(targetClass);
+                    c.reverse(targetComponent);
+                } else {
+                    var converted = c.convert();
+                    toAdd.put(converted.getClass(), converted);
+                    it.remove();
+                }
             }
-        } else if (supportDescMapped) {
-            addComponent(new Descriptor(getComponent(Descriptor.Mapped.class).mappedDescriptor));
-            removeComponent(Descriptor.Mapped.class);
         }
-        getComponentOptional(LocalVariableTable.Paired.class).ifPresent(LocalVariableTable.Paired::reverse);
+        for (Component value : toAdd.values()) {
+            addComponent(value);
+        }
         return this;
     }
 

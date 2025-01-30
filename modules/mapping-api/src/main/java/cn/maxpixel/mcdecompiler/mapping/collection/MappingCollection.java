@@ -21,8 +21,8 @@ package cn.maxpixel.mcdecompiler.mapping.collection;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.trait.MappingTrait;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -37,7 +37,8 @@ public abstract class MappingCollection<M extends Mapping> {
     /**
      * Packages of this mapping.
      */
-    public final ObjectArrayList<@NotNull M> packages = new ObjectArrayList<>();
+//    public final ObjectArrayList<@NotNull M> packages = new ObjectArrayList<>();// TODO: Remove this after passing the tests
+    public final ObjectLinkedOpenHashSet<@NotNull M> packages = new ObjectLinkedOpenHashSet<>();
 
     private final Object2ObjectOpenHashMap<@NotNull Class<? extends MappingTrait>, @NotNull MappingTrait> traits = new Object2ObjectOpenHashMap<>();
 

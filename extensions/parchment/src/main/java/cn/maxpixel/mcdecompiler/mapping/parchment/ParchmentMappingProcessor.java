@@ -139,12 +139,12 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
             reader.beginObject();
 
             PairedMapping method = null;
-            Descriptor mDesc = null;
+            Descriptor.Unmapped mDesc = null;
             Documented mDoc = null;
             LocalVariableTable.Paired lvt = null;
             while (reader.peek() == JsonToken.NAME) switch (reader.nextName()) {
                 case KEY_NAME -> method = new PairedMapping(reader.nextString());
-                case KEY_DESCRIPTOR -> mDesc = new Descriptor(reader.nextString());
+                case KEY_DESCRIPTOR -> mDesc = new Descriptor.Unmapped(reader.nextString());
                 case KEY_JAVADOC -> mDoc = handleDocs(reader);
                 case KEY_PARAMETERS -> lvt = handleParameters(reader);
                 default -> reader.skipValue();
@@ -166,11 +166,11 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
             reader.beginObject();
 
             PairedMapping field = null;
-            Descriptor fDesc = null;
+            Descriptor.Unmapped fDesc = null;
             Documented fDoc = null;
             while (reader.peek() == JsonToken.NAME) switch (reader.nextName()) {
                 case KEY_NAME -> field = new PairedMapping(reader.nextString());
-                case KEY_DESCRIPTOR -> fDesc = new Descriptor(reader.nextString());
+                case KEY_DESCRIPTOR -> fDesc = new Descriptor.Unmapped(reader.nextString());
                 case KEY_JAVADOC -> fDoc = handleDocs(reader);
                 default -> reader.skipValue();
             }

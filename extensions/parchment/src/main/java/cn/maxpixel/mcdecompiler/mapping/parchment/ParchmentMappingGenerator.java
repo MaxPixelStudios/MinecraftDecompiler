@@ -74,7 +74,7 @@ public enum ParchmentMappingGenerator implements MappingGenerator.Classified<Pai
                             .name(KEY_NAME)
                             .value(field.unmappedName)
                             .name(KEY_DESCRIPTOR)
-                            .value(field.getComponent(Descriptor.class).unmappedDescriptor);
+                            .value(field.getComponent(Descriptor.Unmapped.class).descriptor);
                     writeDoc(field, writer);
                     writer.endObject();
                 }
@@ -88,7 +88,7 @@ public enum ParchmentMappingGenerator implements MappingGenerator.Classified<Pai
                             .name(KEY_NAME)
                             .value(method.unmappedName)
                             .name(KEY_DESCRIPTOR)
-                            .value(method.getComponent(Descriptor.class).unmappedDescriptor);
+                            .value(method.getComponent(Descriptor.Unmapped.class).descriptor);
                     writeDoc(method, writer);
                     writeParams(writer, method);
                     writer.endObject();

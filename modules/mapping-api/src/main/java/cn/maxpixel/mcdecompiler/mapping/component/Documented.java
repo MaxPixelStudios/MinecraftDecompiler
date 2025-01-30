@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
+import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,5 +99,12 @@ public class Documented implements Component {
     @Override
     public int hashCode() {
         return Objects.hashCode(contents);
+    }
+
+    @Override
+    public String toString() {
+        return "Documented{" +
+                "contents=" + TinyUtil.escape(getContentString()) +
+                '}';
     }
 }

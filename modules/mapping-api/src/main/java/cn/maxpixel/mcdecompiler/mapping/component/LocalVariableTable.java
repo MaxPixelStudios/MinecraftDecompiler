@@ -81,21 +81,22 @@ public abstract class LocalVariableTable<T extends Mapping> {
                 '}';
     }
 
-    public static class Paired extends LocalVariableTable<PairedMapping> implements Component {
+    public static class Paired extends LocalVariableTable<PairedMapping> implements Component, Component.Reversible {
         @Override
         public void validate() throws IllegalStateException {
             lvt.int2ObjectEntrySet().fastForEach(entry -> {
-                if (entry.getIntKey() < 0 || entry.getIntKey() > 255) throw new IllegalStateException();
+                if (entry.getIntKey() < 0 || entry.getIntKey() > 255) throw new IllegalStateException("Illegal LVT index");
                 entry.getValue().validateComponents();
             });
         }
 
+        @Override
         public void reverse() {
             lvt.values().forEach(PairedMapping::reverse);
         }
     }
 
-    public static class Namespaced extends LocalVariableTable<NamespacedMapping> implements Component, NameGetter.Namespace {
+    public static class Namespaced extends LocalVariableTable<NamespacedMapping> implements Component, NameGetter.Namespace, Component.Swappable {
         private String unmappedNamespace;
         private String mappedNamespace;
         private String fallbackNamespace;
@@ -110,7 +111,8 @@ public abstract class LocalVariableTable<T extends Mapping> {
             super.setLocalVariable(index, mapping);
         }
 
-        public void swapAll(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
+        @Override
+        public void swap(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
             lvt.values().forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
         }
 
@@ -126,7 +128,9 @@ public abstract class LocalVariableTable<T extends Mapping> {
 
         public Namespaced setUnmappedNamespace(@NotNull String namespace) {
             this.unmappedNamespace = Objects.requireNonNull(namespace);
-            lvt.values().forEach(v -> v.setMappedNamespace(unmappedNamespace));
+            for (NamespacedMapping v : lvt.values()) {
+                v.setUnmappedNamespace(namespace);
+            }
             return this;
         }
 

@@ -30,7 +30,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,16 +167,16 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
     }
 
     public String getUnmappedDesc(Mapping mapping) {
-        if (mapping.hasComponent(Descriptor.class)) return mapping.getComponent(Descriptor.class).unmappedDescriptor;
+        if (mapping.hasComponent(Descriptor.Unmapped.class)) return mapping.getComponent(Descriptor.Unmapped.class).descriptor;
         else if (mapping.hasComponent(Descriptor.Mapped.class))
-            return unmapMethodDesc(mapping.getComponent(Descriptor.Mapped.class).mappedDescriptor);
+            return unmapMethodDesc(mapping.getComponent(Descriptor.Mapped.class).descriptor);
         else if (mapping.hasComponent(Descriptor.Namespaced.class))
-            return mapping.getComponent(Descriptor.Namespaced.class).unmappedDescriptor;
+            return mapping.getComponent(Descriptor.Namespaced.class).descriptor;
         else throw new IllegalArgumentException("Mapping for methods must support at least one of the descriptor components");
     }
 
     public static <T extends Mapping> Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, T>> genFieldsByUnmappedNameMap(
-            ObjectList<ClassMapping<T>> mapping) {
+            ObjectSet<ClassMapping<T>> mapping) {
         return mapping.parallelStream().collect(Collectors.toMap(
                 cm -> cm.mapping.getUnmappedName(),
                 cm -> cm.getFields().parallelStream().collect(Collectors.toMap(NameGetter::getUnmappedName, Function.identity(),
@@ -185,19 +185,19 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
     }
 
     public static <T extends Mapping> Object2ObjectOpenHashMap<String, ClassMapping<T>> genMappingsByUnmappedNameMap(
-            ObjectList<ClassMapping<T>> mapping) {
+            ObjectSet<ClassMapping<T>> mapping) {
         return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.getUnmappedName(),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public static <T extends Mapping> Object2ObjectOpenHashMap<String, ClassMapping<T>> genMappingsByMappedNameMap(
-            ObjectList<ClassMapping<T>> mapping) {
+            ObjectSet<ClassMapping<T>> mapping) {
         return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.getMappedName(),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public static Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> genMappingsByNamespaceMap(
-            ObjectList<ClassMapping<NamespacedMapping>> mapping, String namespace) {
+            ObjectSet<ClassMapping<NamespacedMapping>> mapping, String namespace) {
         return mapping.parallelStream().collect(Collectors.toMap(m -> m.mapping.getName(namespace),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
