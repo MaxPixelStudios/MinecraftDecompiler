@@ -50,6 +50,7 @@ public interface MappingProcessor<T extends Mapping, C extends MappingCollection
      * @return processed mapping collection
      */
     C process(ObjectList<String>... contents);// TODO: better ways of merging mapping collections?
+    // TODO: Maybe use Map<String, List<String>>
 
     interface Unique<T extends Mapping> extends MappingProcessor<T, UniqueMapping<T>> {
         @Override

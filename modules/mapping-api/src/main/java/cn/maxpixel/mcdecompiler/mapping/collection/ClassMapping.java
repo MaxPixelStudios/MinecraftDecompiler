@@ -25,8 +25,9 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,10 +45,9 @@ public class ClassMapping<T extends Mapping> {
      * The mapping for this class
      */
     public T mapping;
-//    private final ObjectArrayList<@NotNull T> methods = new ObjectArrayList<>();// TODO: Remove this after passing the tests
-//    private final ObjectArrayList<@NotNull T> fields = new ObjectArrayList<>();
-    private final ObjectLinkedOpenHashSet<@NotNull T> methods = new ObjectLinkedOpenHashSet<>();
-    private final ObjectLinkedOpenHashSet<@NotNull T> fields = new ObjectLinkedOpenHashSet<>();
+    private final ObjectArrayList<@NotNull T> methods = new ObjectArrayList<>();
+    private final ObjectArrayList<@NotNull T> fields = new ObjectArrayList<>();
+    private final ObjectOpenHashSet<@NotNull T> memberSet = new ObjectOpenHashSet<>();
 
     /**
      * No-arg constructor
@@ -143,8 +143,7 @@ public class ClassMapping<T extends Mapping> {
      * @apiNote You shouldn't add methods through this list
      * @return The methods
      */
-//    public ObjectList<T> getMethods() {
-    public ObjectSet<T> getMethods() {// TODO: Remove this after passing the tests
+    public ObjectList<T> getMethods() {
         return methods;
     }
 
@@ -154,8 +153,7 @@ public class ClassMapping<T extends Mapping> {
      * @apiNote You shouldn't add methods through this list
      * @return The fields
      */
-//    public ObjectList<T> getFields() {
-    public ObjectSet<T> getFields() {// TODO: Remove this after passing the tests
+    public ObjectList<T> getFields() {
         return fields;
     }
 
@@ -215,42 +213,27 @@ public class ClassMapping<T extends Mapping> {
         return (a == b) || (a != null && b != null && Objects.equals(a.mapping, b.mapping));
     }
 
-    /* Auto-generated equals, hashCode and toString methods */
+    private ObjectOpenHashSet<@NotNull T> populateMemberSet() {
+        if (!memberSet.containsAll(methods) || !memberSet.containsAll(fields)) {// TODO: Profile to see whether this condition is needed
+            memberSet.clear();
+            memberSet.addAll(methods);
+            memberSet.addAll(fields);
+        }
+        return memberSet;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ClassMapping<?> that)) return false;
-        boolean res = Objects.equals(mapping, that.mapping) && methods.equals(that.methods) && fields.equals(that.fields);
-        if (!res && Objects.equals(mapping, that.mapping)) {
-            System.err.println("Not equals(method=" + methods.equals(that.methods) + ",field=" + fields.equals(that.fields) + "): this: <" + this + ">                                       o: <" + o + ">");
-            for (@NotNull T method : methods) {
-                if (!that.methods.contains(method)) {
-                    System.err.println("Not contains: a<" + method + ">");
-                }
-            }
-            System.err.println(methods.first().equals(that.methods.first()));
-            System.err.println(that.methods.first().equals(methods.first()));
-            System.err.println(that.methods.contains(methods.first()));
-            System.err.println(that.methods.contains(that.methods.first()));
-            System.err.println(methods.contains(methods.first()));
-            System.err.println(methods.contains(that.methods.first()));
-//            that.methods.en
-            System.err.println(methods.first().hashCode());
-            System.err.println(that.methods.first().hashCode());
-            System.err.println(methods.contains(methods.first()));
-            System.err.println(that.methods.contains(that.methods.first()));
-            ObjectLinkedOpenHashSet<Object> set = new ObjectLinkedOpenHashSet<>();
-            for (@NotNull T method : methods) {
-                set.add(method);
-            }
-            System.err.println(set.contains(that.methods.first()));
-        }
-        return res;
+        return Objects.equals(mapping, that.mapping) && methods.size() == that.methods.size() &&
+                fields.size() == that.fields.size() && populateMemberSet().containsAll(that.fields) &&
+                memberSet.containsAll(that.methods);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mapping, methods, fields);
+        return Objects.hash(mapping, populateMemberSet());
     }
 
     @Override
@@ -259,6 +242,6 @@ public class ClassMapping<T extends Mapping> {
                 "mapping=" + mapping +
                 ", methods=" + methods +
                 ", fields=" + fields +
-                "} \n";
+                '}';
     }
 }

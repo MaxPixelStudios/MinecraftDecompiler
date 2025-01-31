@@ -56,7 +56,7 @@ class ParchmentFormatTest {
 
     @Test
     void testProcessorAndGenerator(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
-        LOGGER.info(tmp.toString());
+//        LOGGER.info(tmp.toString());
         var is = getClass().getClassLoader().getResourceAsStream("parchment.json");
         assertNotNull(is);
         var c1 = ParchmentMappingFormat.INSTANCE.read(is);
@@ -66,14 +66,12 @@ class ParchmentFormatTest {
         }
         try (var reader = Files.newBufferedReader(path)) {
             var c2 = ParchmentMappingFormat.INSTANCE.read(reader);
-//            assertEquals(c1, c2);
-            LOGGER.info("c1 == c2: {}", c1.equals(c2));
+            assertEquals(c1, c2);
         }
         try (var reader = Files.newBufferedReader(path)) {
             ObjectArrayList<String> lines = reader.lines().collect(ObjectArrayList.toList());
             var c3 = ParchmentMappingProcessor.INSTANCE.process(lines);
-//            assertEquals(c1, c3);
-            LOGGER.info("c1 == c3: {}", c1.equals(c3));
+            assertEquals(c1, c3);
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }

@@ -24,10 +24,9 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.trait.MappingTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * A collection of mappings of classes and packages.
@@ -45,8 +44,8 @@ public class ClassifiedMapping<T extends Mapping> extends MappingCollection<T> {
     /**
      * Classes of this mapping.
      */
-//    public final ObjectArrayList<@NotNull ClassMapping<@NotNull T>> classes = new ObjectArrayList<>();// TODO: Remove this after passing the tests
-    public final ObjectLinkedOpenHashSet<@NotNull ClassMapping<@NotNull T>> classes = new ObjectLinkedOpenHashSet<>();
+    public final ObjectArrayList<@NotNull ClassMapping<@NotNull T>> classes = new ObjectArrayList<>();
+    private final ObjectOpenHashSet<@NotNull ClassMapping<@NotNull T>> classSet = new ObjectOpenHashSet<>();
 
     public ClassifiedMapping() {}
 
@@ -180,24 +179,30 @@ public class ClassifiedMapping<T extends Mapping> extends MappingCollection<T> {
         return mappings.getTrait(NamespacedTrait.class).getUnmappedNamespace();
     }
 
-    /* Auto-generated equals, hashCode and toString methods */
+    private ObjectOpenHashSet<@NotNull ClassMapping<@NotNull T>> populateClassSet() {
+        if (!classSet.containsAll(classes)) {// TODO: Profile to see whether this condition is needed
+            classSet.clear();
+            classSet.addAll(classes);
+        }
+        return classSet;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (!(o instanceof ClassifiedMapping<?> that)) return false;
-        return Objects.equals(classes, that.classes) && Objects.equals(packages, that.packages);
+        if (!super.equals(o)) return false;
+        return classes.size() == that.classes.size() && populateClassSet().containsAll(that.classes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(classes, packages);
+        return 31 * super.hashCode() + populateClassSet().hashCode();
     }
 
     @Override
     public String toString() {
         return "ClassifiedMapping{" +
                 "classes=" + classes +
-                ", packages=" + packages +
-                '}';
+                "} " + super.toString();
     }
 }

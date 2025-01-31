@@ -51,12 +51,18 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
         lines.add("tiny\t2\t0\t" + String.join("\t", namespaces));
         for (ClassMapping<NamespacedMapping> cls : mappings.classes) {
             lines.add("c\t" + NamingUtil.concatNamespaces(namespaces, cls.mapping::getName, "\t"));
+            var classDoc = cls.mapping.getComponent(Documented.class);
+            if (classDoc != null) {
+                String content = classDoc.getContentString();
+                if (!content.isBlank()) lines.add("\tc\t" + TinyUtil.escape(content));
+            }
             cls.getFields().parallelStream().forEach(field -> {
                 String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, field);
                 synchronized (lines) {
                     lines.add("\tf\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
-                    if (field.hasComponent(Documented.class)) {
-                        String doc = field.getComponent(Documented.class).getContentString();
+                    var fieldDoc = field.getComponent(Documented.class);
+                    if (fieldDoc != null) {
+                        String doc = fieldDoc.getContentString();
                         if (!doc.isBlank()) lines.add("\t\tc\t" + TinyUtil.escape(doc));
                     }
                 }
@@ -65,8 +71,9 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                 String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, method);
                 synchronized (lines) {
                     lines.add("\tm\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));
-                    if (method.hasComponent(Documented.class)) {
-                        String doc = method.getComponent(Documented.class).getContentString();
+                    var methodDoc = method.getComponent(Documented.class);
+                    if (methodDoc != null) {
+                        String doc = methodDoc.getContentString();
                         if (!doc.isBlank()) lines.add("\t\tc\t" + TinyUtil.escape(doc));
                     }
                     if (method.hasComponent(LocalVariableTable.Namespaced.class)) {
@@ -81,8 +88,9 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                                 return name;
                             }, "\t");
                             lines.add("\t\tp\t" + index + '\t' + names);
-                            if (localVariable.hasComponent(Documented.class)) {
-                                String doc = localVariable.getComponent(Documented.class).getContentString();
+                            var paramDoc = localVariable.getComponent(Documented.class);
+                            if (paramDoc != null) {
+                                String doc = paramDoc.getContentString();
                                 if (!doc.isBlank()) lines.add("\t\t\tc\t" + TinyUtil.escape(doc));
                             }
                         });

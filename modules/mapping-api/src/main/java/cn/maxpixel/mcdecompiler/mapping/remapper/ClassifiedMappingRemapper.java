@@ -30,7 +30,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +176,7 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
     }
 
     public static <T extends Mapping> Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, T>> genFieldsByUnmappedNameMap(
-            ObjectSet<ClassMapping<T>> mapping) {
+            ObjectList<ClassMapping<T>> mapping) {
         return mapping.parallelStream().collect(Collectors.toMap(
                 cm -> cm.mapping.getUnmappedName(),
                 cm -> cm.getFields().parallelStream().collect(Collectors.toMap(NameGetter::getUnmappedName, Function.identity(),
@@ -185,19 +185,19 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
     }
 
     public static <T extends Mapping> Object2ObjectOpenHashMap<String, ClassMapping<T>> genMappingsByUnmappedNameMap(
-            ObjectSet<ClassMapping<T>> mapping) {
+            ObjectList<ClassMapping<T>> mapping) {
         return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.getUnmappedName(),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public static <T extends Mapping> Object2ObjectOpenHashMap<String, ClassMapping<T>> genMappingsByMappedNameMap(
-            ObjectSet<ClassMapping<T>> mapping) {
+            ObjectList<ClassMapping<T>> mapping) {
         return mapping.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.getMappedName(),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }
 
     public static Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> genMappingsByNamespaceMap(
-            ObjectSet<ClassMapping<NamespacedMapping>> mapping, String namespace) {
+            ObjectList<ClassMapping<NamespacedMapping>> mapping, String namespace) {
         return mapping.parallelStream().collect(Collectors.toMap(m -> m.mapping.getName(namespace),
                 Function.identity(), Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
     }

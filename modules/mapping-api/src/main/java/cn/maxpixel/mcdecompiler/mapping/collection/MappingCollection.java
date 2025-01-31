@@ -21,8 +21,9 @@ package cn.maxpixel.mcdecompiler.mapping.collection;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.trait.MappingTrait;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -37,10 +38,10 @@ public abstract class MappingCollection<M extends Mapping> {
     /**
      * Packages of this mapping.
      */
-//    public final ObjectArrayList<@NotNull M> packages = new ObjectArrayList<>();// TODO: Remove this after passing the tests
-    public final ObjectLinkedOpenHashSet<@NotNull M> packages = new ObjectLinkedOpenHashSet<>();
+    public final ObjectArrayList<@NotNull M> packages = new ObjectArrayList<>();
 
     private final Object2ObjectOpenHashMap<@NotNull Class<? extends MappingTrait>, @NotNull MappingTrait> traits = new Object2ObjectOpenHashMap<>();
+    private final ObjectOpenHashSet<@NotNull M> packageSet = new ObjectOpenHashSet<>();
 
     /**
      * No-arg constructor
@@ -136,5 +137,33 @@ public abstract class MappingCollection<M extends Mapping> {
      */
     public void clear() {
         packages.clear();
+    }
+
+    private ObjectOpenHashSet<@NotNull M> populatePackageSet() {
+        if (!packageSet.containsAll(packages)) {// TODO: Profile to see whether this condition is needed
+            packageSet.clear();
+            packageSet.addAll(packages);
+        }
+        return packageSet;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof MappingCollection<?> that)) return false;
+        return Objects.equals(traits, that.traits) && packages.size() == that.packages.size() &&
+                populatePackageSet().containsAll(that.packages);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(traits, populatePackageSet());
+    }
+
+    @Override
+    public String toString() {
+        return "MappingCollection{" +
+                "traits=" + traits +
+                ", packages=" + packages +
+                '}';
     }
 }

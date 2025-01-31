@@ -39,37 +39,37 @@ class MappingProcessorGeneratorTest {
         test(tmp, "1.17.1.srg", MappingFormats.SRG);
     }
 
-//    @Test
+    @Test
     void testCsrg(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1.csrg", MappingFormats.CSRG);
     }
 
-//    @Test
+    @Test
     void testTsrg(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1.tsrg", MappingFormats.TSRG_V1);
     }
 
-//    @Test
+    @Test
     void testTsrg2(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1-v2.tsrg", MappingFormats.TSRG_V2);
     }
 
-//    @Test
+    @Test
     void testProguard(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1.txt", MappingFormats.PROGUARD);
     }
 
-//    @Test
+    @Test
     void testTiny1(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1.tiny", MappingFormats.TINY_V1);
     }
 
-//    @Test
+    @Test
     void testTiny2(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1-v2.tiny", MappingFormats.TINY_V2);
     }
 
-//    @Test
+//    @Test// TODO
     void testPDME(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1.pdme", MappingFormats.PDME);
     }
@@ -84,7 +84,7 @@ class MappingProcessorGeneratorTest {
         }
         try (var reader = Files.newBufferedReader(path)) {
             var c2 = format.read(reader);
-            assertEquals(c1, c2);// FIXME: How to assertEquals mappings?
+            assertEquals(c1, c2);
         }
     }
 }

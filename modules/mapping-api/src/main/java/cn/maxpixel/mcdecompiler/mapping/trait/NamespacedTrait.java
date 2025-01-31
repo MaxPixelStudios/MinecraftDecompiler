@@ -88,4 +88,24 @@ public class NamespacedTrait implements MappingTrait, NameGetter.Namespace {
             }
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof NamespacedTrait that)) return false;
+        return Objects.equals(namespaces, that.namespaces) && Objects.equals(mappedNamespace, that.mappedNamespace) && Objects.equals(fallbackNamespace, that.fallbackNamespace);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(namespaces, mappedNamespace, fallbackNamespace);
+    }
+
+    @Override
+    public String toString() {
+        return "NamespacedTrait{" +
+                "namespaces=" + namespaces +
+                ", mappedNamespace='" + mappedNamespace + '\'' +
+                ", fallbackNamespace='" + fallbackNamespace + '\'' +
+                '}';
+    }
 }
