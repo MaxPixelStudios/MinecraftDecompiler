@@ -140,10 +140,8 @@ public abstract class MappingCollection<M extends Mapping> {
     }
 
     private ObjectOpenHashSet<@NotNull M> populatePackageSet() {
-        if (!packageSet.containsAll(packages)) {// TODO: Profile to see whether this condition is needed
-            packageSet.clear();
-            packageSet.addAll(packages);
-        }
+        packageSet.clear();
+        packageSet.addAll(packages);
         return packageSet;
     }
 
