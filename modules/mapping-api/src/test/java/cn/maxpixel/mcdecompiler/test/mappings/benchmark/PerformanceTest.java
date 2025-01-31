@@ -21,7 +21,6 @@ package cn.maxpixel.mcdecompiler.test.mappings.benchmark;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import org.junit.jupiter.api.Test;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.JavaFlightRecorderProfiler;
 import org.openjdk.jmh.runner.Runner;
@@ -42,7 +41,7 @@ public class PerformanceTest {
     private static final ClassifiedMapping<NamespacedMapping> tiny1 = MappingFormats.TINY_V2.read(PerformanceTest.class.getClassLoader().getResourceAsStream("1.17.1-v2.tiny"));
     private static final ClassifiedMapping<NamespacedMapping> tiny2 = MappingFormats.TINY_V2.read(PerformanceTest.class.getClassLoader().getResourceAsStream("1.17.1-v2.tiny"));
 
-    @Test
+//    @Test
     public void benchmark() throws RunnerException {
         Options options = new OptionsBuilder()
                 .include(PerformanceTest.class.getName())
