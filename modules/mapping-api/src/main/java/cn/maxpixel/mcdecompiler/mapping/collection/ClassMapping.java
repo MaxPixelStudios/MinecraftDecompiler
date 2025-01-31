@@ -214,11 +214,9 @@ public class ClassMapping<T extends Mapping> {
     }
 
     private ObjectOpenHashSet<@NotNull T> populateMemberSet() {
-        if (!memberSet.containsAll(methods) || !memberSet.containsAll(fields)) {// TODO: Profile to see whether this condition is needed
-            memberSet.clear();
-            memberSet.addAll(methods);
-            memberSet.addAll(fields);
-        }
+        memberSet.clear();
+        memberSet.addAll(methods);
+        memberSet.addAll(fields);
         return memberSet;
     }
 
@@ -226,8 +224,8 @@ public class ClassMapping<T extends Mapping> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ClassMapping<?> that)) return false;
-        return Objects.equals(mapping, that.mapping) && methods.size() == that.methods.size() &&
-                fields.size() == that.fields.size() && populateMemberSet().containsAll(that.fields) &&
+        return Objects.equals(mapping, that.mapping) && fields.size() == that.fields.size() &&
+                methods.size() == that.methods.size() && populateMemberSet().containsAll(that.fields) &&
                 memberSet.containsAll(that.methods);
     }
 

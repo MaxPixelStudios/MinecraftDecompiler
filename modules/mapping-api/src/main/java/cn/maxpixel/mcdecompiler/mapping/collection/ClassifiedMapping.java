@@ -180,10 +180,8 @@ public class ClassifiedMapping<T extends Mapping> extends MappingCollection<T> {
     }
 
     private ObjectOpenHashSet<@NotNull ClassMapping<@NotNull T>> populateClassSet() {
-        if (!classSet.containsAll(classes)) {// TODO: Profile to see whether this condition is needed
-            classSet.clear();
-            classSet.addAll(classes);
-        }
+        classSet.clear();
+        classSet.addAll(classes);
         return classSet;
     }
 
