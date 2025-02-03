@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler.mapping.component;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 
 import java.util.Objects;
 
@@ -42,7 +43,7 @@ public class Owned<T extends Mapping> implements Component {
 
     @Override
     public void validate() throws IllegalStateException {
-        if (owner == null) throw new IllegalStateException("Owner is null");
+        Validation.requireNonNull(owner, "owner");
     }
 
     @Override

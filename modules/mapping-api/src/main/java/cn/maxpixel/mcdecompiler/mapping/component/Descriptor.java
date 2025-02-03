@@ -21,6 +21,7 @@ package cn.maxpixel.mcdecompiler.mapping.component;
 import cn.maxpixel.mcdecompiler.common.Constants;
 import cn.maxpixel.mcdecompiler.common.annotation.MethodOrFieldDesc;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
+import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -50,7 +51,7 @@ public abstract class Descriptor implements Component {
 
     @Override
     public void validate() throws IllegalStateException {
-        if (descriptor == null) throw new IllegalStateException("Descriptor must not be null");
+        Validation.requireNonNull(descriptor, "descriptor");
         if (!MATCHERS.get().reset(descriptor).matches()) {
             throw new IllegalStateException("Invalid descriptor: " + descriptor);
         }

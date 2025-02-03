@@ -58,9 +58,9 @@ public class MinecraftDecompilerCommandLine {
                 "decompile. Values are \"CLIENT\" and \"SERVER\". With this option, you must specify --version option.")
                 .withRequiredArg().ofType(SideType.class).defaultsTo(SideType.CLIENT);
         ArgumentAcceptingOptionSpec<Path> inputO = parser.acceptsAll(of("i", "input"), "Input jar.")
-                .requiredUnless(sideTypeO).withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
+                .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
         ArgumentAcceptingOptionSpec<String> mappingPathO = parser.acceptsAll(of("m", "map", "mapping-path"), "Mapping file that " +
-                "is used to deobfuscate.").requiredUnless(sideTypeO).withRequiredArg();
+                "is used to deobfuscate.").withRequiredArg();
         ArgumentAcceptingOptionSpec<String> versionO = parser.acceptsAll(of("v", "ver", "version"), "Version to " +
                 "deobfuscate/decompile. Only works on Proguard mappings or downloading libraries for the decompiler.")
                 .requiredUnless(inputO, mappingPathO).requiredIf(sideTypeO).withRequiredArg();

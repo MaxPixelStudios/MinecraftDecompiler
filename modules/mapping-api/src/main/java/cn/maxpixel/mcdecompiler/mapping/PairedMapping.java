@@ -20,6 +20,7 @@ package cn.maxpixel.mcdecompiler.mapping;
 
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
+import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
@@ -115,23 +116,6 @@ public class PairedMapping extends Mapping {
         String temp = unmappedName;
         unmappedName = mappedName;
         mappedName = temp;
-//        boolean supportDesc = hasComponent(Descriptor.Unmapped.class);// TODO: abstract as a general-purpose interface
-//        boolean supportDescMapped = hasComponent(Descriptor.Mapped.class);
-//        if (supportDesc) {
-//            Descriptor.Unmapped unmapped = getComponent(Descriptor.Unmapped.class);
-//            if (supportDescMapped) {
-//                Descriptor.Mapped mapped = getComponent(Descriptor.Mapped.class);
-//                String desc = unmapped.descriptor;
-//                unmapped.descriptor = mapped.descriptor;
-//                mapped.descriptor = desc;
-//            } else {
-//                addComponent(new Descriptor.Mapped(unmapped.descriptor));
-//                removeComponent(Descriptor.Unmapped.class);
-//            }
-//        } else if (supportDescMapped) {
-//            addComponent(new Descriptor.Unmapped(getComponent(Descriptor.Mapped.class).descriptor));
-//            removeComponent(Descriptor.Mapped.class);
-//        }// TODO: Remove this after passing the tests
         ObjectOpenHashSet<Class<? extends Component>> skipped = new ObjectOpenHashSet<>();
         Object2ObjectOpenHashMap<Class<? extends Component>, Component> toAdd = new Object2ObjectOpenHashMap<>();
         var it = getComponents().iterator();
@@ -152,9 +136,7 @@ public class PairedMapping extends Mapping {
                 }
             }
         }
-        for (Component value : toAdd.values()) {
-            addComponent(value);
-        }
+        components.putAll(toAdd);
         return this;
     }
 
@@ -174,6 +156,13 @@ public class PairedMapping extends Mapping {
 
     public void setMappedName(String mappedName) {
         this.mappedName = mappedName;
+    }
+
+    @Override
+    public void validate() throws IllegalStateException {
+        Validation.requireNonNull(unmappedName, "unmappedName");
+        Validation.requireNonNull(mappedName, "mappedName");
+        super.validate();
     }
 
     /* Auto-generated equals, hashCode and toString methods */

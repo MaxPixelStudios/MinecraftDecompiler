@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,32 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping;
+package cn.maxpixel.mcdecompiler.mapping.util;
 
-import org.jetbrains.annotations.NotNull;
+import java.util.Objects;
 
-/**
- * Intends to be a universal interface for getting names
- */
-public interface NameGetter {
-    String getUnmappedName();
-
-    String getMappedName();
-
-    /**
-     * Universal interface for getting/setting namespaces
-     *
-     * @implSpec unmapped namespace should be set by mapping processors
-     */
-    interface Namespace {
-        String getUnmappedNamespace();
-
-        String getMappedNamespace();
-
-        void setMappedNamespace(@NotNull String namespace);
-
-        String getFallbackNamespace();
-
-        void setFallbackNamespace(@NotNull String namespace);
+public class Validation {
+    public static void requireNonNull(Object o, String name) {
+        if (o == null) throw new IllegalStateException(Objects.requireNonNull(name) + " cannot be null");
     }
 }

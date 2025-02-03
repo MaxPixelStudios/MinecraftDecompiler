@@ -34,7 +34,7 @@ import java.util.function.Supplier;
  * @implNote This class should only be extended, so it is abstract
  */
 public abstract class Mapping implements NameGetter {
-    private final Object2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
+    protected final Object2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
 
     /**
      * Constructor
@@ -70,7 +70,7 @@ public abstract class Mapping implements NameGetter {
      * @return The component if exists, or the newly created component
      */
     @SuppressWarnings("unchecked")
-    public <C extends Component> @NotNull C getOrCreateComponent(@NotNull Class<? extends C> component, Supplier<? extends C> factory) {
+    public <C extends Component> @NotNull C getOrCreateComponent(@NotNull Class<? extends C> component, @NotNull Supplier<? extends C> factory) {
         var value = components.get(component);
         if (value == null) {
             value = Objects.requireNonNull(factory.get());
@@ -138,11 +138,11 @@ public abstract class Mapping implements NameGetter {
     }
 
     /**
-     * Validates all the components of this mapping
+     * Validates this mapping
      *
      * @throws IllegalStateException If any of the component fails validation
      */
-    public void validateComponents() throws IllegalStateException {
+    public void validate() throws IllegalStateException {
         for (Component value : components.values()) {
             value.validate();
         }

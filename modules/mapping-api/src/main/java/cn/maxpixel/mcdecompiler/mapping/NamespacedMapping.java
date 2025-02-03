@@ -20,7 +20,6 @@ package cn.maxpixel.mcdecompiler.mapping;
 
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
-import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
@@ -293,8 +292,9 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     @Override
     public void setMappedNamespace(@NotNull String namespace) {
         this.mappedNamespace = Objects.requireNonNull(namespace);
-        LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
-        if (n != null) n.setMappedNamespace(namespace);
+        for (Component component : getComponents()) {
+            if (component instanceof NameGetter.Namespace n) n.setMappedNamespace(namespace);
+        }
     }
 
     @Override
@@ -305,8 +305,9 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     @Override
     public void setFallbackNamespace(@NotNull String namespace) {
         this.fallbackNamespace = Objects.requireNonNull(namespace);
-        LocalVariableTable.Namespaced n = getComponent(LocalVariableTable.Namespaced.class);
-        if (n != null) n.setFallbackNamespace(namespace);
+        for (Component component : getComponents()) {
+            if (component instanceof NameGetter.Namespace n) n.setFallbackNamespace(namespace);
+        }
     }
 
     /* Auto-generated equals, hashCode and toString methods */

@@ -23,6 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
+import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ import java.util.Objects;
  *          will be treated as the actual lvt index - 1, which means that index 0 in {@link LocalVariableTable} represents
  *          the index 1 in the actual lvt(omitting {@code this}).
  */
-public abstract class LocalVariableTable<T extends Mapping> {
+public abstract class LocalVariableTable<T extends Mapping> implements Component {
     protected final @NotNull Int2ObjectOpenHashMap<T> lvt = new Int2ObjectOpenHashMap<>();
 
     public T getLocalVariable(@Range(from = 0, to = 255) int index) {
@@ -63,6 +64,14 @@ public abstract class LocalVariableTable<T extends Mapping> {
     }
 
     @Override
+    public void validate() throws IllegalStateException {
+        lvt.int2ObjectEntrySet().fastForEach(entry -> {
+            if (entry.getIntKey() < 0 || entry.getIntKey() > 255) throw new IllegalStateException("Illegal LVT index");
+            entry.getValue().validate();
+        });
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof LocalVariableTable<?> that)) return false;
@@ -82,14 +91,6 @@ public abstract class LocalVariableTable<T extends Mapping> {
     }
 
     public static class Paired extends LocalVariableTable<PairedMapping> implements Component, Component.Reversible {
-        @Override
-        public void validate() throws IllegalStateException {
-            lvt.int2ObjectEntrySet().fastForEach(entry -> {
-                if (entry.getIntKey() < 0 || entry.getIntKey() > 255) throw new IllegalStateException("Illegal LVT index");
-                entry.getValue().validateComponents();
-            });
-        }
-
         @Override
         public void reverse() {
             lvt.values().forEach(PairedMapping::reverse);
@@ -157,12 +158,8 @@ public abstract class LocalVariableTable<T extends Mapping> {
 
         @Override
         public void validate() throws IllegalStateException {
-            if (unmappedNamespace == null) throw new IllegalStateException();
-            lvt.int2ObjectEntrySet().fastForEach(entry -> {
-                if (entry.getIntKey() < 0 || entry.getIntKey() > 255)
-                    throw new IllegalStateException("Illegal LVT index");
-                entry.getValue().validateComponents();
-            });
+            Validation.requireNonNull(unmappedNamespace, "unmappedNamespace");
+            super.validate();
         }
 
         @Override
