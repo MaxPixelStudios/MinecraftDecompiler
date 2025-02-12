@@ -71,8 +71,8 @@ public class MinecraftDecompilerCommandLine {
                 "the reversed mapping to deobfuscate.").availableIf(inputO);
         ArgumentAcceptingOptionSpec<String> mappingFormatO = parser.acceptsAll(of("M", "mapping-format"),
                 "Manually specify the mapping format").availableIf(mappingPathO).withRequiredArg();
-        ArgumentAcceptingOptionSpec<String> targetNamespaceO = parser.acceptsAll(of("t", "target-namespace"), "Namespace to " +
-                "remap to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
+        ArgumentAcceptingOptionSpec<String> namespaceTargetO = parser.acceptsAll(of("t", "namespace-target"), "Namespace to " +
+                "remap from/to if you are using namespaced mappings(Tiny, Tsrgv2)").availableIf(mappingPathO).withRequiredArg();
         ArgumentAcceptingOptionSpec<Path> outputO = parser.acceptsAll(of("o", "output"), "Mapped output file, including the suffix.")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         ArgumentAcceptingOptionSpec<Path> outputDecompO = parser.accepts("decompiled-output", "Decompiled output directory. " +
@@ -160,7 +160,7 @@ public class MinecraftDecompilerCommandLine {
                 .withMapping(orDetect(options.valueOf(mappingFormatO), m).read(new FileInputStream(m)))));
         if (options.has(regenVarNameO)) builder.regenerateVariableNames();
         if (options.has(dontIncludeOthersO)) builder.doNotIncludeOthers();
-        options.valueOfOptional(targetNamespaceO).ifPresent(builder::targetNamespace);
+        options.valueOfOptional(namespaceTargetO).ifPresent(builder::namespaceTarget);
         options.valueOfOptional(outputO).ifPresent(builder::output);
         options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
         builder.addExtraJars(options.valuesOf(extraJarsO));

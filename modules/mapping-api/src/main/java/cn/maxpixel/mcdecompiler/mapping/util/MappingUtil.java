@@ -82,33 +82,29 @@ public final class MappingUtil {
         }
 
         public static NamespacedMapping o(String[] namespaces, String[] names) {
-            return new NamespacedMapping(namespaces, names, new Owned<>()).setUnmappedNamespace(namespaces[0]);
+            return new NamespacedMapping(namespaces, names, new Owned<>());
         }
 
         public static NamespacedMapping d(String[] namespaces, String[] names, int start) {
-            return new NamespacedMapping(namespaces, names, start, new Documented()).setUnmappedNamespace(namespaces[0]);
+            return new NamespacedMapping(namespaces, names, start, new Documented());
         }
 
         public static NamespacedMapping duo(String[] namespaces, String[] names, int start, String descNamespace, String desc) {
-            return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace))
-                    .setUnmappedNamespace(namespaces[0]);
+            return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace));
         }
 
         public static NamespacedMapping dduo(String[] namespaces, String[] names, int start, String descNamespace, String desc) {
-            return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace), new Documented())
-                    .setUnmappedNamespace(namespaces[0]);
+            return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace), new Documented());
         }
 
         public static NamespacedMapping slduo(String[] namespaces, String[] names, int start, String descNamespace, String desc) {
             return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace),
-                    new StaticIdentifiable(), new LocalVariableTable.Namespaced().setUnmappedNamespace(namespaces[0]))
-                    .setUnmappedNamespace(namespaces[0]);
+                    new StaticIdentifiable(), new LocalVariableTable.Namespaced());
         }
 
         public static NamespacedMapping dlduo(String[] namespaces, String[] names, int start, String descNamespace, String desc) {
             return new NamespacedMapping(namespaces, names, start, new Owned<>(), new Descriptor.Namespaced(desc, descNamespace),
-                    new Documented(), new LocalVariableTable.Namespaced().setUnmappedNamespace(namespaces[0]))
-                    .setUnmappedNamespace(namespaces[0]);
+                    new Documented(), new LocalVariableTable.Namespaced());
         }
     }
 

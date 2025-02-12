@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,49 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.util;
+package cn.maxpixel.mcdecompiler.mapping.remapper;
 
 import cn.maxpixel.mcdecompiler.common.Constants;
 import cn.maxpixel.mcdecompiler.common.util.DescriptorUtil;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Lightweight remapper for descriptors in place of the general heavyweight {@link cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper}s.
+ * Lightweight remapper for descriptors of one direction in place of the general heavyweight {@link MappingRemapper}s.
  */
-public class DescriptorRemapper {
+public class UniDescriptorRemapper {
     private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByUnm;
-    private final Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByMap;
 
-    public DescriptorRemapper(Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByUnm,
-                              Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByMap) {
+    public UniDescriptorRemapper(Object2ObjectOpenHashMap<String, ? extends ClassMapping<? extends Mapping>> mappingByUnm) {
         this.mappingByUnm = mappingByUnm;
-        this.mappingByMap = mappingByMap;
-    }
-
-    public DescriptorRemapper(ClassifiedMapping<?> collection) {
-        this(ClassifiedMappingRemapper.genMappingsByUnmappedNameMap(collection.classes),
-                ClassifiedMappingRemapper.genMappingsByMappedNameMap(collection.classes));
-    }
-
-    public DescriptorRemapper(ClassifiedMapping<NamespacedMapping> collection, String targetNamespace) {
-        this(setup(collection, targetNamespace));
-    }
-
-    private static ClassifiedMapping<NamespacedMapping> setup(ClassifiedMapping<NamespacedMapping> collection, String targetNamespace) {
-        var trait = collection.getTrait(NamespacedTrait.class);
-        trait.setMappedNamespace(targetNamespace);
-        trait.setFallbackNamespace(trait.getUnmappedNamespace());
-        collection.updateCollection();
-        return collection;
     }
 
     private String mapClass(@NotNull String name) {
@@ -67,8 +43,8 @@ public class DescriptorRemapper {
         return name;
     }
 
-    private String unmapClass(@NotNull String name) {
-        ClassMapping<? extends Mapping> classMapping = mappingByMap.get(name);
+    protected String unmapClass(@NotNull String name) {
+        ClassMapping<? extends Mapping> classMapping = mappingByUnm.get(name);
         if (classMapping != null) return classMapping.mapping.getUnmappedName();
         return name;
     }
@@ -102,11 +78,11 @@ public class DescriptorRemapper {
             case 'L' -> {
                 StringBuilder ret = new StringBuilder(desc.length()).append(desc, 0, ++i);
                 int j = desc.indexOf(';', i + 1);// skip 'L' and the first char
-                if (j < 0) DescriptorUtil.throwInvalid(true);
+                if (j < 0) DescriptorUtil.throwInvalid(false);
                 yield ret.append(map ? mapClass(desc.substring(i, j)) : unmapClass(desc.substring(i, j)))
                         .append(desc, j, desc.length()).toString();
             }
-            default -> DescriptorUtil.throwInvalid(true);
+            default -> DescriptorUtil.throwInvalid(false);
         };
     }
 

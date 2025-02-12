@@ -42,7 +42,9 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
     public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {// TODO: Support properties
         if (!content.get(0).startsWith("tiny\t2\t0")) error();
         String[] namespaces = MappingUtil.split(content.get(0), '\t', 9);
-        ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(new NamespacedTrait(namespaces));
+        var trait = new NamespacedTrait(namespaces);
+        trait.setUnmappedNamespace(namespaces[0]);
+        ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
         for (int i = 1, len = content.size(); i < len; ) {
             String[] sa = MappingUtil.split(content.get(i), '\t');
             if (sa[0].length() == 1 && sa[0].charAt(0) == 'c') {
@@ -51,6 +53,7 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
                 mappings.classes.add(classMapping);
             } else error();
         }
+        mappings.updateCollection();
         return mappings;
     }
 

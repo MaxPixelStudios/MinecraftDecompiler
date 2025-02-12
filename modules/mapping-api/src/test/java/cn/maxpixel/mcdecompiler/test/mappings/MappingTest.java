@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.test.mappings;
 
+import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
@@ -119,6 +120,68 @@ class MappingTest {
 
     @Test
     void testNamespaced() {
+        Descriptor.Namespaced dn = new Descriptor.Namespaced("La;", "a");
+        Owned<NamespacedMapping> o = new Owned<>();
 
+        NamespacedMapping m1 = new NamespacedMapping();
+        assertTrue(m1.getNamespaces().isEmpty());
+        assertTrue(m1.getComponents().isEmpty());
+
+        NamespacedMapping m2 = new NamespacedMapping(dn);
+        assertTrue(m1.getNamespaces().isEmpty());
+        assertEquals(1, m2.getComponents().size());
+        assertDoesNotThrow(m2::validate);
+
+        NamespacedMapping m3 = new NamespacedMapping(new String[] { "a", "b" }, "a");
+        assertEquals("a", m3.getName("a"));
+        assertEquals("a", m3.getName("b"));
+        assertTrue(m3.getComponents().isEmpty());
+
+        NamespacedMapping m4 = new NamespacedMapping(new String[] { "a", "b" }, "a", dn);
+        assertEquals("a", m4.getName("a"));
+        assertEquals("a", m4.getName("b"));
+        assertEquals(1, m4.getComponents().size());
+
+        NamespacedMapping m5 = new NamespacedMapping(new String[] { "a", "b" }, new String[] { "a", "b" });
+        assertEquals("a", m5.getName("a"));
+        assertEquals("b", m5.getName("b"));
+        assertTrue(m5.getComponents().isEmpty());
+
+        NamespacedMapping m6 = new NamespacedMapping(new String[] { "a", "b" }, new String[] { "a", "b" }, dn);
+        assertEquals("a", m6.getName("a"));
+        assertEquals("b", m6.getName("b"));
+        assertEquals("a", m6.getComponent(Descriptor.Namespaced.class).descriptorNamespace);
+        assertEquals(1, m6.getComponents().size());
+
+        m1.setName("a", "a");
+        m1.setName("b", "b");
+        m1.setUnmappedNamespace("a");
+        m1.setMappedNamespace("b");
+        assertEquals("a", m1.getName("a"));
+        assertEquals("b", m1.getName("b"));
+        assertSame(m1.getName("a"), m1.getUnmappedName());
+        assertSame(m1.getName("b"), m1.getMappedName());
+        m1.setMappedNamespace("c");
+        m1.setFallbackNamespace("a");
+        assertSame(m1.getName("a"), m1.getMappedName());
+        assertDoesNotThrow(m1::validate);
+
+        assertSame(o, new NamespacedMapping(o).getOwned());
+
+        m6.swap("a", "b");
+        assertTrue(m6.hasComponent(Descriptor.Namespaced.class));
+        assertEquals("La;", m6.getComponent(Descriptor.Namespaced.class).descriptor);
+        assertEquals("b", m6.getComponent(Descriptor.Namespaced.class).descriptorNamespace);
+        assertEquals("b", m6.getName("a"));
+        assertEquals("a", m6.getName("b"));
+        assertEquals(1, m6.getComponents().size());
+
+        m6.swap("a", "b");
+        assertTrue(m6.hasComponent(Descriptor.Namespaced.class));
+        assertEquals("La;", m6.getComponent(Descriptor.Namespaced.class).descriptor);
+        assertEquals("a", m6.getComponent(Descriptor.Namespaced.class).descriptorNamespace);
+        assertEquals("a", m6.getName("a"));
+        assertEquals("b", m6.getName("b"));
+        assertEquals(1, m6.getComponents().size());
     }
 }

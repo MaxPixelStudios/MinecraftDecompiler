@@ -38,9 +38,10 @@ import java.util.Objects;
  */
 public class NamespacedTrait implements MappingTrait, NameGetter.Namespace {
     /**
-     * Ordered list that shows all the namespaces.
+     * All the namespaces. Stored in a linked set to preserve the order
      */
     public final ObjectLinkedOpenHashSet<String> namespaces;
+    private String unmappedNamespace;
     private String mappedNamespace;
     private String fallbackNamespace;
 
@@ -55,7 +56,12 @@ public class NamespacedTrait implements MappingTrait, NameGetter.Namespace {
 
     @Override
     public String getUnmappedNamespace() {
-        return namespaces.first();
+        return Objects.requireNonNull(unmappedNamespace, "The unmapped namespace has not been set");
+    }
+
+    @Override
+    public void setUnmappedNamespace(@NotNull String namespace) {
+        this.unmappedNamespace = Objects.requireNonNull(namespace);
     }
 
     @Override
@@ -80,10 +86,11 @@ public class NamespacedTrait implements MappingTrait, NameGetter.Namespace {
 
     @Override
     public void updateCollection(MappingCollection<?> collection) {
-        if (mappedNamespace == null) return;
+        if (unmappedNamespace == null && mappedNamespace == null) return;
         if (collection instanceof ClassifiedMapping<?> classified) {
             for (ClassMapping<?> cm : classified.classes) {
-                ClassMapping.setMappedNamespace((ClassMapping<NamespacedMapping>) cm, mappedNamespace);
+                if (unmappedNamespace != null) ClassMapping.setUnmappedNamespace((ClassMapping<NamespacedMapping>) cm, unmappedNamespace);
+                if (mappedNamespace != null) ClassMapping.setMappedNamespace((ClassMapping<NamespacedMapping>) cm, mappedNamespace);
                 if (fallbackNamespace != null) ClassMapping.setFallbackNamespace((ClassMapping<NamespacedMapping>) cm, fallbackNamespace);
             }
         }
@@ -92,18 +99,20 @@ public class NamespacedTrait implements MappingTrait, NameGetter.Namespace {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof NamespacedTrait that)) return false;
-        return Objects.equals(namespaces, that.namespaces) && Objects.equals(mappedNamespace, that.mappedNamespace) && Objects.equals(fallbackNamespace, that.fallbackNamespace);
+        return Objects.equals(namespaces, that.namespaces) && Objects.equals(unmappedNamespace, that.unmappedNamespace) &&
+                Objects.equals(mappedNamespace, that.mappedNamespace) && Objects.equals(fallbackNamespace, that.fallbackNamespace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(namespaces, mappedNamespace, fallbackNamespace);
+        return Objects.hash(namespaces, unmappedNamespace, mappedNamespace, fallbackNamespace);
     }
 
     @Override
     public String toString() {
         return "NamespacedTrait{" +
                 "namespaces=" + namespaces +
+                ", unmappedNamespace='" + unmappedNamespace + '\'' +
                 ", mappedNamespace='" + mappedNamespace + '\'' +
                 ", fallbackNamespace='" + fallbackNamespace + '\'' +
                 '}';

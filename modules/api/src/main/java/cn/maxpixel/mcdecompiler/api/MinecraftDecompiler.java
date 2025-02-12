@@ -110,7 +110,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             if (decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Directories.TEMP_DIR.toAbsolutePath().normalize());
             if (decompiler instanceof ILibRecommendedDecompiler lrd) {
-                ObjectSet<Path> libs = options.bundledLibs().<ObjectSet<Path>>map(ObjectOpenHashSet::new).orElseGet(() ->
+                ObjectOpenHashSet<Path> libs = options.bundledLibs().map(ObjectOpenHashSet::new).orElseGet(() ->
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
                 if (incrementalJar != null && decompiler.getSourceType() == IDecompiler.SourceType.DIRECTORY) {
                     try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar);
@@ -186,7 +186,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         private Path inputJar;
         private boolean reverse;
 
-        private String targetNamespace;
+        private String namespaceTarget;
 
         public OptionBuilder(String version, SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
@@ -307,8 +307,8 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             return this;
         }
 
-        public OptionBuilder targetNamespace(@Nullable String targetNamespace) {
-            this.targetNamespace = targetNamespace;
+        public OptionBuilder namespaceTarget(@Nullable String namespaceTarget) {
+            this.namespaceTarget = namespaceTarget;
             return this;
         }
 
@@ -400,8 +400,8 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                 }
 
                 @Override
-                public String targetNamespace() {
-                    return targetNamespace;
+                public String namespaceTarget() {
+                    return namespaceTarget;
                 }
 
                 @Override
@@ -422,7 +422,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             if (mappings() != null) {
                 if (mappings() instanceof ClassifiedMapping<?> mappings) {
                     if (mappings.hasTrait(NamespacedTrait.class)) {
-                        return new ClassifiedDeobfuscator((ClassifiedMapping<NamespacedMapping>) mappings, targetNamespace(), deobfuscation());
+                        return new ClassifiedDeobfuscator((ClassifiedMapping<NamespacedMapping>) mappings, namespaceTarget(), deobfuscation());
                     } else return new ClassifiedDeobfuscator((ClassifiedMapping<PairedMapping>) mappings, deobfuscation());
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
@@ -441,7 +441,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
 
         Path outputDecompDir();
 
-        String targetNamespace();
+        String namespaceTarget();
 
         Optional<ObjectSet<Path>> bundledLibs();
     }

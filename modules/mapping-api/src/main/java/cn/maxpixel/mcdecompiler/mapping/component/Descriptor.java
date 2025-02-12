@@ -20,7 +20,6 @@ package cn.maxpixel.mcdecompiler.mapping.component;
 
 import cn.maxpixel.mcdecompiler.common.Constants;
 import cn.maxpixel.mcdecompiler.common.annotation.MethodOrFieldDesc;
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 import org.jetbrains.annotations.NotNull;
 
@@ -126,8 +125,7 @@ public abstract class Descriptor implements Component {
     }
 
     /**
-     * Swappable descriptor component<br>
-     * Extends {@link Descriptor} because the currently supported namespaced mappings only have unmapped descriptors
+     * Namespaced descriptor component
      */
     public static class Namespaced extends Descriptor implements Component.Swappable {
         public @NotNull String descriptorNamespace;
@@ -147,8 +145,8 @@ public abstract class Descriptor implements Component {
 
         @Override
         public void validate() throws IllegalStateException {
+            Validation.requireNonNull(descriptorNamespace, "descriptorNamespace");
             super.validate();
-            if (descriptorNamespace == null) throw new IllegalStateException("Descriptor namespace must not be null");
         }
 
         @Override
@@ -172,9 +170,9 @@ public abstract class Descriptor implements Component {
         }
 
         @Override
-        public void swap(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
-            if (!descriptorNamespace.equals(fromNamespace)) throw new IllegalArgumentException();
-            descriptor = descriptor.charAt(0) == '(' ? remapper.mapMethodDesc(descriptor) : remapper.mapDesc(descriptor);
+        public void swap(@NotNull String fromNamespace, @NotNull String toNamespace) {
+            if (descriptorNamespace.equals(fromNamespace)) descriptorNamespace = toNamespace;
+            else if (descriptorNamespace.equals(toNamespace)) descriptorNamespace = fromNamespace;
         }
     }
 }

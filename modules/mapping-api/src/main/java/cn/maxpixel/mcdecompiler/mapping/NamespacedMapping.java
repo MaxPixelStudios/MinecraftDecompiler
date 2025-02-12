@@ -21,10 +21,8 @@ package cn.maxpixel.mcdecompiler.mapping;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,10 +102,22 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     }
 
     /**
+     * Helper constructor. Internally used by mapping readers
+     *
+     * @param namespaces The namespaces
+     * @param name The name
+     */
+    public NamespacedMapping(String[] namespaces, String name) {
+        for (String namespace : namespaces) {
+            this.names.put(Objects.requireNonNull(namespace), name);
+        }
+    }
+
+    /**
      * Constructor
      *
      * @param names A map keyed with namespace and valued with name
-     * @param components Components add to this mapping
+     * @param components Components to add to this mapping
      */
     public NamespacedMapping(Map<String, String> names, Component... components) {
         super(components);
@@ -120,7 +130,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      *
      * @param namespace The namespace
      * @param name The name
-     * @param components Components add to this mapping
+     * @param components Components to add to this mapping
      */
     public NamespacedMapping(String namespace, String name, Component... components) {
         super(components);
@@ -132,7 +142,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      *
      * @param namespaces The namespaces
      * @param names The names
-     * @param components Components add to this mapping
+     * @param components Components to add to this mapping
      */
     public NamespacedMapping(String[] namespaces, String[] names, Component... components) {
         super(components);
@@ -145,7 +155,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     /**
      * Constructor
      *
-     * @param components Components add to this mapping
+     * @param components Components to add to this mapping
      */
     public NamespacedMapping(Component... components) {
         super(components);
@@ -157,7 +167,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      * @param namespaces The namespaces
      * @param names The names
      * @param nameStart To put the names start from the index
-     * @param components Components add to this mapping
+     * @param components Components to add to this mapping
      */
     public NamespacedMapping(String[] namespaces, String[] names, int nameStart, Component... components) {
         super(components);
@@ -166,6 +176,20 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
             throw new IllegalArgumentException();
         for (int i = 0; i < namespaces.length; i++) {
             this.names.put(Objects.requireNonNull(namespaces[i]), names[i + nameStart]);
+        }
+    }
+
+    /**
+     * Helper constructor. Internally used by mapping readers
+     *
+     * @param namespaces The namespaces
+     * @param name The name
+     * @param components Components to add to this mapping
+     */
+    public NamespacedMapping(String[] namespaces, String name, Component... components) {
+        super(components);
+        for (String namespace : namespaces) {
+            this.names.put(Objects.requireNonNull(namespace), name);
         }
     }
 
@@ -225,29 +249,10 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
      */
     public NamespacedMapping swap(@NotNull String fromNamespace, @NotNull String toNamespace) {
         names.put(Objects.requireNonNull(toNamespace), names.put(Objects.requireNonNull(fromNamespace), names.get(toNamespace)));
-        return this;
-    }
-
-    /**
-     * Swap the given namespaced mapping<br>
-     * <b>INTERNAL METHOD. DO NOT CALL</b>
-     *
-     * @param remapper Remapper to remap descriptors
-     * @param fromNamespace Namespace to swap from
-     * @param toNamespace Namespace to swap to
-     */
-    @ApiStatus.Internal
-    public void swap(DescriptorRemapper remapper, String fromNamespace, String toNamespace) {
-        swap(fromNamespace, toNamespace);
-//        if (hasComponent(Descriptor.Namespaced.class)) {
-//            Descriptor.Namespaced n = getComponent(Descriptor.Namespaced.class);
-//            if (!n.descriptorNamespace.equals(fromNamespace)) throw new IllegalArgumentException();
-//            String desc = n.descriptor;
-//            n.setDescriptor(desc.charAt(0) == '(' ? remapper.mapMethodDesc(desc) : remapper.mapDesc(desc));
-//        }// TODO: Remove this after passing the tests
         for (Component component : getComponents()) {
-            if (component instanceof Component.Swappable s) s.swap(fromNamespace, toNamespace, remapper);
+            if (component instanceof Component.Swappable s) s.swap(fromNamespace, toNamespace);
         }
+        return this;
     }
 
     /**
@@ -284,9 +289,12 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
         return mappedNamespace;
     }
 
-    public NamespacedMapping setUnmappedNamespace(@NotNull String namespace) {
+    @Override
+    public void setUnmappedNamespace(@NotNull String namespace) {
         this.unmappedNamespace = Objects.requireNonNull(namespace);
-        return this;
+        for (Component component : getComponents()) {
+            if (component instanceof NameGetter.Namespace n) n.setUnmappedNamespace(namespace);
+        }
     }
 
     @Override
@@ -313,7 +321,6 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (!(o instanceof NamespacedMapping that)) return false;
         if (!super.equals(o)) return false;
         return names.equals(that.names);

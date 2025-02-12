@@ -47,16 +47,25 @@ public class ClassifiedDeobfuscator extends Deobfuscator<ClassifiedMappingRemapp
 
     public ClassifiedDeobfuscator(ClassifiedMapping<PairedMapping> mappings, DeobfuscationOptions options) {
         super(options);
-        this.remapper = new ClassifiedMappingRemapper(mappings, options.reverse);
+        if (options.reverse) mappings.reverse();
+        this.remapper = new ClassifiedMappingRemapper(mappings);
     }
 
-    public ClassifiedDeobfuscator(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {
-        this(mappings, targetNamespace, DeobfuscationOptions.DEFAULT);
+    public ClassifiedDeobfuscator(ClassifiedMapping<NamespacedMapping> mappings, String namespaceTarget) {
+        this(mappings, namespaceTarget, DeobfuscationOptions.DEFAULT);
     }
 
-    public ClassifiedDeobfuscator(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace, DeobfuscationOptions options) {
+    public ClassifiedDeobfuscator(ClassifiedMapping<NamespacedMapping> mappings, String namespaceTarget, DeobfuscationOptions options) {
         super(options);
-        this.remapper = new ClassifiedMappingRemapper(mappings, inferTargetNamespace(targetNamespace, mappings), options.reverse);
+        var namespaced = mappings.getTrait(NamespacedTrait.class);
+        int i = namespaceTarget != null ? namespaceTarget.indexOf(':') : -1;// FIXME: Should this logic be placed here?
+        if (i >= 0) namespaced.setUnmappedNamespace(namespaceTarget.substring(0, i));
+        String targetNamespace = inferTargetNamespace(i >= 0 ? namespaceTarget.substring(i + 1) : namespaceTarget, mappings);
+        if (options.reverse) mappings.swap(targetNamespace);
+        namespaced.setMappedNamespace(targetNamespace);
+        namespaced.setFallbackNamespace(mappings.getFirstNamespace());
+        mappings.updateCollection();
+        this.remapper = new ClassifiedMappingRemapper(mappings);
     }
 
     private static String inferTargetNamespace(String targetNamespace, @NotNull ClassifiedMapping<NamespacedMapping> mappings) {

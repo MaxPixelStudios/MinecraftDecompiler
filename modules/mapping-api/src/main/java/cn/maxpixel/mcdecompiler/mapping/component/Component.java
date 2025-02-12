@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,6 +44,6 @@ public interface Component {
     }
 
     interface Swappable {
-        void swap(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper);
+        void swap(@NotNull String fromNamespace, @NotNull String toNamespace);
     }
 }

@@ -19,7 +19,6 @@
 package cn.maxpixel.mcdecompiler.mapping.remapper;
 
 import cn.maxpixel.mcdecompiler.common.Constants;
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;

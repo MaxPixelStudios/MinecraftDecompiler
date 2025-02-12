@@ -18,10 +18,10 @@
 
 package cn.maxpixel.mcdecompiler.mapping.util;
 
-import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 public class Validation {
-    public static void requireNonNull(Object o, String name) {
-        if (o == null) throw new IllegalStateException(Objects.requireNonNull(name) + " cannot be null");
+    public static void requireNonNull(Object o, @NotNull String name) {
+        if (o == null) throw new IllegalStateException(name + " cannot be null");
     }
 }

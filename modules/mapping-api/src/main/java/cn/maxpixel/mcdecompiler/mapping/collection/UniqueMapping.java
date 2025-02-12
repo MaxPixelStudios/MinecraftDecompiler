@@ -96,19 +96,17 @@ public class UniqueMapping<T extends Mapping> extends MappingCollection<T> {
         m.packages.addAll(packages);
     }
 
-    /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (!(o instanceof UniqueMapping<?> that)) return false;
+        if (!super.equals(o)) return false;
         return Objects.equals(classes, that.classes) && Objects.equals(fields, that.fields) &&
-                Objects.equals(methods, that.methods)&& Objects.equals(params, that.params) &&
-                Objects.equals(packages, that.packages);
+                Objects.equals(methods, that.methods) && Objects.equals(params, that.params);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(classes, fields, methods, params, packages);
+        return 31 * super.hashCode() + Objects.hash(classes, fields, methods, params);
     }
 
     @Override
@@ -118,7 +116,6 @@ public class UniqueMapping<T extends Mapping> extends MappingCollection<T> {
                 ", fields=" + fields +
                 ", methods=" + methods +
                 ", params=" + params +
-                ", packages=" + packages +
-                '}';
+                "} " + super.toString();
     }
 }

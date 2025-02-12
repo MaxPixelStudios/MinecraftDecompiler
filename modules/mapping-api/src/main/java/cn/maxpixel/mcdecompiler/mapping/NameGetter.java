@@ -36,6 +36,8 @@ public interface NameGetter {
     interface Namespace {
         String getUnmappedNamespace();
 
+        void setUnmappedNamespace(@NotNull String namespace);
+
         String getMappedNamespace();
 
         void setMappedNamespace(@NotNull String namespace);

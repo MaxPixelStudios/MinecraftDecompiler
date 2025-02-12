@@ -22,7 +22,6 @@ import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -90,14 +89,14 @@ public abstract class LocalVariableTable<T extends Mapping> implements Component
                 '}';
     }
 
-    public static class Paired extends LocalVariableTable<PairedMapping> implements Component, Component.Reversible {
+    public static class Paired extends LocalVariableTable<PairedMapping> implements Component.Reversible {
         @Override
         public void reverse() {
             lvt.values().forEach(PairedMapping::reverse);
         }
     }
 
-    public static class Namespaced extends LocalVariableTable<NamespacedMapping> implements Component, NameGetter.Namespace, Component.Swappable {
+    public static class Namespaced extends LocalVariableTable<NamespacedMapping> implements NameGetter.Namespace, Component.Swappable {
         private String unmappedNamespace;
         private String mappedNamespace;
         private String fallbackNamespace;
@@ -113,8 +112,8 @@ public abstract class LocalVariableTable<T extends Mapping> implements Component
         }
 
         @Override
-        public void swap(@NotNull String fromNamespace, @NotNull String toNamespace, DescriptorRemapper remapper) {
-            lvt.values().forEach(value -> value.swap(remapper, fromNamespace, toNamespace));
+        public void swap(@NotNull String fromNamespace, @NotNull String toNamespace) {
+            lvt.values().forEach(value -> value.swap(fromNamespace, toNamespace));
         }
 
         @Override
@@ -127,12 +126,12 @@ public abstract class LocalVariableTable<T extends Mapping> implements Component
             return mappedNamespace;
         }
 
-        public Namespaced setUnmappedNamespace(@NotNull String namespace) {
+        @Override
+        public void setUnmappedNamespace(@NotNull String namespace) {
             this.unmappedNamespace = Objects.requireNonNull(namespace);
             for (NamespacedMapping v : lvt.values()) {
                 v.setUnmappedNamespace(namespace);
             }
-            return this;
         }
 
         @Override
@@ -160,21 +159,6 @@ public abstract class LocalVariableTable<T extends Mapping> implements Component
         public void validate() throws IllegalStateException {
             Validation.requireNonNull(unmappedNamespace, "unmappedNamespace");
             super.validate();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Namespaced that)) return false;
-            if (!super.equals(o)) return false;
-            return Objects.equals(unmappedNamespace, that.unmappedNamespace) &&
-                    Objects.equals(mappedNamespace, that.mappedNamespace) &&
-                    Objects.equals(fallbackNamespace, that.fallbackNamespace);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * super.hashCode() + Objects.hash(unmappedNamespace, mappedNamespace, fallbackNamespace);
         }
     }
 }

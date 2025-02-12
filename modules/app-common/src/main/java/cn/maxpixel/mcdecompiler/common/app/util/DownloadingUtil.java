@@ -27,7 +27,6 @@ import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.Blocking;
 import org.jetbrains.annotations.NonBlocking;
 import org.jetbrains.annotations.NotNull;
@@ -154,8 +153,8 @@ public class DownloadingUtil {
      * @return All the lib paths
      */
     @Blocking
-    public static @NotNull ObjectSet<Path> downloadLibraries(@Nullable String version, @NotNull Path libDir) {
-        if (version == null || version.isBlank()) {
+    public static @NotNull ObjectOpenHashSet<Path> downloadLibraries(@Nullable String version, @NotNull Path libDir) {
+        if (!Utils.isStringNotBlank(version)) {
             LOGGER.trace("Invalid version, skipping downloading libs");
             return ObjectOpenHashSet.of();
         }

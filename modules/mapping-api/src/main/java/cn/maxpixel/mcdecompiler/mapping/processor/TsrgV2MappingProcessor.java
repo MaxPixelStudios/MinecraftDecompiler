@@ -41,22 +41,24 @@ public enum TsrgV2MappingProcessor implements MappingProcessor.Classified<Namesp
     public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {
         if(!content.get(0).startsWith("tsrg2")) error();
         String[] namespaces = MappingUtil.split(content.get(0), ' ', 6);
-        ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(new NamespacedTrait(namespaces));
+        var trait = new NamespacedTrait(namespaces);
+        trait.setUnmappedNamespace(namespaces[0]);
+        ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
         for (int i = 1, len = content.size(); i < len; ) {
             String[] sa = MappingUtil.split(content.get(i), ' ');
             if (sa[0].charAt(0) != '\t') {
                 if (sa[0].charAt(sa[0].length() - 1) == '/') {
                     for (int j = 0; j < sa.length; j++) sa[j] = sa[j].substring(0, sa[j].length() - 1);
-                    mappings.packages.add(new NamespacedMapping(namespaces, sa).setUnmappedNamespace(namespaces[0]));
+                    mappings.packages.add(new NamespacedMapping(namespaces, sa));
                     i++;
                 } else {
-                    ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa)
-                            .setUnmappedNamespace(namespaces[0]));
+                    ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa));
                     i = processTree(i, len, namespaces, content, classMapping);
                     mappings.classes.add(classMapping);
                 }
             } else error();
         }
+        mappings.updateCollection();
         return mappings;
     }
 

@@ -19,6 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping.generator;
 
 import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
@@ -84,8 +85,7 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                             NamespacedMapping localVariable = lvt.getLocalVariable(omittedThis ? index + 1 : index);
                             String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
                                 String name = localVariable.getName(namespace);
-                                if(name == null || name.isBlank()) return "";
-                                return name;
+                                return Utils.isStringNotBlank(name) ? name : "";
                             }, "\t");
                             lines.add("\t\tp\t" + index + '\t' + names);
                             var paramDoc = localVariable.getComponent(Documented.class);

@@ -111,7 +111,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
     }
 
     private static String nilWhenBlank(String s) {
-        return s == null || s.isBlank() ? NIL : s;
+        return Utils.isStringNotBlank(s) ? s : NIL;
     }
 
     private static String getDoc(PairedMapping m) {

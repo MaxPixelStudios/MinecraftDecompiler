@@ -22,13 +22,11 @@ import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
@@ -46,63 +44,26 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
     private final DescriptorRemapper descriptorRemapper;
     private boolean methodStaticIdentifiable;
 
-    public ClassifiedMappingRemapper(ClassifiedMapping<PairedMapping> mappings) {
-        this(mappings, false);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMapping<PairedMapping> mappings, boolean reverse) {
-        if (reverse) mappings.reverse();
+    public ClassifiedMappingRemapper(ClassifiedMapping<?> mappings) {
         this.fieldByUnm = genFieldsByUnmappedNameMap(mappings.classes);
         this.mappingByUnm = genMappingsByUnmappedNameMap(mappings.classes);
         this.mappingByMap = genMappingsByMappedNameMap(mappings.classes);
         this.descriptorRemapper = new DescriptorRemapper(mappingByUnm, mappingByMap);
-        this.methodsByUnm = mappings.classes.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.unmappedName, cm -> {
-            Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, PairedMapping>> map =
-                    new Object2ObjectOpenHashMap<>();
-            for (PairedMapping mm : cm.getMethods()) {
-                var m = map.computeIfAbsent(mm.unmappedName, k -> new Object2ObjectOpenHashMap<>());
-                if (!methodStaticIdentifiable && mm.hasComponent(StaticIdentifiable.class)) methodStaticIdentifiable = true;
-                if (m.putIfAbsent(getUnmappedDesc(mm), mm) != null) {
-                    throw new IllegalArgumentException("Method duplicated... This should not happen!");
-                }
-            }
-            return map;
-        }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace) {
-        this(mappings, targetNamespace, false);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace, String fallbackNamespace) {
-        this(mappings, targetNamespace, fallbackNamespace, false);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace, boolean reverse) {
-        this(mappings, targetNamespace, mappings.getSourceNamespace(), reverse);
-    }
-
-    public ClassifiedMappingRemapper(ClassifiedMapping<NamespacedMapping> mappings, String targetNamespace, String fallbackNamespace, boolean reverse) {
-        if (reverse) mappings.swap(targetNamespace);
-        mappings.getTrait(NamespacedTrait.class).setMappedNamespace(targetNamespace);
-        mappings.getTrait(NamespacedTrait.class).setFallbackNamespace(fallbackNamespace);
-        mappings.updateCollection();
-        this.fieldByUnm = genFieldsByUnmappedNameMap(mappings.classes);
-        this.mappingByUnm = genMappingsByUnmappedNameMap(mappings.classes);
-        this.mappingByMap = genMappingsByMappedNameMap(mappings.classes);
+        var namespaced = mappings.getTrait(NamespacedTrait.class);
+        var remapperMap = namespaced != null ? new Object2ObjectOpenHashMap<String, UniDescriptorRemapper>() : null;
         this.methodsByUnm = mappings.classes.parallelStream().collect(Collectors.toMap(cm -> cm.mapping.getUnmappedName(), cm -> {
-            Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, NamespacedMapping>> map =
+            Object2ObjectOpenHashMap<String, Object2ObjectOpenHashMap<String, Mapping>> map =
                     new Object2ObjectOpenHashMap<>();
-            for (NamespacedMapping mm : cm.getMethods()) {
+            for (Mapping mm : cm.getMethods()) {
                 var m = map.computeIfAbsent(mm.getUnmappedName(), k -> new Object2ObjectOpenHashMap<>());
                 if (!methodStaticIdentifiable && mm.hasComponent(StaticIdentifiable.class)) methodStaticIdentifiable = true;
-                if (m.putIfAbsent(getUnmappedDesc(mm), mm) != null) {
+                if (m.putIfAbsent(namespaced == null ? getUnmappedDesc(mm) : getUnmappedDesc(mm, namespaced.getUnmappedNamespace(),
+                        remapperMap, (ClassifiedMapping<NamespacedMapping>) mappings), mm) != null) {
                     throw new IllegalArgumentException("Method duplicated... This should not happen!");
                 }
             }
             return map;
         }, Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new));
-        this.descriptorRemapper = new DescriptorRemapper(mappingByUnm, mappingByMap);
     }
 
     @Override
@@ -170,8 +131,15 @@ public class ClassifiedMappingRemapper implements MappingRemapper {
         if (mapping.hasComponent(Descriptor.Unmapped.class)) return mapping.getComponent(Descriptor.Unmapped.class).descriptor;
         else if (mapping.hasComponent(Descriptor.Mapped.class))
             return unmapMethodDesc(mapping.getComponent(Descriptor.Mapped.class).descriptor);
-        else if (mapping.hasComponent(Descriptor.Namespaced.class))
-            return mapping.getComponent(Descriptor.Namespaced.class).descriptor;
+        else throw new IllegalArgumentException("Mapping for methods must support at least one of the descriptor components");
+    }
+
+    public String getUnmappedDesc(Mapping mapping, String unmappedNamespace, Object2ObjectOpenHashMap<String, UniDescriptorRemapper> map,
+                                  ClassifiedMapping<NamespacedMapping> mappings) {
+        var desc = mapping.getComponent(Descriptor.Namespaced.class);
+        if (desc != null) return unmappedNamespace.equals(desc.descriptorNamespace) ? desc.descriptor : map
+                .computeIfAbsent(desc.descriptorNamespace, (String n) -> new UniDescriptorRemapper(genMappingsByNamespaceMap(mappings.classes, n)))
+                .unmapMethodDesc(desc.descriptor);
         else throw new IllegalArgumentException("Mapping for methods must support at least one of the descriptor components");
     }
 

@@ -165,10 +165,8 @@ public class PairedMapping extends Mapping {
         super.validate();
     }
 
-    /* Auto-generated equals, hashCode and toString methods */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (!(o instanceof PairedMapping that)) return false;
         if (!super.equals(o)) return false;
         return unmappedName.equals(that.unmappedName) && mappedName.equals(that.mappedName);

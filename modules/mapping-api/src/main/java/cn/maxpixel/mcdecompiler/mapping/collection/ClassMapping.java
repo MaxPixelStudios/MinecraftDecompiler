@@ -24,11 +24,9 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import cn.maxpixel.mcdecompiler.mapping.util.DescriptorRemapper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -172,10 +170,8 @@ public class ClassMapping<T extends Mapping> {
 
     /**
      * Swap the given class mapping<br>
-     * <b>INTERNAL METHOD. DO NOT CALL. USE METHODS LISTED BELOW</b>
      *
      * @param mapping         Mapping to swap
-     * @param remapper        Remapper to remap descriptors
      * @param sourceNamespace Namespace to swap from
      * @param targetNamespace Namespace to swap to
      * @see ClassifiedMapping#swap(ClassifiedMapping, String)
@@ -183,12 +179,16 @@ public class ClassMapping<T extends Mapping> {
      * @see ClassifiedMapping#swap(String)
      * @see ClassifiedMapping#swap(String, String)
      */
-    @ApiStatus.Internal
-    public static void swap(ClassMapping<NamespacedMapping> mapping, DescriptorRemapper remapper,
-                            String sourceNamespace, String targetNamespace) {
-        mapping.mapping.swap(remapper, sourceNamespace, targetNamespace);
-        mapping.getFields().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
-        mapping.getMethods().forEach(m -> m.swap(remapper, sourceNamespace, targetNamespace));
+    public static void swap(ClassMapping<NamespacedMapping> mapping, String sourceNamespace, String targetNamespace) {
+        mapping.mapping.swap(sourceNamespace, targetNamespace);
+        mapping.getFields().forEach(m -> m.swap(sourceNamespace, targetNamespace));
+        mapping.getMethods().forEach(m -> m.swap(sourceNamespace, targetNamespace));
+    }
+
+    public static void setUnmappedNamespace(ClassMapping<? extends NameGetter.Namespace> cm, String namespace) {
+        cm.mapping.setUnmappedNamespace(namespace);
+        cm.fields.forEach(m -> m.setUnmappedNamespace(namespace));
+        cm.methods.forEach(m -> m.setUnmappedNamespace(namespace));
     }
 
     public static void setMappedNamespace(ClassMapping<? extends NameGetter.Namespace> cm, String namespace) {
@@ -222,7 +222,6 @@ public class ClassMapping<T extends Mapping> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (!(o instanceof ClassMapping<?> that)) return false;
         return Objects.equals(mapping, that.mapping) && fields.size() == that.fields.size() &&
                 methods.size() == that.methods.size() && populateMemberSet().containsAll(that.fields) &&
