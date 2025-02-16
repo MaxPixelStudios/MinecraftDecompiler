@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,9 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.util;
+package cn.maxpixel.mcdecompiler.mapping.util;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
-public class NamingUtil {
+public final class NamingUtil {
     public static int getDimension(@NotNull String javaName) {
         int arrDimension = 0;
         for (int i = javaName.indexOf("[]"); i != -1; i = javaName.indexOf("[]", i + 2)) {
@@ -49,10 +48,6 @@ public class NamingUtil {
 
     public static String asNativeName(@NotNull String javaName) {
         return javaName.replace('.', '/');
-    }
-
-    public static String file2Native(@NotNull String fileName) {
-        return fileName.replace('\\', '/').replace(".class", "");
     }
 
     public static String java2Descriptor(@NotNull String javaName) {
@@ -89,7 +84,7 @@ public class NamingUtil {
     }
 
     // NOTE: Not strictly FIELD_DESC_PATTERN: this allows void/V
-    public static String descriptor2Java(@NotNull @Pattern(Constants.FIELD_DESC_PATTERN) String descriptor) {
+    public static String descriptor2Java(@NotNull @Pattern(MethodOrFieldDesc.FIELD_DESC_PATTERN) String descriptor) {
         if (descriptor.isBlank()) return "";
         char c0 = descriptor.charAt(0);
         return switch (c0) {
@@ -116,7 +111,7 @@ public class NamingUtil {
             case 'J' -> "long";
             case 'S' -> "short";
             case 'V' -> "void";
-            default -> DescriptorUtil.throwInvalid(false);
+            default -> Utils.throwInvalidDescriptor(false);
         };
     }
 }

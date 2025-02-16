@@ -33,7 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static cn.maxpixel.mcdecompiler.common.Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
+import static cn.maxpixel.mcdecompiler.common.app.Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
 
 public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
     public static final String NAME = "user-defined";

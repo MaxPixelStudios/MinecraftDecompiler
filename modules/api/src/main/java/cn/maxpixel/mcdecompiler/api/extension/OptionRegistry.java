@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.api.extension;
 
-import cn.maxpixel.mcdecompiler.common.util.LambdaUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
+import cn.maxpixel.mcdecompiler.common.app.util.LambdaUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

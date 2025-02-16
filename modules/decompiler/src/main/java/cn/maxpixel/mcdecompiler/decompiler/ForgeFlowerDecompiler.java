@@ -18,11 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
+import cn.maxpixel.mcdecompiler.common.app.Constants;
 import cn.maxpixel.mcdecompiler.common.app.DecompilerType;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.common.app.util.DownloadingUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
+import cn.maxpixel.mcdecompiler.common.app.util.MiscUtils;
 import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
 import cn.maxpixel.rewh.logging.LogManager;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -77,7 +77,7 @@ public class ForgeFlowerDecompiler implements IExternalResourcesDecompiler, ILib
             while (thread.isAlive()) Thread.onSpinWait();
         } catch(ReflectiveOperationException e) {
             LogManager.getLogger().fatal("Failed to load ForgeFlower", e);
-            throw Utils.wrapInRuntime(e);
+            throw MiscUtils.wrapInRuntime(e);
         }
     }
 

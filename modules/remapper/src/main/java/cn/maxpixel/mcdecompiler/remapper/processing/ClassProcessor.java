@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.remapper.processing;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
+import cn.maxpixel.mcdecompiler.common.app.Constants;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;

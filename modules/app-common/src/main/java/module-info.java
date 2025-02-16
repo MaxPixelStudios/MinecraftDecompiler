@@ -1,5 +1,5 @@
 open module cn.maxpixel.mcdecompiler.common.app {
-    requires transitive cn.maxpixel.mcdecompiler.common;
+    requires static transitive org.jetbrains.annotations;
 
     requires it.unimi.dsi.fastutil;
     requires java.net.http;

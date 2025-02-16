@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.remapper.processing;
 
-import cn.maxpixel.mcdecompiler.common.util.IOUtil;
 import cn.maxpixel.mcdecompiler.remapper.Deobfuscator;
+import cn.maxpixel.mcdecompiler.remapper.util.IOUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.*;

@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.common.app.util;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
+import cn.maxpixel.mcdecompiler.common.app.Constants;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 

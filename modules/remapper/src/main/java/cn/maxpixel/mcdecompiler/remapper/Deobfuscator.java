@@ -20,12 +20,12 @@ package cn.maxpixel.mcdecompiler.remapper;
 
 import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
 import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
-import cn.maxpixel.mcdecompiler.common.util.IOUtil;
-import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.common.app.util.MiscUtils;
 import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.remapper.processing.ClassFileRemapper;
 import cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor;
 import cn.maxpixel.mcdecompiler.remapper.processing.ExtraClassesInformation;
+import cn.maxpixel.mcdecompiler.remapper.util.IOUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -70,7 +70,7 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
             ExtraClassesInformation info = new ExtraClassesInformation(options.refMap, FileUtil.iterateFiles(fs.getPath(""))
                     .filter(p -> {
                         String ps = p.toString();
-                        String k = NamingUtil.file2Native(ps);
+                        String k = MiscUtils.file2Native(ps);
                         return (deobfAll && ps.endsWith(".class")) || remapper.hasClassMapping(k) ||
                                 (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
@@ -88,7 +88,7 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
             paths.forEach(path -> {
                 try {
                     String pathString = path.toString();
-                    String classKeyName = NamingUtil.file2Native(pathString);
+                    String classKeyName = MiscUtils.file2Native(pathString);
                     if ((deobfAll && pathString.endsWith(".class")) || remapper.hasClassMapping(classKeyName) ||
                             (extraClassesNotEmpty && extraClasses.stream().anyMatch(classKeyName::startsWith))) {
                         ClassReader reader = new ClassReader(IOUtil.readAllBytes(path));

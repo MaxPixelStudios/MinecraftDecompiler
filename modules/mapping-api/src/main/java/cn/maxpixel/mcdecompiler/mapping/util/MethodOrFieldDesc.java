@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,21 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common;
+package cn.maxpixel.mcdecompiler.mapping.util;
 
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.annotations.Pattern;
 
-public interface Constants {
+@Pattern('(' + MethodOrFieldDesc.FIELD_DESC_PATTERN + ")|(" + MethodOrFieldDesc.METHOD_DESC_PATTERN + ')')
+public @interface MethodOrFieldDesc {
     @Language("RegExp")
     String DESC_PATTERN = "(\\[*([ZBCDFIJS]|L([A-Za-z_]+\\w*[/$]?)+;))";
 
     @Language("RegExp")
-    String FIELD_DESC_PATTERN = '^' + DESC_PATTERN + '$';
-
-    @Language("RegExp")
     String METHOD_DESC_PATTERN = "^\\(" + DESC_PATTERN + "*\\)(" + DESC_PATTERN + "|V)$";
 
-    boolean IS_DEV = System.console() == null && Boolean.getBoolean("mcd.isDevEnv");
-
-    String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
+    @Language("RegExp")
+    String FIELD_DESC_PATTERN = '^' + DESC_PATTERN + '$';
 }

@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,17 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.util;
+package cn.maxpixel.mcdecompiler.remapper.util;
 
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.zip.InflaterInputStream;
 
 public class IOUtil {
@@ -57,14 +55,5 @@ public class IOUtil {
             }
             throw new UnsupportedOperationException();
         }
-    }
-
-    public static BufferedReader asBufferedReader(@NotNull Reader reader) {
-        return asBufferedReader(reader, "reader");
-    }
-
-    public static BufferedReader asBufferedReader(@NotNull Reader reader, @NotNull String readerName) {
-        return Objects.requireNonNull(reader, () -> Objects.requireNonNull(readerName) + " cannot be null")
-                instanceof BufferedReader br ? br : new BufferedReader(reader);
     }
 }

@@ -20,13 +20,13 @@ package cn.maxpixel.mcdecompiler.remapper;
 
 import cn.maxpixel.mcdecompiler.common.app.SideType;
 import cn.maxpixel.mcdecompiler.common.app.util.DownloadingUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

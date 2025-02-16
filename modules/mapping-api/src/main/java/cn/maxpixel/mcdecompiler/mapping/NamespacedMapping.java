@@ -18,9 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.mapping;
 
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;

@@ -18,14 +18,13 @@
 
 package cn.maxpixel.mcdecompiler.mapping.format;
 
-import cn.maxpixel.mcdecompiler.common.util.IOUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +96,7 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
     }
 
     default @NotNull C read(@NotNull Reader reader) {
-        return read(IOUtil.asBufferedReader(reader));
+        return read(Utils.asBufferedReader(reader));
     }
 
     default @NotNull C read(@NotNull InputStream is) {
@@ -129,7 +128,7 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
     }
 
     default @NotNull C read(@NotNull Reader @NotNull ... reader) {
-        return read(Utils.mapArray(reader, BufferedReader[]::new, IOUtil::asBufferedReader));
+        return read(Utils.mapArray(reader, BufferedReader[]::new, Utils::asBufferedReader));
     }
 
     default @NotNull C read(@NotNull InputStream @NotNull ... is) {

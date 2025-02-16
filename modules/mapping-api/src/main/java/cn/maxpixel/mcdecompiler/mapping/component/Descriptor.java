@@ -18,8 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.component;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
-import cn.maxpixel.mcdecompiler.common.annotation.MethodOrFieldDesc;
+import cn.maxpixel.mcdecompiler.mapping.util.MethodOrFieldDesc;
 import cn.maxpixel.mcdecompiler.mapping.util.Validation;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ import java.util.regex.Pattern;
  * Descriptor component for paired mappings
  */
 public abstract class Descriptor implements Component {
-    private static final Pattern DESC_PATTERN = Pattern.compile('(' + Constants.FIELD_DESC_PATTERN + ")|(" + Constants.METHOD_DESC_PATTERN + ')');
+    private static final Pattern DESC_PATTERN = Pattern.compile('(' + MethodOrFieldDesc.FIELD_DESC_PATTERN + ")|(" + MethodOrFieldDesc.METHOD_DESC_PATTERN + ')');
     private static final ThreadLocal<Matcher> MATCHERS = ThreadLocal.withInitial(() -> DESC_PATTERN.matcher(""));
 
     public @NotNull @MethodOrFieldDesc String descriptor;

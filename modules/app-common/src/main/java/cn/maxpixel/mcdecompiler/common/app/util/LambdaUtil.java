@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,17 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.util;
+package cn.maxpixel.mcdecompiler.common.app.util;
 
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class LambdaUtil {
-    @FunctionalInterface
-    public interface Runnable_WithThrowable<E extends Throwable> {
-        void run() throws E;
-    }
+//    @FunctionalInterface
+//    public interface Runnable_WithThrowable<E extends Throwable> {
+//        void run() throws E;
+//    }
 
     @FunctionalInterface
     public interface Function_WithThrowable<T, R, E extends Throwable> {
@@ -39,27 +39,27 @@ public class LambdaUtil {
     }
 
     public static <E extends Throwable> void rethrowAsRuntime(E throwable) {
-        throw Utils.wrapInRuntime(throwable);
+        throw new RuntimeException(throwable);
     }
 
     public static <E extends Throwable> void rethrowAsCompletion(E throwable) {
         throw new CompletionException(throwable);
     }
 
-    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
-        return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
-        return () -> {
-            try {
-                runnableWithThrowable.run();
-            } catch (Throwable e) {
-                exceptionHandler.accept((E) e);
-            }
-        };
-    }
+//    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
+//        return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
+//        return () -> {
+//            try {
+//                runnableWithThrowable.run();
+//            } catch (Throwable e) {
+//                exceptionHandler.accept((E) e);
+//            }
+//        };
+//    }
 
     public static <T, R, E extends Throwable> Function<T, R> unwrap(Function_WithThrowable<T, R, E> functionWithThrowable) {
         return unwrap(functionWithThrowable, LambdaUtil::rethrowAsRuntime);

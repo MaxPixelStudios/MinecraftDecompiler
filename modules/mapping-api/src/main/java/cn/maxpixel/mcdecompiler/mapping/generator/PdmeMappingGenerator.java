@@ -18,8 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.mapping.generator;
 
-import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
@@ -30,6 +28,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.AccessTransformationTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
+import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;

@@ -18,15 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.remapper.processing;
 
-import cn.maxpixel.mcdecompiler.common.util.DescriptorUtil;
 import cn.maxpixel.mcdecompiler.remapper.Deobfuscator;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import org.intellij.lang.annotations.Subst;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 // Visitor version of https://github.com/MinecraftForge/ForgeAutoRenamingTool/blob/master/src/main/java/net/minecraftforge/fart/internal/ParameterAnnotationFixer.java
 public class RuntimeParameterAnnotationFixer extends ClassVisitor {
@@ -69,7 +65,7 @@ public class RuntimeParameterAnnotationFixer extends ClassVisitor {
     public MethodVisitor visitMethod(int access, String name, @Subst("(Ljava/lang/String;I)V") String descriptor, String signature, String[] exceptions) {
         if (toProcess != null && "<init>".equals(name) && descriptor.startsWith(toProcess)) {
             return new MethodVisitor(Deobfuscator.ASM_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
-                private final int params = DescriptorUtil.getArgumentCount(descriptor);
+                private final int params = Type.getArgumentCount(descriptor);
                 private boolean processVisible;
                 private boolean processInvisible;
                 @Override

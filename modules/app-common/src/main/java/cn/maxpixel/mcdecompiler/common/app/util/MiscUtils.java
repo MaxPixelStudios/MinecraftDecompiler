@@ -16,12 +16,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.mapping.util;
+package cn.maxpixel.mcdecompiler.common.app.util;
 
 import org.jetbrains.annotations.NotNull;
 
-public final class Validation {
-    public static void requireNonNull(Object o, @NotNull String name) {
-        if (o == null) throw new IllegalStateException(name + " cannot be null");
+import java.security.MessageDigest;
+
+public class MiscUtils {
+    public static RuntimeException wrapInRuntime(Throwable e) {
+        return new RuntimeException(e);
+    }
+
+    public static <T> T onKeyDuplicate(T t, T u) {
+        throw new IllegalArgumentException("Key duplicated for \"" + t + "\" and \"" + u + "\"");
+    }
+
+    public static StringBuilder createHashString(MessageDigest md) {
+        StringBuilder out = new StringBuilder();
+        for (byte b : md.digest()) {
+            String hex = Integer.toHexString(Byte.toUnsignedInt(b));
+            if (hex.length() < 2) out.append('0');
+            out.append(hex);
+        }
+        return out;
+    }
+
+    public static String file2Native(@NotNull String fileName) {
+        return fileName.replace('\\', '/').replace(".class", "");
     }
 }

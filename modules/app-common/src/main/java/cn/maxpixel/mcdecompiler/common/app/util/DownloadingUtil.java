@@ -18,11 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.common.app.util;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
+import cn.maxpixel.mcdecompiler.common.app.Constants;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.common.app.SideType;
-import cn.maxpixel.mcdecompiler.common.util.LambdaUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import com.google.gson.JsonObject;
@@ -141,7 +139,7 @@ public class DownloadingUtil {
             }
         } catch (InterruptedException e) {
             LOGGER.fatal("Download process interrupted", e);
-            throw Utils.wrapInRuntime(e);
+            throw MiscUtils.wrapInRuntime(e);
         }
         return Files.newInputStream(localPath, READ);
     }
@@ -154,7 +152,7 @@ public class DownloadingUtil {
      */
     @Blocking
     public static @NotNull ObjectOpenHashSet<Path> downloadLibraries(@Nullable String version, @NotNull Path libDir) {
-        if (!Utils.isStringNotBlank(version)) {
+        if (version == null || version.isBlank()) {
             LOGGER.trace("Invalid version, skipping downloading libs");
             return ObjectOpenHashSet.of();
         }
@@ -173,10 +171,10 @@ public class DownloadingUtil {
                                     HttpResponse.BodyHandlers.ofFile(file, OPEN_OPTIONS));
                         } catch (IOException e) {
                             LOGGER.fatal("Error downloading files", e);
-                            throw Utils.wrapInRuntime(e);
+                            throw MiscUtils.wrapInRuntime(e);
                         } catch (InterruptedException e) {
                             LOGGER.fatal("Download process interrupted", e);
-                            throw Utils.wrapInRuntime(e);
+                            throw MiscUtils.wrapInRuntime(e);
                         }
                     }
                     return file;

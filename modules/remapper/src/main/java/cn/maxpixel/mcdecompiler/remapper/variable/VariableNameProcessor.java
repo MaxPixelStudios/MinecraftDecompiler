@@ -18,8 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.remapper.variable;
 
-import cn.maxpixel.mcdecompiler.common.util.DescriptorUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import cn.maxpixel.mcdecompiler.remapper.Deobfuscator;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
@@ -90,7 +89,7 @@ public class VariableNameProcessor extends ClassVisitor {
                 case "java/lang/invoke/LambdaMetafactory" -> {
                     if (!regenerate) return;
                     Handle lambdaImpl = (Handle) bootstrapMethodArguments[1];
-                    int argCount = DescriptorUtil.getArgumentCount(descriptor);
+                    int argCount = Type.getArgumentCount(descriptor);
                     if (argCount > 1 || (argCount == 1 && descriptor.indexOf(1) != 'L')) {// definitely a lambda method
                         // May put more than once when the lambda is in finally block
                         lambdaRenamers.put(lambdaImpl.getName().concat(lambdaImpl.getDesc()), new LambdaRenamer(renamer, argCount));

@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,19 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.util;
+package cn.maxpixel.mcdecompiler.mapping.util;
 
-import java.security.MessageDigest;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.BufferedReader;
+import java.io.Reader;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
-public class Utils {
+public final class Utils {
     public static RuntimeException wrapInRuntime(Throwable e) {
         return new RuntimeException(e);
     }
 
-    public static <I, O, E extends Throwable> O[] mapArray(I[] input, IntFunction<O[]> outputGenerator,
-                                                           LambdaUtil.Function_WithThrowable<I, O, E> func) throws E {
+    public static <I, O> O[] mapArray(I[] input, IntFunction<O[]> outputGenerator, Function<I, O> func) {
         Objects.requireNonNull(func);
         O[] output = Objects.requireNonNull(outputGenerator.apply(input.length));
         for (int i = 0; i < input.length; i++) {
@@ -41,17 +44,16 @@ public class Utils {
         throw new IllegalArgumentException("Key duplicated for \"" + t + "\" and \"" + u + "\"");
     }
 
-    public static StringBuilder createHashString(MessageDigest md) {
-        StringBuilder out = new StringBuilder();
-        for (byte b : md.digest()) {
-            String hex = Integer.toHexString(Byte.toUnsignedInt(b));
-            if (hex.length() < 2) out.append('0');
-            out.append(hex);
-        }
-        return out;
-    }
-
     public static boolean isStringNotBlank(String s) {
         return s != null && !s.isBlank();
+    }
+
+    public static <T> T throwInvalidDescriptor(boolean method) {
+        throw new IllegalArgumentException(method ? "Invalid method descriptor" : "Invalid descriptor");
+    }
+
+    public static BufferedReader asBufferedReader(@NotNull Reader reader) {
+        return Objects.requireNonNull(reader, "reader cannot be null") instanceof BufferedReader br ?
+                br : new BufferedReader(reader);
     }
 }

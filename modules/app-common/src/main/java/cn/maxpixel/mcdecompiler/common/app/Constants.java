@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.annotation;
+package cn.maxpixel.mcdecompiler.common.app;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
-import org.intellij.lang.annotations.Pattern;
+public interface Constants {
+    boolean IS_DEV = System.console() == null && Boolean.getBoolean("mcd.isDevEnv");
 
-@Pattern('(' + Constants.FIELD_DESC_PATTERN + ")|(" + Constants.METHOD_DESC_PATTERN + ')')
-public @interface MethodOrFieldDesc {}
+    String FERNFLOWER_ABSTRACT_PARAMETER_NAMES = "fernflower_abstract_parameter_names.txt";
+}

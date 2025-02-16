@@ -19,11 +19,11 @@
 package cn.maxpixel.mcdecompiler.test.mapping.parchment;
 
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.parchment.FormatVersion;
 import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingProcessor;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

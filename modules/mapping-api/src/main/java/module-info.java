@@ -1,6 +1,6 @@
 open module cn.maxpixel.mcdecompiler.mapping {
+    requires static transitive org.jetbrains.annotations;
     requires it.unimi.dsi.fastutil;
-    requires transitive cn.maxpixel.mcdecompiler.common;
 
     exports cn.maxpixel.mcdecompiler.mapping;
     exports cn.maxpixel.mcdecompiler.mapping.collection;

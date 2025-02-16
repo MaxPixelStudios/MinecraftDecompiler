@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.remapper;
 
-import cn.maxpixel.mcdecompiler.common.Constants;
+import cn.maxpixel.mcdecompiler.mapping.util.MethodOrFieldDesc;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -78,22 +78,22 @@ public interface MappingRemapper {
     DescriptorRemapper getDescriptorRemapper();
 
     @Subst("I")
-    default @Pattern(Constants.FIELD_DESC_PATTERN) String mapDesc(@Pattern(Constants.FIELD_DESC_PATTERN) String unmappedDesc) {
+    default @Pattern(MethodOrFieldDesc.FIELD_DESC_PATTERN) String mapDesc(@Pattern(MethodOrFieldDesc.FIELD_DESC_PATTERN) String unmappedDesc) {
         return getDescriptorRemapper().mapDesc(unmappedDesc);
     }
 
     @Subst("()V")
-    default @Pattern(Constants.METHOD_DESC_PATTERN) String mapMethodDesc(@Pattern(Constants.METHOD_DESC_PATTERN) String unmappedDesc) {
+    default @Pattern(MethodOrFieldDesc.METHOD_DESC_PATTERN) String mapMethodDesc(@Pattern(MethodOrFieldDesc.METHOD_DESC_PATTERN) String unmappedDesc) {
         return getDescriptorRemapper().mapMethodDesc(unmappedDesc);
     }
 
     @Subst("I")
-    default @Pattern(Constants.FIELD_DESC_PATTERN) String unmapDesc(@Pattern(Constants.FIELD_DESC_PATTERN) String mappedDesc) {
+    default @Pattern(MethodOrFieldDesc.FIELD_DESC_PATTERN) String unmapDesc(@Pattern(MethodOrFieldDesc.FIELD_DESC_PATTERN) String mappedDesc) {
         return getDescriptorRemapper().unmapDesc(mappedDesc);
     }
 
     @Subst("()V")
-    default @Pattern(Constants.METHOD_DESC_PATTERN) String unmapMethodDesc(@Pattern(Constants.METHOD_DESC_PATTERN) String mappedDesc) {
+    default @Pattern(MethodOrFieldDesc.METHOD_DESC_PATTERN) String unmapMethodDesc(@Pattern(MethodOrFieldDesc.METHOD_DESC_PATTERN) String mappedDesc) {
         return getDescriptorRemapper().unmapMethodDesc(mappedDesc);
     }
 }

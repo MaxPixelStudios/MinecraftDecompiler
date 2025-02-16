@@ -42,7 +42,6 @@
     </organization>
     <modules>
         <module>modules/cli</module>
-        <module>modules/common</module>
         <module>modules/decompiler</module>
         <module>modules/mapping-api</module>
         <module>modules/remapper</module>

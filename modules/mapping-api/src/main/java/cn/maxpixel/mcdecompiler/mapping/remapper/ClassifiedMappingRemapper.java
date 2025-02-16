@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.mapping.remapper;
 
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
@@ -27,6 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;

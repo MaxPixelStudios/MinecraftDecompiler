@@ -15,11 +15,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>cn.maxpixel.minecraft-decompiler</groupId>
-            <artifactId>common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
         </dependency>

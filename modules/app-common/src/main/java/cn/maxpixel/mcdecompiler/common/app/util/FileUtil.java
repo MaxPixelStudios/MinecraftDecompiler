@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.common.app.util;
 
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -119,7 +118,7 @@ public final class FileUtil {
             Path parent = p.getParent();
             if (parent != null) Files.createDirectories(parent);
         } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
+            throw MiscUtils.wrapInRuntime(e);
         }
         return p;
     }
@@ -136,7 +135,7 @@ public final class FileUtil {
             return Files.walk(path).parallel().filter(Files::isRegularFile);
         } catch (IOException e) {
             LOGGER.fatal("Error iterating files", e);
-            throw Utils.wrapInRuntime(e);
+            throw MiscUtils.wrapInRuntime(e);
         }
     }
 
@@ -171,10 +170,10 @@ public final class FileUtil {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             ByteBuffer buf = ByteBuffer.allocateDirect(65536);
             while (fc.read(buf.clear()) != -1) md.update(buf.flip());
-            return (size < 0 || fc.size() == size) && hash.contentEquals(Utils.createHashString(md));
+            return (size < 0 || fc.size() == size) && hash.contentEquals(MiscUtils.createHashString(md));
         } catch (IOException e) {
             LOGGER.fatal("Error reading files", e);
-            throw Utils.wrapInRuntime(e);
+            throw MiscUtils.wrapInRuntime(e);
         } catch (NoSuchAlgorithmException e) {
             LOGGER.warn("Hmm... You need a SHA-1 digest implementation");
             return false;
