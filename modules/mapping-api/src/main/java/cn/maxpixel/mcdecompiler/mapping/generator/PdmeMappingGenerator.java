@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.generator;
 
+import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
@@ -34,6 +35,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMapping> {
     INSTANCE;
@@ -49,11 +51,12 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
     @Override
     public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
         ObjectArrayList<String> lines = new ObjectArrayList<>();
+        lines.add("tipo¶original¶nuevo¶def¶pos¶desc");
         if (mappings.classes.isEmpty()) return lines;
         mappings.classes.parallelStream().forEach(classMapping -> {
             PairedMapping cm = classMapping.mapping;
-            String unmapped = cm.getUnmappedName().replace('/', '.');
-            String mapped = cm.getMappedName().replace('/', '.');
+            String unmapped = NamingUtil.asJavaName(cm.getUnmappedName());
+            String mapped = NamingUtil.asJavaName(cm.getMappedName());
             String clsDoc = getDoc(cm);
             synchronized (lines) {
                 lines.add(String.join(PARA, "Class", unmapped, mapped, NIL, NIL, clsDoc));
@@ -63,7 +66,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
                 String unmappedName = unmapped + '.' + field.getUnmappedName() + ':' + desc;
                 String doc = getDoc(field);
                 synchronized (lines) {
-                    lines.add(String.join("Var", unmappedName, field.mappedName, NIL, NIL, doc));
+                    lines.add(String.join(PARA, "Var", unmappedName, field.mappedName, NIL, NIL, doc));
                 }
             });
             classMapping.getMethods().parallelStream().forEach(method -> {
@@ -73,20 +76,20 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
                 synchronized (lines) {
                     lines.add(String.join(PARA, "Def", unmappedName, method.mappedName, NIL, NIL, doc));
                 }
-                if (method.hasComponent(LocalVariableTable.Paired.class)) {
-                    LocalVariableTable.Paired lvt = method.getComponent(LocalVariableTable.Paired.class);
+                var lvt = method.getComponent(LocalVariableTable.Paired.class);
+                if (lvt != null) {
                     IntIterator it = lvt.getLocalVariableIndexes().iterator();
                     while (it.hasNext()) {
                         int index = it.nextInt();
-                        PairedMapping loc = lvt.getLocalVariable(index);
+                        PairedMapping lv = lvt.getLocalVariable(index);
                         String line = String.join(
                                 PARA,
                                 "Param",
-                                nilWhenBlank(loc.unmappedName),
-                                nilWhenBlank(loc.mappedName),
+                                nilWhenBlank(lv.unmappedName),
+                                nilWhenBlank(lv.mappedName),
                                 unmappedName,
                                 String.valueOf(index),
-                                getDoc(loc)
+                                getDoc(lv)
                         );
                         synchronized (lines) {
                             lines.add(line);
@@ -96,16 +99,22 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
             });
         });
         if (mappings.hasTrait(InheritanceTrait.class)) {
-            mappings.getTrait(InheritanceTrait.class).getMap().forEach((k, v) -> {
-                if (!v.isEmpty()) lines.add(String.join(PARA, "Include", k.replace('/', '.'),
-                        String.join(",", Utils.mapArray(v.toArray(), String[]::new,
-                                s -> ((String) s).replace('/', '.'))), NIL, NIL, ""));
+            mappings.getTrait(InheritanceTrait.class).map.forEach((k, v) -> {
+                if (!v.isEmpty()) lines.add(String.join(PARA, "Include", NamingUtil.asJavaName(k),
+                        String.join(",", Utils.mapArray(v.toArray(new String[0]), String[]::new,
+                                NamingUtil::asJavaName)), NIL, NIL, ""));
             });
         }
         if (mappings.hasTrait(AccessTransformationTrait.class)) {
-            var map = mappings.getTrait(AccessTransformationTrait.class).getMap();
-            map.object2IntEntrySet().fastForEach(e -> lines.add(String.join(PARA, "AccessFlag",
-                    e.getKey().replace('/', '.'), formatHex(e.getIntValue()), NIL, NIL, "")));
+            var at = mappings.getTrait(AccessTransformationTrait.class);
+            at.classMap.object2IntEntrySet().fastForEach(e -> lines.add(String.join(PARA, "AccessFlag",
+                    NamingUtil.asJavaName(e.getKey()), formatHex(e.getIntValue()), NIL, NIL, "")));
+            at.fieldMap.object2IntEntrySet().fastForEach(e -> lines.add(String.join(PARA, "AccessFlag",
+                    NamingUtil.asJavaName(e.getKey().owner()) + '.' + e.getKey().name() + ':' +
+                            Objects.requireNonNull(e.getKey().descriptor()), formatHex(e.getIntValue()), NIL, NIL, "")));
+            at.methodMap.object2IntEntrySet().fastForEach(e -> lines.add(String.join(PARA, "AccessFlag",
+                    NamingUtil.asJavaName(e.getKey().owner()) + '.' + e.getKey().name() + e.getKey().descriptor(),
+                    formatHex(e.getIntValue()), NIL, NIL, "")));
         }
         return lines;
     }
@@ -115,7 +124,8 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
     }
 
     private static String getDoc(PairedMapping m) {
-        return m.getComponentOptional(Documented.class).map(Documented::getContentString).orElse("");
+        var doc = m.getComponent(Documented.class);
+        return doc != null ? doc.getContentString() : "";
     }
 
     private static String formatHex(int value) {

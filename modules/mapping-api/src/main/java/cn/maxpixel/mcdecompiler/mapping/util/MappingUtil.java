@@ -58,6 +58,10 @@ public final class MappingUtil {
             return new PairedMapping(unmapped, mapped, new Descriptor.Unmapped(unmappedDesc), new Owned<>());
         }
 
+        public static PairedMapping lvduo(String unmapped, String mapped, String unmappedDesc) {
+            return new PairedMapping(unmapped, mapped, new LocalVariableTable.Paired(), new Descriptor.Unmapped(unmappedDesc), new Owned<>());
+        }
+
         public static PairedMapping dmo(String unmapped, String mapped, String mappedDesc) {
             return new PairedMapping(unmapped, mapped, new Descriptor.Mapped(mappedDesc), new Owned<>());
         }

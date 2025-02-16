@@ -19,27 +19,47 @@
 package cn.maxpixel.mcdecompiler.mapping.trait;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * A trait that stores inheritance information
  */
 public class InheritanceTrait implements MappingTrait {
-    private final Object2ObjectOpenHashMap<String, List<String>> map = new Object2ObjectOpenHashMap<>();
+    public final Object2ObjectOpenHashMap<String, Set<String>> map = new Object2ObjectOpenHashMap<>();
 
     @Override
     public String getName() {
         return "inheritance";
     }
 
-    public Object2ObjectOpenHashMap<String, List<String>> getMap() {
+    public Object2ObjectOpenHashMap<String, Set<String>> getMap() {
         return map;
     }
 
-    public void put(String parent, String[] children) {
+    public void put(String parent, String... children) {
+        if (children.length == 0) {
+            map.remove(parent);
+            return;
+        }
+        map.put(parent, new ObjectOpenHashSet<>(children));
+    }
+
+    public void add(String parent, String... children) {
         if (children.length == 0) return;
-        map.put(parent, ObjectArrayList.wrap(children));
+        map.computeIfAbsent(parent, k -> new ObjectOpenHashSet<>()).addAll(Arrays.asList(children));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof InheritanceTrait that)) return false;
+        return map.equals(that.map);
+    }
+
+    @Override
+    public int hashCode() {
+        return map.hashCode();
     }
 }

@@ -69,7 +69,7 @@ class MappingProcessorGeneratorTest {
         test(tmp, "1.17.1-v2.tiny", MappingFormats.TINY_V2);
     }
 
-//    @Test// TODO
+    @Test
     void testPDME(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException {
         test(tmp, "1.17.1.pdme", MappingFormats.PDME);
     }

@@ -18,24 +18,76 @@
 
 package cn.maxpixel.mcdecompiler.mapping.trait;
 
+import cn.maxpixel.mcdecompiler.mapping.NameGetter;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+
+import java.util.Objects;
 
 /**
  * A trait that stores access flag transformation data
  */
 public class AccessTransformationTrait implements MappingTrait {
-    private final Object2IntOpenHashMap<String> map = new Object2IntOpenHashMap<>();
+    public final Object2IntOpenHashMap<String> classMap = new Object2IntOpenHashMap<>();
+    public final Object2IntOpenHashMap<Member> fieldMap = new Object2IntOpenHashMap<>();
+    public final Object2IntOpenHashMap<Member> methodMap = new Object2IntOpenHashMap<>();
 
     @Override
     public String getName() {
         return "access-transformation";
     }
 
-    public Object2IntOpenHashMap<String> getMap() {
-        return map;
+    public Object2IntOpenHashMap<String> getClassMap() {
+        return classMap;
     }
 
-    public void add(String name, int flag) {
-        map.mergeInt(name, flag, (a, b) -> a | b);
+    public Object2IntOpenHashMap<Member> getFieldMap() {
+        return fieldMap;
+    }
+
+    public Object2IntOpenHashMap<Member> getMethodMap() {
+        return methodMap;
+    }
+
+    public void addClass(String name, int flag) {
+        classMap.mergeInt(name, flag, (a, b) -> a | b);
+    }
+
+    public void addField(String owner, String name, int flag) {
+        fieldMap.mergeInt(new Member(owner, name), flag, (a, b) -> a | b);
+    }
+
+    public void addField(String owner, String name, String descriptor, int flag) {
+        fieldMap.mergeInt(new Member(owner, name, descriptor), flag, (a, b) -> a | b);
+    }
+
+    public void addMethod(String owner, String name, String descriptor, int flag) {
+        methodMap.mergeInt(new Member(owner, name, descriptor), flag, (a, b) -> a | b);
+    }
+
+    public record Member(String owner, String name, String descriptor) implements NameGetter {
+        public Member(String owner, String name) {
+            this(name, owner, null);
+        }
+
+        @Override
+        public String getUnmappedName() {
+            return name;
+        }
+
+        @Override
+        public String getMappedName() {
+            return name;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof AccessTransformationTrait that)) return false;
+        return classMap.equals(that.classMap) && fieldMap.equals(that.fieldMap) && methodMap.equals(that.methodMap);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(classMap, fieldMap, methodMap);
     }
 }

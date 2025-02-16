@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.processor;
 
+import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
@@ -53,8 +54,8 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
             String[] parts = MappingUtil.split(line, PARA);
             switch (parts[0]) {
                 case "Class" -> {
-                    String unmapped = parts[1].replace('.', '/');
-                    String mapped = parts[2].replace('.', '/');
+                    String unmapped = NamingUtil.asNativeName(parts[1]);
+                    String mapped = NamingUtil.asNativeName(parts[2]);
                     classes.merge(unmapped, new ClassMapping<>(new PairedMapping(unmapped, mapped, new Documented(parts[5]))), (o, n) -> {
                         n.addFields(o.getFields());
                         n.addMethods(o.getMethods());
@@ -64,32 +65,31 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
                 case "Def" -> getMethod(parts[1], parts[2], parts[5], classes, methodMap);
                 case "Var" -> {
                     int lastDot = parts[1].lastIndexOf('.');
-                    String nameAndDesc = parts[1].substring(lastDot + 1);
-                    int colon = nameAndDesc.indexOf(':');
-                    PairedMapping field = MappingUtil.Paired.duo(nameAndDesc.substring(0, colon), parts[2],
-                            nameAndDesc.substring(colon + 1));
+                    int colon = parts[1].lastIndexOf(':');
+                    PairedMapping field = MappingUtil.Paired.duo(parts[1].substring(lastDot + 1, colon), parts[2],
+                            parts[1].substring(colon + 1));
                     field.addComponent(new Documented(parts[5]));
-                    ClassMapping<PairedMapping> cm = classes.computeIfAbsent(parts[1].substring(0, lastDot)
-                            .replace('.', '/'), MappingUtil.Paired.COMPUTE_DEFAULT_CLASS);
-                    cm.addField(field);
+                    classes.computeIfAbsent(NamingUtil.asNativeName(parts[1].substring(0, lastDot)),
+                            MappingUtil.Paired.COMPUTE_DEFAULT_CLASS).addField(field);
                 }
-                case "Param" -> {
-                    PairedMapping local = new PairedMapping(parts[1], parts[2]);
-                    local.addComponent(new Documented(parts[5]));
-                    PairedMapping method = getMethod(parts[3], null, null, classes, methodMap);
-                    LocalVariableTable.Paired lvt = method.getOrCreateComponent(LocalVariableTable.Paired.class,
-                            LocalVariableTable.Paired::new);
-                    lvt.setLocalVariable(Integer.parseInt(parts[4]), local);
-                }
-                case "Include", "Incluir" -> inheritanceMap.put(parts[1].replace('.', '/'),
-                        Utils.mapArray(MappingUtil.split(parts[2], ','), String[]::new,
-                                s -> s.replace('.', '/')));
+                case "Param" -> getMethod(parts[3], null, null, classes, methodMap)
+                        .getComponent(LocalVariableTable.Paired.class)
+                        .setLocalVariable(Integer.parseInt(parts[4]), new PairedMapping(parts[1], parts[2], new Documented(parts[5])));
+                case "Include", "Incluir" -> inheritanceMap.put(NamingUtil.asNativeName(parts[1]),
+                        Utils.mapArray(MappingUtil.split(parts[2], ','), String[]::new, NamingUtil::asNativeName));
                 case "AccessFlag", "BanderaDeAcceso" -> {
                     if (parts[1].contains(":")) { // field
+                        int lastDot = parts[1].lastIndexOf('.');
+                        int colon = parts[1].lastIndexOf(':');
+                        at.addField(NamingUtil.asNativeName(parts[1].substring(0, lastDot)), parts[1].substring(lastDot + 1, colon),
+                                parts[1].substring(colon + 1), parseHexOrDec(parts[2]));
                     } else if (parts[1].contains("(")) { // method
+                        int lastDot = parts[1].lastIndexOf('.');
+                        int bracket = parts[1].lastIndexOf('(');
+                        at.addMethod(NamingUtil.asNativeName(parts[1].substring(0, lastDot)), parts[1].substring(lastDot + 1, bracket),
+                                parts[1].substring(bracket + 1), parseHexOrDec(parts[2]));
                     } else { // class
-                        at.add(parts[1].replace('.', '/'), parts[2].startsWith("0x") ?
-                                Integer.parseInt(parts[2].substring(2), 16) : Integer.parseInt(parts[2]));
+                        at.addClass(NamingUtil.asNativeName(parts[1]), parseHexOrDec(parts[2]));
                     }
                 }
             }
@@ -97,6 +97,10 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
         mappings.classes.addAll(classes.values());
         for (var cm : mappings.classes) parseOuterClass(cm.mapping.unmappedName, classes);
         return mappings;
+    }
+
+    private static int parseHexOrDec(String number) {
+        return number.startsWith("0x") ? Integer.parseInt(number.substring(2), 16) : Integer.parseInt(number);
     }
 
     private static String parseOuterClass(String unmapped, Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes) {
@@ -126,15 +130,12 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
                 return old;
             }
             int lastDot = s.lastIndexOf('.');
-            String nameAndDesc = s.substring(lastDot + 1);
-            int bracket = nameAndDesc.indexOf('(');
-            String name = nameAndDesc.substring(0, bracket);
-            PairedMapping method = MappingUtil.Paired.duo(name, mapped == null ? name : mapped,
-                    nameAndDesc.substring(bracket));
+            int bracket = s.lastIndexOf('(');
+            String name = s.substring(lastDot + 1, bracket);
+            PairedMapping method = MappingUtil.Paired.lvduo(name, mapped == null ? name : mapped, s.substring(bracket));
             if (docs != null) method.addComponent(new Documented(docs));
-            ClassMapping<PairedMapping> cm = classes.computeIfAbsent(s.substring(0, lastDot)
-                    .replace('.', '/'), MappingUtil.Paired.COMPUTE_DEFAULT_CLASS);
-            cm.addMethod(method);
+            classes.computeIfAbsent(NamingUtil.asNativeName(s.substring(0, lastDot)),
+                    MappingUtil.Paired.COMPUTE_DEFAULT_CLASS).addMethod(method);
             return method;
         });
     }
