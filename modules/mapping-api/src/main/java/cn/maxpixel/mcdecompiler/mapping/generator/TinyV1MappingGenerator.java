@@ -25,7 +25,9 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -44,6 +46,12 @@ public enum TinyV1MappingGenerator implements MappingGenerator.Classified<Namesp
         var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
         String namespace0 = namespaces.first();
         lines.add("v1\t" + String.join("\t", namespaces));
+        var props = mappings.getTrait(PropertiesTrait.class);
+        if (props != null) {
+            for (String property : props.properties) lines.add("# " + TinyUtil.ensureSafe(property));
+            props.propertiesWithValue.forEach((k, v) ->
+                    lines.add("# " + TinyUtil.ensureSafe(k) + ' ' + TinyUtil.ensureSafeAndSpaceless(v)));
+        }
         mappings.classes.parallelStream().forEach(cls -> {
             NamespacedMapping classMapping = cls.mapping;
             synchronized (lines) {

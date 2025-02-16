@@ -34,7 +34,7 @@ import java.util.function.Supplier;
  * @implNote This class should only be extended, so it is abstract
  */
 public abstract class Mapping implements NameGetter {
-    protected final Object2ObjectOpenHashMap<Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
+    protected final Object2ObjectOpenHashMap<@NotNull Class<? extends Component>, Component> components = new Object2ObjectOpenHashMap<>();
 
     /**
      * Constructor

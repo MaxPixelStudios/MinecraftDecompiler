@@ -30,11 +30,6 @@ import java.util.Set;
 public class InheritanceTrait implements MappingTrait {
     public final Object2ObjectOpenHashMap<String, Set<String>> map = new Object2ObjectOpenHashMap<>();
 
-    @Override
-    public String getName() {
-        return "inheritance";
-    }
-
     public Object2ObjectOpenHashMap<String, Set<String>> getMap() {
         return map;
     }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Base class of a mapping collection.
@@ -40,7 +41,7 @@ public abstract class MappingCollection<M extends Mapping> {
      */
     public final ObjectArrayList<@NotNull M> packages = new ObjectArrayList<>();
 
-    private final Object2ObjectOpenHashMap<@NotNull Class<? extends MappingTrait>, @NotNull MappingTrait> traits = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<@NotNull Class<? extends MappingTrait>, MappingTrait> traits = new Object2ObjectOpenHashMap<>();
     private final ObjectOpenHashSet<@NotNull M> packageSet = new ObjectOpenHashSet<>();
 
     /**
@@ -99,6 +100,22 @@ public abstract class MappingCollection<M extends Mapping> {
     @SuppressWarnings("unchecked")
     public final <T extends MappingTrait> T getTrait(@NotNull Class<T> trait) {
         return (T) this.traits.get(Objects.requireNonNull(trait));
+    }
+
+    /**
+     * Gets the trait of given type if it is present, otherwise create a new trait<br>
+     *
+     * @param trait Given trait type. Cannot be null
+     * @return The trait if exists, or the newly created trait
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends MappingTrait> @NotNull T getOrCreateTrait(@NotNull Class<T> trait, @NotNull Supplier<? extends T> factory) {
+        var value = traits.get(trait);
+        if (value == null) {
+            value = Objects.requireNonNull(factory.get());
+            traits.put(trait, value);
+        }
+        return (T) value;
     }
 
     /**

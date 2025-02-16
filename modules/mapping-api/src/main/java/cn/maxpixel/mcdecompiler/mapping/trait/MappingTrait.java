@@ -30,13 +30,6 @@ import org.jetbrains.annotations.ApiStatus;
  */
 public interface MappingTrait {
     /**
-     * Gets the name of this trait.
-     *
-     * @return The name of this trait.
-     */
-    String getName();
-
-    /**
      * Updates the given mapping collection containing {@code this} trait.
      *
      * @implSpec This should be called by the {@link MappingCollection} that owns this trait.

@@ -101,8 +101,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
         if (mappings.hasTrait(InheritanceTrait.class)) {
             mappings.getTrait(InheritanceTrait.class).map.forEach((k, v) -> {
                 if (!v.isEmpty()) lines.add(String.join(PARA, "Include", NamingUtil.asJavaName(k),
-                        String.join(",", Utils.mapArray(v.toArray(new String[0]), String[]::new,
-                                NamingUtil::asJavaName)), NIL, NIL, ""));
+                        NamingUtil.asJavaName(String.join(",", v)), NIL, NIL, ""));
             });
         }
         if (mappings.hasTrait(AccessTransformationTrait.class)) {

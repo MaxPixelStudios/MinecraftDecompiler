@@ -32,11 +32,6 @@ public enum TinyV2MappingFormat implements MappingFormat.Classified<NamespacedMa
     }
 
     @Override
-    public char getCommentChar() {
-        return '\0';
-    }
-
-    @Override
     public @NotNull TinyV2MappingProcessor getProcessor() {
         return TinyV2MappingProcessor.INSTANCE;
     }

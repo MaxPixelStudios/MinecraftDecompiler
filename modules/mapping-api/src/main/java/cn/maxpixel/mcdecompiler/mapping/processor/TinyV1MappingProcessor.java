@@ -42,7 +42,7 @@ public enum TinyV1MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {// TODO: Support properties
+    public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {
         if (!content.get(0).startsWith("v1")) error();
         String[] namespaces = MappingUtil.split(content.get(0), '\t', 3);
         var trait = new NamespacedTrait(namespaces);

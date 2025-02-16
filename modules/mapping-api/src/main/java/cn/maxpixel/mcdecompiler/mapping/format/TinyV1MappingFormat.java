@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.generator.TinyV1MappingGenerator;
 import cn.maxpixel.mcdecompiler.mapping.processor.TinyV1MappingProcessor;
 import org.jetbrains.annotations.NotNull;
 
-public enum TinyV1MappingFormat implements MappingFormat.Classified<NamespacedMapping> {// TODO: support properties
+public enum TinyV1MappingFormat implements MappingFormat.Classified<NamespacedMapping> {
     INSTANCE;
 
     @Override

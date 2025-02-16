@@ -30,6 +30,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -50,6 +51,11 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
         var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
         String namespace0 = namespaces.first();
         lines.add("tiny\t2\t0\t" + String.join("\t", namespaces));
+        var props = mappings.getTrait(PropertiesTrait.class);
+        if (props != null) {
+            for (String property : props.properties) lines.add('\t' + TinyUtil.ensureSafe(property));
+            props.propertiesWithValue.forEach((k, v) -> lines.add('\t' + TinyUtil.ensureSafe(k) + '\t' + TinyUtil.escape(v)));
+        }
         for (ClassMapping<NamespacedMapping> cls : mappings.classes) {
             lines.add("c\t" + NamingUtil.concatNamespaces(namespaces, cls.mapping::getName, "\t"));
             var classDoc = cls.mapping.getComponent(Documented.class);

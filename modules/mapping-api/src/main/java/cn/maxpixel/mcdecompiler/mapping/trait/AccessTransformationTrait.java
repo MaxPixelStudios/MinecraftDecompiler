@@ -31,11 +31,6 @@ public class AccessTransformationTrait implements MappingTrait {
     public final Object2IntOpenHashMap<Member> fieldMap = new Object2IntOpenHashMap<>();
     public final Object2IntOpenHashMap<Member> methodMap = new Object2IntOpenHashMap<>();
 
-    @Override
-    public String getName() {
-        return "access-transformation";
-    }
-
     public Object2IntOpenHashMap<String> getClassMap() {
         return classMap;
     }

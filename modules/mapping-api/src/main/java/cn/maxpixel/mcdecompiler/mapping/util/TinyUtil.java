@@ -66,4 +66,19 @@ public final class TinyUtil {
         }
         return sb.append(escaped, mark, escaped.length()).toString();
     }
+
+    public static String ensureSafe(String s) {
+        for (int i = 0, len = s.length(); i < len; i++) {
+            switch (s.charAt(i)) {
+                case '\\', '\n', '\r', '\t', '\0' ->
+                        throw new IllegalArgumentException("Not a safe string: \"" + s + '"');
+            }
+        }
+        return s;
+    }
+
+    public static String ensureSafeAndSpaceless(String s) {
+        if (s.contains(" ")) throw new IllegalArgumentException("Not a spaceless string: \"" + s + '"');
+        return ensureSafe(s);
+    }
 }

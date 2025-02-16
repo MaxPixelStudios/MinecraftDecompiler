@@ -26,6 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
+import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -39,7 +40,7 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {// TODO: Support properties
+    public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {
         if (!content.get(0).startsWith("tiny\t2\t0")) error();
         String[] namespaces = MappingUtil.split(content.get(0), '\t', 9);
         var trait = new NamespacedTrait(namespaces);
@@ -51,6 +52,11 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
                 ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingUtil.Namespaced.d(namespaces, sa, 1));
                 i = processTree(i, len, namespaces, content, classMapping);
                 mappings.classes.add(classMapping);
+            } else if (sa[0].isEmpty()) {
+                var props = mappings.getOrCreateTrait(PropertiesTrait.class, PropertiesTrait::new);
+                if (sa.length == 3) props.setProperty(sa[1], TinyUtil.unescape(sa[2]));
+                else props.addProperty(sa[1]);
+                i++;
             } else error();
         }
         mappings.updateCollection();
@@ -86,7 +92,7 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
                                     NamespacedMapping mapping) {
         for (index = index + 1; index < size; index++) {
             String s = content.get(index);
-            if (s.charAt(1) == '\t' && s.charAt(0) == '\t') {
+            if (s.startsWith("\t\t")) {
                 switch (s.charAt(2)) {
                     case 'c' -> mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 4));
                     case 'p' -> {
@@ -106,7 +112,7 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
     private static int processTree2(int index, int size, ObjectList<String> content, NamespacedMapping localVariable) {
         if (++index < size) {
             String s = content.get(index);
-            if (s.charAt(2) == '\t' && s.charAt(1) == '\t' && s.charAt(0) == '\t') {
+            if (s.startsWith("\t\t\t")) {
                 if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 5));
                 else error();
                 return index;

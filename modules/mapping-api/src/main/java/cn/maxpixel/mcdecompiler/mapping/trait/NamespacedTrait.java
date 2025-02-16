@@ -50,11 +50,6 @@ public class NamespacedTrait implements MappingTrait, NameGetter.Namespace {
     }
 
     @Override
-    public String getName() {
-        return "namespaced";
-    }
-
-    @Override
     public String getUnmappedNamespace() {
         return Objects.requireNonNull(unmappedNamespace, "The unmapped namespace has not been set");
     }

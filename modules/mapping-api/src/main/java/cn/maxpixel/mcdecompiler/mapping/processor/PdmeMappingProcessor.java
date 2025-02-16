@@ -19,7 +19,6 @@
 package cn.maxpixel.mcdecompiler.mapping.processor;
 
 import cn.maxpixel.mcdecompiler.common.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.common.util.Utils;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
@@ -76,7 +75,7 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
                         .getComponent(LocalVariableTable.Paired.class)
                         .setLocalVariable(Integer.parseInt(parts[4]), new PairedMapping(parts[1], parts[2], new Documented(parts[5])));
                 case "Include", "Incluir" -> inheritanceMap.put(NamingUtil.asNativeName(parts[1]),
-                        Utils.mapArray(MappingUtil.split(parts[2], ','), String[]::new, NamingUtil::asNativeName));
+                        MappingUtil.split(NamingUtil.asNativeName(parts[2]), ','));
                 case "AccessFlag", "BanderaDeAcceso" -> {
                     if (parts[1].contains(":")) { // field
                         int lastDot = parts[1].lastIndexOf('.');
