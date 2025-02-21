@@ -42,6 +42,13 @@ public class ClassFileRemapper extends Remapper {
     }
 
     @Override
+    public String mapAnnotationAttributeName(String descriptor, String name) {
+        // annotation descriptors cannot be primitive types, right?
+        String mapped = remapper.mapMethod(descriptor.substring(1, descriptor.length() - 1), name, null);
+        return mapped == null ? name : mapped;
+    }
+
+    @Override
     public String mapMethodName(String owner, String name, String descriptor) {
         if (name.charAt(0) != '<') { // equivalent to !(name.equals("<init>") || name.equals("<clinit>"))
             String mapped = remapper.mapMethod(owner, name, descriptor);
