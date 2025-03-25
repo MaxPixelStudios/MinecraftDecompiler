@@ -30,7 +30,8 @@ import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import java.util.List;
 
 public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMapping> {
     INSTANCE;
@@ -43,7 +44,7 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
+    public ClassifiedMapping<PairedMapping> process(List<String> content) {
         InheritanceTrait inheritanceMap = new InheritanceTrait();
         AccessTransformationTrait at = new AccessTransformationTrait();
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>(inheritanceMap, at);

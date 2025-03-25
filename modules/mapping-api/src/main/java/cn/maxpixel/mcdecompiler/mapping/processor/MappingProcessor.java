@@ -23,7 +23,10 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * A processor which processes strings to mappings.
@@ -41,7 +44,7 @@ public interface MappingProcessor<T extends Mapping, C extends MappingCollection
      * @param content contents to process
      * @return processed mapping collection
      */
-    C process(ObjectList<String> content);
+    C process(List<String> content);
 
     /**
      * Processes contents(probably of multiple files) and merge them into a single mapping collection.
@@ -49,23 +52,35 @@ public interface MappingProcessor<T extends Mapping, C extends MappingCollection
      * @param contents contents to process
      * @return processed mapping collection
      */
-    C process(ObjectList<String>... contents);// TODO: better ways of merging mapping collections?
-    // TODO: Maybe use Map<String, List<String>>
+    default C process(List<String>... contents) {
+        Object2ObjectOpenHashMap<String, List<String>> map = new Object2ObjectOpenHashMap<>();
+        for (int i = 0; i < contents.length; i++) map.put(String.valueOf(i), contents[i]);
+        return process(map);
+    }
+
+    /**
+     * Processes contents(probably of multiple files) and merge them into a single mapping collection.
+     *
+     * @param contents map of contents to process, with the key usually being the file name or relative path and
+     *                 the value being the content of the file
+     * @return processed mapping collection
+     */
+    C process(Map<String, List<String>> contents);// TODO: better ways of merging mapping collections?
 
     interface Unique<T extends Mapping> extends MappingProcessor<T, UniqueMapping<T>> {
         @Override
-        default UniqueMapping<T> process(ObjectList<String>... contents) {
+        default UniqueMapping<T> process(Map<String, List<String>> contents) {
             UniqueMapping<T> result = new UniqueMapping<>();
-            for (ObjectList<String> content : contents) result.add(process(content));
+            for (List<String> content : contents.values()) result.add(process(content));
             return result;
         }
     }
 
     interface Classified<T extends Mapping> extends MappingProcessor<T, ClassifiedMapping<T>> {
         @Override
-        default ClassifiedMapping<T> process(ObjectList<String>... contents) {
+        default ClassifiedMapping<T> process(Map<String, List<String>> contents) {
             ClassifiedMapping<T> result = new ClassifiedMapping<>();
-            for (ObjectList<String> content : contents) result.add(process(content));
+            for (List<String> content : contents.values()) result.add(process(content));
             return result;
         }
     }

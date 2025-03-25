@@ -25,7 +25,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import java.util.List;
 
 public enum CsrgMappingProcessor implements MappingProcessor.Classified<PairedMapping> {
     INSTANCE;
@@ -36,7 +37,7 @@ public enum CsrgMappingProcessor implements MappingProcessor.Classified<PairedMa
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
+    public ClassifiedMapping<PairedMapping> process(List<String> content) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
         Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
         content.parallelStream().forEach(s -> {

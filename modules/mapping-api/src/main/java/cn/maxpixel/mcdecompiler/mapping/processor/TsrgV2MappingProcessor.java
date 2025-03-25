@@ -27,7 +27,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import java.util.List;
 
 public enum TsrgV2MappingProcessor implements MappingProcessor.Classified<NamespacedMapping> {
     INSTANCE;
@@ -38,7 +39,7 @@ public enum TsrgV2MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {
+    public ClassifiedMapping<NamespacedMapping> process(List<String> content) {
         if(!content.get(0).startsWith("tsrg2")) error();
         String[] namespaces = MappingUtil.split(content.get(0), ' ', 6);
         var trait = new NamespacedTrait(namespaces);
@@ -62,7 +63,7 @@ public enum TsrgV2MappingProcessor implements MappingProcessor.Classified<Namesp
         return mappings;
     }
 
-    private static int processTree(int index, int size, String[] namespaces, ObjectList<String> content,
+    private static int processTree(int index, int size, String[] namespaces, List<String> content,
                                    ClassMapping<NamespacedMapping> classMapping) {
         for (index = index + 1; index < size; index++) {
             String s = content.get(index);
@@ -90,7 +91,7 @@ public enum TsrgV2MappingProcessor implements MappingProcessor.Classified<Namesp
         return index;
     }
 
-    private static int processTree1(int index, int size, String[] namespaces, ObjectList<String> content, NamespacedMapping methodMapping) {
+    private static int processTree1(int index, int size, String[] namespaces, List<String> content, NamespacedMapping methodMapping) {
         for (index = index + 1; index < size; index++) {
             String s = content.get(index);
             if (s.charAt(1) == '\t') {

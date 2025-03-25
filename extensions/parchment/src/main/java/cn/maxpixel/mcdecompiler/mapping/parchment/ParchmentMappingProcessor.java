@@ -29,11 +29,11 @@ import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
 import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.List;
 
 import static cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingFormat.*;
 
@@ -46,7 +46,7 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
+    public ClassifiedMapping<PairedMapping> process(List<String> content) {
         return process(new StringListReader(content));
     }
 
@@ -206,7 +206,7 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
     }
 
     private static class StringListReader extends Reader {
-        private final ObjectList<String> l;
+        private final List<String> l;
         private int listIndex = 0;
         private final int listSize;
         private String s;
@@ -214,7 +214,7 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
         private int stringSize = 0;
         private boolean closed;
 
-        public StringListReader(ObjectList<String> l) {
+        public StringListReader(List<String> l) {
             this.l = l;
             if ((this.listSize = l.size()) > 0) {
                 this.s = l.get(0);

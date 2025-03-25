@@ -26,8 +26,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import java.util.List;
 import java.util.function.Function;
 
 public enum TinyV1MappingProcessor implements MappingProcessor.Classified<NamespacedMapping> {
@@ -42,7 +42,7 @@ public enum TinyV1MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ObjectList<String> content) {
+    public ClassifiedMapping<NamespacedMapping> process(List<String> content) {
         if (!content.get(0).startsWith("v1")) error();
         String[] namespaces = MappingUtil.split(content.get(0), '\t', 3);
         var trait = new NamespacedTrait(namespaces);

@@ -18,8 +18,16 @@
 
 package cn.maxpixel.mcdecompiler.remapper.test;
 
+import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
+import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
+import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
+import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -179,59 +187,59 @@ public class FunctionTest {
 //        }
 //    }
 //
-//    private enum MCP implements MappingFormat.Unique<PairedMapping> {
-//        INSTANCE;
-//        @Override
-//        public @NotNull String getName() {
-//            return "mcp";
-//        }
-//
-//        @Override
-//        public MappingProcessor.Unique<PairedMapping> getProcessor() {
-//            return new MappingProcessor.Unique<>() {
-//                @Override
-//                public MappingFormat<PairedMapping, UniqueMapping<PairedMapping>> getFormat() {
-//                    return MCP.this;
-//                }
-//
-//                @Override
-//                public UniqueMapping<PairedMapping> process(ObjectList<String> content) {
-//                    UniqueMapping<PairedMapping> ret = new UniqueMapping<>();
-//                    for (String s : content) {
-//                        String[] sa = s.split(",");
-//                        if (s.startsWith("field")) {
-//                            ret.fields.add(new PairedMapping(sa[0], sa[1]));
-//                        } else if (s.startsWith("func")) {
-//                            ret.methods.add(new PairedMapping(sa[0], sa[1]));
-//                        } else if (s.startsWith("p_")) {
-//                            ret.params.add(new PairedMapping(sa[0], sa[1]));
-//                        }
-//                    }
-//                    return ret;
-//                }
-//
-//                @Override
-//                public UniqueMapping<PairedMapping> process(ObjectList<String>... contents) {
-//                    UniqueMapping<PairedMapping> result = new UniqueMapping<>();
-//                    for (ObjectList<String> content : contents) {
-//                        for (String s : content) {
-//                            String[] sa = s.split(",");
-//                            if (s.startsWith("field")) {
-//                                result.fields.add(new PairedMapping(sa[0], sa[1]));
-//                            } else if (s.startsWith("func")) {
-//                                result.methods.add(new PairedMapping(sa[0], sa[1]));
-//                            } else if (s.startsWith("p_")) {
-//                                result.params.add(new PairedMapping(sa[0], sa[1]));
-//                            }
-//                        }
-//                    }
-//                    return result;
-//                }
-//            };
-//        }
-//        @Override
-//        public MappingGenerator.Unique<PairedMapping> getGenerator() {
-//            return null;
-//        }
-//    }
+    private enum MCP implements MappingFormat.Unique<PairedMapping> {
+        INSTANCE;
+        @Override
+        public @NotNull String getName() {
+            return "mcp";
+        }
+
+        @Override
+        public MappingProcessor.Unique<PairedMapping> getProcessor() {
+            return new MappingProcessor.Unique<>() {
+                @Override
+                public MappingFormat<PairedMapping, UniqueMapping<PairedMapping>> getFormat() {
+                    return MCP.this;
+                }
+
+                @Override
+                public UniqueMapping<PairedMapping> process(List<String> content) {
+                    UniqueMapping<PairedMapping> ret = new UniqueMapping<>();
+                    for (String s : content) {
+                        String[] sa = s.split(",");
+                        if (s.startsWith("field")) {
+                            ret.fields.add(new PairedMapping(sa[0], sa[1]));
+                        } else if (s.startsWith("func")) {
+                            ret.methods.add(new PairedMapping(sa[0], sa[1]));
+                        } else if (s.startsWith("p_")) {
+                            ret.params.add(new PairedMapping(sa[0], sa[1]));
+                        }
+                    }
+                    return ret;
+                }
+
+                @Override
+                public UniqueMapping<PairedMapping> process(List<String>... contents) {
+                    UniqueMapping<PairedMapping> result = new UniqueMapping<>();
+                    for (List<String> content : contents) {
+                        for (String s : content) {
+                            String[] sa = s.split(",");
+                            if (s.startsWith("field")) {
+                                result.fields.add(new PairedMapping(sa[0], sa[1]));
+                            } else if (s.startsWith("func")) {
+                                result.methods.add(new PairedMapping(sa[0], sa[1]));
+                            } else if (s.startsWith("p_")) {
+                                result.params.add(new PairedMapping(sa[0], sa[1]));
+                            }
+                        }
+                    }
+                    return result;
+                }
+            };
+        }
+        @Override
+        public MappingGenerator.Unique<PairedMapping> getGenerator() {
+            return null;
+        }
+    }
 }

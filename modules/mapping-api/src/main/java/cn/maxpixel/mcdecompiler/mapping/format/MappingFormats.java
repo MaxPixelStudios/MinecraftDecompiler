@@ -33,6 +33,7 @@ public final class MappingFormats {
     public static final TinyV1MappingFormat TINY_V1 = TinyV1MappingFormat.INSTANCE;
     public static final TinyV2MappingFormat TINY_V2 = TinyV2MappingFormat.INSTANCE;
     public static final PdmeMappingFormat PDME = PdmeMappingFormat.INSTANCE;
+    public static final MCPMappingFormat MCP = MCPMappingFormat.INSTANCE;
 
     private static final Object2ObjectOpenHashMap<String, MappingFormat<?, ?>> MAPPING_FORMATS = new Object2ObjectOpenHashMap<>();
 
@@ -45,6 +46,7 @@ public final class MappingFormats {
         registerMappingFormat(TINY_V1);
         registerMappingFormat(TINY_V2);
         registerMappingFormat(PDME);
+        registerMappingFormat(MCP);
     }
 
     public static boolean registerMappingFormat(MappingFormat<?, ?> format) {

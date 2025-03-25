@@ -25,7 +25,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+
+import java.util.List;
 
 public enum ProguardMappingProcessor implements MappingProcessor.Classified<PairedMapping> {
     INSTANCE;
@@ -36,7 +37,7 @@ public enum ProguardMappingProcessor implements MappingProcessor.Classified<Pair
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ObjectList<String> content) {
+    public ClassifiedMapping<PairedMapping> process(List<String> content) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
         for (int i = 0, len = content.size(); i < len; ) {
             String s = content.get(i);
@@ -54,7 +55,7 @@ public enum ProguardMappingProcessor implements MappingProcessor.Classified<Pair
         return mappings;
     }
 
-    private static int processTree(int index, int size, ObjectList<String> content, ClassMapping<PairedMapping> classMapping) {
+    private static int processTree(int index, int size, List<String> content, ClassMapping<PairedMapping> classMapping) {
         for (index = index + 1; index < size; index++) {
             String s = content.get(index);
             if (s.startsWith("    ")) {
