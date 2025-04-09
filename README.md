@@ -21,7 +21,3 @@ For usage and more information, visit [the wiki](https://github.com/MaxPixelStud
 **KOOK/开黑啦: https://kook.top/WI8xyn**  
 **QQ群(加群请注明理由: MinecraftDecompiler): 814722661**  
 **QQ频道: https://pd.qq.com/s/1ospru74**
-
-## Special Thanks
-### JetBrains - Provide awesome IDEs and free license codes
-<img src="https://user-images.githubusercontent.com/47449269/113337933-07607100-935b-11eb-99dc-a4be92229ecb.png" alt="JetBrains" height="10%" width="10%">
