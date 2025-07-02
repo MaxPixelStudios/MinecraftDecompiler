@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.common.app.util;
 
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -93,16 +94,16 @@ public final class FileUtil {
     }
 
     public static void deleteIfExists(@NotNull Path path) {
-        if (Files.notExists(path)) return;
         try {
-            LOGGER.debug("Deleting \"{}\"...", path);
             if (Files.isDirectory(path)) {
                 try (DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
                     StreamSupport.stream(ds.spliterator(), true)
                             .forEach(FileUtil::deleteIfExists);
                 }
             }
-            Files.deleteIfExists(path);
+            if (Files.deleteIfExists(path)) {
+                LOGGER.debug("Deleted \"{}\"...", path);
+            }
         } catch (IOException e) {
             LOGGER.error("Failed to delete \"{}\"", path, e);
         }
@@ -118,7 +119,7 @@ public final class FileUtil {
             Path parent = p.getParent();
             if (parent != null) Files.createDirectories(parent);
         } catch (IOException e) {
-            throw MiscUtils.wrapInRuntime(e);
+            throw Utils.wrapInRuntime(e);
         }
         return p;
     }
@@ -135,7 +136,7 @@ public final class FileUtil {
             return Files.walk(path).parallel().filter(Files::isRegularFile);
         } catch (IOException e) {
             LOGGER.fatal("Error iterating files", e);
-            throw MiscUtils.wrapInRuntime(e);
+            throw Utils.wrapInRuntime(e);
         }
     }
 
@@ -170,10 +171,10 @@ public final class FileUtil {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             ByteBuffer buf = ByteBuffer.allocateDirect(65536);
             while (fc.read(buf.clear()) != -1) md.update(buf.flip());
-            return (size < 0 || fc.size() == size) && hash.contentEquals(MiscUtils.createHashString(md));
+            return (size < 0 || fc.size() == size) && hash.contentEquals(AppUtils.createHashString(md));
         } catch (IOException e) {
             LOGGER.fatal("Error reading files", e);
-            throw MiscUtils.wrapInRuntime(e);
+            throw Utils.wrapInRuntime(e);
         } catch (NoSuchAlgorithmException e) {
             LOGGER.warn("Hmm... You need a SHA-1 digest implementation");
             return false;

@@ -18,16 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.remapper.test;
 
-import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
-import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
-import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -95,10 +87,10 @@ public class FunctionTest {
 //            String obfClassName = cm.mapping.getName("obf");
 //            ClassMapping<PairedMapping> ncm = new ClassMapping<>(new PairedMapping(obfClassName, obf2off.mapClass(obfClassName)));
 //            for (NamespacedMapping field : cm.getFields()) {
-//                ncm.addField(MappingUtil.Paired.o(field.getUnmappedName(), field.getMappedName()));
+//                ncm.addField(MappingUtils.Paired.o(field.getUnmappedName(), field.getMappedName()));
 //            }
 //            for (NamespacedMapping method : cm.getMethods()) {
-//                ncm.addMethod(MappingUtil.Paired.duo(method.getUnmappedName(), method.getMappedName(), method.getComponent(Descriptor.Namespaced.class).unmappedDescriptor));
+//                ncm.addMethod(MappingUtils.Paired.duo(method.getUnmappedName(), method.getMappedName(), method.getComponent(Descriptor.Namespaced.class).unmappedDescriptor));
 //            }
 //            out.classes.add(ncm);
 //        }
@@ -110,11 +102,11 @@ public class FunctionTest {
 //            String obfClassName = cm.mapping.getUnmappedName();
 //            ClassMapping<PairedMapping> ncm = new ClassMapping<>(new PairedMapping(obf2off.mapClass(obfClassName), obf2off.mapClass(obfClassName)));
 //            for (NamespacedMapping field : cm.getFields()) {
-//                ncm.addField(MappingUtil.Paired.o(field.getMappedName(), obf2off.mapField(obfClassName, field.getUnmappedName())));
+//                ncm.addField(MappingUtils.Paired.o(field.getMappedName(), obf2off.mapField(obfClassName, field.getUnmappedName())));
 //            }
 //            for (NamespacedMapping method : cm.getMethods()) {
 //                String obfDesc = method.getComponent(Descriptor.Namespaced.class).unmappedDescriptor;
-//                ncm.addMethod(MappingUtil.Paired.duo(method.getMappedName(), obf2off.mapMethod(obfClassName, method.getUnmappedName(), obfDesc), obf2off.mapMethodDesc(obfDesc)));
+//                ncm.addMethod(MappingUtils.Paired.duo(method.getMappedName(), obf2off.mapMethod(obfClassName, method.getUnmappedName(), obfDesc), obf2off.mapMethodDesc(obfDesc)));
 //            }
 //            out.classes.add(ncm);
 //        }
@@ -168,7 +160,7 @@ public class FunctionTest {
 //                    obfFieldName = field.mappedName;
 //                }
 //                String srgFieldName = obf2srg.mapFieldOrDefault(obfClassName, obfFieldName);
-//                outClass.addField(MappingUtil.Paired.o(srg2moj.mapFieldOrDefault(srgClassName, srgFieldName), srgFieldName));
+//                outClass.addField(MappingUtils.Paired.o(srg2moj.mapFieldOrDefault(srgClassName, srgFieldName), srgFieldName));
 //            }
 //            for (@NotNull PairedMapping method : cm.getMethods()) {
 //                String srgMethodDesc = method.getComponent(Descriptor.class).unmappedDescriptor;
@@ -180,66 +172,11 @@ public class FunctionTest {
 //                    obfMethodName = method.mappedName;
 //                }
 //                String srgMethodName = obf2srg.mapMethodOrDefault(obfClassName, obfMethodName, obfMethodDesc);
-//                outClass.addMethod(MappingUtil.Paired.duo(srg2moj.mapMethodOrDefault(srgClassName, srgMethodName, srgMethodDesc),
+//                outClass.addMethod(MappingUtils.Paired.duo(srg2moj.mapMethodOrDefault(srgClassName, srgMethodName, srgMethodDesc),
 //                        srgMethodName, srg2moj.mapMethodDesc(srgMethodDesc)));
 //            }
 //            out.classes.add(outClass);
 //        }
 //    }
 //
-    private enum MCP implements MappingFormat.Unique<PairedMapping> {
-        INSTANCE;
-        @Override
-        public @NotNull String getName() {
-            return "mcp";
-        }
-
-        @Override
-        public MappingProcessor.Unique<PairedMapping> getProcessor() {
-            return new MappingProcessor.Unique<>() {
-                @Override
-                public MappingFormat<PairedMapping, UniqueMapping<PairedMapping>> getFormat() {
-                    return MCP.this;
-                }
-
-                @Override
-                public UniqueMapping<PairedMapping> process(List<String> content) {
-                    UniqueMapping<PairedMapping> ret = new UniqueMapping<>();
-                    for (String s : content) {
-                        String[] sa = s.split(",");
-                        if (s.startsWith("field")) {
-                            ret.fields.add(new PairedMapping(sa[0], sa[1]));
-                        } else if (s.startsWith("func")) {
-                            ret.methods.add(new PairedMapping(sa[0], sa[1]));
-                        } else if (s.startsWith("p_")) {
-                            ret.params.add(new PairedMapping(sa[0], sa[1]));
-                        }
-                    }
-                    return ret;
-                }
-
-                @Override
-                public UniqueMapping<PairedMapping> process(List<String>... contents) {
-                    UniqueMapping<PairedMapping> result = new UniqueMapping<>();
-                    for (List<String> content : contents) {
-                        for (String s : content) {
-                            String[] sa = s.split(",");
-                            if (s.startsWith("field")) {
-                                result.fields.add(new PairedMapping(sa[0], sa[1]));
-                            } else if (s.startsWith("func")) {
-                                result.methods.add(new PairedMapping(sa[0], sa[1]));
-                            } else if (s.startsWith("p_")) {
-                                result.params.add(new PairedMapping(sa[0], sa[1]));
-                            }
-                        }
-                    }
-                    return result;
-                }
-            };
-        }
-        @Override
-        public MappingGenerator.Unique<PairedMapping> getGenerator() {
-            return null;
-        }
-    }
 }

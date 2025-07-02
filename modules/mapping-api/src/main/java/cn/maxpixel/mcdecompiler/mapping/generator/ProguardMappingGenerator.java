@@ -26,7 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.LineNumber;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -48,7 +48,7 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
             lines.add(NamingUtil.asJavaName(mapping.mappedName) + " -> " +
                     NamingUtil.asJavaName(mapping.unmappedName) + ':');
             for (PairedMapping field : cls.getFields()) {
-                MappingUtil.checkOwner(field.getOwned(), cls);
+                MappingUtils.checkOwner(field.getOwned(), cls);
                 String mappedDesc;
                 if (field.hasComponent(Descriptor.Mapped.class)) {
                     mappedDesc = field.getComponent(Descriptor.Mapped.class).descriptor;
@@ -59,7 +59,7 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
                         " -> " + field.unmappedName);
             }
             for (PairedMapping method : cls.getMethods()) {
-                MappingUtil.checkOwner(method.getOwned(), cls);
+                MappingUtils.checkOwner(method.getOwned(), cls);
                 String mappedDesc;
                 if (method.hasComponent(Descriptor.Mapped.class)) {
                     mappedDesc = method.getComponent(Descriptor.Mapped.class).descriptor;

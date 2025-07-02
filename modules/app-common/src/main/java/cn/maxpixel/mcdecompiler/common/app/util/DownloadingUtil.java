@@ -21,6 +21,8 @@ package cn.maxpixel.mcdecompiler.common.app.util;
 import cn.maxpixel.mcdecompiler.common.app.Constants;
 import cn.maxpixel.mcdecompiler.common.app.Directories;
 import cn.maxpixel.mcdecompiler.common.app.SideType;
+import cn.maxpixel.mcdecompiler.utils.LambdaUtil;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import com.google.gson.JsonObject;
@@ -139,7 +141,7 @@ public class DownloadingUtil {
             }
         } catch (InterruptedException e) {
             LOGGER.fatal("Download process interrupted", e);
-            throw MiscUtils.wrapInRuntime(e);
+            throw Utils.wrapInRuntime(e);
         }
         return Files.newInputStream(localPath, READ);
     }
@@ -171,10 +173,10 @@ public class DownloadingUtil {
                                     HttpResponse.BodyHandlers.ofFile(file, OPEN_OPTIONS));
                         } catch (IOException e) {
                             LOGGER.fatal("Error downloading files", e);
-                            throw MiscUtils.wrapInRuntime(e);
+                            throw Utils.wrapInRuntime(e);
                         } catch (InterruptedException e) {
                             LOGGER.fatal("Download process interrupted", e);
-                            throw MiscUtils.wrapInRuntime(e);
+                            throw Utils.wrapInRuntime(e);
                         }
                     }
                     return file;

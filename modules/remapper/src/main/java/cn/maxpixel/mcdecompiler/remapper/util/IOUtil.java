@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.remapper.util;
 
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

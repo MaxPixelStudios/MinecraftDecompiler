@@ -27,10 +27,12 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.function.Consumer;
 
 public enum TinyV2MappingProcessor implements MappingProcessor.Classified<NamespacedMapping> {
     INSTANCE;
@@ -41,88 +43,91 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(List<String> content) {
-        if (!content.get(0).startsWith("tiny\t2\t0")) error();
-        String[] namespaces = MappingUtil.split(content.get(0), '\t', 9);
-        var trait = new NamespacedTrait(namespaces);
-        trait.setUnmappedNamespace(namespaces[0]);
-        ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
-        for (int i = 1, len = content.size(); i < len; ) {
-            String[] sa = MappingUtil.split(content.get(i), '\t');
-            if (sa[0].length() == 1 && sa[0].charAt(0) == 'c') {
-                ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingUtil.Namespaced.d(namespaces, sa, 1));
-                i = processTree(i, len, namespaces, content, classMapping);
-                mappings.classes.add(classMapping);
-            } else if (sa[0].isEmpty()) {
-                var props = mappings.getOrCreateTrait(PropertiesTrait.class, PropertiesTrait::new);
-                if (sa.length == 3) props.setProperty(sa[1], TinyUtil.unescape(sa[2]));
-                else props.addProperty(sa[1]);
-                i++;
-            } else error();
-        }
-        mappings.updateCollection();
-        return mappings;
-    }
+    public ClassifiedMapping<NamespacedMapping> process(ContentList contents) throws IOException {
+        try (var reader = contents.getAsSingle().asBufferedReader()) {
+            String firstLine = reader.readLine();
+            if (!firstLine.startsWith("tiny\t2\t0")) error();
+            String[] namespaces = MappingUtils.split(firstLine, '\t', 9);
+            var trait = new NamespacedTrait(namespaces);
+            trait.setUnmappedNamespace(namespaces[0]);
+            ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
+            preprocess(reader.lines()).forEach(new Consumer<>() {
+                private ClassMapping<NamespacedMapping> currentClass;
+                private NamespacedMapping currentMember;
+                private NamespacedMapping currentLocalVariable;
 
-    private static int processTree(int index, int size, String[] namespaces, List<String> content,
-                                   ClassMapping<NamespacedMapping> classMapping) {
-        for (index = index + 1; index < size; index++) {
-            String s = content.get(index);
-            if (s.charAt(0) == '\t') {
-                String[] sa = MappingUtil.split(s, '\t', 3);
-                switch (s.charAt(1)) {
-                    case 'c' -> classMapping.mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(sa[0]));
-                    case 'f' -> {
-                        NamespacedMapping fieldMapping = MappingUtil.Namespaced.dduo(namespaces, sa, 1, namespaces[0], sa[0]);
-                        index = processTree1(index, size, namespaces, content, fieldMapping);
-                        classMapping.addField(fieldMapping);
+                @Override
+                public void accept(String s) {
+                    if (s.charAt(0) == '\t') {
+                        if (currentClass == null) {
+                            String[] sa = MappingUtils.split(s, '\t', 1);
+                            var props = mappings.getOrCreateTrait(PropertiesTrait.class, PropertiesTrait::new);
+                            if (sa.length == 2) props.setProperty(sa[0], TinyUtil.unescape(sa[1]));
+                            else props.addProperty(sa[0]);
+                            return;
+                        }
+                        if (s.charAt(1) == '\t') {
+                            if (s.charAt(2) == '\t') {
+                                if (s.charAt(3) == 'c') {
+                                    currentLocalVariable.getComponent(Documented.class)
+                                            .setContentString(TinyUtil.unescape(s, 5));
+                                } else error();
+                                return;
+                            }
+                            currentLocalVariable = processTree1(namespaces, s, currentMember);
+                            return;
+                        }
+                        currentMember = processTree(namespaces, s, currentClass);
+                        return;
                     }
-                    case 'm' -> {
-                        NamespacedMapping methodMapping = MappingUtil.Namespaced.dlduo(namespaces, sa, 1, namespaces[0], sa[0]);
-                        index = processTree1(index, size, namespaces, content, methodMapping);
-                        classMapping.addMethod(methodMapping);
-                    }
-                    default -> error();
+                    if (s.charAt(0) == 'c') {
+                        String[] sa = MappingUtils.split(s, '\t', 2);
+                        ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(MappingUtils.Namespaced.d(namespaces, sa));
+                        mappings.classes.add(classMapping);
+                        currentClass = classMapping;
+                    } else error();
                 }
-            } else break;
+            });
+            mappings.updateCollection();
+            return mappings;
         }
-        return index;
     }
 
-    private static int processTree1(int index, int size, String[] namespaces, List<String> content,
-                                    NamespacedMapping mapping) {
-        for (index = index + 1; index < size; index++) {
-            String s = content.get(index);
-            if (s.startsWith("\t\t")) {
-                switch (s.charAt(2)) {
-                    case 'c' -> mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 4));
-                    case 'p' -> {
-                        String[] sa = MappingUtil.split(s, '\t', 4);
-                        NamespacedMapping localVariable = MappingUtil.Namespaced.d(namespaces, sa, 1);
-                        mapping.getComponent(LocalVariableTable.Namespaced.class)
-                                .setLocalVariable(Integer.parseInt(sa[0]), localVariable);
-                        index = processTree2(index, size, content, localVariable);
-                    }
-                    default -> error();
-                }
-            } else break;
-        }
-        return index - 1;
-    }
-
-    private static int processTree2(int index, int size, List<String> content, NamespacedMapping localVariable) {
-        if (++index < size) {
-            String s = content.get(index);
-            if (s.startsWith("\t\t\t")) {
-                if (s.charAt(3) == 'c') localVariable.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 5));
-                else error();
-                return index;
+    private static NamespacedMapping processTree(String[] namespaces, String s, ClassMapping<NamespacedMapping> classMapping) {
+        String[] sa = MappingUtils.split(s, '\t', 3);
+        switch (s.charAt(1)) {
+            case 'c' -> classMapping.mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(sa[0]));
+            case 'f' -> {
+                NamespacedMapping fieldMapping = MappingUtils.Namespaced.dduo(namespaces, sa, 1, namespaces[0], sa[0]);
+                classMapping.addField(fieldMapping);
+                return fieldMapping;
             }
+            case 'm' -> {
+                NamespacedMapping methodMapping = MappingUtils.Namespaced.dlduo(namespaces, sa, 1, namespaces[0], sa[0]);
+                classMapping.addMethod(methodMapping);
+                return methodMapping;
+            }
+            default -> error();
         }
-        return index - 1;
+        return null;
+    }
+
+    private static NamespacedMapping processTree1(String[] namespaces, String s, NamespacedMapping mapping) {
+        switch (s.charAt(2)) {
+            case 'c' -> mapping.getComponent(Documented.class).setContentString(TinyUtil.unescape(s, 4));
+            case 'p' -> {
+                String[] sa = MappingUtils.split(s, '\t', 4);
+                NamespacedMapping localVariable = MappingUtils.Namespaced.d(namespaces, sa, 1);
+                mapping.getComponent(LocalVariableTable.Namespaced.class)
+                        .setLocalVariable(Integer.parseInt(sa[0]), localVariable);
+                return localVariable;
+            }
+            default -> error();
+        }
+        return null;
     }
 
     private static void error() {
-        throw new IllegalArgumentException("Is this a Tiny v2 mapping file?");
+        throw new IllegalArgumentException("Is this Tiny v2 mapping format?");
     }
 }

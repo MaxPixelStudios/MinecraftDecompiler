@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -45,13 +45,13 @@ public enum CsrgMappingGenerator implements MappingGenerator.Classified<PairedMa
                 lines.add(classMapping.unmappedName + ' ' + classMapping.mappedName);
             }
             cls.getFields().parallelStream().forEach(field -> {
-                MappingUtil.checkOwner(field.getOwned(), cls);
+                MappingUtils.checkOwner(field.getOwned(), cls);
                 synchronized (lines) {
                     lines.add(classMapping.unmappedName + ' ' + field.unmappedName + ' ' + field.mappedName);
                 }
             });
             cls.getMethods().parallelStream().forEach(method -> {
-                String unmappedDesc = MappingUtil.Paired.checkSlimSrgMethod(cls, method, remapper);
+                String unmappedDesc = MappingUtils.Paired.checkSlimSrgMethod(cls, method, remapper);
                 synchronized (lines) {
                     lines.add(classMapping.unmappedName + ' ' + method.unmappedName + ' ' +
                             unmappedDesc + ' ' + method.mappedName);

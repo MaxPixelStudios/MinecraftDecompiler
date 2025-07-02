@@ -10,36 +10,13 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>app-common</artifactId>
-    <name>MinecraftDecompiler - Application Common</name>
+    <artifactId>utils</artifactId>
+    <name>MinecraftDecompiler - Utilities</name>
 
     <dependencies>
         <dependency>
-            <groupId>cn.maxpixel.minecraft-decompiler</groupId>
-            <artifactId>utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.jopt-simple</groupId>
-            <artifactId>jopt-simple</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>cn.maxpixel.rewh.logging</groupId>
-            <artifactId>logging-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

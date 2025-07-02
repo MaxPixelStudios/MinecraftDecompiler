@@ -24,8 +24,8 @@ import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,6 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 /**
  * Represents a mapping format.<br>
@@ -51,15 +50,6 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
     @NotNull String getName();
 
     /**
-     * Gets the comment char of this mapping format.
-     *
-     * @return The comment char of this mapping format. '\0' if this mapping format does not support comments
-     */
-    default char getCommentChar() {
-        return '#';
-    }
-
-    /**
      * Gets the processor of this mapping format.
      *
      * @return The processor of this mapping format
@@ -73,66 +63,24 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
      */
     @NotNull MappingGenerator<M, C> getGenerator();
 
-    default @NotNull C read(@NotNull BufferedReader reader) {
-        Objects.requireNonNull(reader);
-        try (reader) {
-            ObjectArrayList<String> lines = reader.lines().map(s -> {
-                if (s.isBlank()) return null;
-
-                char comment = getCommentChar();
-                if (comment != '\0') {
-                    if (s.charAt(0) == comment) return null;
-                    int index = s.indexOf(comment);
-                    if (index > 0) return s.substring(0, index);
-                    else if (index == 0) return null;
-                }
-
-                return s;
-            }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
-            return getProcessor().process(lines);
+    default @NotNull C read(@NotNull Reader reader) {
+        try {
+            return getProcessor().process(new ContentList.ContentStream(reader));
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
-    }
-
-    default @NotNull C read(@NotNull Reader reader) {
-        return read(Utils.asBufferedReader(reader));
     }
 
     default @NotNull C read(@NotNull InputStream is) {
         return read(new InputStreamReader(is, StandardCharsets.UTF_8));
     }
 
-    default @NotNull C read(@NotNull BufferedReader @NotNull ... readers) {
-        @SuppressWarnings("unchecked")
-        ObjectArrayList<String>[] contents = Utils.mapArray(readers, ObjectArrayList[]::new, reader -> {
-            try (reader) {
-                return reader.lines().map(s -> {
-                    if (s.isBlank()) return null;
-
-                    char comment = getCommentChar();
-                    if (comment != '\0') {
-                        if (s.charAt(0) == comment) return null;
-                        int index = s.indexOf(comment);
-                        if (index > 0) return s.substring(0, index);
-                        else if (index == 0) return null;
-                    }
-
-                    return s;
-                }).filter(Objects::nonNull).collect(ObjectArrayList.toList());
-            } catch (IOException e) {
-                throw Utils.wrapInRuntime(e);
-            }
-        });
-        return getProcessor().process(contents);
-    }
-
-    default @NotNull C read(@NotNull Reader @NotNull ... reader) {
-        return read(Utils.mapArray(reader, BufferedReader[]::new, Utils::asBufferedReader));
-    }
-
-    default @NotNull C read(@NotNull InputStream @NotNull ... is) {
-        return read(Utils.mapArray(is, InputStreamReader[]::new, i -> new InputStreamReader(i, StandardCharsets.UTF_8)));
+    default @NotNull C read(@NotNull ContentList contents) {
+        try {
+            return getProcessor().process(contents);
+        } catch (IOException e) {
+            throw Utils.wrapInRuntime(e);
+        }
     }
 
     default void write(@NotNull C collection, @NotNull OutputStream os) throws IOException {

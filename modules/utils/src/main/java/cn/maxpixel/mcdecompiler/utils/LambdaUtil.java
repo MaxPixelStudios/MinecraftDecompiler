@@ -16,17 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.app.util;
+package cn.maxpixel.mcdecompiler.utils;
 
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class LambdaUtil {
-//    @FunctionalInterface
-//    public interface Runnable_WithThrowable<E extends Throwable> {
-//        void run() throws E;
-//    }
+    @FunctionalInterface
+    public interface Runnable_WithThrowable<E extends Throwable> {
+        void run() throws E;
+    }
 
     @FunctionalInterface
     public interface Function_WithThrowable<T, R, E extends Throwable> {
@@ -46,20 +46,20 @@ public class LambdaUtil {
         throw new CompletionException(throwable);
     }
 
-//    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
-//        return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
-//    }
-//
-//    @SuppressWarnings("unchecked")
-//    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
-//        return () -> {
-//            try {
-//                runnableWithThrowable.run();
-//            } catch (Throwable e) {
-//                exceptionHandler.accept((E) e);
-//            }
-//        };
-//    }
+    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable) {
+        return unwrap(runnableWithThrowable, LambdaUtil::rethrowAsRuntime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <E extends Throwable> Runnable unwrap(Runnable_WithThrowable<E> runnableWithThrowable, Consumer<E> exceptionHandler) {
+        return () -> {
+            try {
+                runnableWithThrowable.run();
+            } catch (Throwable e) {
+                exceptionHandler.accept((E) e);
+            }
+        };
+    }
 
     public static <T, R, E extends Throwable> Function<T, R> unwrap(Function_WithThrowable<T, R, E> functionWithThrowable) {
         return unwrap(functionWithThrowable, LambdaUtil::rethrowAsRuntime);

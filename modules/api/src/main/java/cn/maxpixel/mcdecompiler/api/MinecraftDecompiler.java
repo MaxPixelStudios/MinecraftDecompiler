@@ -31,10 +31,11 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import cn.maxpixel.mcdecompiler.remapper.ClassifiedDeobfuscator;
 import cn.maxpixel.mcdecompiler.remapper.DeobfuscationOptions;
 import cn.maxpixel.mcdecompiler.remapper.util.IOUtil;
+import cn.maxpixel.mcdecompiler.utils.LambdaUtil;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import com.google.gson.JsonObject;
@@ -122,10 +123,10 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                                     try {
                                         MessageDigest md = MessageDigest.getInstance("SHA-1");
                                         md.update(IOUtil.readAllBytes(p));
-                                        StringBuilder hashA = MiscUtils.createHashString(md);
+                                        StringBuilder hashA = AppUtils.createHashString(md);
 
                                         md.update(IOUtil.readAllBytes(jarFs.getPath(path)));
-                                        StringBuilder hashB = MiscUtils.createHashString(md);
+                                        StringBuilder hashB = AppUtils.createHashString(md);
                                         if (hashA.compareTo(hashB) == 0) {
                                             maybeRemoved.add(path);
                                         } else if (fileName.lastIndexOf('$') > 0) {

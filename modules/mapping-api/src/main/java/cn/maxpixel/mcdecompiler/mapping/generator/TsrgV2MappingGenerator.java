@@ -28,9 +28,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -52,7 +51,7 @@ public enum TsrgV2MappingGenerator implements MappingGenerator.Classified<Namesp
         for (ClassMapping<NamespacedMapping> cls : mappings.classes) {
             lines.add(NamingUtil.concatNamespaces(namespaces, cls.mapping::getName, " "));
             cls.getFields().parallelStream().forEach(field -> {
-                MappingUtil.checkOwner(field.getOwned(), cls);
+                MappingUtils.checkOwner(field.getOwned(), cls);
                 String names = NamingUtil.concatNamespaces(namespaces, field::getName, " ");
                 if (field.hasComponent(Descriptor.Namespaced.class)) synchronized (lines) {
                     genDescriptorLine(lines, namespace0, field, names);
@@ -62,7 +61,7 @@ public enum TsrgV2MappingGenerator implements MappingGenerator.Classified<Namesp
             });
             cls.getMethods().parallelStream().forEach(method -> {
                 if (!method.hasComponent(Descriptor.Namespaced.class)) throw new UnsupportedOperationException();
-                MappingUtil.checkOwner(method.getOwned(), cls);
+                MappingUtils.checkOwner(method.getOwned(), cls);
                 synchronized (lines) {
                     genDescriptorLine(lines, namespace0, method, NamingUtil.concatNamespaces(namespaces,
                             method::getName, " "));
@@ -73,7 +72,7 @@ public enum TsrgV2MappingGenerator implements MappingGenerator.Classified<Namesp
                         lvt.getLocalVariableIndexes().forEach(index -> {
                             String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
                                 String name = lvt.getLocalVariable(index).getName(namespace);
-                                return Utils.isStringNotBlank(name) ? name : "o";
+                                return MappingUtils.isStringNotBlank(name) ? name : "o";
                             }, " ");
                             lines.add("\t\t" + index + ' ' + names);
                         });

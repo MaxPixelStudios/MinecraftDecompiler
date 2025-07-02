@@ -23,7 +23,8 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public class MappingVariableNameProvider implements VariableNameProvider {
                 Mapping m = lvt.getLocalVariable(index);
                 if (m != null) {
                     String mapped = m.getMappedName();
-                    return Utils.isStringNotBlank(mapped) && !PLACEHOLDER_CHARS.contains(mapped) ? mapped : null;
+                    return MappingUtils.isStringNotBlank(mapped) && !PLACEHOLDER_CHARS.contains(mapped) ? mapped : null;
                 }
                 return null;
             };

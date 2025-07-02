@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.mapping.parchment;
 
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 
 public record FormatVersion(int major, int minor, int patch) {
     public static FormatVersion CURRENT = new FormatVersion(1, 1, 0);
@@ -30,7 +30,7 @@ public record FormatVersion(int major, int minor, int patch) {
     }
 
     public static FormatVersion from(String version) {
-        String[] parts = MappingUtil.split(version, '.');
+        String[] parts = MappingUtils.split(version, '.');
         if (parts.length < 2) throw new IllegalArgumentException("Expected at least 2 tokens for version " + version);
         if (parts.length > 3) throw new IllegalArgumentException("Expected at most 3 tokens for version " + version);
         return new FormatVersion(

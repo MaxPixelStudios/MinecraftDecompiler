@@ -18,10 +18,11 @@
 
 package cn.maxpixel.mcdecompiler.mapping.trait;
 
+import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-public class PropertiesTrait implements MappingTrait {
+public class PropertiesTrait implements MappingTrait, Component {
     public final ObjectOpenHashSet<String> properties = new ObjectOpenHashSet<>();
     public final Object2ObjectOpenHashMap<String, String> propertiesWithValue = new Object2ObjectOpenHashMap<>();
 

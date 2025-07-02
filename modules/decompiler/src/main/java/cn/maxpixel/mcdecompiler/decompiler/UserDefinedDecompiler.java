@@ -19,8 +19,8 @@
 package cn.maxpixel.mcdecompiler.decompiler;
 
 import cn.maxpixel.mcdecompiler.common.app.Directories;
+import cn.maxpixel.mcdecompiler.common.app.util.AppUtils;
 import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
-import cn.maxpixel.mcdecompiler.common.app.util.ProcessUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -40,7 +40,7 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
     public static final UserDefinedDecompiler NONE = new UserDefinedDecompiler() {
         @Override
         public void decompile(@NotNull Path source, @NotNull Path target) {
-            throw new RuntimeException("User decompiler not found. Please make sure you have put correct config file in \"decompiler\" directory");
+            throw new RuntimeException("User decompiler not found. Please make sure you have put a correct config file in \"decompiler\" directory");
         }
     };
     private SourceType sourceType;
@@ -52,7 +52,7 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
 
     UserDefinedDecompiler(@NotNull SourceType sourceType, @NotNull Path decompilerPath, @NotNull List<String> options) {
         this.sourceType = sourceType;
-        this.decompilerPath = FileUtil.requireExist(decompilerPath);
+        this.decompilerPath = FileUtil.requireExist(decompilerPath.toAbsolutePath().normalize());
         this.options = options;
     }
 
@@ -69,16 +69,15 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
     @Override
     public void decompile(@NotNull Path source, @NotNull Path target) throws IOException {
         checkArgs(source, target);
-        ObjectArrayList<String> arrayList = new ObjectArrayList<>();
-        arrayList.add("java");
-        arrayList.add("-jar");
-        arrayList.add(decompilerPath.toString());
-        arrayList.addAll(resolveArgs(source, target, options));
-        ProcessUtil.waitFor(Runtime.getRuntime().exec(arrayList.toArray(new String[0])));
+        ObjectArrayList<String> command = new ObjectArrayList<>();
+        command.add("java");
+        command.add("-jar");
+        command.add(decompilerPath.toString());
+        resolveArgs(source, target, options, command);
+        AppUtils.waitFor(new ProcessBuilder(command).start());
     }
 
-    private ObjectArrayList<String> resolveArgs(@NotNull Path source, @NotNull Path target, @NotNull List<String> options) {
-        ObjectArrayList<String> resolvedOptions = new ObjectArrayList<>();
+    private void resolveArgs(@NotNull Path source, @NotNull Path target, @NotNull List<String> options, ObjectArrayList<String> command) {
         for (int i = 0; i < options.size(); i++) {
             String s = options.get(i);
             if (s.contains("%source%")) s = s.replace("%source%", source.toString());
@@ -90,14 +89,15 @@ public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
             }
             if (s.contains("%lib_repeat%")) {
                 for (int j = 0; j < libs.size(); j++) {
-                    if (s.equals("%lib_repeat%")) {
-                        resolvedOptions.add(options.get(i - 1));
-                        resolvedOptions.add(libs.get(j));
-                    } else resolvedOptions.add(s.replace("%lib_repeat%", libs.get(j)));
+                    command.add(s.replace("%lib_repeat%", libs.get(j)));
                 }
-            } else resolvedOptions.add(s);
+            } else if (s.contains("%lib_repeat_with_previous%")) {
+                for (int j = 0; j < libs.size(); j++) {
+                    command.add(options.get(i - 1));
+                    command.add(libs.get(j));
+                }
+            } else command.add(s);
         }
-        return resolvedOptions;
     }
 
     @Override

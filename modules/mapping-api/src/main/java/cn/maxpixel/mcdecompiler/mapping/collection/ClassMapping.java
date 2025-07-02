@@ -113,8 +113,9 @@ public class ClassMapping<T extends Mapping> {
      */
     @SuppressWarnings("unchecked")
     public ClassMapping<T> addField(T field) {
-        if (!field.hasComponent(Owned.class)) field.addComponent(new Owned<>(this));
-        else field.getComponent(Owned.class).setOwner(this);
+        var owned = field.getComponent(Owned.class);
+        if (owned != null) owned.setOwner(this);
+        else field.addComponent(new Owned<>(this));
         fields.add(field);
         return this;
     }
@@ -129,8 +130,9 @@ public class ClassMapping<T extends Mapping> {
     public ClassMapping<T> addMethod(T method) {
         if (!method.hasComponent(Descriptor.Unmapped.class) && !method.hasComponent(Descriptor.Mapped.class) &&
                 !method.hasComponent(Descriptor.Namespaced.class)) throw new UnsupportedOperationException();
-        if (!method.hasComponent(Owned.class)) method.addComponent(new Owned<>(this));
-        else method.getComponent(Owned.class).setOwner(this);
+        var owned = method.getComponent(Owned.class);
+        if (owned != null) owned.setOwner(this);
+        else method.addComponent(new Owned<>(this));
         methods.add(method);
         return this;
     }

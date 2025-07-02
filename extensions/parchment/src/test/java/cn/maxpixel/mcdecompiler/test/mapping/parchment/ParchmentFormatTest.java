@@ -22,11 +22,6 @@ import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.parchment.FormatVersion;
 import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingFormat;
-import cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingProcessor;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
-import cn.maxpixel.rewh.logging.LogManager;
-import cn.maxpixel.rewh.logging.Logger;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,7 +33,6 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParchmentFormatTest {
-    private static final Logger LOGGER = LogManager.getLogger();
 
     @Test
     void testFormatVersion() {
@@ -66,13 +60,6 @@ class ParchmentFormatTest {
         try (var reader = Files.newBufferedReader(path)) {
             var c2 = ParchmentMappingFormat.INSTANCE.read(reader);
             assertEquals(c1, c2);
-        }
-        try (var reader = Files.newBufferedReader(path)) {
-            ObjectArrayList<String> lines = reader.lines().collect(ObjectArrayList.toList());
-            var c3 = ParchmentMappingProcessor.INSTANCE.process(lines);
-            assertEquals(c1, c3);
-        } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
         }
     }
 }

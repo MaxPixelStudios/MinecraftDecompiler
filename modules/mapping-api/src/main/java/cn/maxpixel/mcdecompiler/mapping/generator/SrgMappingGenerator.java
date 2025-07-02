@@ -24,7 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -46,14 +46,14 @@ public enum SrgMappingGenerator implements MappingGenerator.Classified<PairedMap
                 lines.add("CL: " + classMapping.unmappedName + " " + classMapping.mappedName);
             }
             cls.getFields().parallelStream().forEach(field -> {
-                MappingUtil.checkOwner(field.getOwned(), cls);
+                MappingUtils.checkOwner(field.getOwned(), cls);
                 synchronized (lines) {
                     lines.add("FD: " + classMapping.unmappedName + '/' + field.unmappedName + ' ' +
                             classMapping.mappedName + '/' + field.mappedName);
                 }
             });
             cls.getMethods().parallelStream().forEach(method -> {
-                MappingUtil.checkOwner(method.getOwned(), cls);
+                MappingUtils.checkOwner(method.getOwned(), cls);
                 String unmappedDesc, mappedDesc;
                 if (method.hasComponent(Descriptor.Unmapped.class)) {
                     unmappedDesc = method.getComponent(Descriptor.Unmapped.class).descriptor;

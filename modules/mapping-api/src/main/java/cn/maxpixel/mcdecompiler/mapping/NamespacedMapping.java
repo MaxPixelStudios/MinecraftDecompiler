@@ -20,7 +20,7 @@ package cn.maxpixel.mcdecompiler.mapping;
 
 import cn.maxpixel.mcdecompiler.mapping.component.Component;
 import cn.maxpixel.mcdecompiler.mapping.component.Owned;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
@@ -275,7 +275,7 @@ public class NamespacedMapping extends Mapping implements NameGetter.Namespace {
     public String getMappedName() {
         if (mappedNamespace == null) throw new IllegalStateException("Set a namespace for mapped name first");
         var name = names.get(mappedNamespace);
-        if (fallbackNamespace == null || Utils.isStringNotBlank(name)) return name;
+        if (fallbackNamespace == null || MappingUtils.isStringNotBlank(name)) return name;
         return names.get(fallbackNamespace);
     }
 

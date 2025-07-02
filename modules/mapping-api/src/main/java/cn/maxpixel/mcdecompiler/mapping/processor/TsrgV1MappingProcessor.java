@@ -23,9 +23,10 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 public enum TsrgV1MappingProcessor implements MappingProcessor.Classified<PairedMapping> {
     INSTANCE;
@@ -36,41 +37,41 @@ public enum TsrgV1MappingProcessor implements MappingProcessor.Classified<Paired
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(List<String> content) {
+    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
-        for (int i = 0, len = content.size(); i < len;) {
-            String[] sa = MappingUtil.split(content.get(i), ' ');
-            if (sa[0].charAt(0) != '\t') {
-                if (sa[0].charAt(sa[0].length() - 1) == '/') {
-                    mappings.packages.add(new PairedMapping(sa[0].substring(0, sa[0].length() - 1),
-                            sa[1].substring(0, sa[1].length() - 1)));
-                    i++;
-                } else {
-                    ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(sa[0], sa[1]));
-                    i = processTree(i, len, content, classMapping);
-                    mappings.classes.add(classMapping);
-                }
-            } else error();
+        for (var content : contents) {
+            try (var lines = preprocess(content.lines().map(this::stripComments))) {
+                lines.forEach(new Consumer<>() {
+                    private ClassMapping<PairedMapping> currentClass;
+
+                    @Override
+                    public void accept(String s) {
+                        if (s.charAt(0) == '\t') {
+                            String[] sa = MappingUtils.split(s, ' ', 1);
+                            switch (sa.length) {
+                                case 2 -> currentClass.addField(MappingUtils.Paired.o(sa[0], sa[1]));
+                                case 3 -> currentClass.addMethod(MappingUtils.Paired.duo(sa[0], sa[2], sa[1]));
+                                default -> error();
+                            }
+                            return;
+                        }
+                        String[] sa = MappingUtils.split(s, ' ');
+                        if (sa[0].charAt(sa[0].length() - 1) == '/') {
+                            mappings.packages.add(new PairedMapping(sa[0].substring(0, sa[0].length() - 1),
+                                    sa[1].substring(0, sa[1].length() - 1)));
+                        } else {
+                            ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(sa[0], sa[1]));
+                            mappings.classes.add(classMapping);
+                            currentClass = classMapping;
+                        }
+                    }
+                });
+            }
         }
         return mappings;
     }
 
-    private static int processTree(int index, int size, List<String> content, ClassMapping<PairedMapping> classMapping) {
-        for (index = index + 1; index < size; index++) {
-            String s = content.get(index);
-            if (s.charAt(0) == '\t') {
-                String[] sa = MappingUtil.split(s, ' ', 1);
-                switch (sa.length) {
-                    case 2 -> classMapping.addField(MappingUtil.Paired.o(sa[0], sa[1]));
-                    case 3 -> classMapping.addMethod(MappingUtil.Paired.duo(sa[0], sa[2], sa[1]));
-                    default -> error();
-                }
-            } else break;
-        }
-        return index;
-    }
-
     private static void error() {
-        throw new IllegalArgumentException("Is this a TSRG v1 mapping file?");
+        throw new IllegalArgumentException("Is this TSRG v1 mapping format?");
     }
 }

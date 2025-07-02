@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.common.app.util;
 
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import com.google.gson.JsonArray;
@@ -68,7 +69,7 @@ public class VersionManifest {
                     Spliterator.DISTINCT + Spliterator.NONNULL + Spliterator.IMMUTABLE), true
             ).map(JsonElement::getAsJsonObject).collect(Collectors.toMap(
                     obj -> obj.get("id").getAsString(), obj -> URI.create(obj.get("url").getAsString()),
-                    MiscUtils::onKeyDuplicate, Object2ObjectOpenHashMap::new
+                    Utils::onKeyDuplicate, Object2ObjectOpenHashMap::new
             ));
         });
     }

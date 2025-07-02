@@ -141,7 +141,7 @@ public abstract class MappingCollection<M extends Mapping> {
     /**
      * Updates this collection with all the traits.
      */
-    public final void updateCollection() {
+    public final void updateCollection() {// FIXME: This operation takes up to much time
         for (MappingTrait value : traits.values()) {
             value.updateCollection(this);
         }

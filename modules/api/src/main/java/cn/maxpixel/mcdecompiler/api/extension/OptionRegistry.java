@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.api.extension;
 
-import cn.maxpixel.mcdecompiler.common.app.util.LambdaUtil;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
+import cn.maxpixel.mcdecompiler.utils.LambdaUtil;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,7 +149,7 @@ public final class OptionRegistry {
         }
 
         public Option register(@NotNull String option, @Nullable String description) {
-            if (Utils.isStringNotBlank(option)) return OptionRegistry.this.register(new Option(List.of(prefix + '-' + option), description));
+            if (MappingUtils.isStringNotBlank(option)) return OptionRegistry.this.register(new Option(List.of(prefix + '-' + option), description));
             else throw new IllegalArgumentException("Option cannot be null or empty");
         }
 
@@ -161,7 +161,7 @@ public final class OptionRegistry {
             String[] sa = new String[Objects.requireNonNull(options).size()];
             for (int i = 0; i < sa.length; i++) {
                 String o = options.get(i);
-                if (Utils.isStringNotBlank(o)) sa[i] = prefix + '-' + o;
+                if (MappingUtils.isStringNotBlank(o)) sa[i] = prefix + '-' + o;
                 else throw new IllegalArgumentException("Option cannot be null or empty");
             }
             return OptionRegistry.this.register(new Option(new ObjectImmutableList<>(sa), description));

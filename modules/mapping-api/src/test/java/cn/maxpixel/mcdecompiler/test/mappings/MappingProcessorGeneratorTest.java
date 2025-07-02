@@ -18,15 +18,20 @@
 
 package cn.maxpixel.mcdecompiler.test.mappings;
 
+import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
+import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
+import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.utils.LambdaUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -74,7 +79,12 @@ class MappingProcessorGeneratorTest {
         test(tmp, "1.17.1.pdme", MappingFormats.PDME);
     }
 
-    private static <M extends Mapping, C extends ClassifiedMapping<M>> void test(Path tmp, String fileName, MappingFormat<M, C> format) throws IOException {
+    @Test
+    void testMCP(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tmp) throws IOException, URISyntaxException {
+        testZip(tmp, "mcp_stable-12-1.7.10.zip", MappingFormats.MCP);
+    }
+
+    private static <M extends Mapping, C extends MappingCollection<M>> void test(Path tmp, String fileName, MappingFormat<M, C> format) throws IOException {
         var is = MappingProcessorGeneratorTest.class.getClassLoader().getResourceAsStream(fileName);
         assertNotNull(is);
         var c1 = format.read(is);
@@ -85,6 +95,23 @@ class MappingProcessorGeneratorTest {
         try (var reader = Files.newBufferedReader(path)) {
             var c2 = format.read(reader);
             assertEquals(c1, c2);
+        }
+    }
+
+    private static <M extends Mapping, C extends MappingCollection<M>> void testZip(Path tmp, String fileName, MappingFormat<M, C> format) throws IOException, URISyntaxException {
+        var zipURL = MappingProcessorGeneratorTest.class.getClassLoader().getResource(fileName);
+        assertNotNull(zipURL);
+        try (var zip = JarUtil.createZipFs(Path.of(zipURL.toURI()))) {
+            var c1 = format.read(ContentList.ofLazy(() -> FileUtil.iterateFiles(zip.getPath(""))
+                    .map(LambdaUtil.unwrap(p -> new ContentList.ContentStream(Files.newBufferedReader(p), p.toString()))).iterator()));
+            Path path = tmp.resolve(fileName);
+//            try (var os = Files.newOutputStream(path)) {
+//                format.write(c1, os);
+//            }
+//            try (var reader = Files.newBufferedReader(path)) {
+//                var c2 = format.read(reader);
+//                assertEquals(c1, c2);
+//            }
         }
     }
 }

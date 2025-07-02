@@ -27,15 +27,13 @@ import org.jetbrains.annotations.NotNull;
 
 public enum MCPMappingFormat implements MappingFormat.Unique<PairedMapping> {
     INSTANCE;
+    public static final String METHODS_CSV = "methods.csv";
+    public static final String FIELDS_CSV = "fields.csv";
+    public static final String PARAMS_CSV = "params.csv";
 
     @Override
     public @NotNull String getName() {
         return "mcp";
-    }
-
-    @Override
-    public char getCommentChar() {
-        return '\0';
     }
 
     @Override

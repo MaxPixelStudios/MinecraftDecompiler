@@ -26,14 +26,13 @@ import cn.maxpixel.mcdecompiler.mapping.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.util.List;
 
 import static cn.maxpixel.mcdecompiler.mapping.parchment.ParchmentMappingFormat.*;
 
@@ -46,32 +45,30 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(List<String> content) {
-        return process(new StringListReader(content));
-    }
+    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
+        ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
+        for (var content : contents) {
+            try (JsonReader reader = new JsonReader(content.reader())) {
+                reader.beginObject();
 
-    public ClassifiedMapping<PairedMapping> process(Reader rd) {
-        try (JsonReader reader = new JsonReader(rd)) {
-            reader.beginObject();
-
-            ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
-            while (reader.peek() == JsonToken.NAME) switch (reader.nextName()) {
-                case KEY_VERSION -> {
-                    FormatVersion version = FormatVersion.from(reader.nextString());
-                    if (!FormatVersion.CURRENT.compatibleWith(version)) {
-                        throw new UnsupportedOperationException("Version " + version + " is incompatible with " +
-                                "current version " + FormatVersion.CURRENT);
+                while (reader.peek() == JsonToken.NAME) switch (reader.nextName()) {
+                    case KEY_VERSION -> {
+                        FormatVersion version = FormatVersion.from(reader.nextString());
+                        if (!FormatVersion.CURRENT.compatibleWith(version)) {
+                            throw new UnsupportedOperationException("Version " + version + " is incompatible with " +
+                                    "current version " + FormatVersion.CURRENT);
+                        }
                     }
+                    case KEY_PACKAGES -> handlePackages(reader, mappings);
+                    case KEY_CLASSES -> handleClasses(reader, mappings);
+                    default -> reader.skipValue();
                 }
-                case KEY_PACKAGES -> handlePackages(reader, mappings);
-                case KEY_CLASSES -> handleClasses(reader, mappings);
-                default -> reader.skipValue();
+                reader.endObject();
+            } catch (IOException e) {
+                throw Utils.wrapInRuntime(e);
             }
-            reader.endObject();
-            return mappings;
-        } catch (IOException e) {
-            throw Utils.wrapInRuntime(e);
         }
+        return mappings;
     }
 
     private static @NotNull Documented handleDocs(JsonReader reader) throws IOException {
@@ -203,60 +200,5 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
             }
         }
         reader.endArray();
-    }
-
-    private static class StringListReader extends Reader {
-        private final List<String> l;
-        private int listIndex = 0;
-        private final int listSize;
-        private String s;
-        private int stringIndex = 0;
-        private int stringSize = 0;
-        private boolean closed;
-
-        public StringListReader(List<String> l) {
-            this.l = l;
-            if ((this.listSize = l.size()) > 0) {
-                this.s = l.get(0);
-                this.stringSize = s.length();
-            }
-        }
-
-        @Override
-        public int read(char @NotNull [] cbuf, int off, int len) throws IOException {
-            if (closed) throw new IOException("Reader closed");
-            if (listIndex >= listSize) return -1;
-            int read = 0;
-            while (listIndex < listSize && len > 0) {
-                int remaining = stringSize - stringIndex;
-                if (remaining >= len) {
-                    s.getChars(stringIndex, stringIndex + len, cbuf, off);
-                    stringIndex += len;
-                    read += len;
-                    return read;
-                } else {// remaining <= len - 1
-                    s.getChars(stringIndex, stringSize, cbuf, off);
-                    cbuf[off + remaining] = '\n';
-                    read += remaining + 1;
-                    off += remaining + 1;
-                    len -= remaining + 1;
-                    updateString();
-                }
-            }
-            return read;
-        }
-
-        private void updateString() {
-            if (++listIndex < listSize) {
-                s = l.get(listIndex);
-                stringIndex = 0;
-                stringSize = s.length();
-            }
-        }
-
-        @Override
-        public void close() {
-            closed = true;
-        }
     }
 }

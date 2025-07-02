@@ -23,10 +23,10 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.List;
 import java.util.function.Function;
 
 public enum SrgMappingProcessor implements MappingProcessor.Classified<PairedMapping> {
@@ -41,42 +41,46 @@ public enum SrgMappingProcessor implements MappingProcessor.Classified<PairedMap
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(List<String> content) {
+    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
         Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
-        content.parallelStream().forEach(s -> {
-            String[] strings = MappingUtil.split(s, ' ');
-            switch (strings[0]) {
-                case "CL:" -> {
-                    ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(strings[1], strings[2]));
-                    synchronized (classes) {
-                        classes.putIfAbsent(strings[1], classMapping);
+        for (var content : contents) {
+            try (var lines = preprocess(content.lines().map(this::stripComments))) {
+                lines.parallel().forEach(s -> {
+                    String[] strings = MappingUtils.split(s, ' ');
+                    switch (strings[0]) {
+                        case "CL:" -> {
+                            ClassMapping<PairedMapping> classMapping = new ClassMapping<>(new PairedMapping(strings[1], strings[2]));
+                            synchronized (classes) {
+                                classes.putIfAbsent(strings[1], classMapping);
+                            }
+                        }
+                        case "FD:" -> {
+                            PairedMapping fieldMapping = MappingUtils.Paired.o(getName(strings[1]), getName(strings[2]));
+                            String unmClassName = getClassName(strings[1]);
+                            synchronized (classes) {
+                                classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[2]))
+                                        .addField(fieldMapping);
+                            }
+                        }
+                        case "MD:" -> {
+                            PairedMapping methodMapping = MappingUtils.Paired.d2o(getName(strings[1]), getName(strings[3]), strings[2], strings[4]);
+                            String unmClassName = getClassName(strings[1]);
+                            synchronized (classes) {
+                                classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[3]))
+                                        .addMethod(methodMapping);
+                            }
+                        }
+                        case "PK:" -> {
+                            synchronized (mappings.packages) {
+                                mappings.packages.add(new PairedMapping(strings[1], strings[2]));
+                            }
+                        }
+                        default -> throw new IllegalArgumentException("Is this SRG mapping format?");
                     }
-                }
-                case "FD:" -> {
-                    PairedMapping fieldMapping = MappingUtil.Paired.o(getName(strings[1]), getName(strings[2]));
-                    String unmClassName = getClassName(strings[1]);
-                    synchronized (classes) {
-                        classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[2]))
-                                .addField(fieldMapping);
-                    }
-                }
-                case "MD:" -> {
-                    PairedMapping methodMapping = MappingUtil.Paired.d2o(getName(strings[1]), getName(strings[3]), strings[2], strings[4]);
-                    String unmClassName = getClassName(strings[1]);
-                    synchronized (classes) {
-                        classes.computeIfAbsent(unmClassName, MAPPING_FUNC.apply(strings[3]))
-                                .addMethod(methodMapping);
-                    }
-                }
-                case "PK:" -> {
-                    synchronized (mappings.packages) {
-                        mappings.packages.add(new PairedMapping(strings[1], strings[2]));
-                    }
-                }
-                default -> throw new IllegalArgumentException("Is this a SRG mapping file?");
+                });
             }
-        });
+        }
         mappings.classes.addAll(classes.values());
         return mappings;
     }

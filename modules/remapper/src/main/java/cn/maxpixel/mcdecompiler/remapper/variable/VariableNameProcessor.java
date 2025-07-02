@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.remapper.variable;
 
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.remapper.Deobfuscator;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
@@ -111,10 +111,10 @@ public class VariableNameProcessor extends ClassVisitor {
                 String newName = renameFunction != null ? renameFunction.getName(name, descriptor, signature, start, end,
                         (notStatic && omitThis) ? index - 1 : index) : null;
                 if (regenerate) {
-                    newName = Utils.isStringNotBlank(newName) ? renamer.addExistingName(newName, index) :
+                    newName = MappingUtils.isStringNotBlank(newName) ? renamer.addExistingName(newName, index) :
                             renamer.getVarName(Type.getType(descriptor), index);
                 }
-                super.visitLocalVariable(Utils.isStringNotBlank(newName) ? newName : name, descriptor, signature, start, end, index);
+                super.visitLocalVariable(MappingUtils.isStringNotBlank(newName) ? newName : name, descriptor, signature, start, end, index);
             }
         }
     }

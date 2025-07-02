@@ -28,8 +28,8 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.AccessTransformationTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -119,7 +119,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
     }
 
     private static String nilWhenBlank(String s) {
-        return Utils.isStringNotBlank(s) ? s : NIL;
+        return MappingUtils.isStringNotBlank(s) ? s : NIL;
     }
 
     private static String getDoc(PairedMapping m) {

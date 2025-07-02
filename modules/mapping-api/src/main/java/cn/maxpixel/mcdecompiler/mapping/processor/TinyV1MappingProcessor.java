@@ -24,10 +24,11 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.function.Function;
 
 public enum TinyV1MappingProcessor implements MappingProcessor.Classified<NamespacedMapping> {
@@ -42,41 +43,49 @@ public enum TinyV1MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(List<String> content) {
-        if (!content.get(0).startsWith("v1")) error();
-        String[] namespaces = MappingUtil.split(content.get(0), '\t', 3);
-        var trait = new NamespacedTrait(namespaces);
-        trait.setUnmappedNamespace(namespaces[0]);
-        ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
-        Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: the first namespace, usually unmapped name
-        String k = namespaces[0];
-        content.parallelStream().skip(1).forEach(s -> {
-            String[] sa = MappingUtil.split(s, '\t');
-            if (s.startsWith("CLASS")) {
-                ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa, 1));
-                synchronized (classes) {
-                    classes.merge(sa[1], classMapping, (o, n) -> n.addFields(o.getFields()).addMethods(o.getMethods()));
+    public ClassifiedMapping<NamespacedMapping> process(ContentList contents) throws IOException {
+        try (var reader = contents.getAsSingle().asBufferedReader()) {
+            String firstLine = reader.readLine();
+            if (!firstLine.startsWith("v1")) error();
+            String[] namespaces = MappingUtils.split(firstLine, '\t', 3);
+            var trait = new NamespacedTrait(namespaces);
+            trait.setUnmappedNamespace(namespaces[0]);
+            ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
+            Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: the first namespace, usually unmapped name
+            String k = namespaces[0];
+            preprocess(reader.lines().parallel()).forEach(s -> {
+                String[] sa = MappingUtils.split(s, '\t');
+                switch (sa[0]) {
+                    case "CLASS" -> {
+                        ClassMapping<NamespacedMapping> classMapping = new ClassMapping<>(new NamespacedMapping(namespaces, sa, 1));
+                        synchronized (classes) {
+                            classes.merge(sa[1], classMapping, (o, n) -> n.addFields(o.getFields()).addMethods(o.getMethods()));
+                        }
+                    }
+                    case "FIELD" -> {
+                        NamespacedMapping fieldMapping = MappingUtils.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
+                        synchronized (classes) {
+                            classes.computeIfAbsent(sa[1], MAPPING_FUNC.apply(namespaces))
+                                    .addField(fieldMapping);
+                        }
+                    }
+                    case "METHOD" -> {
+                        NamespacedMapping methodMapping = MappingUtils.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
+                        synchronized (classes) {
+                            classes.computeIfAbsent(sa[1], MAPPING_FUNC.apply(namespaces))
+                                    .addMethod(methodMapping);
+                        }
+                    }
+                    default -> error();
                 }
-            } else if (s.startsWith("FIELD")) {
-                NamespacedMapping fieldMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
-                synchronized (classes) {
-                    classes.computeIfAbsent(sa[1], MAPPING_FUNC.apply(namespaces))
-                            .addField(fieldMapping);
-                }
-            } else if (s.startsWith("METHOD")) {
-                NamespacedMapping methodMapping = MappingUtil.Namespaced.duo(namespaces, sa, 3, k, sa[2]);
-                synchronized (classes) {
-                    classes.computeIfAbsent(sa[1], MAPPING_FUNC.apply(namespaces))
-                            .addMethod(methodMapping);
-                }
-            } else error();
-        });
-        mappings.classes.addAll(classes.values());
-        mappings.updateCollection();
-        return mappings;
+            });
+            mappings.classes.addAll(classes.values());
+            mappings.updateCollection();
+            return mappings;
+        }
     }
 
     private static void error() {
-        throw new IllegalArgumentException("Is this a Tiny v1 mapping file?");
+        throw new IllegalArgumentException("Is this Tiny v1 mapping format?");
     }
 }

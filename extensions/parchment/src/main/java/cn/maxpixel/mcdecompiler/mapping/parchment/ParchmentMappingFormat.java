@@ -19,12 +19,8 @@
 package cn.maxpixel.mcdecompiler.mapping.parchment;
 
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
-import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.BufferedReader;
-import java.util.Objects;
 
 public enum ParchmentMappingFormat implements MappingFormat.Classified<PairedMapping> {
     INSTANCE;
@@ -46,11 +42,6 @@ public enum ParchmentMappingFormat implements MappingFormat.Classified<PairedMap
     }
 
     @Override
-    public char getCommentChar() {
-        return '\0';
-    }
-
-    @Override
     public @NotNull ParchmentMappingProcessor getProcessor() {
         return ParchmentMappingProcessor.INSTANCE;
     }
@@ -58,10 +49,5 @@ public enum ParchmentMappingFormat implements MappingFormat.Classified<PairedMap
     @Override
     public @NotNull ParchmentMappingGenerator getGenerator() {
         return ParchmentMappingGenerator.INSTANCE;
-    }
-
-    @Override
-    public @NotNull ClassifiedMapping<PairedMapping> read(@NotNull BufferedReader reader) {
-        return getProcessor().process(Objects.requireNonNull(reader));
     }
 }

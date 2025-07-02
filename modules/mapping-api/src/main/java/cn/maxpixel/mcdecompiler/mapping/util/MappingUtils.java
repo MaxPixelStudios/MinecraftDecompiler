@@ -24,12 +24,16 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.*;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.Reader;
+import java.util.Objects;
 import java.util.function.Function;
 
-public final class MappingUtil {
-    private MappingUtil() {
+public final class MappingUtils {
+    private MappingUtils() {
         throw new AssertionError("No instances");
     }
 
@@ -89,6 +93,10 @@ public final class MappingUtil {
             return new NamespacedMapping(namespaces, names, new Owned<>());
         }
 
+        public static NamespacedMapping d(String[] namespaces, String[] names) {
+            return new NamespacedMapping(namespaces, names, new Documented());
+        }
+
         public static NamespacedMapping d(String[] namespaces, String[] names, int start) {
             return new NamespacedMapping(namespaces, names, start, new Documented());
         }
@@ -112,6 +120,21 @@ public final class MappingUtil {
         }
     }
 
+    public static String[] splitExact(String s, char c, int len) {
+        int i = s.indexOf(c);
+        if (i == -1) return new String[] { s };
+
+        String[] ret = new String[len];
+        int start = 0, p = 0;
+        for (int j = i; p < len - 1; j = s.indexOf(c, start)) {
+            ret[p++] = s.substring(start, j);
+            start = j + 1;
+        }
+        ret[p] = s.substring(start);
+
+        return ret;
+    }
+
     public static String[] split(String s, char c) {
         return split(s, c, 0);
     }
@@ -131,5 +154,27 @@ public final class MappingUtil {
         ret[n - 1] = s.substring(start);
 
         return ret;
+    }
+
+//    public static <I, O> O[] mapArray(I[] input, IntFunction<O[]> outputGenerator, Function<I, O> func) {
+//        Objects.requireNonNull(func);
+//        O[] output = Objects.requireNonNull(outputGenerator.apply(input.length));
+//        for (int i = 0; i < input.length; i++) {
+//            output[i] = Objects.requireNonNull(func.apply(Objects.requireNonNull(input[i])));
+//        }
+//        return output;
+//    }
+
+    public static boolean isStringNotBlank(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    public static <T> T throwInvalidDescriptor(boolean method) {
+        throw new IllegalArgumentException(method ? "Invalid method descriptor" : "Invalid descriptor");
+    }
+
+    public static BufferedReader asBufferedReader(@NotNull Reader reader) {
+        return Objects.requireNonNull(reader, "reader cannot be null") instanceof BufferedReader br ?
+                br : new BufferedReader(reader);
     }
 }

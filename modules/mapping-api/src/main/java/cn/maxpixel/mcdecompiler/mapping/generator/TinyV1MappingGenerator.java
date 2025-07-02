@@ -25,7 +25,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -58,14 +58,14 @@ public enum TinyV1MappingGenerator implements MappingGenerator.Classified<Namesp
                 lines.add("CLASS\t" + NamingUtil.concatNamespaces(namespaces, classMapping::getName, "\t"));
             }
             cls.getFields().parallelStream().forEach(field -> {
-                String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, field);
+                String desc = MappingUtils.Namespaced.checkTiny(namespace0, cls, field);
                 synchronized (lines) {
                     lines.add("FIELD\t" + classMapping.getName(namespace0) + '\t' + desc + '\t' +
                             NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
                 }
             });
             cls.getMethods().parallelStream().forEach(method -> {
-                String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, method);
+                String desc = MappingUtils.Namespaced.checkTiny(namespace0, cls, method);
                 synchronized (lines) {
                     lines.add("METHOD\t" + classMapping.getName(namespace0) + '\t' + desc + '\t' +
                             NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));

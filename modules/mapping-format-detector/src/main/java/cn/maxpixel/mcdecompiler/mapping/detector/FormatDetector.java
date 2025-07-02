@@ -19,7 +19,7 @@
 package cn.maxpixel.mcdecompiler.mapping.detector;
 
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.io.IOException;

@@ -23,10 +23,12 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
 
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * A processor which processes strings to mappings.
@@ -36,52 +38,41 @@ import java.util.Map;
  * @param <C> Collection type
  */
 public interface MappingProcessor<T extends Mapping, C extends MappingCollection<T>> {
+    Predicate<String> NOT_BLANK = Predicate.not(String::isBlank);
+
     MappingFormat<T, C> getFormat();
 
-    /**
-     * Processes contents(probably of one file) to a mapping collection.
-     *
-     * @param content contents to process
-     * @return processed mapping collection
-     */
-    C process(List<String> content);
+    default String stripComments(String s) {
+        int index = s.indexOf('#');
+        if (index >= 0) return s.substring(0, index);
+        return s;
+    }
 
-    /**
-     * Processes contents(probably of multiple files) and merge them into a single mapping collection.
-     *
-     * @param contents contents to process
-     * @return processed mapping collection
-     */
-    default C process(List<String>... contents) {
-        Object2ObjectOpenHashMap<String, List<String>> map = new Object2ObjectOpenHashMap<>();
-        for (int i = 0; i < contents.length; i++) map.put(String.valueOf(i), contents[i]);
-        return process(map);
+    default Stream<String> preprocess(Stream<String> s) {
+        return s.filter(NOT_BLANK).map(String::stripTrailing);
+    }
+
+    default String getFirstLine(BufferedReader reader) throws IOException {
+        String firstLine = reader.readLine();
+        while (stripComments(firstLine).isBlank()) firstLine = reader.readLine();
+        return firstLine;
     }
 
     /**
-     * Processes contents(probably of multiple files) and merge them into a single mapping collection.
+     * Processes contents and, if supported, merge them into a single mapping collection.
      *
-     * @param contents map of contents to process, with the key usually being the file name or relative path and
-     *                 the value being the content of the file
-     * @return processed mapping collection
+     * @param contents Content tree to process
+     * @throws IOException When IO errors occur
+     * @return a mapping collection
+     * @implNote If your mapping does not support merging, you can call {@link ContentList#getAsSingle()} to convert
+     *      the content tree to a single content, which will throw {@link UnsupportedOperationException} when multiple
+     *      contents are given
      */
-    C process(Map<String, List<String>> contents);// TODO: better ways of merging mapping collections?
+    C process(ContentList contents) throws IOException;
 
     interface Unique<T extends Mapping> extends MappingProcessor<T, UniqueMapping<T>> {
-        @Override
-        default UniqueMapping<T> process(Map<String, List<String>> contents) {
-            UniqueMapping<T> result = new UniqueMapping<>();
-            for (List<String> content : contents.values()) result.add(process(content));
-            return result;
-        }
     }
 
     interface Classified<T extends Mapping> extends MappingProcessor<T, ClassifiedMapping<T>> {
-        @Override
-        default ClassifiedMapping<T> process(Map<String, List<String>> contents) {
-            ClassifiedMapping<T> result = new ClassifiedMapping<>();
-            for (List<String> content : contents.values()) result.add(process(content));
-            return result;
-        }
     }
 }

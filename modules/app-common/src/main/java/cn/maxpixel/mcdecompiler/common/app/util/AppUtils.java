@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2025 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,16 +20,31 @@ package cn.maxpixel.mcdecompiler.common.app.util;
 
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.security.MessageDigest;
 
-public class ProcessUtil {
+public class AppUtils {
+    public static StringBuilder createHashString(MessageDigest md) {
+        StringBuilder out = new StringBuilder();
+        for (byte b : md.digest()) {
+            String hex = Integer.toHexString(Byte.toUnsignedInt(b));
+            if (hex.length() < 2) out.append('0');
+            out.append(hex);
+        }
+        return out;
+    }
+
+    public static String file2Native(@NotNull String fileName) {
+        return fileName.replace('\\', '/').replace(".class", "");
+    }
+
     public static void waitFor(Process pro) {
         Logger logger = LogManager.getLogger("Process PID: " + pro.pid());
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(pro.getInputStream()));
-            BufferedReader err = new BufferedReader(new InputStreamReader(pro.getErrorStream()))) {
+        try (BufferedReader in = pro.inputReader();
+             BufferedReader err = pro.errorReader()) {
             Thread inT = new Thread(() -> {
                 try {
                     String ins;
@@ -37,7 +52,7 @@ public class ProcessUtil {
                 } catch (Throwable e) {
                     logger.warn("Exception thrown", e);
                 }
-            });
+            }, "Process-PID-" + pro.pid() + "-STDOUT-Reader");
             Thread errT = new Thread(() -> {
                 try {
                     String ins;
@@ -45,7 +60,7 @@ public class ProcessUtil {
                 } catch (Throwable e) {
                     logger.warn("Exception thrown", e);
                 }
-            });
+            }, "Process-PID-" + pro.pid() + "-STDERR-Reader");
             inT.setDaemon(true);
             errT.setDaemon(true);
             inT.start();

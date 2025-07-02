@@ -29,10 +29,9 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.MappingUtil;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -64,7 +63,7 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                 if (!content.isBlank()) lines.add("\tc\t" + TinyUtil.escape(content));
             }
             cls.getFields().parallelStream().forEach(field -> {
-                String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, field);
+                String desc = MappingUtils.Namespaced.checkTiny(namespace0, cls, field);
                 synchronized (lines) {
                     lines.add("\tf\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, field::getName, "\t"));
                     var fieldDoc = field.getComponent(Documented.class);
@@ -75,7 +74,7 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                 }
             });
             cls.getMethods().parallelStream().forEach(method -> {
-                String desc = MappingUtil.Namespaced.checkTiny(namespace0, cls, method);
+                String desc = MappingUtils.Namespaced.checkTiny(namespace0, cls, method);
                 synchronized (lines) {
                     lines.add("\tm\t" + desc + '\t' + NamingUtil.concatNamespaces(namespaces, method::getName, "\t"));
                     var methodDoc = method.getComponent(Documented.class);
@@ -91,7 +90,7 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                             NamespacedMapping localVariable = lvt.getLocalVariable(omittedThis ? index + 1 : index);
                             String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
                                 String name = localVariable.getName(namespace);
-                                return Utils.isStringNotBlank(name) ? name : "";
+                                return MappingUtils.isStringNotBlank(name) ? name : "";
                             }, "\t");
                             lines.add("\t\tp\t" + index + '\t' + names);
                             var paramDoc = localVariable.getComponent(Documented.class);

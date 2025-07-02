@@ -18,7 +18,6 @@
 
 package cn.maxpixel.mcdecompiler.mapping.util;
 
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,8 +82,7 @@ public final class NamingUtil {
         }
     }
 
-    // NOTE: Not strictly FIELD_DESC_PATTERN: this allows void/V
-    public static String descriptor2Java(@NotNull @Pattern(MethodOrFieldDesc.FIELD_DESC_PATTERN) String descriptor) {
+    public static String descriptor2Java(@NotNull String descriptor) {
         if (descriptor.isBlank()) return "";
         char c0 = descriptor.charAt(0);
         return switch (c0) {
@@ -111,7 +109,7 @@ public final class NamingUtil {
             case 'J' -> "long";
             case 'S' -> "short";
             case 'V' -> "void";
-            default -> Utils.throwInvalidDescriptor(false);
+            default -> MappingUtils.throwInvalidDescriptor(false);
         };
     }
 }

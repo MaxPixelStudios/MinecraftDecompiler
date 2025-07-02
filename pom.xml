@@ -49,6 +49,7 @@
         <module>modules/app-common</module>
         <module>modules/api</module>
         <module>extensions</module>
+        <module>modules/utils</module>
     </modules>
     <build>
         <pluginManagement>

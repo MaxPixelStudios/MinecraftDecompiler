@@ -62,8 +62,8 @@ public class Decompilers {
                         "source-type is a required property").toUpperCase(Locale.ROOT);
                 String[] args = Objects.requireNonNull(decompilerProperties.getProperty("args"), "args is a required property")
                         .split(" ");
-                return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType), Path.of("decompiler", decompilerPath).
-                        toAbsolutePath().normalize(), ObjectImmutableList.of(args));
+                return new UserDefinedDecompiler(IDecompiler.SourceType.valueOf(sourceType),
+                        Path.of("decompiler", decompilerPath), ObjectImmutableList.of(args));
             } catch (IOException e) {
                 LOGGER.warn("Error occurred when constructing the user-defined decompiler", e);
             }

@@ -20,8 +20,8 @@ package cn.maxpixel.mcdecompiler.mapping.remapper;
 
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
+import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.MethodOrFieldDesc;
-import cn.maxpixel.mcdecompiler.mapping.util.Utils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
@@ -78,11 +78,11 @@ public class UniDescriptorRemapper {
             case 'L' -> {
                 StringBuilder ret = new StringBuilder(desc.length()).append(desc, 0, ++i);
                 int j = desc.indexOf(';', i + 1);// skip 'L' and the first char
-                if (j < 0) Utils.throwInvalidDescriptor(false);
+                if (j < 0) MappingUtils.throwInvalidDescriptor(false);
                 yield ret.append(map ? mapClass(desc.substring(i, j)) : unmapClass(desc.substring(i, j)))
                         .append(desc, j, desc.length()).toString();
             }
-            default -> Utils.throwInvalidDescriptor(false);
+            default -> MappingUtils.throwInvalidDescriptor(false);
         };
     }
 
@@ -97,11 +97,11 @@ public class UniDescriptorRemapper {
                 case 'L' -> {
                     ret.append(desc, start, ++i);
                     start = desc.indexOf(';', i + 1);// skip 'L'(++i) and the first char
-                    if (start < 0) Utils.throwInvalidDescriptor(true);
+                    if (start < 0) MappingUtils.throwInvalidDescriptor(true);
                     ret.append(map ? mapClass(desc.substring(i, start)) : unmapClass(desc.substring(i, start)));
                     i = start;// will do i++, so don't assign `start + 1` here
                 }
-                default -> Utils.throwInvalidDescriptor(true);
+                default -> MappingUtils.throwInvalidDescriptor(true);
             }
         }
         return ret.append(desc, start, desc.length()).toString();
