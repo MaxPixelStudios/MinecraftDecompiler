@@ -20,7 +20,7 @@
         <depend.fernflower.ver>243.22562.218</depend.fernflower.ver>
         <depend.forgeflower.ver>2.0.674.3</depend.forgeflower.ver>
         <depend.vineflower.ver>1.11.1</depend.vineflower.ver>
-        <depend.jbannos.ver>24.0.1</depend.jbannos.ver>
+        <depend.jbannos.ver>26.0.2</depend.jbannos.ver>
         <depend.jmh.ver>1.37</depend.jmh.ver>
         <depend.rewh.ver>0.1</depend.rewh.ver>
     </properties>
