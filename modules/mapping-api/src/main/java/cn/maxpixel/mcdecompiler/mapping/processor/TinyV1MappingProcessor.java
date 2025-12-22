@@ -24,7 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
@@ -43,7 +43,7 @@ public enum TinyV1MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ContentList contents) throws IOException {
+    public ClassifiedMapping<NamespacedMapping> process(InputCollection contents) throws IOException {
         try (var reader = contents.getAsSingle().asBufferedReader()) {
             String firstLine = reader.readLine();
             if (!firstLine.startsWith("v1")) error();
@@ -53,7 +53,7 @@ public enum TinyV1MappingProcessor implements MappingProcessor.Classified<Namesp
             ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
             Object2ObjectOpenHashMap<String, ClassMapping<NamespacedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: the first namespace, usually unmapped name
             String k = namespaces[0];
-            preprocess(reader.lines().parallel()).forEach(s -> {
+            reader.lines().parallel().filter(NOT_BLANK).forEach(s -> {
                 String[] sa = MappingUtils.split(s, '\t');
                 switch (sa[0]) {
                     case "CLASS" -> {

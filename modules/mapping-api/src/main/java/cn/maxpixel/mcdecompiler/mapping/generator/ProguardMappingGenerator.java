@@ -25,7 +25,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Descriptor;
 import cn.maxpixel.mcdecompiler.mapping.component.LineNumber;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -40,7 +40,7 @@ public enum ProguardMappingGenerator implements MappingGenerator.Classified<Pair
     }
 
     @Override
-    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
+    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, MappingRemapper remapper) {
         ObjectArrayList<String> lines = new ObjectArrayList<>();
         if (mappings.classes.isEmpty()) return lines;
         for (ClassMapping<PairedMapping> cls : mappings.classes) {

@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
@@ -36,7 +36,7 @@ public enum CsrgMappingProcessor implements MappingProcessor.Classified<PairedMa
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
+    public ClassifiedMapping<PairedMapping> process(InputCollection contents) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
         Object2ObjectOpenHashMap<String, ClassMapping<PairedMapping>> classes = new Object2ObjectOpenHashMap<>(); // k: unmapped name
         for (var content : contents) {

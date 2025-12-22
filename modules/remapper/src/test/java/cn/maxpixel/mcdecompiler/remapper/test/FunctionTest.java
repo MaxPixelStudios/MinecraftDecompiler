@@ -25,8 +25,12 @@ public class FunctionTest {
     private static final Logger LOGGER = LogManager.getLogger();
 
 //    public static void srg2mcp() throws Throwable {
-//        ClassifiedMapping<PairedMapping> srg = MappingFormats.SRG.read(Files.newBufferedReader(Path.of("downloads/1.8.9/joined.srg")));
-//        UniqueMapping<PairedMapping> mcp = MCP.INSTANCE.read(Files.newBufferedReader(Path.of("downloads/1.9.4/methods.csv")), Files.newBufferedReader(Path.of("downloads/1.9.4/fields.csv")));
+//        ClassifiedMapping<PairedMapping> srg = MappingFormats.SRG.read(Files.newBufferedReader(Path.of("downloads/1.7.10/deobfuscation_data-1.7.10.srg")));
+//        var list = InputCollection.of();
+//        list.add(new InputCollection.Entry(Files.newBufferedReader(Path.of("downloads/1.7.10/methods.csv")), "methods.csv"));
+//        list.add(new InputCollection.Entry(Files.newBufferedReader(Path.of("downloads/1.7.10/fields.csv")), "fields.csv"));
+//        list.add(new InputCollection.Entry(Files.newBufferedReader(Path.of("downloads/1.7.10/params.csv")), "params.csv"));
+//        UniqueMapping<PairedMapping> mcp = MappingFormats.MCP.read(list);
 //        Map<String, String> fields = mcp.fields.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
 //        Map<String, String> methods = mcp.methods.stream().collect(Collectors.toMap(PairedMapping::getUnmappedName, PairedMapping::getMappedName));
 //        ClassifiedMapping<PairedMapping> out = new ClassifiedMapping<>();
@@ -34,7 +38,7 @@ public class FunctionTest {
 //            mapping.mapping.unmappedName = mapping.mapping.mappedName;
 //            mapping.getMethods().forEach(m -> {
 //                m.unmappedName = m.mappedName;
-//                m.getComponent(Descriptor.class).setUnmappedDescriptor(m.getComponent(Descriptor.Mapped.class).mappedDescriptor);
+//                m.getComponent(Descriptor.Unmapped.class).setDescriptor(m.getComponent(Descriptor.Mapped.class).getDescriptor());
 //                m.mappedName = methods.getOrDefault(m.mappedName, m.mappedName);
 //            });
 //            mapping.getFields().forEach(m -> {
@@ -43,7 +47,7 @@ public class FunctionTest {
 //            });
 //            out.classes.add(mapping);
 //        });
-//        try (var os = Files.newOutputStream(Path.of("output/1.9.4-srg2mcp.tsrg"), StandardOpenOption.CREATE)) {
+//        try (var os = Files.newOutputStream(Path.of("output/1.7.10-srg2mcp.tsrg"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 //            MappingFormats.TSRG_V1.write(out, os);
 //        }
 //    }
@@ -137,6 +141,26 @@ public class FunctionTest {
 //        try (var in = Files.newBufferedReader(Path.of("in"));
 //            var out = Files.newBufferedWriter(Path.of("out"))) {
 //            MappingFormats.SRG.write(MappingFormats.TSRG_V1.read(in), out);
+//        }
+
+//        var obf2moj = MappingFormats.PROGUARD.read(new FileReader("downloads/1.21.5/client_mappings.txt"));
+//        var remapper = new ClassifiedMappingRemapper(obf2moj);
+//        var obf_int_yarn = MappingFormats.TINY_V2.read(new FileReader("downloads/1.21.5/mappings.tiny"));
+//        var namespaced = obf_int_yarn.getTrait(NamespacedTrait.class);
+//        namespaced.namespaces.add("mojang");
+//        for (ClassMapping<@NotNull NamespacedMapping> cm : obf_int_yarn.classes) {
+//            String cls = cm.mapping.getUnmappedName();
+//            cm.mapping.setName("mojang", remapper.mapClass(cls));
+//            for (NamespacedMapping fm : cm.getFields()) {
+//                fm.setName("mojang", remapper.mapField(cls, fm.getUnmappedName()));
+//            }
+//            for (NamespacedMapping mm : cm.getMethods()) {
+//                mm.setName("mojang", remapper.mapMethodOrDefault(cls, mm.getUnmappedName(),
+//                        mm.getComponent(Descriptor.Namespaced.class).descriptor));
+//            }
+//        }
+//        try (var writer = Files.newBufferedWriter(Path.of("output/1.21.5_obf_int_yarn_moj.tsrg"))) {
+//            MappingFormats.TSRG_V2.write(obf_int_yarn, writer);
 //        }
     }
 //

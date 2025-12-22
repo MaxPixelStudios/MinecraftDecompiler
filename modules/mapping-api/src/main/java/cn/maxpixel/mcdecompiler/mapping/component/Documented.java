@@ -32,7 +32,7 @@ import java.util.Objects;
  * so {@code \n} and {@code \r} are not allowed. An empty line must be represented by {@code ""}.
  * {@code null} elements are prohibited
  */
-public class Documented implements Component {
+public class Documented implements Component {// TODO: Make doc more standardized
     /**
      * The contents
      */

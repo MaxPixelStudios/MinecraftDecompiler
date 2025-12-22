@@ -22,7 +22,7 @@ import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -36,7 +36,7 @@ public enum CsrgMappingGenerator implements MappingGenerator.Classified<PairedMa
     }
 
     @Override
-    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
+    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, MappingRemapper remapper) {
         ObjectArrayList<String> lines = new ObjectArrayList<>();
         if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
         mappings.classes.parallelStream().forEach(cls -> {

@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.component.*;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public final class MappingUtils {
         public static final Function<String, ClassMapping<PairedMapping>> COMPUTE_DEFAULT_CLASS = name ->
                 new ClassMapping<>(new PairedMapping(name));
 
-        public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, @Nullable ClassifiedMappingRemapper remapper) {
+        public static String checkSlimSrgMethod(ClassMapping<PairedMapping> cls, PairedMapping method, @Nullable MappingRemapper remapper) {
             checkOwner(method.getOwned(), cls);
             if (method.hasComponent(Descriptor.Unmapped.class)) {
                 return method.getComponent(Descriptor.Unmapped.class).descriptor;

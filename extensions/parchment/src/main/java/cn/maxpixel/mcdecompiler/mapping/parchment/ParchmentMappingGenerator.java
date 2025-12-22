@@ -26,7 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.utils.Utils;
 import com.google.gson.stream.JsonWriter;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -43,7 +43,7 @@ public enum ParchmentMappingGenerator implements MappingGenerator.Classified<Pai
     INSTANCE;
 
     @Override
-    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, @Nullable ClassifiedMappingRemapper remapper) {
+    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, @Nullable MappingRemapper remapper) {
         StringListWriter slw = new StringListWriter();// No specialized version of returning String because it's not worth it
         try (JsonWriter writer = new JsonWriter(slw)) {
             writer.setIndent("  ");// 2 spaces

@@ -23,9 +23,13 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.util.OutputCollection;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * A generator which generates mappings to strings.<br>
@@ -37,36 +41,22 @@ import org.jetbrains.annotations.Nullable;
 public interface MappingGenerator<T extends Mapping, C extends MappingCollection<T>> {
     MappingFormat<T, C> getFormat();
 
-    ObjectList<String> generate(C mappings);
-
-    // Just in case that maybe some types of mapping need to generate multiple files
-
-    default boolean requireMultiFiles() {
-        return false;
+    default ObjectList<String> generate(C mappings) {
+        return generate(mappings, null);
     }
 
-    default ObjectList<String>[] generateMulti(C mappings) {
-        throw new UnsupportedOperationException();
+    @ApiStatus.OverrideOnly
+    ObjectList<String> generate(C mappings, @Nullable MappingRemapper remapper);
+
+    default void generateAndWrite(C mappings, OutputCollection out, @Nullable MappingRemapper remapper) throws IOException {
+        try (var unnamed = out.getUnnamedOutput()) {
+            unnamed.write(String.join("\n", generate(mappings, remapper)));
+        }
     }
 
     interface Unique<T extends Mapping> extends MappingGenerator<T, UniqueMapping<T>> {
     }
 
     interface Classified<T extends Mapping> extends MappingGenerator<T, ClassifiedMapping<T>> {
-        @Override
-        default ObjectList<String> generate(ClassifiedMapping<T> mappings) {
-            return generate(mappings, null);
-        }
-
-        ObjectList<String> generate(ClassifiedMapping<T> mappings, @Nullable ClassifiedMappingRemapper remapper);
-
-        @Override
-        default ObjectList<String>[] generateMulti(ClassifiedMapping<T> mappings) {
-            return generateMulti(mappings, null);
-        }
-
-        default ObjectList<String>[] generateMulti(ClassifiedMapping<T> mappings, @Nullable ClassifiedMappingRemapper remapper) {
-            throw new UnsupportedOperationException();
-        }
     }
 }

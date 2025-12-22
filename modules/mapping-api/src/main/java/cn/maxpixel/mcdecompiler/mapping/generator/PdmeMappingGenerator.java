@@ -25,7 +25,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.AccessTransformationTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
@@ -49,7 +49,7 @@ public enum PdmeMappingGenerator implements MappingGenerator.Classified<PairedMa
     }
 
     @Override
-    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
+    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, MappingRemapper remapper) {
         ObjectArrayList<String> lines = new ObjectArrayList<>();
         lines.add("tipo¶original¶nuevo¶def¶pos¶desc");
         if (mappings.classes.isEmpty()) return lines;

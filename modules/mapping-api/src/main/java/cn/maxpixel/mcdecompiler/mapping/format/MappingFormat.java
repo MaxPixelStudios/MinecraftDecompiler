@@ -24,14 +24,12 @@ import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.generator.MappingGenerator;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
+import cn.maxpixel.mcdecompiler.mapping.util.OutputCollection;
 import cn.maxpixel.mcdecompiler.utils.Utils;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -65,7 +63,7 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
 
     default @NotNull C read(@NotNull Reader reader) {
         try {
-            return getProcessor().process(new ContentList.ContentStream(reader));
+            return getProcessor().process(new InputCollection.Entry(reader));
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
@@ -75,7 +73,7 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
         return read(new InputStreamReader(is, StandardCharsets.UTF_8));
     }
 
-    default @NotNull C read(@NotNull ContentList contents) {
+    default @NotNull C read(@NotNull InputCollection contents) {
         try {
             return getProcessor().process(contents);
         } catch (IOException e) {
@@ -84,45 +82,15 @@ public interface MappingFormat<M extends Mapping, C extends MappingCollection<M>
     }
 
     default void write(@NotNull C collection, @NotNull OutputStream os) throws IOException {
-        if (getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use write(OutputStream...) instead.");
-        os.write(String.join("\n", getGenerator().generate(collection)).getBytes(StandardCharsets.UTF_8));
+        write(collection, new OutputStreamWriter(os, StandardCharsets.UTF_8));
     }
 
     default void write(@NotNull C collection, @NotNull Writer writer) throws IOException {
-        if (getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use write(Writer...) instead.");
-        writer.write(String.join("\n", getGenerator().generate(collection)));
+        getGenerator().generateAndWrite(collection, OutputCollection.ofUnnamed(writer), null);
     }
 
-    default void write(@NotNull C collection, @NotNull WritableByteChannel ch) throws IOException {
-        if (getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use write(WritableByteChannel...) instead.");
-        ch.write(ByteBuffer.wrap(String.join("\n", getGenerator().generate(collection)).getBytes(StandardCharsets.UTF_8)));
-    }
-
-    default void write(@NotNull C collection, @NotNull OutputStream... os) throws IOException {
-        if (!getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use write(OutputStream) instead.");
-        ObjectList<String>[] output = getGenerator().generateMulti(collection);
-        if (output.length != os.length) throw new UnsupportedOperationException();
-        for (int i = 0; i < output.length; i++) {
-            os[i].write(String.join("\n", output[i]).getBytes(StandardCharsets.UTF_8));
-        }
-    }
-
-    default void write(@NotNull C collection, @NotNull Writer... writer) throws IOException {
-        if (!getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use write(Writer) instead.");
-        ObjectList<String>[] output = getGenerator().generateMulti(collection);
-        if (output.length != writer.length) throw new UnsupportedOperationException();
-        for (int i = 0; i < output.length; i++) {
-            writer[i].write(String.join("\n", output[i]));
-        }
-    }
-
-    default void write(@NotNull C collection, @NotNull WritableByteChannel... ch) throws IOException {
-        if (!getGenerator().requireMultiFiles()) throw new UnsupportedOperationException("Use write(WritableByteChannel) instead.");
-        ObjectList<String>[] output = getGenerator().generateMulti(collection);
-        if (output.length != ch.length) throw new UnsupportedOperationException();
-        for (int i = 0; i < output.length; i++) {
-            ch[i].write(ByteBuffer.wrap(String.join("\n", output[i]).getBytes(StandardCharsets.UTF_8)));
-        }
+    default void write(@NotNull C collection, @NotNull OutputCollection out) throws IOException {
+        getGenerator().generateAndWrite(collection, out, null);
     }
 
     interface Classified<M extends Mapping> extends MappingFormat<M, ClassifiedMapping<M>> {

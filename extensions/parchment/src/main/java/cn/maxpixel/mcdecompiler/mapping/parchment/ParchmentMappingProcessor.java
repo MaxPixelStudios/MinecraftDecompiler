@@ -26,7 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.processor.MappingProcessor;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.utils.Utils;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -45,7 +45,7 @@ public enum ParchmentMappingProcessor implements MappingProcessor.Classified<Pai
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
+    public ClassifiedMapping<PairedMapping> process(InputCollection contents) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
         for (var content : contents) {
             try (JsonReader reader = new JsonReader(content.reader())) {

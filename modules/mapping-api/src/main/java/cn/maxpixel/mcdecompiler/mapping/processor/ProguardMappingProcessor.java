@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 
@@ -38,7 +38,7 @@ public enum ProguardMappingProcessor implements MappingProcessor.Classified<Pair
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
+    public ClassifiedMapping<PairedMapping> process(InputCollection contents) {
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>();
         for (var content : contents) {
             try (var lines = preprocess(content.lines().map(this::stripComments))) {

@@ -24,7 +24,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.Documented;
 import cn.maxpixel.mcdecompiler.mapping.component.SideSpecific;
 import cn.maxpixel.mcdecompiler.mapping.format.MCPMappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public enum MCPMappingProcessor implements MappingProcessor.Unique<PairedMapping
     }
 
     @Override
-    public UniqueMapping<PairedMapping> process(ContentList contents) throws IOException {
+    public UniqueMapping<PairedMapping> process(InputCollection contents) throws IOException {
         UniqueMapping<PairedMapping> ret = new UniqueMapping<>();
         for (var content : contents) {
             try (var reader = new CSVReader(content.asBufferedReader())) {

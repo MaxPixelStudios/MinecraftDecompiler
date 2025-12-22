@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.collection.UniqueMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -64,11 +64,11 @@ public interface MappingProcessor<T extends Mapping, C extends MappingCollection
      * @param contents Content tree to process
      * @throws IOException When IO errors occur
      * @return a mapping collection
-     * @implNote If your mapping does not support merging, you can call {@link ContentList#getAsSingle()} to convert
+     * @implNote If your mapping does not support merging, you can call {@link InputCollection#getAsSingle()} to convert
      *      the content tree to a single content, which will throw {@link UnsupportedOperationException} when multiple
      *      contents are given
      */
-    C process(ContentList contents) throws IOException;
+    C process(InputCollection contents) throws IOException;
 
     interface Unique<T extends Mapping> extends MappingProcessor<T, UniqueMapping<T>> {
     }

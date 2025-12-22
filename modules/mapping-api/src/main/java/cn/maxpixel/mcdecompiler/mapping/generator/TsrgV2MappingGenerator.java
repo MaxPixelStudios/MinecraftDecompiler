@@ -26,7 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.LocalVariableTable;
 import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
@@ -42,7 +42,7 @@ public enum TsrgV2MappingGenerator implements MappingGenerator.Classified<Namesp
     }
 
     @Override
-    public ObjectList<String> generate(ClassifiedMapping<NamespacedMapping> mappings, ClassifiedMappingRemapper remapper) {
+    public ObjectList<String> generate(ClassifiedMapping<NamespacedMapping> mappings, MappingRemapper remapper) {
         ObjectArrayList<String> lines = new ObjectArrayList<>();
         if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
         var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;

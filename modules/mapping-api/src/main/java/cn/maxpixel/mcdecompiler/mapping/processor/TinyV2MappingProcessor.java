@@ -27,7 +27,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
 
@@ -43,7 +43,7 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ContentList contents) throws IOException {
+    public ClassifiedMapping<NamespacedMapping> process(InputCollection contents) throws IOException {
         try (var reader = contents.getAsSingle().asBufferedReader()) {
             String firstLine = reader.readLine();
             if (!firstLine.startsWith("tiny\t2\t0")) error();
@@ -51,7 +51,7 @@ public enum TinyV2MappingProcessor implements MappingProcessor.Classified<Namesp
             var trait = new NamespacedTrait(namespaces);
             trait.setUnmappedNamespace(namespaces[0]);
             ClassifiedMapping<NamespacedMapping> mappings = new ClassifiedMapping<>(trait);
-            preprocess(reader.lines()).forEach(new Consumer<>() {
+            reader.lines().filter(NOT_BLANK).forEach(new Consumer<>() {
                 private ClassMapping<NamespacedMapping> currentClass;
                 private NamespacedMapping currentMember;
                 private NamespacedMapping currentLocalVariable;

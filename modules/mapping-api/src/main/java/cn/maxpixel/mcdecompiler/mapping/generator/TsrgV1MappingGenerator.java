@@ -23,7 +23,7 @@ import cn.maxpixel.mcdecompiler.mapping.collection.ClassMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
-import cn.maxpixel.mcdecompiler.mapping.remapper.ClassifiedMappingRemapper;
+import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -37,7 +37,7 @@ public enum TsrgV1MappingGenerator implements MappingGenerator.Classified<Paired
     }
 
     @Override
-    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, ClassifiedMappingRemapper remapper) {
+    public ObjectList<String> generate(ClassifiedMapping<PairedMapping> mappings, MappingRemapper remapper) {
         ObjectArrayList<String> lines = new ObjectArrayList<>();
         if (mappings.classes.isEmpty() && mappings.packages.isEmpty()) return lines;
         for (ClassMapping<PairedMapping> cls : mappings.classes) {

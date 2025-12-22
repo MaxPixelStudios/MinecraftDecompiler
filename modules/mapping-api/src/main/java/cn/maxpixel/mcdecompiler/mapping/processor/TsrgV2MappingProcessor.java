@@ -26,7 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.component.StaticIdentifiable;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public enum TsrgV2MappingProcessor implements MappingProcessor.Classified<Namesp
     }
 
     @Override
-    public ClassifiedMapping<NamespacedMapping> process(ContentList contents) throws IOException {
+    public ClassifiedMapping<NamespacedMapping> process(InputCollection contents) throws IOException {
         try (var reader = contents.getAsSingle().asBufferedReader()) {
             String firstLine = getFirstLine(reader);
             if (!firstLine.startsWith("tsrg2")) error();

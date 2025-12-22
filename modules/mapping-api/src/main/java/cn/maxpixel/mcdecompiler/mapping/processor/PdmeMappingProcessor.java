@@ -27,7 +27,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormats;
 import cn.maxpixel.mcdecompiler.mapping.trait.AccessTransformationTrait;
 import cn.maxpixel.mcdecompiler.mapping.trait.InheritanceTrait;
-import cn.maxpixel.mcdecompiler.mapping.util.ContentList;
+import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -43,7 +43,7 @@ public enum PdmeMappingProcessor implements MappingProcessor.Classified<PairedMa
     }
 
     @Override
-    public ClassifiedMapping<PairedMapping> process(ContentList contents) {
+    public ClassifiedMapping<PairedMapping> process(InputCollection contents) {
         InheritanceTrait inheritanceMap = new InheritanceTrait();
         AccessTransformationTrait at = new AccessTransformationTrait();
         ClassifiedMapping<PairedMapping> mappings = new ClassifiedMapping<>(inheritanceMap, at);
