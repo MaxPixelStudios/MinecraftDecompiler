@@ -75,6 +75,10 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
     }
 
     public void deobfuscate() {
+        if (options.skipWhenAbsent() && deobfuscator == null) {
+            LOGGER.info("Skipping deobfuscation as mappings are absent");
+            return;
+        }
         try {
             deobfuscator.deobfuscate(options.inputJar(), options.outputJar());
         } catch (IOException e) {
@@ -92,13 +96,15 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
     public void decompile(String decompilerName, @Nullable Path incrementalJar) {
         var decompiler = Decompilers.get(decompilerName);
         if (decompiler == null) throw new IllegalArgumentException("Decompiler \"" + decompilerName + "\" does not exist");
-        if (Files.notExists(options.outputJar())) deobfuscate();
-        if (deobfuscator.toDecompile.isEmpty()) {
-            LOGGER.info("Nothing to decompile, skipping decompilation");
-            return;
+        if (deobfuscator != null) {
+            if (Files.notExists(options.outputJar())) deobfuscate();
+            if (deobfuscator.toDecompile.isEmpty()) {
+                LOGGER.info("Nothing to decompile, skipping decompilation");
+                return;
+            }
         }
         LOGGER.info("Decompiling using \"{}\"", decompiler.name());
-        var inputJar = options.outputJar();
+        var inputJar = deobfuscator == null ? options.inputJar() : options.outputJar();
         var outputDir = options.outputDecompDir();
         try (FileSystem jarFs = JarUtil.createZipFs(inputJar)) {
             if (incrementalJar == null) FileUtil.deleteIfExists(outputDir);
@@ -110,6 +116,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                 ObjectOpenHashSet<Path> libs = options.bundledLibs().map(ObjectOpenHashSet::new).orElseGet(() ->
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
                 if (incrementalJar != null && decompiler.getSourceType() == IDecompiler.SourceType.DIRECTORY) {
+                    if (deobfuscator == null) throw new UnsupportedOperationException();// FIXME: I guess no one use this, so just throw uoe before refactoring
                     try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar);
                         Stream<Path> paths = FileUtil.iterateFiles(incrementalFs.getPath(""))) {
                         var toDecompile = deobfuscator.toDecompile;
@@ -153,9 +160,12 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                 if (!libs.isEmpty()) lrd.receiveLibs(libs);
             }
             switch (decompiler.getSourceType()) {
-                case DIRECTORY -> {
+                case DIRECTORY -> {// FIXME: temporary solution; needs refactoring
                     Path decompileClasses = Directories.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
-                    deobfuscator.toDecompile.parallelStream().forEach(path -> FileUtil.copyFile(jarFs.getPath(path), decompileClasses.resolve(path)));
+                    if (deobfuscator != null) deobfuscator.toDecompile.parallelStream().forEach(path -> FileUtil.copyFile(jarFs.getPath(path), decompileClasses.resolve(path)));
+                    else try (Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {
+                        s.forEach(p -> FileUtil.copyFile(p, decompileClasses.resolve(p.toString())));
+                    }
                     decompiler.decompile(decompileClasses, outputDir);
                 }
                 case FILE -> decompiler.decompile(inputJar, outputDir);
@@ -184,6 +194,8 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         private boolean reverse;
 
         private String namespaceTarget;
+
+        private boolean skipWhenAbsent;
 
         public OptionBuilder(String version, SideType type) {
             this.version = Objects.requireNonNull(version, "version cannot be null!");
@@ -349,6 +361,11 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
             return this;
         }
 
+        public OptionBuilder skipRemappingWhenMappingsAreAbsent() {
+            this.skipWhenAbsent = true;
+            return this;
+        }
+
         public Options build() {
             if(this.outputJar.getParent().equals(this.outputDecompDir))
                 throw new IllegalArgumentException("The parent directory of outputJar cannot be the same as outputDecomp");
@@ -405,6 +422,11 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                 public Optional<ObjectSet<Path>> bundledLibs() {
                     return bundledLibs;
                 }
+
+                @Override
+                public boolean skipWhenAbsent() {
+                    return skipWhenAbsent;
+                }
             };
         }
     }
@@ -423,7 +445,13 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
                     } else return new ClassifiedDeobfuscator((ClassifiedMapping<PairedMapping>) mappings, deobfuscation());
                 } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
             }
+            if (skipWhenAbsent() && !containsMappings(version(), type())) return null;
             return new ClassifiedDeobfuscator(version(), type(), deobfuscation());
+        }
+
+        private static boolean containsMappings(String version, SideType type) {
+            return VersionManifest.getSync(version).getAsJsonObject("downloads")
+                    .has(type + "_mappings");
         }
 
         DataMap dataMap();
@@ -441,5 +469,7 @@ public class MinecraftDecompiler {// This class is not designed to be reusable
         String namespaceTarget();
 
         Optional<ObjectSet<Path>> bundledLibs();
+
+        boolean skipWhenAbsent();
     }
 }

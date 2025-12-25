@@ -91,6 +91,8 @@ public class MinecraftDecompilerCommandLine {
         ArgumentAcceptingOptionSpec<Path> incrementalDecompilationO = parser.accepts("incremental-decompilation","Try to decompile " +
                 "incrementally. Specify a jar to compare the difference. Only works with decompilers of source type \"DIRECTORY\"")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.FILE_EXISTING));
+        OptionSpecBuilder skipWhenAbsentO = parser.accepts("skip-when-absent",
+                "Skip remapping when mappings are absent");
         AbstractOptionSpec<Void> help = parser.acceptsAll(of("h", "?", "help"), "For help").forHelp();
 
         for (Option option : ExtensionManager.OPTION_REGISTRY.getOptions()) {
@@ -165,6 +167,8 @@ public class MinecraftDecompilerCommandLine {
         options.valueOfOptional(outputDecompO).ifPresent(builder::outputDecomp);
         builder.addExtraJars(options.valuesOf(extraJarsO));
         builder.addExtraClasses(options.valuesOf(extraClassesO));
+
+        if (options.has(skipWhenAbsentO)) builder.skipRemappingWhenMappingsAreAbsent();
 
         MinecraftDecompiler md = new MinecraftDecompiler(builder.build());
         md.deobfuscate();
