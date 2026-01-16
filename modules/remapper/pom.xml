@@ -21,6 +21,11 @@
         </dependency>
         <dependency>
             <groupId>cn.maxpixel.minecraft-decompiler</groupId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.maxpixel.minecraft-decompiler</groupId>
             <artifactId>mapping-api</artifactId>
             <version>${project.version}</version>
         </dependency>
