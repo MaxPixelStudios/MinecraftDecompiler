@@ -60,7 +60,7 @@ public class ClassFileRemapper extends Remapper {
     private Optional<String[]> processSuperMethod(String owner, String name, String descriptor) {// TODO: Optimize this
         return Optional.ofNullable(eci.getSuperNames(owner))
                 .flatMap(superNames -> {
-                    String nameAndDesc = name.concat(descriptor);
+                    String nameAndDesc = name.concat(descriptor);// TODO: Optimize
                     return superNames.parallelStream().map(cls -> {
                         var mapped = remapper.mapMethod(cls, name, descriptor);
                         return mapped == null ? null : new String[] {cls, mapped};

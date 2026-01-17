@@ -29,9 +29,6 @@ import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 public class ClassifiedDeobfuscator extends Deobfuscator<ClassifiedMappingRemapper> {
     public ClassifiedDeobfuscator(String version, SideType side) {
         this(version, side, DeobfuscationOptions.DEFAULT);
@@ -73,11 +70,5 @@ public class ClassifiedDeobfuscator extends Deobfuscator<ClassifiedMappingRemapp
         var namespaces = mappings.getTrait(NamespacedTrait.class).namespaces;
         if (namespaces.size() > 2) throw new IllegalArgumentException("Cannot infer a target namespace. You must manually specify a target namespace.");
         return namespaces.last();
-    }
-
-    @Override
-    public ClassifiedDeobfuscator deobfuscate(Path source, Path target) throws IOException {
-        super.deobfuscate(source, target);
-        return this;
     }
 }

@@ -18,6 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.remapper;
 
+import cn.maxpixel.mcdecompiler.api.Action;
 import cn.maxpixel.mcdecompiler.common.app.util.AppUtils;
 import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
 import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
@@ -43,7 +44,7 @@ import java.util.Set;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
-public abstract class Deobfuscator<T extends MappingRemapper> {
+public abstract class Deobfuscator<T extends MappingRemapper> implements Action {
     public static final int ASM_VERSION = Opcodes.ASM9;
     protected static final Logger LOGGER = LogManager.getLogger();
 
@@ -58,11 +59,12 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
 
     public final ObjectOpenHashSet<String> toDecompile = new ObjectOpenHashSet<>();
 
-    public Deobfuscator<T> deobfuscate(Path source, Path target) throws IOException {
+    @Override
+    public void execute(Path input, Path others, Path output) throws IOException {
         LOGGER.info("Deobfuscating...");
-        Files.deleteIfExists(target);
-        try (FileSystem fs = JarUtil.createZipFs(FileUtil.requireExist(source));
-             FileSystem targetFs = JarUtil.createZipFs(FileUtil.makeParentDirs(target), true);
+        Files.deleteIfExists(output);
+        try (FileSystem fs = JarUtil.createZipFs(input);
+             FileSystem targetFs = JarUtil.createZipFs(FileUtil.makeParentDirs(output), true);
              Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
             Set<String> extraClasses = options.extraClasses;
             boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
@@ -76,7 +78,7 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
                     }), true);
             options.extraJars.forEach(jar -> {
                 try (FileSystem jarFs = JarUtil.createZipFs(jar);
-                    Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {
+                     Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {
                     s.filter(p -> p.toString().endsWith(".class")).forEach(info);
                 } catch (IOException e) {
                     LOGGER.warn("Error reading extra jar: {}", jar, e);
@@ -119,7 +121,6 @@ public abstract class Deobfuscator<T extends MappingRemapper> {
             });
             processor.afterRunning(cfr);
         }
-        return this;
     }
 
     /**

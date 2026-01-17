@@ -1,5 +1,6 @@
 open module cn.maxpixel.mcdecompiler.remapper {
     requires transitive cn.maxpixel.mcdecompiler.common.app;
+    requires transitive cn.maxpixel.mcdecompiler.api;
     requires transitive cn.maxpixel.mcdecompiler.mapping;
 
     requires org.objectweb.asm;
