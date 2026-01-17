@@ -18,9 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.common.app.DecompilerType;
-import cn.maxpixel.mcdecompiler.common.app.Directories;
-import cn.maxpixel.mcdecompiler.common.app.util.DownloadingUtil;
+import cn.maxpixel.mcdecompiler.api.DecompilerType;
+import cn.maxpixel.mcdecompiler.api.Directories;
+import cn.maxpixel.mcdecompiler.api.util.DownloadingUtil;
 import cn.maxpixel.mcdecompiler.decompiler.thread.ExternalJarClassLoader;
 import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
@@ -35,7 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import static cn.maxpixel.mcdecompiler.common.app.Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
+import static cn.maxpixel.mcdecompiler.api.Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
 
 public class VineflowerDecompiler implements IExternalResourcesDecompiler, ILibRecommendedDecompiler {
     private static final String VERSION = Decompilers.getProperty("VineFlower-Version", "vineflower.version");

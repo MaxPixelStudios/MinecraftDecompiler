@@ -1,7 +1,7 @@
 import cn.maxpixel.mcdecompiler.decompiler.*;
 
 open module cn.maxpixel.mcdecompiler.decompiler {
-    requires transitive cn.maxpixel.mcdecompiler.common.app;
+    requires transitive cn.maxpixel.mcdecompiler.api;
 
     requires cn.maxpixel.rewh.logging.core;
     requires it.unimi.dsi.fastutil;

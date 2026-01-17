@@ -19,14 +19,14 @@
 package cn.maxpixel.mcdecompiler.remapper;
 
 import cn.maxpixel.mcdecompiler.api.Action;
-import cn.maxpixel.mcdecompiler.common.app.util.AppUtils;
-import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
-import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
+import cn.maxpixel.mcdecompiler.api.util.AppUtils;
+import cn.maxpixel.mcdecompiler.api.util.FileUtil;
+import cn.maxpixel.mcdecompiler.api.util.IOUtil;
+import cn.maxpixel.mcdecompiler.api.util.JarUtil;
 import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.remapper.processing.ClassFileRemapper;
 import cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor;
 import cn.maxpixel.mcdecompiler.remapper.processing.ExtraClassesInformation;
-import cn.maxpixel.mcdecompiler.remapper.util.IOUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import org.objectweb.asm.ClassReader;
@@ -104,10 +104,6 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
                                 Manifest man = new Manifest(inputStream);
                                 man.getEntries().clear();
                                 man.write(os);
-                                try (OutputStream os2 = Files.newOutputStream(FileUtil
-                                        .makeParentDirs(output.resolve(JarFile.MANIFEST_NAME)))) {
-                                    man.write(os2);
-                                }
                             } else inputStream.transferTo(os);
                         }
                     }

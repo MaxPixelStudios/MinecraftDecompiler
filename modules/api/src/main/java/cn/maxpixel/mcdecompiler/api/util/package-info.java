@@ -1,6 +1,6 @@
 /*
  * MinecraftDecompiler. A tool/library to deobfuscate and decompile jars.
- * Copyright (C) 2019-2024 MaxPixelStudios(XiaoPangxie732)
+ * Copyright (C) 2019-2026 MaxPixelStudios(XiaoPangxie732)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,23 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package cn.maxpixel.mcdecompiler.common.app;
+/**
+ * Internal utilities used by MinecraftDecompiler.
+ */
+@ApiStatus.Internal
+package cn.maxpixel.mcdecompiler.api.util;
 
-import java.nio.file.Path;
-
-public enum DecompilerType {
-    FERNFLOWER,
-    FORGEFLOWER,
-    VINEFLOWER,
-    CFR,
-    USER_DEFINED;
-    @Override
-    public String toString() {
-        return name().toLowerCase();
-    }
-
-    public Path getDownloadedDecompilerPath() {
-        if (this == DecompilerType.USER_DEFINED) throw new UnsupportedOperationException();
-        return Directories.DOWNLOAD_DIR.resolve("decompiler").resolve(this + ".jar");
-    }
-}
+import org.jetbrains.annotations.ApiStatus;

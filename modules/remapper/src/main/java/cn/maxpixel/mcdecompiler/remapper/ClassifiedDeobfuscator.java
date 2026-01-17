@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.remapper;
 
-import cn.maxpixel.mcdecompiler.common.app.SideType;
-import cn.maxpixel.mcdecompiler.common.app.util.DownloadingUtil;
+import cn.maxpixel.mcdecompiler.api.SideType;
+import cn.maxpixel.mcdecompiler.api.util.DownloadingUtil;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;

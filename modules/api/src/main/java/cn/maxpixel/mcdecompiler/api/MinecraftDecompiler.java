@@ -19,9 +19,7 @@
 package cn.maxpixel.mcdecompiler.api;
 
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
-import cn.maxpixel.mcdecompiler.common.app.Directories;
-import cn.maxpixel.mcdecompiler.common.app.SideType;
-import cn.maxpixel.mcdecompiler.common.app.util.*;
+import cn.maxpixel.mcdecompiler.api.util.*;
 import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
 import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;

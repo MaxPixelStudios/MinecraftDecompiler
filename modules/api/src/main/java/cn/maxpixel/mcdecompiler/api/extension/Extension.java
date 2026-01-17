@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.api.extension;
 
-import cn.maxpixel.mcdecompiler.common.app.util.DataMap;
+import cn.maxpixel.mcdecompiler.api.util.DataMap;
 import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;

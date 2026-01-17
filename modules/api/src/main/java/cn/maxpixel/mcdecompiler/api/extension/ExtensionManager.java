@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.api.extension;
 
-import cn.maxpixel.mcdecompiler.common.app.util.DataMap;
+import cn.maxpixel.mcdecompiler.api.util.DataMap;
 import cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor;
 import cn.maxpixel.mcdecompiler.remapper.processing.Process;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;

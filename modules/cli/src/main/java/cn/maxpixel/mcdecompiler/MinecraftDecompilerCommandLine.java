@@ -18,12 +18,12 @@
 
 package cn.maxpixel.mcdecompiler;
 
+import cn.maxpixel.mcdecompiler.api.Constants;
+import cn.maxpixel.mcdecompiler.api.Directories;
 import cn.maxpixel.mcdecompiler.api.MinecraftDecompiler;
+import cn.maxpixel.mcdecompiler.api.SideType;
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.api.extension.Option;
-import cn.maxpixel.mcdecompiler.common.app.Constants;
-import cn.maxpixel.mcdecompiler.common.app.Directories;
-import cn.maxpixel.mcdecompiler.common.app.SideType;
 import cn.maxpixel.mcdecompiler.decompiler.VineflowerDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.detector.FormatDetector;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;

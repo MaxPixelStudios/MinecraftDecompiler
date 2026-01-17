@@ -1,11 +1,12 @@
 open module cn.maxpixel.mcdecompiler.api {
-    requires cn.maxpixel.mcdecompiler.common.app;
-    requires cn.maxpixel.mcdecompiler.utils;
+    requires static transitive org.jetbrains.annotations;
+    requires transitive cn.maxpixel.mcdecompiler.utils;
+    requires transitive com.google.gson;
+    requires java.net.http;
     requires cn.maxpixel.rewh.logging.core;
-    requires com.google.gson;
     requires it.unimi.dsi.fastutil;
-    requires static org.jetbrains.annotations;
 
     exports cn.maxpixel.mcdecompiler.api;
     exports cn.maxpixel.mcdecompiler.api.extension;
+    exports cn.maxpixel.mcdecompiler.api.util;
 }

@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.api;
 
-import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
-import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
+import cn.maxpixel.mcdecompiler.api.util.FileUtil;
+import cn.maxpixel.mcdecompiler.api.util.JarUtil;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;

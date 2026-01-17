@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
+import cn.maxpixel.mcdecompiler.api.util.JarUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

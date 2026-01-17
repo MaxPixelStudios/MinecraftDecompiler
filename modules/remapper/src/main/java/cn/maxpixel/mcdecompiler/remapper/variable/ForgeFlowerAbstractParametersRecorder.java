@@ -18,7 +18,7 @@
 
 package cn.maxpixel.mcdecompiler.remapper.variable;
 
-import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
+import cn.maxpixel.mcdecompiler.api.util.FileUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

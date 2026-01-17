@@ -18,9 +18,9 @@
 
 package cn.maxpixel.mcdecompiler.decompiler;
 
-import cn.maxpixel.mcdecompiler.common.app.Directories;
-import cn.maxpixel.mcdecompiler.common.app.util.AppUtils;
-import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
+import cn.maxpixel.mcdecompiler.api.Directories;
+import cn.maxpixel.mcdecompiler.api.util.AppUtils;
+import cn.maxpixel.mcdecompiler.api.util.FileUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -33,7 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static cn.maxpixel.mcdecompiler.common.app.Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
+import static cn.maxpixel.mcdecompiler.api.Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES;
 
 public class UserDefinedDecompiler implements ILibRecommendedDecompiler {
     public static final String NAME = "user-defined";

@@ -42,7 +42,7 @@
         </dependency>
         <dependency>
             <groupId>cn.maxpixel.minecraft-decompiler</groupId>
-            <artifactId>app-common</artifactId>
+            <artifactId>api</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
