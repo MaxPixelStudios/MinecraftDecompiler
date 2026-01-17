@@ -18,7 +18,12 @@
 
 package cn.maxpixel.mcdecompiler.api;
 
+import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
+import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
+
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface Action {
@@ -31,7 +36,16 @@ public interface Action {
     }
 
     default void executeRaw(Path input, Path others, Path output) throws IOException {
-        execute(input, others, output);
+        try (FileSystem othersFs = JarUtil.createZipFs(FileUtil.makeParentDirs(others), true);
+             FileSystem outputFs = JarUtil.createZipFs(FileUtil.makeParentDirs(output), true)) {
+            if (Files.isDirectory(input)) {
+                execute(input, othersFs.getPath(""), outputFs.getPath(""));
+            } else {
+                try (FileSystem inputFs = JarUtil.createZipFs(input)) {
+                    execute(inputFs.getPath(""), othersFs.getPath(""), outputFs.getPath(""));
+                }
+            }
+        }
     }
 
     /**

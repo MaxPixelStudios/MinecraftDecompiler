@@ -53,7 +53,9 @@ public class JarUtil {
                 try (URLClassLoader loader = new URLClassLoader(new URL[] {location}, null)) {
                     URL url = loader.findResource(JarFile.MANIFEST_NAME);
                     if (url != null) {
-                        return new Manifest(url.openStream());
+                        try (var is = url.openStream()) {
+                            return new Manifest(is);
+                        }
                     }
                 }
             }
