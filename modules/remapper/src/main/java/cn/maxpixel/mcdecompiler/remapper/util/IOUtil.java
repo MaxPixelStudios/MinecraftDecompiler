@@ -23,9 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.InflaterInputStream;
+
+import static java.nio.file.StandardOpenOption.READ;
 
 public class IOUtil {
     private static final Class<?> ZIP_PATH;
@@ -41,7 +45,14 @@ public class IOUtil {
     }
 
     public static byte[] readAllBytes(@NotNull Path file) throws IOException {
-        if (ZIP_PATH != file.getClass()) throw new IllegalArgumentException(); // Ensure this is zipfs path
+        if (ZIP_PATH != file.getClass()) {
+            try (FileChannel fc = FileChannel.open(file, READ)) {
+                var bytes = ByteBuffer.allocate(Math.toIntExact(fc.size()));
+                while (fc.read(bytes) >= 0);// FIXME: >= 0 or > 0 ?
+                if (bytes.remaining() != 0) throw new IllegalStateException("Shouldn't happen");
+                return bytes.array();
+            }
+        }
         try (InputStream is = Files.newInputStream(file)) {
             byte[] bytes = new byte[is.available()];
             if (is instanceof InflaterInputStream) {

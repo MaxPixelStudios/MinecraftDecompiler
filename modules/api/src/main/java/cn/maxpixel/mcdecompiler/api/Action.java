@@ -36,6 +36,7 @@ public interface Action {
     }
 
     default void executeRaw(Path input, Path others, Path output) throws IOException {
+        FileUtil.deleteIfExists(output);
         try (FileSystem othersFs = JarUtil.createZipFs(FileUtil.makeParentDirs(others), true);
              FileSystem outputFs = JarUtil.createZipFs(FileUtil.makeParentDirs(output), true)) {
             if (Files.isDirectory(input)) {
@@ -51,7 +52,7 @@ public interface Action {
     /**
      * Executes the action
      * @param input The input, which behaves as a directory
-     * @param others The input, which behaves as a directory
+     * @param others Put things that shouldn't go to the next action but still matters in the output here. Sililar to a filter.
      * @param output The output, which behaves as a directory
      * @throws IOException When IO exception occurs
      */

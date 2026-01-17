@@ -29,7 +29,6 @@ import cn.maxpixel.mcdecompiler.remapper.processing.ExtraClassesInformation;
 import cn.maxpixel.mcdecompiler.remapper.util.IOUtil;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -41,6 +40,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
@@ -57,19 +57,14 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
         this.processor = new ClassProcessor(options);
     }
 
-    public final ObjectOpenHashSet<String> toDecompile = new ObjectOpenHashSet<>();
-
     @Override
     public void execute(Path input, Path others, Path output) throws IOException {
         LOGGER.info("Deobfuscating...");
-        Files.deleteIfExists(output);
-        try (FileSystem fs = JarUtil.createZipFs(input);
-             FileSystem targetFs = JarUtil.createZipFs(FileUtil.makeParentDirs(output), true);
-             Stream<Path> paths = FileUtil.iterateFiles(fs.getPath(""))) {
+        try (Stream<Path> paths = FileUtil.iterateFiles(input)) {
             Set<String> extraClasses = options.extraClasses;
             boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
-            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap, FileUtil.iterateFiles(fs.getPath(""))
+            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap, FileUtil.iterateFiles(input)
                     .filter(p -> {
                         String ps = p.toString();
                         String k = AppUtils.file2Native(ps);
@@ -86,7 +81,6 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
             });
             ClassFileRemapper cfr = new ClassFileRemapper(remapper, info);
             processor.beforeRunning(cfr);
-            toDecompile.clear();
             paths.forEach(path -> {
                 try {
                     String pathString = path.toString();
@@ -98,20 +92,22 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
                         String s = remapper.mapClass(classKeyName);
                         reader.accept(processor.getVisitor(writer, reader, cfr), 0);
                         String mapped = s != null ? s.concat(".class") : pathString;
-                        synchronized (toDecompile) {
-                            toDecompile.add(mapped);
-                        }
-                        try (OutputStream os = Files.newOutputStream(FileUtil.makeParentDirs(targetFs.getPath(mapped)))) {
+                        try (OutputStream os = Files.newOutputStream(FileUtil.makeParentDirs(output.resolve(mapped)))) {
                             os.write(writer.toByteArray());
                         }
                     } else if (options.includeOthers) {
                         if (pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;
                         try (InputStream inputStream = Files.newInputStream(path);
-                             OutputStream os = Files.newOutputStream(FileUtil.makeParentDirs(targetFs.getPath(pathString)))) {
-                            if (path.endsWith("META-INF/MANIFEST.MF")) {
+                             OutputStream os = Files.newOutputStream(FileUtil
+                                     .makeParentDirs(others.resolve(pathString)))) {
+                            if (path.endsWith(JarFile.MANIFEST_NAME)) {
                                 Manifest man = new Manifest(inputStream);
                                 man.getEntries().clear();
                                 man.write(os);
+                                try (OutputStream os2 = Files.newOutputStream(FileUtil
+                                        .makeParentDirs(output.resolve(JarFile.MANIFEST_NAME)))) {
+                                    man.write(os2);
+                                }
                             } else inputStream.transferTo(os);
                         }
                     }
