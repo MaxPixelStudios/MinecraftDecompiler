@@ -58,20 +58,30 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
     }
 
     @Override
+    public String getName() {
+        return "deobfuscator";
+    }
+
+    @Override
+    public String getDefaultOutputName() {
+        return "deobfuscated.jar";
+    }
+
+    @Override
     public void execute(Path input, Path others, Path output) throws IOException {
         LOGGER.info("Deobfuscating...");
         try (Stream<Path> paths = FileUtil.iterateFiles(input)) {
-            Set<String> extraClasses = options.extraClasses;
+            Set<String> extraClasses = options.extraClasses();
             boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
-            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap, FileUtil.iterateFiles(input)
+            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(input)
                     .filter(p -> {
                         String ps = p.toString();
                         String k = AppUtils.file2Native(ps);
                         return (deobfAll && ps.endsWith(".class")) || remapper.hasClassMapping(k) ||
                                 (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
                     }), true);
-            options.extraJars.forEach(jar -> {
+            options.extraJars().forEach(jar -> {
                 try (FileSystem jarFs = JarUtil.createZipFs(jar);
                      Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {
                     s.filter(p -> p.toString().endsWith(".class")).forEach(info);
@@ -95,7 +105,7 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
                         try (OutputStream os = Files.newOutputStream(FileUtil.makeParentDirs(output.resolve(mapped)))) {
                             os.write(writer.toByteArray());
                         }
-                    } else if (options.includeOthers) {
+                    } else if (options.includeOthers()) {
                         if (pathString.endsWith(".SF") || pathString.endsWith(".RSA")) return;
                         try (InputStream inputStream = Files.newInputStream(path);
                              OutputStream os = Files.newOutputStream(FileUtil

@@ -54,6 +54,18 @@ import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
+/**
+ * The core class of the application.
+ * <p>
+ * This class accepts actions and execute them. Starting the execution, the class will receive an input,
+ * which can either be a jar or a directory, and pass it to actions. The actions will be executed in the
+ * order when they were added. For each action, it will receive input from the output of the previous action,
+ * or the input of this class if it is the first action. Its output will be passed as input to the next action.
+ * When the last action finishes execution, its output will be the output of this class. For each action,
+ * you can request an intermediate output if you need the output of the action. An intermediate output consists of
+ * the output of the action and the others in the state when the action is just finished. The intermediate output
+ * of the last action is also the output of this class
+ */
 public class MinecraftDecompiler {// This class is not designed to be reusable
     private static final Logger LOGGER = LogManager.getLogger();
     static {

@@ -27,14 +27,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface Action {
-    default boolean dirInput() {
-        return false;
+    String getName();
+
+    default String getDefaultOutputName() {
+        return getName() + ".jar";
     }
 
-    default boolean dirOutput() {
-        return false;
-    }
-
+    /**
+     * Executes the action without processing the arguments
+     * @param input The input, which is either a zip file or a directory.
+     * @param others The others zip file. When files shouldn't be passed as input to
+     *               the next action but still matter in the output, put them here.
+     *               They will be merged into the intermediate output. This file is not
+     *               automatically created and should be created by the first action that uses it
+     * @param output The output, which is either a zip file or a directory. Files here will
+     *               become the intermediate output and the input for the next action.
+     *               It should be created by the action itself
+     * @throws IOException When IO exception occurs
+     */
     default void executeRaw(Path input, Path others, Path output) throws IOException {
         FileUtil.deleteIfExists(output);
         try (FileSystem othersFs = JarUtil.createZipFs(FileUtil.makeParentDirs(others), true);
@@ -51,9 +61,12 @@ public interface Action {
 
     /**
      * Executes the action
-     * @param input The input, which behaves as a directory
-     * @param others Put things that shouldn't go to the next action but still matters in the output here. Sililar to a filter.
-     * @param output The output, which behaves as a directory
+     * @param input The input directory
+     * @param others The others directory. When files shouldn't be passed as input to
+     *               the next action but still matter in the output, put them here.
+     *               They will be merged into the intermediate output
+     * @param output The output directory. Files here will become the intermediate output
+     *               and the input for the next action
      * @throws IOException When IO exception occurs
      */
     void execute(Path input, Path others, Path output) throws IOException;

@@ -51,7 +51,7 @@ public class CFRDecompileThread extends Thread {
         options.put(OptionsImpl.OUTPUT_PATH.getName(), target);
         options.put(OptionsImpl.REMOVE_BAD_GENERICS.getName(), "false");
         options.put(OptionsImpl.REMOVE_DEAD_CONDITIONALS.getName(), "false");
-        options.put(OptionsImpl.JAR_FILTER.getName(), "^(net\\.minecraft|com\\.mojang\\.(blaze3d|math|realmsclient))\\.*");
+        options.put(OptionsImpl.JAR_FILTER.getName(), "^(net\\.minecraft|com\\.mojang\\.(blaze3d|math|realmsclient))\\.*");// FIXME: Remove this?
         CfrDriver cfr = new CfrDriver.Builder().withOptions(options).build();
         PrintStream sysErr = System.err;
         System.setErr(new PrintStream(new OutputStream() {

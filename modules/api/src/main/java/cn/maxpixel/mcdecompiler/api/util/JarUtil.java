@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
@@ -44,6 +45,14 @@ public class JarUtil {
     public static FileSystem createZipFs(Path zipPath, boolean create) throws IOException {
         LOGGER.trace("Creating JarFileSystem for \"{}\"", zipPath);
         return JAR_FSP.newFileSystem(zipPath, Map.of("create", create));
+    }
+
+    public static FileSystem createZipFsOrNullIfDir(Path zipPath) throws IOException {
+        return Files.isDirectory(zipPath) ? null : createZipFs(zipPath);
+    }
+
+    public static Path rootOrElse(FileSystem fs, Path orElse) {
+        return fs == null ? orElse : fs.getPath("");
     }
 
     public static Manifest getManifest(Class<?> c) {

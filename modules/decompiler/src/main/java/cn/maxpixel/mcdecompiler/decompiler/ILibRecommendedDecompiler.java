@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 
 /**
- * A decompiler implements this interface is lib-recommended
+ * A decompiler implements this interface is lib-recommended.
+ * @implNote A lib-recommended decompiler should be able to accept both files and directories
  */
 public interface ILibRecommendedDecompiler extends IDecompiler {
     void receiveLibs(@NotNull ObjectSet<Path> libs);

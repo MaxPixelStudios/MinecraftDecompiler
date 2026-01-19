@@ -103,12 +103,12 @@ public final class ClassProcessor {
 
         @Override
         public void beforeRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) {
-            if (options.rvn) recorder.startRecord();
+            if (options.rvn()) recorder.startRecord();
         }
 
         @Override
         public void afterRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) throws IOException {
-            if (options.rvn) recorder.endRecord(Directories.TEMP_DIR.resolve(Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
+            if (options.rvn()) recorder.endRecord(Directories.TEMP_DIR.resolve(Constants.FERNFLOWER_ABSTRACT_PARAMETER_NAMES));
         }
 
         @Override
@@ -131,17 +131,17 @@ public final class ClassProcessor {
                     cv = r;
                     handler.addProvider(r);
                 }
-                cv = new VariableNameProcessor(cv, recorder, handler, cfr.map(className), options.rvn);
+                cv = new VariableNameProcessor(cv, recorder, handler, cfr.map(className), options.rvn());
                 cv = new ClassRemapper(cv, cfr);
                 cv = new IndyRemapper(cv, cfr);
                 ExtraClassesInformation eci = cfr.eci;
                 if (eci.dontRemap.containsKey(className)) {
                     ObjectSet<String> skipped = eci.dontRemap.get(className);
                     if (!skipped.isEmpty()) {
-                        cv = new MixinClassRemapper(cv, cfr.remapper, eci, options.refMap, skipped, className);
+                        cv = new MixinClassRemapper(cv, cfr.remapper, eci, options.refMap(), skipped, className);
                     }
                 } else {
-                    cv = new MixinClassRemapper(cv, cfr.remapper, eci, options.refMap, ObjectSets.emptySet(), className);
+                    cv = new MixinClassRemapper(cv, cfr.remapper, eci, options.refMap(), ObjectSets.emptySet(), className);
                 }
                 return new RuntimeParameterAnnotationFixer(cv, className, access);
             };

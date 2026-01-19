@@ -31,6 +31,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
@@ -48,41 +49,43 @@ public final class FileUtil {
         throw new AssertionError("No instances");
     }
 
-//    public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
-//        if(Files.notExists(source)) {
-//            LOGGER.log(Level.FINER, "Source \"{0}\" does not exist, skipping this operation...", source);
-//            return;
-//        }
-//        if(!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
-//        Path p = source.toAbsolutePath().normalize();
-//        try(Stream<Path> sourceStream = iterateFiles(p)) {
-//            final Path dest;
-//            if(Files.exists(target)) {
-//                if(!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
-//                dest = Files.createDirectories(target.resolve(source.getFileName().toString()));
-//            } else dest = Files.createDirectories(target);
-//            LOGGER.log(Level.FINER, "Coping directory \"{0}\" to \"{1}\"...", new Object[] {source, target});
-//            sourceStream.forEach(path -> {
-//                Path relative = p.relativize(path);
-//                try(InputStream in = Files.newInputStream(path);
-//                    OutputStream out = Files.newOutputStream(ensureFileExist(dest.resolve(relative.toString())), TRUNCATE_EXISTING)) {
-//                    in.transferTo(out);
-//                } catch (IOException e) {
-//                    LOGGER.log(Level.WARNING, "Error coping file \"{0}\"", new Object[] {path, e});
-//                }
-//            });
-//        } catch (IOException e) {
-//            LOGGER.log(Level.WARNING, "Error coping directory", e);
-//        }
-//    }
-
-    public static void copyFile(@NotNull Path source, @NotNull Path target) {
+    public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
         if (Files.notExists(source)) {
             LOGGER.trace("Source \"{}\" does not exist, skipping this operation...", source);
             return;
         }
-        if (Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a file");
-        if (Files.exists(target) && Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
+        if (!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
+        Path p = source.toAbsolutePath().normalize();
+        try (Stream<Path> sourceStream = iterateFiles(p)) {
+            final Path dest;
+            if (Files.exists(target)) {
+                if (!Files.isDirectory(target)) throw new IllegalArgumentException("Target exists and it's not a directory");
+                dest = Files.createDirectories(target.resolve(source.getFileName().toString()));
+            } else dest = Files.createDirectories(target);
+            LOGGER.trace("Coping directory \"{}\" to \"{}\"...", source, target);
+            sourceStream.forEach(path -> {
+                Path relative = p.relativize(path);
+                try (var in = Files.newInputStream(path);
+                    var out = Files.newOutputStream(makeParentDirs(dest.resolve(relative.toString())))) {
+                    in.transferTo(out);
+                } catch (IOException e) {
+                    LOGGER.warn("Error coping file \"{}\"", path, e);
+                }
+            });
+        } catch (IOException e) {
+            LOGGER.warn("Error coping directory", e);
+        }
+    }
+
+    public static void copyFile(@NotNull Path source, @NotNull Path target) {
+        try {
+            if (!Files.readAttributes(source, BasicFileAttributes.class).isRegularFile())
+                throw new IllegalArgumentException("Source isn't a file");
+        } catch (IOException e) {
+            LOGGER.trace("Source \"{}\" does not exist, skipping this operation...", source);
+            throw new RuntimeException(e);
+        }
+        if (Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
         LOGGER.debug("Coping file {} to {} ...", source, target);
         try {
             Files.createDirectories(target.getParent());

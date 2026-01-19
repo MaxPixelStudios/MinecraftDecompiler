@@ -18,8 +18,8 @@
 
 package cn.maxpixel.mcdecompiler.test.mappings;
 
-import cn.maxpixel.mcdecompiler.common.app.util.FileUtil;
-import cn.maxpixel.mcdecompiler.common.app.util.JarUtil;
+import cn.maxpixel.mcdecompiler.api.util.FileUtil;
+import cn.maxpixel.mcdecompiler.api.util.JarUtil;
 import cn.maxpixel.mcdecompiler.mapping.Mapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;

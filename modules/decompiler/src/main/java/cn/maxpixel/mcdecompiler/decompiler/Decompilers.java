@@ -72,7 +72,7 @@ public class Decompilers {
     }
 
     public static IDecompiler get(String name) {
-        return DECOMPILERS.get(name);
+        return DECOMPILERS.get(Objects.requireNonNull(name));
     }
 
     public static String getProperty(String name, String prop) {
