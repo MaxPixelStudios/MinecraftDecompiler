@@ -67,7 +67,7 @@ public class DecompilerAction implements Action {
     @Override
     public void executeRaw(Path input, Path others, Path output) throws IOException {
         try (FileSystem jarFs = JarUtil.createZipFsOrNullIfDir(input)) {
-            Path inputRoot = jarFs == null ? input : jarFs.getPath("");
+            Path inputRoot = JarUtil.rootOrElse(jarFs, input);
             try (var ds = Files.newDirectoryStream(inputRoot)) {
                 if (!ds.iterator().hasNext()) {
                     LOGGER.info("Nothing to decompile, skipping decompilation");
@@ -79,7 +79,7 @@ public class DecompilerAction implements Action {
             Path libDownloadPath = Files.createDirectories(Directories.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize());
             if (decompiler instanceof IExternalResourcesDecompiler erd)
                 erd.extractTo(Directories.TEMP_DIR.toAbsolutePath().normalize());
-            Predicate<Path> incFilter = p -> true;
+            Predicate<Path> incFilter = null;
             if (decompiler instanceof ILibRecommendedDecompiler lrd) {
                 ObjectSet<Path> libs = options.bundledLibs() != null ? options.bundledLibs() :
                         DownloadingUtil.downloadLibraries(options.version(), libDownloadPath);
@@ -102,11 +102,16 @@ public class DecompilerAction implements Action {
                                 if (Files.exists(p2)) {
                                     try {
                                         if (Arrays.equals(IOUtil.readAllBytes(p), IOUtil.readAllBytes(p2))) {
-                                            mayRemove.add(path);
-                                        } else if (fileName.lastIndexOf('$') > 0) {
-                                            possibleInnerClasses.add(path.substring(0, path.indexOf('$',
-                                                    path.lastIndexOf(fileName))));
-                                        } else possibleInnerClasses.add(path);
+                                            synchronized (mayRemove) {
+                                                mayRemove.add(path);
+                                            }
+                                        } else {
+                                            String toAdd = fileName.lastIndexOf('$') > 0 ? path.substring(0,
+                                                    path.indexOf('$', path.lastIndexOf(fileName))) : path;
+                                            synchronized (possibleInnerClasses) {
+                                                possibleInnerClasses.add(toAdd);
+                                            }
+                                        }
                                     } catch (IOException e) {
                                         throw Utils.wrapInRuntime(e);
                                     }
@@ -117,14 +122,9 @@ public class DecompilerAction implements Action {
                         });
                         ObjectOpenHashSet<String> toRemove = new ObjectOpenHashSet<>();
                         for (String entry : mayRemove) {
-                            // A
-                            // A$B
-                            // A$C
-                            int i = entry.indexOf('$');
-                            String key = i >= 0 ? entry.substring(0, i) : entry.substring(0, entry.length() - 6);// Remove ".class"
-                            if (!possibleInnerClasses.contains(key)) {
-                                toRemove.add(entry);
-                            }
+                            int i = entry.indexOf('$', 1);
+                            String key = i > 0 ? entry.substring(0, i) : entry.substring(0, entry.length() - 6);// Remove ".class"
+                            if (!possibleInnerClasses.contains(key)) toRemove.add(entry);
                         }
                         incFilter = p -> !toRemove.contains(inputRoot.relativize(p).toString());
                     }
@@ -135,15 +135,34 @@ public class DecompilerAction implements Action {
             Files.createDirectories(output);
             switch (decompiler.getSourceType()) {
                 case DIRECTORY -> {
-                    Path decompileClasses = Directories.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
-                    try (Stream<Path> s = FileUtil.iterateFiles(inputRoot).filter(incFilter)) {
-                        s.forEach(p -> FileUtil.copyFile(p, decompileClasses.resolve(p.toString())));
+                    if (jarFs == null && incFilter == null) {
+                        decompiler.decompile(input, output);
+                    } else {
+                        Path decompileClasses = Directories.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
+                        try (Stream<Path> s = optFilter(FileUtil.iterateFiles(inputRoot), incFilter)) {
+                            s.forEach(p -> FileUtil.copyFile(p, decompileClasses.resolve(inputRoot.relativize(p).toString())));
+                        }
+                        decompiler.decompile(decompileClasses, output);
                     }
-                    decompiler.decompile(decompileClasses, output);
                 }
-                case FILE -> decompiler.decompile(input, output);// FIXME: input may be a directory
+                case FILE -> {
+                    if (jarFs != null && incFilter == null) {
+                        decompiler.decompile(input, output);
+                    } else {
+                        Path decompileClasses = Directories.TEMP_DIR.resolve("decompileClasses.jar").toAbsolutePath().normalize();
+                        try (Stream<Path> s = optFilter(FileUtil.iterateFiles(inputRoot), incFilter);
+                             FileSystem fs = JarUtil.createZipFs(FileUtil.makeParentDirs(decompileClasses), true)) {
+                            s.forEach(p -> FileUtil.copyFile(p, fs.getPath(inputRoot.relativize(p).toString())));
+                        }
+                        decompiler.decompile(decompileClasses, output);
+                    }
+                }
             }
         }
+    }
+
+    private static Stream<Path> optFilter(Stream<Path> s, Predicate<Path> p) {
+        return p == null ? s : s.filter(p);
     }
 
     @Override

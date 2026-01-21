@@ -43,6 +43,7 @@ public interface Action {
      * @param output The output, which is either a zip file or a directory. Files here will
      *               become the intermediate output and the input for the next action.
      *               It should be created by the action itself
+     * @apiNote All paths passed to this method should be absolute and normalized
      * @throws IOException When IO exception occurs
      */
     default void executeRaw(Path input, Path others, Path output) throws IOException {
@@ -67,6 +68,7 @@ public interface Action {
      *               They will be merged into the intermediate output
      * @param output The output directory. Files here will become the intermediate output
      *               and the input for the next action
+     * @apiNote All paths passed to this method should be absolute and normalized
      * @throws IOException When IO exception occurs
      */
     void execute(Path input, Path others, Path output) throws IOException;
