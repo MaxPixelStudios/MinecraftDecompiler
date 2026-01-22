@@ -132,7 +132,8 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
         this.remapper = null;
     }
 
-    public void release() {
+    @Override
+    public void close() {
         releaseRemapper();
     }
 }

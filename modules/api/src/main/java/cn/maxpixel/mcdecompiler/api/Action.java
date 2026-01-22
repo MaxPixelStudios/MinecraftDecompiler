@@ -26,7 +26,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public interface Action {
+public interface Action extends AutoCloseable {
     String getName();
 
     default String getDefaultOutputName() {
@@ -39,23 +39,21 @@ public interface Action {
      * @param others The others zip file. When files shouldn't be passed as input to
      *               the next action but still matter in the output, put them here.
      *               They will be merged into the intermediate output. This file is not
-     *               automatically created and should be created by the first action that uses it
+     *               automatically created and should be created by the action itself
      * @param output The output, which is either a zip file or a directory. Files here will
      *               become the intermediate output and the input for the next action.
      *               It should be created by the action itself
      * @apiNote All paths passed to this method should be absolute and normalized
      * @throws IOException When IO exception occurs
      */
-    default void executeRaw(Path input, Path others, Path output) throws IOException {
+    default void executeRaw(Path input, Path others, Path output) throws Exception {
         FileUtil.deleteIfExists(output);
         try (FileSystem othersFs = JarUtil.createZipFs(FileUtil.makeParentDirs(others), true);
              FileSystem outputFs = JarUtil.createZipFs(FileUtil.makeParentDirs(output), true)) {
             if (Files.isDirectory(input)) {
                 execute(input, othersFs.getPath(""), outputFs.getPath(""));
-            } else {
-                try (FileSystem inputFs = JarUtil.createZipFs(input)) {
-                    execute(inputFs.getPath(""), othersFs.getPath(""), outputFs.getPath(""));
-                }
+            } else try (FileSystem inputFs = JarUtil.createZipFs(input)) {
+                execute(inputFs.getPath(""), othersFs.getPath(""), outputFs.getPath(""));
             }
         }
     }
@@ -71,5 +69,12 @@ public interface Action {
      * @apiNote All paths passed to this method should be absolute and normalized
      * @throws IOException When IO exception occurs
      */
-    void execute(Path input, Path others, Path output) throws IOException;
+    void execute(Path input, Path others, Path output) throws Exception;
+
+    /**
+     * Clean the things up to save memory if your action holds big objects
+     */
+    @Override
+    default void close() throws Exception {// TODO: Should throwing exceptions be allowed?
+    }
 }

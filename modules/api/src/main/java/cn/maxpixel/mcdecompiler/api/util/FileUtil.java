@@ -50,11 +50,12 @@ public final class FileUtil {
     }
 
     public static void copyDirectory(@NotNull Path source, @NotNull Path target) {
-        if (Files.notExists(source)) {
-            LOGGER.trace("Source \"{}\" does not exist, skipping this operation...", source);
-            return;
+        try {
+            if (!Files.readAttributes(source, BasicFileAttributes.class).isDirectory())
+                throw new IllegalArgumentException("Source isn't a directory");
+        } catch (IOException e) {
+            LOGGER.trace("Source \"{}\" isn't sure to exist, skipping this operation...", source);
         }
-        if (!Files.isDirectory(source)) throw new IllegalArgumentException("Source isn't a directory");
         Path p = source.toAbsolutePath().normalize();
         try (Stream<Path> sourceStream = iterateFiles(p)) {
             final Path dest;
@@ -82,8 +83,7 @@ public final class FileUtil {
             if (!Files.readAttributes(source, BasicFileAttributes.class).isRegularFile())
                 throw new IllegalArgumentException("Source isn't a file");
         } catch (IOException e) {
-            LOGGER.trace("Source \"{}\" does not exist, skipping this operation...", source);
-            throw new RuntimeException(e);
+            LOGGER.trace("Source \"{}\" isn't sure to exist, skipping this operation...", source);
         }
         if (Files.isDirectory(target)) target = target.resolve(source.getFileName().toString());
         LOGGER.debug("Coping file {} to {} ...", source, target);

@@ -20,10 +20,6 @@ package cn.maxpixel.mcdecompiler.api;
 
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.api.util.*;
-import cn.maxpixel.mcdecompiler.decompiler.Decompilers;
-import cn.maxpixel.mcdecompiler.decompiler.IDecompiler;
-import cn.maxpixel.mcdecompiler.decompiler.IExternalResourcesDecompiler;
-import cn.maxpixel.mcdecompiler.decompiler.ILibRecommendedDecompiler;
 import cn.maxpixel.mcdecompiler.mapping.NamespacedMapping;
 import cn.maxpixel.mcdecompiler.mapping.PairedMapping;
 import cn.maxpixel.mcdecompiler.mapping.collection.ClassifiedMapping;
@@ -31,7 +27,6 @@ import cn.maxpixel.mcdecompiler.mapping.collection.MappingCollection;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.remapper.ClassifiedDeobfuscator;
 import cn.maxpixel.mcdecompiler.remapper.DeobfuscationOptions;
-import cn.maxpixel.mcdecompiler.remapper.util.IOUtil;
 import cn.maxpixel.mcdecompiler.utils.LambdaUtil;
 import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
@@ -45,14 +40,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
+
+import static it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair.of;
 
 /**
  * The core class of the application.
@@ -61,127 +57,94 @@ import java.util.stream.Stream;
  * which can either be a jar or a directory, and pass it to actions. The actions will be executed in the
  * order when they were added. For each action, it will receive input from the output of the previous action,
  * or the input of this class if it is the first action. Its output will be passed as input to the next action.
- * When the last action finishes execution, its output will be the output of this class. For each action,
- * you can request an intermediate output if you need the output of the action. An intermediate output consists of
- * the output of the action and the others in the state when the action is just finished. The intermediate output
- * of the last action is also the output of this class
+ * You can request an intermediate output if you need the output of the action. An intermediate output consists of
+ * the output of the action and the others in the state when the action is just finished.
  */
-public class MinecraftDecompiler {// This class is not designed to be reusable
+public class MinecraftDecompiler {
     private static final Logger LOGGER = LogManager.getLogger();
     static {
         ExtensionManager.init();
-    }
-
-    private final Options options;
-    private final ClassifiedDeobfuscator deobfuscator;
-
-    static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.deleteIfExists(Directories.TEMP_DIR)));
     }
 
-    public MinecraftDecompiler(Options options) {
-        this.options = options;
-        this.deobfuscator = options.buildDeobfuscator();
+    private final ObjectArrayList<ObjectObjectImmutablePair<Action, Optional<Path>>> actions = new ObjectArrayList<>();
+
+    public void add(Action action) {
+        add(action, false);
     }
 
-    public void deobfuscate() {
-        if (options.skipWhenAbsent() && deobfuscator == null) {
-            LOGGER.info("Skipping deobfuscation as mappings are absent");
-            return;
-        }
-        try {
-            deobfuscator.deobfuscate(options.inputJar(), options.outputJar());
-        } catch (IOException e) {
-            LOGGER.fatal("Error deobfuscating", e);
-            throw Utils.wrapInRuntime(e);
-        } finally {
-            deobfuscator.release();// clean up the memory for decompilation
-        }
+    public void add(int i, Action action) {
+        add(i, action, false);
     }
 
-    public void decompile(String decompilerName) {
-        decompile(decompilerName, null);
+    public void add(Action action, boolean createIntermediateOutput) {
+        actions.add(of(Objects.requireNonNull(action, "Action cannot be null"),
+                createIntermediateOutput ? Optional.empty() : null));
     }
 
-    public void decompile(String decompilerName, @Nullable Path incrementalJar) {
-        var decompiler = Decompilers.get(decompilerName);
-        if (decompiler == null) throw new IllegalArgumentException("Decompiler \"" + decompilerName + "\" does not exist");
-        if (deobfuscator != null) {
-            if (Files.notExists(options.outputJar())) deobfuscate();
-            if (deobfuscator.toDecompile.isEmpty()) {
-                LOGGER.info("Nothing to decompile, skipping decompilation");
-                return;
+    public void add(int i, Action action, boolean createIntermediateOutput) {
+        actions.add(i, of(Objects.requireNonNull(action, "Action cannot be null"),
+                createIntermediateOutput ? Optional.empty() : null));
+    }
+
+    public void add(Action action, Path intermediateOutput) {
+        actions.add(of(Objects.requireNonNull(action, "Action cannot be null"),
+                Optional.of(intermediateOutput)));
+    }
+
+    public void add(int i, Action action, Path intermediateOutput) {
+        actions.add(i, of(Objects.requireNonNull(action, "Action cannot be null"),
+                Optional.of(intermediateOutput)));
+    }
+
+    public void execute(Path input) throws Exception {
+        Path actionInput = input.toAbsolutePath().normalize();
+        Path others = Directories.TEMP_DIR.resolve("others.jar").toAbsolutePath().normalize();
+        for (int i = 0; i < actions.size(); i++) {
+            var pair = actions.get(i);
+            var action = pair.left();
+            Path output = Directories.TEMP_DIR.resolve(action.getDefaultOutputName()).toAbsolutePath().normalize();
+            try {
+                action.executeRaw(actionInput, others, output);
+            } catch (Exception e) {
+                LOGGER.fatal("Error when executing action \"{}\"", action.getName(), e);
+                for (int j = i; j < actions.size(); j++) try {
+                    actions.get(j).left().close();
+                } catch (Exception ex) {
+                    LOGGER.warn("Error when cleaning up action \"{}\"", action.getName(), ex);
+                    e.addSuppressed(ex);
+                }
+                throw e;
             }
-        }
-        LOGGER.info("Decompiling using \"{}\"", decompiler.name());
-        var inputJar = deobfuscator == null ? options.inputJar() : options.outputJar();
-        var outputDir = options.outputDecompDir();
-        try (FileSystem jarFs = JarUtil.createZipFs(inputJar)) {
-            if (incrementalJar == null) FileUtil.deleteIfExists(outputDir);
-            Files.createDirectories(outputDir);
-            Path libDownloadPath = Files.createDirectories(Directories.DOWNLOAD_DIR.resolve("libs").toAbsolutePath().normalize());
-            if (decompiler instanceof IExternalResourcesDecompiler erd)
-                erd.extractTo(Directories.TEMP_DIR.toAbsolutePath().normalize());
-            if (decompiler instanceof ILibRecommendedDecompiler lrd) {
-                ObjectOpenHashSet<Path> libs = options.bundledLibs().map(ObjectOpenHashSet::new).orElseGet(() ->
-                        DownloadingUtil.downloadLibraries(options.version(), libDownloadPath));
-                if (incrementalJar != null && decompiler.getSourceType() == IDecompiler.SourceType.DIRECTORY) {
-                    if (deobfuscator == null) throw new UnsupportedOperationException();// FIXME: I guess no one use this, so just throw uoe before refactoring
-                    try (FileSystem incrementalFs = JarUtil.createZipFs(incrementalJar);
-                        Stream<Path> paths = FileUtil.iterateFiles(incrementalFs.getPath(""))) {
-                        var toDecompile = deobfuscator.toDecompile;
-                        ObjectOpenHashSet<String> possibleInnerClasses = new ObjectOpenHashSet<>();
-                        ObjectOpenHashSet<String> maybeRemoved = new ObjectOpenHashSet<>();
-                        paths.forEach(p -> {
-                            String path = p.toString();
-                            if (path.endsWith(".class")) {
-                                String fileName = p.getFileName().toString();
-                                if (toDecompile.contains(path)) {
-                                    try {
-                                        MessageDigest md = MessageDigest.getInstance("SHA-1");
-                                        md.update(IOUtil.readAllBytes(p));
-                                        StringBuilder hashA = AppUtils.createHashString(md);
-
-                                        md.update(IOUtil.readAllBytes(jarFs.getPath(path)));
-                                        StringBuilder hashB = AppUtils.createHashString(md);
-                                        if (hashA.compareTo(hashB) == 0) {
-                                            maybeRemoved.add(path);
-                                        } else if (fileName.lastIndexOf('$') > 0) {
-                                            possibleInnerClasses.add(fileName.substring(0, fileName.indexOf('$')));
-                                        }
-                                    } catch (IOException | NoSuchAlgorithmException e) {
-                                        throw Utils.wrapInRuntime(e);
-                                    }
-                                } else { // deleted classes(delete java files here)
-                                    FileUtil.deleteIfExists(outputDir.resolve(path.replace(".class", ".java")));
-                                }
-                            }
-                        });
-                        for (String entry : maybeRemoved) {
-                            int i = entry.indexOf('$');
-                            String key = i >= 0 ? entry.substring(0, i) : entry.substring(0, entry.length() - 6);// Remove ".class"
-                            if (!possibleInnerClasses.contains(key) && (i < 0 || maybeRemoved.contains(key + ".class"))) {
-                                toDecompile.remove(entry);
-                            }
+            try {
+                action.close();
+            } catch (Exception e) {
+                LOGGER.warn("Error when cleaning up action \"{}\"", action.getName(), e);
+            }
+            if (pair.right() != null) {
+                Path intermediateOutput = pair.right().orElseGet(() -> {
+                    String inName = input.getFileName().toString();
+                    return Path.of(inName.substring(0, inName.lastIndexOf('.')) + '_' +
+                            action.getDefaultOutputName());
+                });
+                try {
+                    FileUtil.deleteIfExists(intermediateOutput);
+                    if (Files.isDirectory(output)) FileUtil.copyDirectory(output, intermediateOutput);
+                    else try (FileSystem ofs = JarUtil.createZipFs(output)) {
+                        FileUtil.copyDirectory(ofs.getPath(""), intermediateOutput);
+                    }
+                    try (FileSystem ofs = JarUtil.createZipFs(others);
+                         DirectoryStream<Path> ds = Files.newDirectoryStream(ofs.getPath(""))) {
+                        for (var entry : ds) {
+                            FileUtil.copyDirectory(entry, intermediateOutput);
                         }
                     }
-                    libs.add(inputJar);
+                } catch (Exception e) {
+                    LOGGER.error("Error when generating intermediate output for action \"{}\" at \"{}\"",
+                            action.getName(), intermediateOutput.toAbsolutePath().normalize(), e);
                 }
-                if (!libs.isEmpty()) lrd.receiveLibs(libs);
             }
-            switch (decompiler.getSourceType()) {
-                case DIRECTORY -> {// FIXME: temporary solution; needs refactoring
-                    Path decompileClasses = Directories.TEMP_DIR.resolve("decompileClasses").toAbsolutePath().normalize();
-                    if (deobfuscator != null) deobfuscator.toDecompile.parallelStream().forEach(path -> FileUtil.copyFile(jarFs.getPath(path), decompileClasses.resolve(path)));
-                    else try (Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {
-                        s.forEach(p -> FileUtil.copyFile(p, decompileClasses.resolve(p.toString())));
-                    }
-                    decompiler.decompile(decompileClasses, outputDir);
-                }
-                case FILE -> decompiler.decompile(inputJar, outputDir);
-            }
-        } catch (IOException e) {
-            LOGGER.fatal("Error when decompiling", e);
+            actionInput = output;
         }
     }
 
