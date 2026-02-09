@@ -23,7 +23,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 
 import java.io.IOException;
-import java.util.function.Function;
+import java.nio.file.Path;
 
 public interface Process {
     enum Run {
@@ -37,13 +37,13 @@ public interface Process {
         AFTER
     }
 
-    String getName();// may have uses in the future, or may be removed
+    String getName();// TODO: may have uses in the future, or may be removed
 
-    default void beforeRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) throws IOException {
+    default void beforeRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper, Path input) throws IOException {// TODO: Final design to be determined
     }
 
     default void afterRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) throws IOException {
     }
 
-    Function<ClassVisitor, ClassVisitor> getVisitor(DeobfuscationOptions options, ClassReader reader, ClassFileRemapper cfr);
+    ClassVisitor getVisitor(DeobfuscationOptions options, ClassReader reader, ClassFileRemapper cfr, ClassVisitor parent);
 }

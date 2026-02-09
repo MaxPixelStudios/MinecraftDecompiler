@@ -18,15 +18,13 @@
 
 package cn.maxpixel.mcdecompiler.remapper;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
 
 public record DeobfuscationOptions(boolean includeOthers, boolean rvn, boolean reverse, Set<Path> extraJars,
-                                   Set<String> extraClasses, Map<String, Map<String, String>> refMap) {
+                                   Set<String> extraClasses) {
     public static final DeobfuscationOptions DEFAULT = new DeobfuscationOptions();
 
     public DeobfuscationOptions() {
@@ -34,6 +32,6 @@ public record DeobfuscationOptions(boolean includeOthers, boolean rvn, boolean r
     }
 
     public DeobfuscationOptions(boolean includeOthers, boolean rvn, boolean reverse) {
-        this(includeOthers, rvn, reverse, ObjectSets.emptySet(), ObjectSets.emptySet(), Object2ObjectMaps.emptyMap());
+        this(includeOthers, rvn, reverse, ObjectSets.emptySet(), ObjectSets.emptySet());
     }
 }

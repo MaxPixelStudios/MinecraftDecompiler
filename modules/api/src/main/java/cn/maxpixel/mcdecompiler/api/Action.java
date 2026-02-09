@@ -34,6 +34,13 @@ public interface Action extends AutoCloseable {
     }
 
     /**
+     * Preprocess the things before any action has begun
+     * @param input The input directory
+     */
+    default void preprocess(Path input) throws Exception {
+    }
+
+    /**
      * Executes the action without processing the arguments
      * @param input The input, which is either a zip file or a directory.
      * @param others The others zip file. When files shouldn't be passed as input to

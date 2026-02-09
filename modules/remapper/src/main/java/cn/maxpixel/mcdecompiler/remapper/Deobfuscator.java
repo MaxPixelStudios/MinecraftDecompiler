@@ -74,7 +74,7 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
             Set<String> extraClasses = options.extraClasses();
             boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
-            ExtraClassesInformation info = new ExtraClassesInformation(options.refMap(), FileUtil.iterateFiles(input)
+            ExtraClassesInformation info = new ExtraClassesInformation(refMap, FileUtil.iterateFiles(input)// FIXME
                     .filter(p -> {
                         String ps = p.toString();
                         String k = AppUtils.file2Native(ps);
@@ -90,7 +90,7 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
                 }
             });
             ClassFileRemapper cfr = new ClassFileRemapper(remapper, info);
-            processor.beforeRunning(cfr);
+            processor.beforeRunning(cfr, input);
             paths.forEach(path -> {
                 try {
                     String pathString = path.toString();

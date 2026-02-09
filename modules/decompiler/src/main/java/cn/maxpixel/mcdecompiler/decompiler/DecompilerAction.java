@@ -27,10 +27,13 @@ import cn.maxpixel.mcdecompiler.api.util.JarUtil;
 import cn.maxpixel.mcdecompiler.utils.Utils;
 import cn.maxpixel.rewh.logging.LogManager;
 import cn.maxpixel.rewh.logging.Logger;
+import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,6 +46,7 @@ public class DecompilerAction implements Action {
 
     private final IDecompiler decompiler;
     private final DecompilationOptions options;
+    private String version;
 
     public DecompilerAction() {
         this(DecompilationOptions.DEFAULT);
@@ -65,6 +69,17 @@ public class DecompilerAction implements Action {
     }
 
     @Override
+    public void preprocess(Path input) throws Exception {
+        if (options.version() == null) {
+            try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(
+                    input.resolve("version.json")), StandardCharsets.UTF_8)) {
+                this.version = JsonParser.parseReader(isr).getAsJsonObject().get("id").getAsString();
+            } catch (IOException ignored) {
+            }
+        } else this.version = options.version();
+    }
+
+    @Override
     public void executeRaw(Path input, Path others, Path output) throws IOException {
         try (FileSystem jarFs = JarUtil.createZipFsOrNullIfDir(input)) {
             Path inputRoot = JarUtil.rootOrElse(jarFs, input);
@@ -82,7 +97,7 @@ public class DecompilerAction implements Action {
             Predicate<Path> incFilter = null;
             if (decompiler instanceof ILibRecommendedDecompiler lrd) {
                 ObjectSet<Path> libs = options.bundledLibs() != null ? options.bundledLibs() :
-                        DownloadingUtil.downloadLibraries(options.version(), libDownloadPath);
+                        DownloadingUtil.downloadLibraries(version, libDownloadPath);
                 if (options.incrementalInput() != null && options.incrementalOutput() != null &&
                         decompiler.getSourceType() == IDecompiler.SourceType.DIRECTORY) {// TODO: Test if this works
                     var incIn = options.incrementalInput();

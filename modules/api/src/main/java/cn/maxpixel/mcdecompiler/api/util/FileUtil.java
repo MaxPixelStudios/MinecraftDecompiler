@@ -27,14 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -182,5 +181,32 @@ public final class FileUtil {
             LOGGER.warn("Hmm... You need a SHA-1 digest implementation");
             return false;
         }
+    }
+
+    public static Path extractBundle(Path inputJar, Path extractDir, Set<Path> libs) {
+        try (FileSystem jarFs = JarUtil.createZipFsOrNullIfDir(requireExist(inputJar))) {
+            if (jarFs != null && Files.exists(jarFs.getPath("/net/minecraft/bundler/Main.class"))) {
+                Path metaInf = jarFs.getPath("META-INF");
+                List<String> jar = Files.readAllLines(metaInf.resolve("versions.list"));
+                if (jar.size() == 1) {
+                    Path versionPath = metaInf.resolve("versions").resolve(jar.get(0).split("\t")[2]);
+                    Files.createDirectories(extractDir);
+                    copyFile(versionPath, extractDir);
+                    try (Stream<String> lines = Files.lines(metaInf.resolve("libraries.list"))) {
+                        Path libraries = metaInf.resolve("libraries");
+                        lines.forEach(line -> {
+                            Path lib = libraries.resolve(line.split("\t")[2]);
+                            copyFile(lib, extractDir);
+                            libs.add(extractDir.resolve(lib.getFileName().toString()));
+                        });
+                    }
+                    return extractDir.resolve(versionPath.getFileName().toString());
+                } else throw new IllegalArgumentException("Why multiple versions in a bundle?");
+            }
+        } catch (IOException e) {
+            LOGGER.error("Error when extracting the bundle", e);
+            throw Utils.wrapInRuntime(e);
+        }
+        return inputJar;
     }
 }

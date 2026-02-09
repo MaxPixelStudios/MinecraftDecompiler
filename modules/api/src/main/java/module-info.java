@@ -1,4 +1,5 @@
 open module cn.maxpixel.mcdecompiler.api {
+    uses cn.maxpixel.mcdecompiler.api.extension.Extension;
     requires static transitive org.jetbrains.annotations;
     requires transitive cn.maxpixel.mcdecompiler.utils;
     requires transitive com.google.gson;
