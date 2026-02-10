@@ -24,7 +24,6 @@ import cn.maxpixel.mcdecompiler.api.MinecraftDecompiler;
 import cn.maxpixel.mcdecompiler.api.SideType;
 import cn.maxpixel.mcdecompiler.api.extension.ExtensionManager;
 import cn.maxpixel.mcdecompiler.api.extension.Option;
-import cn.maxpixel.mcdecompiler.api.util.DataMap;
 import cn.maxpixel.mcdecompiler.api.util.DownloadingUtil;
 import cn.maxpixel.mcdecompiler.api.util.FileUtil;
 import cn.maxpixel.mcdecompiler.api.util.VersionManifest;
@@ -66,7 +65,6 @@ public class MinecraftDecompilerCommandLine {
     private static final Object2ObjectOpenHashMap<Option, OptionSpec<?>> OPTION_MAP = new Object2ObjectOpenHashMap<>();
     private static final Logger LOGGER = LogManager.getLogger();
 
-
     private String version;
     private SideType type;
     private boolean includeOthers = true;
@@ -76,21 +74,23 @@ public class MinecraftDecompilerCommandLine {
     private Path outputDecompDir;
     private final ObjectSet<Path> extraJars = new ObjectOpenHashSet<>();
     private final ObjectSet<String> extraClasses = new ObjectOpenHashSet<>();
-    private ObjectOpenHashSet<Path> bundledLibs = new ObjectOpenHashSet<>();
-    private final DataMap dataMap = new DataMap();
-
-    private Path inputJar;
-    private boolean reverse;
+    private final ObjectOpenHashSet<Path> bundledLibs = new ObjectOpenHashSet<>();
+    private final Path inputJar;
+    private final boolean reverse;
 
     private String namespaceTarget;
 
     private boolean skipWhenAbsent;
+
+    private String decompiler;
+    private Path incrementalDecompilation;
 
     public MinecraftDecompilerCommandLine(String version, SideType type) {
         this.version = Objects.requireNonNull(version, "version cannot be null!");
         this.type = Objects.requireNonNull(type, "type cannot be null!");
         this.inputJar = FileUtil.extractBundle(DownloadingUtil.downloadJarSync(version, type),
                 Directories.TEMP_DIR.resolve("bundleExtract"), this.bundledLibs);
+        this.reverse = false;
         this.outputJar = Path.of("output", version + "_" + type + "_deobfuscated.jar").toAbsolutePath().normalize();
         this.outputDecompDir = Path.of("output", version + "_" + type + "_decompiled").toAbsolutePath().normalize();
     }
@@ -179,10 +179,15 @@ public class MinecraftDecompilerCommandLine {
         return this;
     }
 
+    public MinecraftDecompilerCommandLine decompile(String decompiler, Path incrementalDecompilation) {
+        this.decompiler = Objects.requireNonNull(decompiler);
+        this.incrementalDecompilation = incrementalDecompilation;
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     private ClassifiedDeobfuscator buildDeobfuscator() {
-        DeobfuscationOptions deobfuscation = new DeobfuscationOptions(includeOthers, rvn, reverse,
-                ObjectSets.unmodifiable(extraJars), ObjectSets.unmodifiable(extraClasses));
+        var deobfuscation = new DeobfuscationOptions(includeOthers, rvn, reverse, extraJars, extraClasses);
         if (mappingCollection != null) {
             if (mappingCollection instanceof ClassifiedMapping<?> mappings) {
                 if (mappings.hasTrait(NamespacedTrait.class)) {
@@ -190,7 +195,15 @@ public class MinecraftDecompilerCommandLine {
                 } else return new ClassifiedDeobfuscator((ClassifiedMapping<PairedMapping>) mappings, deobfuscation);
             } else throw new UnsupportedOperationException("Unsupported yet"); // TODO
         }
-        if (skipWhenAbsent && !containsMappings(version, type)) return null;
+        if (!containsMappings(version, type)) {
+            if (skipWhenAbsent) {
+                LOGGER.info("Skipping deobfuscation as no mappings present for version {}", version);
+                return null;
+            } else {
+                LOGGER.fatal("No mappings present for version {}. Consider directly using a decompiler instead of " +
+                        "using this software, providing a mapping manually, or using --skip-when-absent", version);
+            }
+        }
         return new ClassifiedDeobfuscator(version, type, deobfuscation);
     }
 
@@ -199,12 +212,14 @@ public class MinecraftDecompilerCommandLine {
                 .has(type + "_mappings");
     }
 
-    private void run(boolean decompile, String decompiler, Path incrementalDecompilation) throws Exception {
-        if (this.outputJar.getParent().equals(this.outputDecompDir))
+    private void run() throws Exception {
+        if (this.outputJar.startsWith(this.outputDecompDir))
             throw new IllegalArgumentException("The parent directory of outputJar cannot be the same as outputDecomp");
-        MinecraftDecompiler mcd = new MinecraftDecompiler();
-        mcd.add(buildDeobfuscator(), outputJar);
-        if (decompile) mcd.add(new DecompilerAction(new DecompilationOptions(decompiler, version, bundledLibs, outputJar, incrementalDecompilation)));
+        MinecraftDecompiler mcd = new MinecraftDecompiler();// FIXME: Is this right?
+        var deobfuscator = buildDeobfuscator();
+        if (deobfuscator != null) mcd.add(deobfuscator, outputJar);
+        if (decompiler != null) mcd.add(new DecompilerAction(new DecompilationOptions(decompiler, version, bundledLibs,
+                outputJar, incrementalDecompilation)), outputDecompDir);
         mcd.execute(inputJar);
     }
 
@@ -308,26 +323,27 @@ public class MinecraftDecompilerCommandLine {
             }
         }
 
-        MinecraftDecompilerCommandLine mcdcl;
+        MinecraftDecompilerCommandLine cli;
         if (options.has(inputO)) {
-            mcdcl = new MinecraftDecompilerCommandLine(options.valueOf(inputO), options.has(reverseO));
-            options.valueOfOptional(versionO).ifPresent(mcdcl::libsUsing);
+            cli = new MinecraftDecompilerCommandLine(options.valueOf(inputO), options.has(reverseO));
+            options.valueOfOptional(versionO).ifPresent(cli::libsUsing);
         } else {
-            mcdcl = new MinecraftDecompilerCommandLine(options.valueOf(versionO), options.valueOf(sideTypeO));
+            cli = new MinecraftDecompilerCommandLine(options.valueOf(versionO), options.valueOf(sideTypeO));
         }
-        options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> mcdcl
+        options.valueOfOptional(mappingPathO).ifPresent(LambdaUtil.unwrapConsumer(m -> cli
                 .withMapping(orDetect(options.valueOf(mappingFormatO), m).read(new FileInputStream(m)))));
-        if (options.has(regenVarNameO)) mcdcl.regenerateVariableNames();
-        if (options.has(dontIncludeOthersO)) mcdcl.doNotIncludeOthers();
-        options.valueOfOptional(namespaceTargetO).ifPresent(mcdcl::namespaceTarget);
-        options.valueOfOptional(outputO).ifPresent(mcdcl::output);
-        options.valueOfOptional(outputDecompO).ifPresent(mcdcl::outputDecomp);
-        mcdcl.addExtraJars(options.valuesOf(extraJarsO));
-        mcdcl.addExtraClasses(options.valuesOf(extraClassesO));
+        if (options.has(regenVarNameO)) cli.regenerateVariableNames();
+        if (options.has(dontIncludeOthersO)) cli.doNotIncludeOthers();
+        options.valueOfOptional(namespaceTargetO).ifPresent(cli::namespaceTarget);
+        options.valueOfOptional(outputO).ifPresent(cli::output);
+        options.valueOfOptional(outputDecompO).ifPresent(cli::outputDecomp);
+        cli.addExtraJars(options.valuesOf(extraJarsO));
+        cli.addExtraClasses(options.valuesOf(extraClassesO));
 
-        if (options.has(skipWhenAbsentO)) mcdcl.skipRemappingWhenMappingsAreAbsent();
+        if (options.has(skipWhenAbsentO)) cli.skipRemappingWhenMappingsAreAbsent();
+        if (options.has(decompileO)) cli.decompile(options.valueOf(decompileO), options.valueOf(incrementalDecompilationO));
 
-        mcdcl.run(options.has(decompileO), options.valueOf(decompileO), options.valueOf(incrementalDecompilationO));
+        cli.run();
 
         LOGGER.info("Done. Thanks for using Minecraft Decompiler {}", MinecraftDecompilerCommandLine.class.getPackage().getImplementationVersion());
     }

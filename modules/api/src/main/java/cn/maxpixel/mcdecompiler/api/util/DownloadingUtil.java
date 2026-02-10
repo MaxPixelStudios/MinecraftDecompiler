@@ -111,7 +111,7 @@ public class DownloadingUtil {
             JsonObject mappings = object.getAsJsonObject("downloads")
                     .getAsJsonObject(type + "_mappings");
             if (mappings == null) throw new IllegalArgumentException("Version \"" + id +
-                    "\" doesn't have official mappings. Please use 1.14.4 or above");
+                    "\" doesn't have official mappings. Please use 1.14.4(inclusive) - 26.1(exclusive)");
             Path p = Directories.DOWNLOAD_DIR.resolve(id).resolve(type + "_mappings.txt");
             if (!FileUtil.verify(p, mappings.get("sha1").getAsString(), mappings.get("size").getAsLong())) {
                 LOGGER.info("Downloading {} {} mapping...", id, type);
