@@ -27,19 +27,20 @@ import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class ExtraClassesInformation implements Consumer<Path> {// TODO: extensions
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
+    private static final BiFunction<ExtraClassesInformation, ClassReader, ClassVisitor> NULL_FUNC = (e, c) -> null;
+    public final Object2ObjectOpenHashMap<String, ObjectArrayList<String>> superClassMap = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<String, Object2IntOpenHashMap<String>> accessMap = new Object2ObjectOpenHashMap<>();
-    private final Map<String, Map<String, String>> refMap;
-    public final Object2ObjectOpenHashMap<String, ObjectSet<String>> dontRemap = new Object2ObjectOpenHashMap<>();
+    private final BiFunction<ExtraClassesInformation, ClassReader, ClassVisitor> extraVisitorFunc;
 
     public ExtraClassesInformation() {
-        this(Object2ObjectMaps.emptyMap());
+        this(NULL_FUNC);
     }
 
     public ExtraClassesInformation(Stream<Path> classes) {
@@ -47,19 +48,19 @@ public class ExtraClassesInformation implements Consumer<Path> {// TODO: extensi
     }
 
     public ExtraClassesInformation(Stream<Path> classes, boolean close) {
-        this(Object2ObjectMaps.emptyMap(), classes, close);
+        this(classes, close, NULL_FUNC);
     }
 
-    public ExtraClassesInformation(Map<String, Map<String, String>> refMap) {
-        this.refMap = refMap;
+    public ExtraClassesInformation(BiFunction<ExtraClassesInformation, ClassReader, ClassVisitor> extraVisitorFunc) {
+        this.extraVisitorFunc = extraVisitorFunc;
     }
 
-    public ExtraClassesInformation(Map<String, Map<String, String>> refMap, Stream<Path> classes) {
-        this(refMap, classes, false);
+    public ExtraClassesInformation(Stream<Path> classes, BiFunction<ExtraClassesInformation, ClassReader, ClassVisitor> extraVisitorFunc) {
+        this(classes, false, extraVisitorFunc);
     }
 
-    public ExtraClassesInformation(Map<String, Map<String, String>> refMap, Stream<Path> classes, boolean close) {
-        this.refMap = refMap;
+    public ExtraClassesInformation(Stream<Path> classes, boolean close, BiFunction<ExtraClassesInformation, ClassReader, ClassVisitor> extraVisitorFunc) {
+        this.extraVisitorFunc = Objects.requireNonNull(extraVisitorFunc);
         if (close) try(classes) {
             classes.forEach(this);
         } else classes.forEach(this);
@@ -69,114 +70,52 @@ public class ExtraClassesInformation implements Consumer<Path> {// TODO: extensi
     public void accept(Path classFilePath) {
         try {
             ClassReader reader = new ClassReader(IOUtil.readAllBytes(classFilePath));
-            String className = reader.getClassName();
-            boolean needToRecord = (reader.getAccess() & (Opcodes.ACC_INTERFACE | Opcodes.ACC_RECORD)) == 0;
-            boolean notEnum = (reader.getAccess() & Opcodes.ACC_ENUM) == 0;
-            String superName = reader.getSuperName();
-            String[] interfaces = reader.getInterfaces();
-            int itfLen = interfaces.length;
-            if (needToRecord && !superName.startsWith("java/")) {
-                ObjectArrayList<String> list = new ObjectArrayList<>(itfLen + 1);
-                list.add(superName);
-                if (itfLen > 0) for(String itf : interfaces) {
-                    if (itf.startsWith("java/")) continue;
-                    list.add(itf);
-                }
-                synchronized (superClassMap) {
-                    superClassMap.put(className, list);
-                }
-            } else if (itfLen > 0) {
-                ObjectArrayList<String> list = new ObjectArrayList<>(itfLen);
-                for (String itf : interfaces) {
-                    if (itf.startsWith("java/")) continue;
-                    list.add(itf);
-                }
-                synchronized (superClassMap) {
-                    superClassMap.put(className, list);
-                }
-            }
-            reader.accept(new ClassVisitor(Deobfuscator.ASM_VERSION) {
-                private final boolean recordAccess = needToRecord && notEnum;
-                private final Object2IntOpenHashMap<String> map = recordAccess ? new Object2IntOpenHashMap<>() : null;
-                private boolean isMixin;
+            reader.accept(new ClassVisitor(Deobfuscator.ASM_VERSION, extraVisitorFunc.apply(this, reader)) {
+                private String className;
+                private boolean recordAccess;
+                private Object2IntOpenHashMap<String> map;
 
                 @Override
-                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    if ("Lorg/spongepowered/asm/mixin/Mixin;".equals(descriptor)) {
-                        this.isMixin = true;
-                        ObjectArrayList<String> list = superClassMap.computeIfAbsent(className, s -> new ObjectArrayList<>());
-                        return new AnnotationVisitor(api) {
-                            @Override
-                            public AnnotationVisitor visitArray(String name) {
-                                return switch (name) {
-                                    case "value" -> new AnnotationVisitor(api) {
-                                        @Override
-                                        public void visit(String name, Object value) {
-                                            if (value instanceof Type t && t.getSort() == Type.OBJECT) {
-                                                list.add(t.getInternalName());
-                                            } else throw new IllegalArgumentException();
-                                        }
-                                    };
-                                    case "targets" -> new AnnotationVisitor(api) {
-                                        @Override
-                                        public void visit(String name, Object value) {
-                                            if (value instanceof String s) {
-                                                list.add(refMap.getOrDefault(className, Object2ObjectMaps.emptyMap())
-                                                        .getOrDefault(s, s));
-                                            } else throw new IllegalArgumentException();
-                                        }
-                                    };
-                                    default -> null;
-                                };
-                            }
-
-                            @Override
-                            public void visit(String name, Object value) {
-                                if ("remap".equals(name) && value instanceof Boolean b && !b) {
-                                    dontRemap.put(className, ObjectSets.emptySet());
-                                }
-                            }
-                        };
+                public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                    className = name;
+                    boolean needToRecord = (access & (Opcodes.ACC_INTERFACE | Opcodes.ACC_RECORD)) == 0;
+                    boolean notEnum = (access & Opcodes.ACC_ENUM) == 0;
+                    recordAccess = needToRecord && notEnum;
+                    if (recordAccess) map = new Object2IntOpenHashMap<>();
+                    int itfLen = interfaces.length;
+                    if (needToRecord && !superName.startsWith("java/")) {
+                        ObjectArrayList<String> list = new ObjectArrayList<>(itfLen + 1);
+                        list.add(superName);
+                        if (itfLen > 0) for(String itf : interfaces) {
+                            if (itf.startsWith("java/")) continue;
+                            list.add(itf);
+                        }
+                        synchronized (superClassMap) {
+                            superClassMap.put(className, list);
+                        }
+                    } else if (itfLen > 0) {
+                        ObjectArrayList<String> list = new ObjectArrayList<>(itfLen);
+                        for (String itf : interfaces) {
+                            if (itf.startsWith("java/")) continue;
+                            list.add(itf);
+                        }
+                        synchronized (superClassMap) {
+                            superClassMap.put(className, list);
+                        }
                     }
-                    return null;
+                    super.visit(version, access, name, signature, superName, interfaces);
                 }
 
                 @Override
                 public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
                     if (recordAccess && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name, access);
-                    return !isMixin || dontRemap.get(className) == ObjectSets.<String>emptySet() ? null : new FieldVisitor(api) {
-                        @Override
-                        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                            return new AnnotationVisitor(api) {
-                                @Override
-                                public void visit(String name, Object value) {
-                                    if ("remap".equals(name) && value instanceof Boolean b && !b) {
-                                        dontRemap.computeIfAbsent(className, k -> new ObjectOpenHashSet<>())
-                                                .add(name);
-                                    }
-                                }
-                            };
-                        }
-                    };
+                    return super.visitField(access, name, descriptor, signature, value);
                 }
 
                 @Override
                 public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                     if (recordAccess && (access & Opcodes.ACC_PUBLIC) == 0) map.put(name.concat(descriptor), access);
-                    return !isMixin || dontRemap.get(className) == ObjectSets.<String>emptySet() ? null : new MethodVisitor(api) {
-                        @Override
-                        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                            return new AnnotationVisitor(api) {
-                                @Override
-                                public void visit(String name, Object value) {
-                                    if ("remap".equals(name) && value instanceof Boolean b && !b) {
-                                        dontRemap.computeIfAbsent(className, k -> new ObjectOpenHashSet<>())
-                                                .add(name.concat(descriptor));
-                                    }
-                                }
-                            };
-                        }
-                    };
+                    return super.visitMethod(access, name, descriptor, signature, exceptions);
                 }
 
                 @Override
@@ -187,10 +126,11 @@ public class ExtraClassesInformation implements Consumer<Path> {// TODO: extensi
                             accessMap.put(className, map);
                         }
                     }
+                    super.visitEnd();
                 }
             }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         } catch (IOException e) {
-            LOGGER.warn("Error when generating extra classes information", e);
+            LOGGER.warn("Error when collecting extra classes information", e);
         }
     }
 

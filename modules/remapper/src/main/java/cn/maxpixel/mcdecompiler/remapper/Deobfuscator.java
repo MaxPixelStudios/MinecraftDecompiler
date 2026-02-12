@@ -74,13 +74,14 @@ public abstract class Deobfuscator<T extends MappingRemapper> implements Action 
             Set<String> extraClasses = options.extraClasses();
             boolean deobfAll = extraClasses.contains("*") || extraClasses.contains("*all*");
             boolean extraClassesNotEmpty = !extraClasses.isEmpty();
-            ExtraClassesInformation info = new ExtraClassesInformation(refMap, FileUtil.iterateFiles(input)// FIXME
+            processor.beforeCollectingExtraClassesInformation(input);
+            ExtraClassesInformation info = new ExtraClassesInformation(FileUtil.iterateFiles(input)// FIXME
                     .filter(p -> {
                         String ps = p.toString();
                         String k = AppUtils.file2Native(ps);
                         return (deobfAll && ps.endsWith(".class")) || remapper.hasClassMapping(k) ||
                                 (extraClassesNotEmpty && extraClasses.stream().anyMatch(k::startsWith));
-                    }), true);
+                    }), true, processor::getExtraClassesInformationVisitor);
             options.extraJars().forEach(jar -> {
                 try (FileSystem jarFs = JarUtil.createZipFs(jar);
                      Stream<Path> s = FileUtil.iterateFiles(jarFs.getPath(""))) {

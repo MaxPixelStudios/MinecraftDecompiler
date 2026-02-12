@@ -19,6 +19,8 @@
 package cn.maxpixel.mcdecompiler.remapper.processing;
 
 import cn.maxpixel.mcdecompiler.remapper.DeobfuscationOptions;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 
@@ -37,7 +39,15 @@ public interface Process {
         AFTER
     }
 
-    String getName();// TODO: may have uses in the future, or may be removed
+    @NotNull String getName();// TODO: may have uses in the future, or may be removed
+
+    default void beforeCollectingExtraClassesInformation(Path input) throws IOException {
+
+    }
+
+    default @Nullable ClassVisitor getExtraClassesInformationVisitor(ExtraClassesInformation eci, ClassReader reader, ClassVisitor parent) {
+        return null;
+    }
 
     default void beforeRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper, Path input) throws IOException {// TODO: Final design to be determined
     }
@@ -45,5 +55,5 @@ public interface Process {
     default void afterRunning(DeobfuscationOptions options, ClassFileRemapper mappingRemapper) throws IOException {
     }
 
-    ClassVisitor getVisitor(DeobfuscationOptions options, ClassReader reader, ClassFileRemapper cfr, ClassVisitor parent);
+    @NotNull ClassVisitor getVisitor(DeobfuscationOptions options, ClassReader reader, ClassFileRemapper cfr, ClassVisitor parent);
 }
