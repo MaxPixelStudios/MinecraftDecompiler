@@ -32,6 +32,7 @@ import cn.maxpixel.mcdecompiler.mapping.trait.PropertiesTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
 import cn.maxpixel.mcdecompiler.mapping.util.TinyUtil;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -90,7 +91,7 @@ public enum TinyV2MappingGenerator implements MappingGenerator.Classified<Namesp
                             NamespacedMapping localVariable = lvt.getLocalVariable(omittedThis ? index + 1 : index);
                             String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
                                 String name = localVariable.getName(namespace);
-                                return MappingUtils.isStringNotBlank(name) ? name : "";
+                                return Utils.isStringNotBlank(name) ? name : "";
                             }, "\t");
                             lines.add("\t\tp\t" + index + '\t' + names);
                             Documented paramDoc = localVariable.getComponent();

@@ -26,4 +26,9 @@ public final class Utils {
     public static <T> T onKeyDuplicate(T t, T u) {
         throw new IllegalArgumentException("Key duplicated for \"" + t + "\" and \"" + u + "\"");
     }
+
+    // FIXME: Consider moving back to mapping-api after OptionRegistry is removed
+    public static boolean isStringNotBlank(String s) {
+        return s != null && !s.isBlank();
+    }
 }

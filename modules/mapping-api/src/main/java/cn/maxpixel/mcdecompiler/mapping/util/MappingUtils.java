@@ -165,10 +165,6 @@ public final class MappingUtils {
 //        return output;
 //    }
 
-    public static boolean isStringNotBlank(String s) {
-        return s != null && !s.isBlank();
-    }
-
     public static <T> T throwInvalidDescriptor(boolean method) {
         throw new IllegalArgumentException(method ? "Invalid method descriptor" : "Invalid descriptor");
     }

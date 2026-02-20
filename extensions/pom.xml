@@ -14,7 +14,7 @@
     <packaging>pom</packaging>
     <name>MinecraftDecompiler Extensions - Parent</name>
     <modules>
-<!--        <module>mixins-remapper</module>TODO-->
+        <module>mixin-remapper</module>
         <module>parchment</module>
     </modules>
 

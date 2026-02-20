@@ -27,10 +27,7 @@ import cn.maxpixel.rewh.logging.Logger;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -150,6 +147,7 @@ public class MinecraftDecompiler {
                         for (var entry : ds) {
                             FileUtil.copyDirectory(entry, intermediateOutput);
                         }
+                    } catch (NoSuchFileException ignored) {
                     }
                 } catch (Exception e) {
                     LOGGER.error("Error when generating intermediate output for action \"{}\" at \"{}\"",

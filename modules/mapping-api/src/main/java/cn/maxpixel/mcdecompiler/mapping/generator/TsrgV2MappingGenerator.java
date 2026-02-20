@@ -30,6 +30,7 @@ import cn.maxpixel.mcdecompiler.mapping.remapper.MappingRemapper;
 import cn.maxpixel.mcdecompiler.mapping.trait.NamespacedTrait;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
 import cn.maxpixel.mcdecompiler.mapping.util.NamingUtil;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
@@ -72,7 +73,7 @@ public enum TsrgV2MappingGenerator implements MappingGenerator.Classified<Namesp
                         lvt.getLocalVariableIndexes().forEach(index -> {
                             String names = NamingUtil.concatNamespaces(namespaces, namespace -> {
                                 String name = lvt.getLocalVariable(index).getName(namespace);
-                                return MappingUtils.isStringNotBlank(name) ? name : "o";
+                                return Utils.isStringNotBlank(name) ? name : "o";
                             }, " ");
                             lines.add("\t\t" + index + ' ' + names);
                         });

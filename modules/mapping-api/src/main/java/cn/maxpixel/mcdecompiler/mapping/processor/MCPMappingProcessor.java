@@ -26,6 +26,7 @@ import cn.maxpixel.mcdecompiler.mapping.format.MCPMappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.format.MappingFormat;
 import cn.maxpixel.mcdecompiler.mapping.util.InputCollection;
 import cn.maxpixel.mcdecompiler.mapping.util.MappingUtils;
+import cn.maxpixel.mcdecompiler.utils.Utils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,7 +105,7 @@ public enum MCPMappingProcessor implements MappingProcessor.Unique<PairedMapping
 
         public String[] readRow() throws IOException {
             String s = in.readLine();
-            if (MappingUtils.isStringNotBlank(s)) {
+            if (Utils.isStringNotBlank(s)) {
                 String[] ret = MappingUtils.splitExact(s, ',', columnCount);
                 String lastColumn = ret[columnCount - 1];
                 int i = lastColumn.indexOf('"');

@@ -81,6 +81,7 @@ public class DecompilerAction implements Action {
 
     @Override
     public void executeRaw(Path input, Path others, Path output) throws IOException {
+        FileUtil.deleteIfExists(others);
         try (FileSystem jarFs = JarUtil.createZipFsOrNullIfDir(input)) {
             Path inputRoot = JarUtil.rootOrElse(jarFs, input);
             try (var ds = Files.newDirectoryStream(inputRoot)) {
