@@ -25,19 +25,20 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.util.function.Supplier;
 
 @ApiStatus.OverrideOnly
 public interface Extension {
     @NotNull String getName();
 
+    /*
+     * cn.maxpixel.mcdecompiler.decompiler.Decompilers#registerDecompiler(cn.maxpixel.mcdecompiler.decompiler.IDecompiler)
+     * cn.maxpixel.mcdecompiler.mapping.format.MappingFormats#registerMappingFormat(cn.maxpixel.mcdecompiler.mapping.format.MappingFormat)
+     * cn.maxpixel.mcdecompiler.mapping.detector.FormatDetector#registerDetectionUnit(cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit)
+     * cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor#addProcess(cn.maxpixel.mcdecompiler.remapper.processing.Process.Run, Supplier)
+     */
     /**
-     * Register options, mapping formats, format detectors, decompilers, etc.
+     * Register options, mapping formats, format detectors, decompilers, processes, etc.
      * @param optionRegistrar option registrar
-     * @see cn.maxpixel.mcdecompiler.decompiler.Decompilers#registerDecompiler(cn.maxpixel.mcdecompiler.decompiler.IDecompiler)
-     * @see cn.maxpixel.mcdecompiler.mapping.format.MappingFormats#registerMappingFormat(cn.maxpixel.mcdecompiler.mapping.format.MappingFormat)
-     * @see cn.maxpixel.mcdecompiler.mapping.detector.FormatDetector#registerDetectionUnit(cn.maxpixel.mcdecompiler.mapping.detector.DetectionUnit)
-     * @see cn.maxpixel.mcdecompiler.remapper.processing.ClassProcessor#addProcess(cn.maxpixel.mcdecompiler.remapper.processing.Process.Run, Supplier)
      */
     default void onRegistering(OptionRegistry.Registrar optionRegistrar) {
     }
